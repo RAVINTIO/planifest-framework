@@ -56,3 +56,20 @@ Scope Lock complete. All four scenario paths captured.
 P0 exchange (run mode): Q: Review after each phase, or authorize a continuous run? / A: Review each phase, this build has been tricky so far. Run mode set to interactive; plan/.run-mode written.
 
 Gate accepted: P0 (2026-08-09T22:45:00Z)
+
+---
+
+### P1: Requirements
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T22:46:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | 3 requirements expected: REQ-001 (boot file regeneration fix, all applicable tools), REQ-002 (context-mode line removal from templates/standard-boot.md), REQ-003 (local git permission override update). |
+
+Artifacts produced: execution-plan.md, requirements/req-001..003, scope.md, risk-register.md, domain-glossary.md. No OpenAPI spec, operational model, SLO definitions, or cost model, no trigger condition present (no API surface, no deployed runtime service). Component manifest updated in place (planifest-framework/component.yml, existing component, not new): feature and version bumped to 0000029/0.28.1, two new responsibilities and two new inScope entries added with req tags.
