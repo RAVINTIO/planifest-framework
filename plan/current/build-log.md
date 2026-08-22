@@ -73,3 +73,22 @@ Gate accepted: P0 (2026-08-09T22:45:00Z)
 | Notes | 3 requirements expected: REQ-001 (boot file regeneration fix, all applicable tools), REQ-002 (context-mode line removal from templates/standard-boot.md), REQ-003 (local git permission override update). |
 
 Artifacts produced: execution-plan.md, requirements/req-001..003, scope.md, risk-register.md, domain-glossary.md. No OpenAPI spec, operational model, SLO definitions, or cost model, no trigger condition present (no API surface, no deployed runtime service). Component manifest updated in place (planifest-framework/component.yml, existing component, not new): feature and version bumped to 0000029/0.28.1, two new responsibilities and two new inScope entries added with req tags.
+
+Gate accepted: P1 (2026-08-09T22:52:00Z)
+
+P1 exchange (run mode change): Q: Proceed to P2? / A: Yes, and switch to continuous mode. plan/.run-mode updated from interactive to continuous. Per orchestrator rules the P7/P9 close-out confirmation still stops regardless of run mode.
+
+---
+
+### P2: Architecture Decisions
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T23:05:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | Two ADRs planned: ADR-001 boot files are disposable build outputs (always-regenerate), ADR-002 boot templates never name third-party MCP plugins. |
