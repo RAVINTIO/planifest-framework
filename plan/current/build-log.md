@@ -138,3 +138,18 @@ CI: 57 feature suites + 22 regression suites, 0 failures, first attempt, zero se
 R-003 nuance discovered during P4: the other 6 Planifest-enabled repos carry vendored copies of planifest-framework (their own setup.sh still has the skip-if-exists guard and their vendored standard-boot.md still contains the context-mode line), so a plain setup rerun there cannot clean them. Their remediation requires framework propagation first (update each repo's vendored planifest-framework/ from a release containing this fix, then rerun setup). To be raised at the P9 gate: propagate from this branch now, or after the PR merges.
 
 Gate: P4 exception applies (all checks passed first-attempt, zero self-corrections), proceeding without confirmation.
+
+---
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T23:35:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | STRIDE-lite over the three changed surfaces: always-overwrite write path, template line removal (surface reduction), expanded standing git authority in custom-001. |
