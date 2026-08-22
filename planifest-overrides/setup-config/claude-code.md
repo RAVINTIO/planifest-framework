@@ -10,6 +10,6 @@
   "tool": "claude-code",
   "flags": ["--structured-telemetry-mcp","--strict-orchestrator"],
   "backendUrl": "http://localhost:3741",
-  "writtenAt": "2026-08-09T22:01:10Z"
+  "writtenAt": "2026-08-22T05:03:41Z"
 }
 ```
