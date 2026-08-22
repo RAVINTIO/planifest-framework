@@ -92,3 +92,49 @@ P1 exchange (run mode change): Q: Proceed to P2? / A: Yes, and switch to continu
 | Parallel task batches | 0 |
 | Telemetry | confirmed-disabled |
 | Notes | Two ADRs planned: ADR-001 boot files are disposable build outputs (always-regenerate), ADR-002 boot templates never name third-party MCP plugins. |
+
+Artifacts produced: adr/adr-001-boot-files-are-disposable-build-outputs.md, adr/adr-002-boot-templates-never-name-third-party-mcp-plugins.md. Both accepted. Committed b0d99d6.
+
+Gate: continuous mode, proceeding without stop.
+
+---
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T23:12:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer (TDD inline; scope is 3 small edits) |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | TDD: one test file covering req-001 (regeneration behaviour, live setup.sh run in scratch workspace + static .ps1 parity check), req-002 (zero context-mode occurrences in standard-boot.md and generated boot file), req-003 (override wording). RED before implementation, GREEN after. Subagent decomposition considered and declined: three edits share two files and the test harness, sequential inline is faster than dispatch overhead (custom-002 override requires stating the reason). |
+
+RED: 9 targeted failures confirmed before implementation ((b) regeneration, (d) .sh/.ps1 guard, (e)/(f) template and generated file, (h) override wording); out-of-scope guards (g) passing as expected. Two test-harness defects found and fixed during the cycle, not implementation defects: grep_count double-output on zero matches, and (d)'s repo-wide grep matching the legitimately-skipped .github/workflows/planifest.yml and .gitattributes paths (assertion narrowed to function scope via fn_has). GREEN: 17/17. Commit 4330095. Branch pushed to origin per updated custom-001 authorization (req-003 in effect).
+
+Implementation deviations from spec: none. The heading in custom-001 renamed "Local Git Only" to "Git Permissions" per req-003's renaming requirement.
+
+Gate: continuous mode, proceeding without stop.
+
+---
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T23:25:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | Full framework suite via run-tests.sh (feature suites + regression pack), then verify-by-execution: live setup.sh reruns exercising the changed behaviour end-to-end. |
+
+CI: 57 feature suites + 22 regression suites, 0 failures, first attempt, zero self-corrections. Verify-by-execution (live, this repo): setup.sh claude-code rerun printed "~ CLAUDE.md (regenerated from template)"; regenerated file has zero context-mode occurrences, carries the new Git Permissions override wording, old local-git-only wording gone. This constitutes the R-003 remediation for this repo.
+
+R-003 nuance discovered during P4: the other 6 Planifest-enabled repos carry vendored copies of planifest-framework (their own setup.sh still has the skip-if-exists guard and their vendored standard-boot.md still contains the context-mode line), so a plain setup rerun there cannot clean them. Their remediation requires framework propagation first (update each repo's vendored planifest-framework/ from a release containing this fix, then rerun setup). To be raised at the P9 gate: propagate from this branch now, or after the PR merges.
+
+Gate: P4 exception applies (all checks passed first-attempt, zero self-corrections), proceeding without confirmation.
