@@ -172,3 +172,33 @@ Gate: P5 exception applies (Low risk, zero critical/high/medium findings), proce
 | Parallel task batches | 0 |
 | Telemetry | confirmed-disabled |
 | Notes | Living-docs pass: component-registry.md version note, decisions-index.md 0000029 section, context-mode.md status banner (doc actively endorsed the disabled plugin, must match reality), iteration log. dependency-graph.md and architecture-overview.md checked, no drift (no new edges, no architectural change). |
+
+Drift found and fixed: docs/context-mode.md endorsed the disabled plugin with no status caveat. Commit ad1164d.
+
+Gate: continuous mode, proceeding without stop.
+
+---
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-09T23:55:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | Changelog, test report, archive to plan/_archive/0000029-context-mode-removal-and-boot-file-regeneration-fix-2026-08-09/, docs/about.md 0.28.1. No .skips. No regression candidates tagged. |
+
+## Summary (filled at P7)
+
+| Metric | Value |
+|--------|-------|
+| Phases completed | P0-P9, none skipped |
+| Agents spawned | 1 (P8 build-assessment) |
+| Commits | 9 on feat branch through P6 (bc8059a..ad1164d), plus P7 archive commit |
+| Test outcome | 17/17 feature assertions; full suite 57 feature + 22 regression suites, 0 failures, first attempt |
+| Self-corrections | 0 (two test-harness defects fixed within the P3 TDD cycle) |
+| Human gates | P0 design, P1 gate, Scope Lock (2 revision rounds), run-mode switch to continuous at P2 |
