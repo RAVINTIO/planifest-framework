@@ -192,6 +192,36 @@ Gate: continuous mode, proceeding without stop.
 | Telemetry | confirmed-disabled |
 | Notes | Changelog, test report, archive to plan/_archive/0000029-context-mode-removal-and-boot-file-regeneration-fix-2026-08-09/, docs/about.md 0.28.1. No .skips. No regression candidates tagged. |
 
+---
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-10T00:05:00Z` |
+| Model tier | cheaper (claude-haiku-4-5) |
+| Skills loaded | planifest-build-assessment-agent (subagent) |
+| Agents spawned | 1 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | Assessment over this archived build-log.md; build-report.md written to the archive directory. |
+
+---
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-08-10T00:10:00Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Telemetry | confirmed-disabled |
+| Notes | Tag v0.28.1 from product-version.mjs derivation; branch already pushed; PR via gh pr create per updated custom-001 authorization. Cross-repo propagation decision raised at the gate. |
+
 ## Summary (filled at P7)
 
 | Metric | Value |

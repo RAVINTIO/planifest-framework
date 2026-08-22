@@ -2,7 +2,7 @@
 
 **Feature:** Context Mode Removal and Boot File Regeneration Fix
 **Pipeline run:** P0-P9 completed, none skipped
-**PR:** pending
+**PR:** https://github.com/planifest/planifest-framework/pull/56
 
 ## What Was Built
 
