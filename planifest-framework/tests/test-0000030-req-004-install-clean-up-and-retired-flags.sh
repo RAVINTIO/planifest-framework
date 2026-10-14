@@ -104,7 +104,7 @@ JSON
 echo ""
 echo "=== req-001 / req-002: fresh install creates no retired integration state ==="
 
-for tool in claude-code cursor opencode; do
+for tool in claude-code cursor opencode antigravity; do
   WS=$(make_workspace)
   out=$(cd "$WS" && bash planifest-framework/setup.sh "$tool" 2>&1)
   assert_exit_zero $? "fresh $tool: setup exits 0"

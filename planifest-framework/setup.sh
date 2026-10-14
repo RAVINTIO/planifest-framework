@@ -1045,7 +1045,7 @@ setup_tool() {
   if [ "${PLANIFEST_TIER:-}" = "3" ]; then
     echo ""
     echo "  ⚠  [Planifest] $tool does not support deterministic enforcement hooks."
-     Scope enforcement is instruction-based only.
+    echo "     Scope enforcement is instruction-based only."
     echo "     Writes are NOT blocked at the tool level — agent instruction compliance"
     echo "     is the only enforcement mechanism for this tool."
   fi
