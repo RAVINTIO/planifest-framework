@@ -9,7 +9,6 @@
 
 .EXAMPLE
     .\planifest-framework\setup.ps1 claude-code
-    .\planifest-framework\setup.ps1 claude-code --context-mode-mcp
     .\planifest-framework\setup.ps1 all
 #>
 
@@ -29,31 +28,30 @@ if ($args.Count -ge 1 -and $args[0] -in $_skillSubcmds) {
 
 # Manual arg parsing — supports --flag style for cross-platform consistency
 $Tool = $null
-$ContextModeMcp = $false
-$StructuredTelemetryMcp = $false
-$BackendUrl = 'http://localhost:3741'
 $StrictOrchestrator = $false
 $IncludeFullSkillLibrary = $false
 $i = 0
 while ($i -lt $args.Count) {
     switch ($args[$i]) {
-        '--context-mode-mcp'          { $ContextModeMcp = $true; $i++ }
-        '--structured-telemetry-mcp'  { $StructuredTelemetryMcp = $true; $i++ }
         '--strict-orchestrator'       { $StrictOrchestrator = $true; $i++ }
         '--include-full-skill-library' { $IncludeFullSkillLibrary = $true; $i++ }
-        '--backend-url' {
-            $i++
-            if ($i -ge $args.Count) { Write-Host "Error: --backend-url requires a value"; exit 1 }
-            # Validated here, once, at parse time -- Merge-TelemetryHookSettings
-            # interpolates this value directly into a shell command string
-            # written into the target tool's hook config (backlog 0000055,
-            # found during 0000027's P5 review). Fail loudly (setup-time check).
-            if ($args[$i] -notmatch '^https?://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9._/-]*)?$') {
-                Write-Host "Error: --backend-url must be a plain http(s) URL (host[:port][/path]), got: $($args[$i])"
-                exit 1
-            }
-            $BackendUrl = $args[$i]; $i++
+        # BEGIN retired-integrations (0000030)
+        # Flags for the Context Mode and Telemetry integrations, removed in 0.29.0
+        # (0000030 ADR-003). Setup still accepts them so a refresh from an old install
+        # marker succeeds. Each prints one notice and changes nothing. None is ever
+        # recorded in the install marker, and the --backend-url value is consumed
+        # without validation. Parity with setup.sh.
+        '--context-mode-mcp' {
+            Write-Host "  ! --context-mode-mcp was removed in 0.29.0 and has no effect."; $i++
         }
+        '--structured-telemetry-mcp' {
+            Write-Host "  ! --structured-telemetry-mcp was removed in 0.29.0 and has no effect."; $i++
+        }
+        '--backend-url' {
+            Write-Host "  ! --backend-url was removed in 0.29.0 and has no effect."; $i++
+            if ($i -lt $args.Count -and $args[$i] -notlike '-*') { $i++ }
+        }
+        # END retired-integrations (0000030)
         default {
             if ($args[$i] -like '-*') { Write-Host "Unknown flag: $($args[$i])"; exit 1 }
             else { $Tool = $args[$i]; $i++ }
@@ -72,6 +70,53 @@ $SetupDir = Join-Path $ScriptDir 'setup'
 $ValidTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'windsurf', 'cline', 'roo-code', 'opencode')
 
 # --- Shared functions ---
+
+# Shared settings-file helpers (0000030 ADR-004). If a settings file is not valid
+# JSON, every writer leaves it byte-identical and skips it, so setup still
+# finishes. Every write goes to a temporary file in the same folder, which is
+# then moved into place, so a crash can never leave a truncated file.
+function Test-SettingsFileReadable {
+    param([string]$SettingsPath, [string]$Label, [string]$What)
+    if (-not (Test-Path $SettingsPath)) { return $true }
+    try {
+        Get-Content -Raw -Path $SettingsPath | ConvertFrom-Json -ErrorAction Stop | Out-Null
+        return $true
+    } catch {
+        Write-Host "  ! $Label is not valid JSON - left unchanged, skipped $What"
+        return $false
+    }
+}
+
+function Write-SettingsFile {
+    param([string]$SettingsPath, [string]$Content)
+    $dir = Split-Path -Parent $SettingsPath
+    if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+    $tmp = Join-Path $dir (".{0}.planifest-tmp-{1}" -f (Split-Path -Leaf $SettingsPath), $PID)
+    Set-Content -Path $tmp -Value $Content -Encoding UTF8
+    Move-Item -Path $tmp -Destination $SettingsPath -Force
+}
+
+# The same helpers for inline Node scripts, mirroring SETTINGS_JS_HELPERS in
+# setup.sh. The JavaScript uses single quotes only, because Windows PowerShell
+# does not escape embedded double quotes in arguments to native commands.
+$SettingsJsHelpers = @'
+const __fs = require('fs'), __path = require('path');
+function readSettings(sf, label, what) {
+  if (!__fs.existsSync(sf)) return {};
+  try {
+    return JSON.parse(__fs.readFileSync(sf, 'utf8').replace(/^﻿/, ''));
+  } catch (e) {
+    console.log('  ! ' + label + ' is not valid JSON - left unchanged, skipped ' + what);
+    return null;
+  }
+}
+function writeSettings(sf, s) {
+  __fs.mkdirSync(__path.dirname(sf), { recursive: true });
+  const tmp = __path.join(__path.dirname(sf), '.' + __path.basename(sf) + '.planifest-tmp-' + process.pid);
+  __fs.writeFileSync(tmp, JSON.stringify(s, null, 2) + '\n');
+  __fs.renameSync(tmp, sf);
+}
+'@
 
 function Copy-PlanifestSkills {
     param($TargetDir)
@@ -242,292 +287,17 @@ function Copy-PlanifestWorkflow {
     Write-Host "  + workflows/$name.md"
 }
 
-function Get-ContextModeHookCommand {
-    # Builds the PreToolUse command string for a context-mode .mjs hook
-    # (REQ-004, 0000017 ADR-002). No Unix-shell dependency: `node <script>` is
-    # plain-invocation syntax understood by cmd.exe, PowerShell, and POSIX
-    # shells alike — no bash entry point, no jq. The `||` fallback surfaces a
-    # clear runtime message and still fails open (exit 0, no deny JSON) when
-    # the Node.js runtime itself is missing. Mirrors setup.sh exactly.
-    param(
-        [string]$HooksDir,
-        [string]$ScriptName
-    )
-    $scriptPath = "$HooksDir/$ScriptName"
-    return "node `"$scriptPath`" || echo `"[Planifest] context-mode enforcement ($ScriptName) did not run: Node.js runtime not found. Tool call proceeded unblocked.`" 1>&2"
-}
-
-function Merge-HookSettings {
-    # Merge PreToolUse hook entries into .claude/settings.json (REQ-004, 0000017 req-004)
-    # Additive merge: existing content preserved; Grep/Bash/WebFetch entries
-    # removed then re-added for idempotency on re-run.
-    param(
-        [string]$SettingsPath,
-        [string]$HooksDir   # relative path used in command values
-    )
-
-    $grepCmd  = Get-ContextModeHookCommand -HooksDir $HooksDir -ScriptName 'block-grep.mjs'
-    $bashCmd  = Get-ContextModeHookCommand -HooksDir $HooksDir -ScriptName 'block-bash.mjs'
-    $fetchCmd = Get-ContextModeHookCommand -HooksDir $HooksDir -ScriptName 'block-webfetch.mjs'
-
-    $newEntries = @(
-        @{ matcher = "Grep";     hooks = @(@{ type = "command"; command = $grepCmd }) }
-        @{ matcher = "Bash";     hooks = @(@{ type = "command"; command = $bashCmd }) }
-        @{ matcher = "WebFetch"; hooks = @(@{ type = "command"; command = $fetchCmd }) }
-    )
-
-    if (Test-Path $SettingsPath) {
-        # Additive merge using PowerShell JSON handling
-        $existing = Get-Content -Raw -Path $SettingsPath | ConvertFrom-Json
-
-        # Ensure hooks.PreToolUse exists
-        if (-not $existing.hooks) {
-            $existing | Add-Member -NotePropertyName 'hooks' -NotePropertyValue ([PSCustomObject]@{}) -Force
-        }
-        if (-not $existing.hooks.PreToolUse) {
-            $existing.hooks | Add-Member -NotePropertyName 'PreToolUse' -NotePropertyValue @() -Force
-        }
-
-        # Remove existing Grep/Bash/WebFetch entries, then append new ones
-        $toRemove = @('Grep', 'Bash', 'WebFetch')
-        $filtered = @($existing.hooks.PreToolUse | Where-Object { $toRemove -notcontains $_.matcher })
-        $existing.hooks.PreToolUse = $filtered + $newEntries
-
-        $existing | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  ~ .claude/settings.json (context-mode hook entries merged)"
-    }
-    else {
-        $dir = Split-Path -Parent $SettingsPath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-
-        $settings = [PSCustomObject]@{
-            hooks = [PSCustomObject]@{
-                PreToolUse = $newEntries
-            }
-        }
-        $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  + .claude/settings.json (created with context-mode hook entries)"
-    }
-}
-
-function Install-ContextModeHooks {
-    # Copy enforcement hook scripts and wire settings.json
-    # (REQ-004; ported to .mjs in 0000017 req-004 — no bash entry point, no jq).
-    param(
-        [string]$HooksSrcRel,    # relative to ScriptDir  e.g. hooks/context-mode
-        [string]$HooksDirRel,    # relative to ProjectRoot e.g. .claude/hooks/context-mode
-        [string]$SettingsRel     # relative to ProjectRoot e.g. .claude/settings.json
-    )
-
-    $src      = Join-Path $ScriptDir $HooksSrcRel
-    $dest     = Join-Path $ProjectRoot $HooksDirRel
-    $settings = Join-Path $ProjectRoot $SettingsRel
-
-    if (-not (Test-Path $src)) {
-        Write-Host "  ! Warning: hook scripts not found at $src — skipping hook installation"
-        return
-    }
-
-    Write-Host ""
-    Write-Host "  Installing context-mode enforcement hooks"
-
-    # Setup-time Node.js runtime check (0000017 req-004): these hooks are .mjs —
-    # Node is required to run them at all. Warn clearly but still install and
-    # wire the hooks; the wired command itself fails open with a runtime
-    # message if Node turns out to be missing when Claude Code invokes it.
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        Write-Host "  ! Warning: Node.js runtime not found on this machine."
-        Write-Host "  ! context-mode enforcement hooks (block-grep/block-bash/block-webfetch) require Node.js."
-        Write-Host "  ! Hooks will be installed and wired, but will not enforce anything until Node.js is installed."
-    }
-
-    # Create target directory
-    New-Item -ItemType Directory -Path $dest -Force | Out-Null
-
-    # Copy each script
-    Get-ChildItem -Path $src -Filter '*.mjs' | ForEach-Object {
-        $destFile = Join-Path $dest $_.Name
-        Copy-Item -Path $_.FullName -Destination $destFile -Force
-        Write-Host "  + $HooksDirRel/$($_.Name)"
-    }
-
-    # Merge settings.json wiring
-    Merge-HookSettings -SettingsPath $settings -HooksDir $HooksDirRel
-}
-
-function Merge-TelemetryHookSettings {
-    # Merge context-pressure (PostToolUse), emit-phase-start (PreToolUse), and
-    # emit-phase-end (Stop) hook entries into .claude/settings.json, plus the
-    # emit_event receipt hook (PostToolUse, req-004/ADR-001). Idempotent: each
-    # script's prior entry is removed before being re-added.
-    #
-    # Wiring design decision (req-001, feature 0000027) -- mirrors setup.sh's
-    # Merge-TelemetryHookSettings/merge_telemetry_hook_settings: a single hook
-    # `command` string is fixed at setup time and cannot vary the <phase>
-    # argument emit-phase-start.mjs/emit-phase-end.mjs each require as the
-    # pipeline moves through phases. Both entries below route through
-    # hooks/telemetry/resolve-phase.mjs, which infers the active phase from an
-    # observable tool-lifecycle signal (which phase-agent Skill was invoked)
-    # and re-execs the real script with that phase supplied. See
-    # resolve-phase.mjs's own header for the full mechanism.
-    param(
-        [string]$SettingsPath,
-        [string]$HooksDir,
-        [string]$BackendUrl
-    )
-
-    $pressureCmd = "PLANIFEST_TELEMETRY_URL=$BackendUrl node $HooksDir/context-pressure.mjs"
-    $startCmd    = "PLANIFEST_TELEMETRY_URL=$BackendUrl node $HooksDir/resolve-phase.mjs start $HooksDir/emit-phase-start.mjs"
-    $endCmd      = "PLANIFEST_TELEMETRY_URL=$BackendUrl node $HooksDir/resolve-phase.mjs end $HooksDir/emit-phase-end.mjs"
-    $receiptCmd  = "node $HooksDir/emit-event-receipt.mjs"
-
-    $postToolUseEntries = @(
-        @{
-            matcher = ".*"
-            hooks = @(@{ type = "command"; command = $pressureCmd; async = $true; timeout = 5000 })
-        },
-        @{
-            matcher = "mcp__structured-telemetry-mcp__emit_event"
-            hooks = @(@{ type = "command"; command = $receiptCmd; async = $true; timeout = 5000 })
-        }
-    )
-    $preToolUseEntry = @(
-        @{
-            matcher = "Skill"
-            hooks = @(@{ type = "command"; command = $startCmd })
-        }
-    )
-    $stopEntry = @(
-        @{
-            matcher = ".*"
-            hooks = @(@{ type = "command"; command = $endCmd })
-        }
-    )
-
-    if (Test-Path $SettingsPath) {
-        $existing = Get-Content -Raw -Path $SettingsPath | ConvertFrom-Json
-
-        if (-not $existing.hooks) {
-            $existing | Add-Member -NotePropertyName 'hooks' -NotePropertyValue ([PSCustomObject]@{}) -Force
-        }
-        if (-not $existing.hooks.PostToolUse) {
-            $existing.hooks | Add-Member -NotePropertyName 'PostToolUse' -NotePropertyValue @() -Force
-        }
-        if (-not $existing.hooks.PreToolUse) {
-            $existing.hooks | Add-Member -NotePropertyName 'PreToolUse' -NotePropertyValue @() -Force
-        }
-        if (-not $existing.hooks.Stop) {
-            $existing.hooks | Add-Member -NotePropertyName 'Stop' -NotePropertyValue @() -Force
-        }
-
-        # Remove existing entries for each script then append the fresh ones.
-        $filteredPost = @($existing.hooks.PostToolUse | Where-Object {
-            $hooks = $_.hooks
-            -not ($hooks | Where-Object { $_.command -match 'context-pressure' -or $_.command -match 'emit-event-receipt' })
-        })
-        $existing.hooks.PostToolUse = $filteredPost + $postToolUseEntries
-
-        $filteredPre = @($existing.hooks.PreToolUse | Where-Object {
-            $hooks = $_.hooks
-            -not ($hooks | Where-Object { $_.command -match 'resolve-phase' -and $_.command -match 'emit-phase-start' })
-        })
-        $existing.hooks.PreToolUse = $filteredPre + $preToolUseEntry
-
-        $filteredStop = @($existing.hooks.Stop | Where-Object {
-            $hooks = $_.hooks
-            -not ($hooks | Where-Object { $_.command -match 'resolve-phase' -and $_.command -match 'emit-phase-end' })
-        })
-        $existing.hooks.Stop = $filteredStop + $stopEntry
-
-        $existing | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  ~ .claude/settings.json (telemetry hooks merged: context-pressure, emit-phase-start, emit-phase-end, emit-event-receipt)"
-    }
-    else {
-        $dir = Split-Path -Parent $SettingsPath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-
-        $settings = [PSCustomObject]@{
-            hooks = [PSCustomObject]@{
-                PostToolUse = $postToolUseEntries
-                PreToolUse  = $preToolUseEntry
-                Stop        = $stopEntry
-            }
-        }
-        $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  + .claude/settings.json (created with telemetry hooks: context-pressure, emit-phase-start, emit-phase-end, emit-event-receipt)"
-    }
-}
-
-function Test-TelemetryHooksInstalled {
-    # Positive-presence check (req-001, acceptance criterion): fails loudly if
-    # any telemetry hook was copied to disk but never actually registered in
-    # the target tool's settings -- the exact partial-wiring regression this
-    # requirement exists to prevent from recurring silently. Static parity
-    # with setup.sh's verify_telemetry_hooks_installed() / scripts/
-    # verify-telemetry-hooks.mjs (no live PowerShell run required to verify
-    # this parity -- see test-0000027-req-001-telemetry-hooks-wired.sh).
-    param(
-        [string]$SettingsPath,
-        [string]$ScriptDirPath
-    )
-
-    $verifyScript = Join-Path $ScriptDirPath 'scripts/verify-telemetry-hooks.mjs'
-    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-        Write-Host "  ! Warning: node not found -- skipping telemetry hook presence verification"
-        return
-    }
-
-    & node $verifyScript $SettingsPath '--with-receipt'
-    if ($LASTEXITCODE -ne 0) {
-        throw "Telemetry hook presence check failed -- see output above."
-    }
-}
-
-function Install-TelemetryHooks {
-    # Copy context-pressure hook and wire PostToolUse in settings.json (REQ-008, REQ-010)
-    # Only called when --structured-telemetry-mcp is active (0000018 req-001).
-    param(
-        [string]$HooksSrcRel,    # relative to ScriptDir  e.g. hooks/telemetry
-        [string]$HooksDirRel,    # relative to ProjectRoot e.g. .claude/hooks/telemetry
-        [string]$SettingsRel,    # relative to ProjectRoot e.g. .claude/settings.json
-        [string]$BackendUrl
-    )
-
-    $src      = Join-Path $ScriptDir $HooksSrcRel
-    $dest     = Join-Path $ProjectRoot $HooksDirRel
-    $settings = Join-Path $ProjectRoot $SettingsRel
-
-    if (-not (Test-Path $src)) {
-        Write-Host "  ! Warning: telemetry hook scripts not found at $src — skipping"
-        return
-    }
-
-    Write-Host ""
-    Write-Host "  Installing structured telemetry hooks"
-
-    New-Item -ItemType Directory -Path $dest -Force | Out-Null
-
-    Get-ChildItem -Path $src -Filter '*.mjs' | ForEach-Object {
-        $destFile = Join-Path $dest $_.Name
-        Copy-Item -Path $_.FullName -Destination $destFile -Force
-        Write-Host "  + $HooksDirRel/$($_.Name)"
-    }
-
-    Merge-TelemetryHookSettings -SettingsPath $settings -HooksDir $HooksDirRel -BackendUrl $BackendUrl
-}
-
 function Merge-EnforcementHookSettings {
     # Merge gate-write (PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence,
-    # check-design, check-telemetry-failures, and check-telemetry-receipts (UserPromptSubmit)
-    # into settings.json.
-    # check-telemetry-failures (0000026, backlog 0000044) and check-telemetry-receipts
-    # (req-004, feature 0000027, ADR-001) are UserPromptSubmit-shaped like the other
-    # enforcement hooks here, not PostToolUse like context-pressure.mjs, and are always
-    # installed regardless of MCP flags. Idempotent.
+    # and check-design (UserPromptSubmit) into settings.json. Always installed,
+    # whatever flags are passed. Idempotent.
     param(
         [string]$SettingsPath,
+        [string]$SettingsRel,
         [string]$HooksDir
     )
+
+    if (-not (Test-SettingsFileReadable -SettingsPath $SettingsPath -Label $SettingsRel -What 'enforcement hook wiring')) { return }
 
     $preToolEntry = @{
         matcher = 'Write|Edit'
@@ -544,14 +314,6 @@ function Merge-EnforcementHookSettings {
     $userPromptEntry = @{
         matcher = '.*'
         hooks   = @(@{ type = 'command'; command = "node $HooksDir/check-design.mjs" })
-    }
-    $telemetryFailuresEntry = @{
-        matcher = '.*'
-        hooks   = @(@{ type = 'command'; command = "node $HooksDir/check-telemetry-failures.mjs" })
-    }
-    $telemetryReceiptsEntry = @{
-        matcher = '.*'
-        hooks   = @(@{ type = 'command'; command = "node $HooksDir/check-telemetry-receipts.mjs" })
     }
 
     if (Test-Path $SettingsPath) {
@@ -578,28 +340,23 @@ function Merge-EnforcementHookSettings {
             -not ($_.hooks | Where-Object {
                 $_.command -match 'auto-trigger-orchestrator' -or
                 $_.command -match 'check-orchestrator-presence' -or
-                $_.command -match 'check-design' -or
-                $_.command -match 'check-telemetry-failures' -or
-                $_.command -match 'check-telemetry-receipts'
+                $_.command -match 'check-design'
             })
         })
-        $existing.hooks.UserPromptSubmit = $filtered + $autoTriggerEntry + $presenceEntry + $userPromptEntry + $telemetryFailuresEntry + $telemetryReceiptsEntry
+        $existing.hooks.UserPromptSubmit = $filtered + $autoTriggerEntry + $presenceEntry + $userPromptEntry
 
-        $existing | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  ~ .claude/settings.json (enforcement hook entries merged)"
+        Write-SettingsFile -SettingsPath $SettingsPath -Content ($existing | ConvertTo-Json -Depth 10)
+        Write-Host "  ~ $SettingsRel (enforcement hook entries merged)"
     }
     else {
-        $dir = Split-Path -Parent $SettingsPath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-
         $settings = [PSCustomObject]@{
             hooks = [PSCustomObject]@{
                 PreToolUse       = @($preToolEntry)
-                UserPromptSubmit = @($autoTriggerEntry, $presenceEntry, $userPromptEntry, $telemetryFailuresEntry, $telemetryReceiptsEntry)
+                UserPromptSubmit = @($autoTriggerEntry, $presenceEntry, $userPromptEntry)
             }
         }
-        $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
-        Write-Host "  + .claude/settings.json (created with enforcement hook entries)"
+        Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
+        Write-Host "  + $SettingsRel (created with enforcement hook entries)"
     }
 }
 
@@ -607,6 +364,8 @@ function Merge-AllowedTools {
     # Idempotently add "Agent" to allowedTools in .claude/settings.json (REQ-002).
     # Preserves existing allowedTools entries — additive merge only.
     param([string]$SettingsPath)
+
+    if (-not (Test-SettingsFileReadable -SettingsPath $SettingsPath -Label '.claude/settings.json' -What 'allowedTools update')) { return }
 
     $settings = @{}
     if (Test-Path $SettingsPath) {
@@ -621,9 +380,7 @@ function Merge-AllowedTools {
 
     if ($existing -notcontains 'Agent') {
         $settings['allowedTools'] = $existing + @('Agent')
-        $dir = Split-Path -Parent $SettingsPath
-        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-        $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $SettingsPath -Encoding UTF8
+        Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
         Write-Host "  ~ .claude/settings.json (Agent added to allowedTools)"
     } else {
         Write-Host "  - .claude/settings.json (Agent already in allowedTools)"
@@ -631,8 +388,8 @@ function Merge-AllowedTools {
 }
 
 function Install-EnforcementHooks {
-    # Copy gate-write.mjs + check-design.mjs + check-telemetry-failures.mjs (0000026) and
-    # wire settings.json. Always runs — no flag required.
+    # Copy the enforcement hooks (gate-write.mjs, check-design.mjs, and their shared
+    # modules) and wire settings.json. Always runs — no flag required.
     param(
         [string]$HooksSrcRel,
         [string]$HooksDirRel,
@@ -659,11 +416,11 @@ function Install-EnforcementHooks {
         Write-Host "  + $HooksDirRel/$($_.Name)"
     }
 
-    Merge-EnforcementHookSettings -SettingsPath $settings -HooksDir $HooksDirRel
+    Merge-EnforcementHookSettings -SettingsPath $settings -SettingsRel $SettingsRel -HooksDir $HooksDirRel
 }
 
 function Install-Tier1Hooks {
-    # Copies the Tier 1 adapter + shared enforcement/telemetry scripts (REQ-009).
+    # Copies the Tier 1 adapter + shared enforcement scripts (REQ-009).
     param(
         [string]$AdapterSrcRel,   # e.g. hooks\adapters\cursor.mjs
         [string]$AdapterDestRel,  # e.g. .cursor\hooks\adapters\cursor.mjs
@@ -699,23 +456,23 @@ function Install-Tier1Hooks {
         }
     }
 
-    # Copy telemetry scripts. The filter is *.mjs, matching setup.sh's
-    # install_tier1_hooks() (0000028 req-002, ADR-002). It was previously
-    # emit-phase-*.mjs, narrower than its own callers need: emit-phase-start.mjs
-    # and emit-phase-end.mjs import shared modules from this directory, and an
-    # ESM import of a file the install never copied fails at module-load time,
-    # before the hook's own try/catch can run.
-    $telemSrc  = Join-Path $ScriptDir 'hooks\telemetry'
-    $telemDest = Join-Path $hooksDir 'telemetry'
-    if (Test-Path $telemSrc) {
-        New-Item -ItemType Directory -Path $telemDest -Force | Out-Null
-        Get-ChildItem -Path $telemSrc -Filter '*.mjs' | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination (Join-Path $telemDest $_.Name) -Force
-            Write-Host "  + $HooksInstallDir\telemetry\$($_.Name)"
-        }
-    }
-
     Write-Host "  [Planifest] Tier 1 adapter hooks installed."
+}
+
+function Invoke-SettingsNodeScript {
+    # Runs an inline Node script against one settings file, with the shared
+    # helpers prepended. Values reach the script through environment variables,
+    # never through string interpolation, so no quoting can break the script.
+    param([string]$SettingsPath, [string]$SettingsRel, [string]$AdapterCmd, [string]$Js)
+
+    $env:PLANIFEST_SETTINGS     = $SettingsPath
+    $env:PLANIFEST_SETTINGS_REL = $SettingsRel
+    $env:PLANIFEST_ADAPTER_CMD  = $AdapterCmd
+    try {
+        node -e ($SettingsJsHelpers + $Js)
+    } finally {
+        Remove-Item Env:PLANIFEST_SETTINGS, Env:PLANIFEST_SETTINGS_REL, Env:PLANIFEST_ADAPTER_CMD -ErrorAction SilentlyContinue
+    }
 }
 
 function Install-Tier1HookRegistration {
@@ -725,15 +482,17 @@ function Install-Tier1HookRegistration {
         [string]$SettingsRel      # e.g. .cursor\settings.json
     )
 
-    $settings    = Join-Path $ProjectRoot $SettingsRel
-    $adapterCmd  = "node $AdapterDestRel gate-write"
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "  ! Warning: node not found — skipping $SettingsRel Tier 1 hook registration"
+        return
+    }
 
-    $js = @"
-const fs = require('fs'), path = require('path');
-const adapterCmd = '$($adapterCmd.Replace('','\'))';
-const sf = '$($settings.Replace('','\'))';
-let s = {};
-if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,'utf8').replace(/^﻿/,''));
+    $js = @'
+const adapterCmd = process.env.PLANIFEST_ADAPTER_CMD;
+const sf  = process.env.PLANIFEST_SETTINGS;
+const rel = process.env.PLANIFEST_SETTINGS_REL;
+const s = readSettings(sf, rel, 'Tier 1 adapter hook registration');
+if (s === null) process.exit(0);
 s.hooks = s.hooks || {};
 s.hooks.PreToolUse = (s.hooks.PreToolUse || [])
   .filter(h => !['Write','Edit'].includes(h.matcher) ||
@@ -742,12 +501,11 @@ s.hooks.PreToolUse.push(
   {matcher:'Write', hooks:[{type:'command',command:adapterCmd}]},
   {matcher:'Edit',  hooks:[{type:'command',command:adapterCmd}]}
 );
-fs.mkdirSync(path.dirname(sf),{recursive:true});
-fs.writeFileSync(sf, JSON.stringify(s,null,2)+'
-');
-"@
-    node -e $js
-    Write-Host "  ~ $SettingsRel (Tier 1 adapter hook registration written)"
+writeSettings(sf, s);
+console.log('  ~ ' + rel + ' (Tier 1 adapter hook registration written)');
+'@
+    Invoke-SettingsNodeScript -SettingsPath (Join-Path $ProjectRoot $SettingsRel) -SettingsRel $SettingsRel `
+        -AdapterCmd "node $AdapterDestRel gate-write" -Js $js
 }
 
 function Install-BeforeSubmitHookRegistration {
@@ -757,28 +515,165 @@ function Install-BeforeSubmitHookRegistration {
         [string]$SettingsRel      # e.g. .cursor\settings.json
     )
 
-    $settings   = Join-Path $ProjectRoot $SettingsRel
-    $adapterCmd = "node $AdapterDestRel check-design"
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "  ! Warning: node not found — skipping beforeSubmitPrompt check-design registration"
+        return
+    }
 
-    $js = @"
-const fs = require('fs'), path = require('path');
-const adapterCmd = '$($adapterCmd.Replace('','\'))';
-const sf = '$($settings.Replace('','\'))';
-let s = {};
-if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,'utf8').replace(/^﻿/,''));
+    $js = @'
+const adapterCmd = process.env.PLANIFEST_ADAPTER_CMD;
+const sf  = process.env.PLANIFEST_SETTINGS;
+const rel = process.env.PLANIFEST_SETTINGS_REL;
+const s = readSettings(sf, rel, 'beforeSubmitPrompt check-design registration');
+if (s === null) process.exit(0);
 s.hooks = s.hooks || {};
 s.hooks.beforeSubmitPrompt = (s.hooks.beforeSubmitPrompt || [])
   .filter(h => !(h.hooks||[]).some(e => (e.command||'').includes('check-design')));
 s.hooks.beforeSubmitPrompt.push(
   {matcher:'*', hooks:[{type:'command',command:adapterCmd}]}
 );
-fs.mkdirSync(path.dirname(sf),{recursive:true});
-fs.writeFileSync(sf, JSON.stringify(s,null,2)+'
-');
-"@
-    node -e $js
-    Write-Host "  ~ $SettingsRel (beforeSubmitPrompt check-design hook registered)"
+writeSettings(sf, s);
+console.log('  ~ ' + rel + ' (beforeSubmitPrompt check-design hook registered)');
+'@
+    Invoke-SettingsNodeScript -SettingsPath (Join-Path $ProjectRoot $SettingsRel) -SettingsRel $SettingsRel `
+        -AdapterCmd "node $AdapterDestRel check-design" -Js $js
 }
+
+# BEGIN retired-integrations (0000030)
+# Always-on clean-up of the Context Mode and Telemetry integrations removed in
+# 0.29.0 (0000030 ADR-004, ADR-005). Parity with cleanup_retired_integrations in
+# setup.sh: same order, same rules, same output. Runs for every tool on every
+# setup run, before normal wiring:
+#   1. settings hook entries, under any event, whose command runs a file under
+#      the tool's hooks/context-mode/ or hooks/telemetry/ folder, or
+#      hooks/enforcement/check-telemetry-failures.mjs or check-telemetry-receipts.mjs.
+#      A group left with no hooks is dropped.
+#   2. settings hook groups whose matcher is mcp__structured-telemetry-mcp__emit_event
+#   3. the stale hook folders and the check-telemetry-*.mjs and phase-enum.mjs copies
+#   4. .claude/telemetry-enabled, plan/.telemetry-failures/ and plan/.telemetry-receipts/
+# Entries match on command path, never on matcher alone, so a hand-added hook
+# stays. Prints one line per removal and nothing when nothing is found. A
+# settings file that is not valid JSON is left byte-identical and only its
+# clean-up is skipped. Without Node the whole pass is skipped. Setup carries on
+# in every case.
+function Invoke-RetiredIntegrationCleanup {
+    param(
+        [string]$HooksBaseRel,   # e.g. .claude/hooks or .cursor\hooks, empty if the tool installs no hook scripts
+        [string]$SettingsRel     # e.g. .claude/settings.json, empty if the tool has no settings file
+    )
+
+    if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+        Write-Host "  ! Warning: Node.js not found - skipped the retired Context Mode and Telemetry clean-up, stale entries may remain"
+        return
+    }
+
+    $base = if ($HooksBaseRel) { $HooksBaseRel.Replace('\', '/').TrimEnd('/') } else { '' }
+
+    # Steps 1 and 2: settings hook entries and groups
+    if ($base -and $SettingsRel -and (Test-Path (Join-Path $ProjectRoot $SettingsRel))) {
+        $cleanupJs = @'
+const sf   = process.env.PLANIFEST_SETTINGS;
+const rel  = process.env.PLANIFEST_SETTINGS_REL;
+const base = process.env.PLANIFEST_HOOKS_BASE;
+let s;
+try {
+  s = JSON.parse(__fs.readFileSync(sf, 'utf8').replace(/^﻿/, ''));
+} catch (e) {
+  console.log('  ! ' + rel + ' is not valid JSON (' + e.message + ') - left unchanged, clean-up skipped for this file');
+  process.exit(0);
+}
+if (!s || typeof s !== 'object' || !s.hooks || typeof s.hooks !== 'object') process.exit(0);
+const staleFolders = [base + '/context-mode/', base + '/telemetry/'];
+const staleFiles = [base + '/enforcement/check-telemetry-failures.mjs',
+                    base + '/enforcement/check-telemetry-receipts.mjs'];
+const STALE_MATCHER = 'mcp__structured-telemetry-mcp__emit_event';
+const stalePath = (cmd) => {
+  const c = String(cmd || '').replace(/\\/g, '/');
+  for (const f of staleFolders) {
+    const i = c.indexOf(f);
+    if (i >= 0) return c.slice(i).match(/^[^\s\x22\x27]+/)[0];
+  }
+  return staleFiles.find(f => c.includes(f)) || null;
+};
+let changed = false;
+for (const event of Object.keys(s.hooks)) {
+  const groups = s.hooks[event];
+  if (!Array.isArray(groups)) continue;
+  let kept = [];
+  for (const g of groups) {
+    if (g && typeof g === 'object' && Array.isArray(g.hooks)) {
+      const hooks = g.hooks.filter(h => {
+        const p = stalePath(h && h.command);
+        if (p) console.log('  - ' + rel + ': removed ' + event + ' hook running ' + p);
+        return !p;
+      });
+      if (hooks.length !== g.hooks.length) {
+        changed = true;
+        if (hooks.length === 0) continue;
+        g.hooks = hooks;
+      }
+    } else if (g && typeof g === 'object' && 'command' in g) {
+      const p = stalePath(g.command);
+      if (p) {
+        console.log('  - ' + rel + ': removed ' + event + ' hook running ' + p);
+        changed = true;
+        continue;
+      }
+    }
+    kept.push(g);
+  }
+  kept = kept.filter(g => {
+    if (g && g.matcher === STALE_MATCHER) {
+      console.log('  - ' + rel + ': removed ' + event + ' group for matcher ' + STALE_MATCHER);
+      changed = true;
+      return false;
+    }
+    return true;
+  });
+  if (kept.length === 0 && groups.length > 0) delete s.hooks[event];
+  else s.hooks[event] = kept;
+}
+if (changed) writeSettings(sf, s);
+'@
+        $env:PLANIFEST_SETTINGS     = Join-Path $ProjectRoot $SettingsRel
+        $env:PLANIFEST_SETTINGS_REL = $SettingsRel
+        $env:PLANIFEST_HOOKS_BASE   = $base
+        try {
+            node -e ($SettingsJsHelpers + $cleanupJs)
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "  ! Warning: clean-up of $SettingsRel did not finish - stale entries may remain"
+            }
+        } catch {
+            Write-Host "  ! Warning: clean-up of $SettingsRel did not finish - stale entries may remain"
+        } finally {
+            Remove-Item Env:PLANIFEST_SETTINGS, Env:PLANIFEST_SETTINGS_REL, Env:PLANIFEST_HOOKS_BASE -ErrorAction SilentlyContinue
+        }
+    }
+
+    # Step 3: stale hook folders and installed copies
+    $stale = @()
+    if ($base) {
+        $stale += "$base/context-mode", "$base/telemetry"
+        $enfDir = Join-Path $ProjectRoot "$base/enforcement"
+        if (Test-Path $enfDir) {
+            Get-ChildItem -Path $enfDir -Filter 'check-telemetry-*.mjs' | ForEach-Object {
+                $stale += "$base/enforcement/$($_.Name)"
+            }
+        }
+        $stale += "$base/enforcement/phase-enum.mjs"
+    }
+    # Step 4: project-level state the retired hooks and setup wrote
+    $stale += '.claude/telemetry-enabled', 'plan/.telemetry-failures', 'plan/.telemetry-receipts'
+
+    foreach ($p in $stale) {
+        $full = Join-Path $ProjectRoot $p
+        if (Test-Path $full) {
+            Remove-Item -Path $full -Recurse -Force
+            Write-Host "  - $p (retired, removed)"
+        }
+    }
+}
+# END retired-integrations (0000030)
 
 function Invoke-PlanifestGuardrails {
     Write-Host ""
@@ -1198,8 +1093,26 @@ function Invoke-PlanifestSetup {
         exit 1
     }
 
+    # OpenCode's tool script installs as it runs, so its retired integration
+    # clean-up (0000030 ADR-004) runs before the script is invoked. opencode.json
+    # registers plugins only, so there are no settings hook entries to scan.
+    if ($ToolName -eq 'opencode') {
+        Invoke-RetiredIntegrationCleanup -HooksBaseRel '.opencode/hooks' -SettingsRel ''
+    }
+
     # Load tool-specific config
     $toolConfig = & $toolConfigPath
+
+    # Remove stale state from integrations retired in 0.29.0, before any wiring
+    # (0000030 ADR-004). Parity with setup_tool in setup.sh: Tier 1 tools keep hook
+    # scripts under HooksInstallDir, and tools with a settings file but no Tier 1
+    # adapter (Claude Code) use .claude/hooks, the parent of EnforcementHooksDir.
+    if ($ToolName -ne 'opencode' -and $toolConfig) {
+        $hooksBaseRel = ''
+        if ($toolConfig.HooksInstallDir) { $hooksBaseRel = $toolConfig.HooksInstallDir }
+        elseif ($toolConfig.SettingsFile) { $hooksBaseRel = '.claude/hooks' }
+        Invoke-RetiredIntegrationCleanup -HooksBaseRel $hooksBaseRel -SettingsRel $toolConfig.SettingsFile
+    }
 
     $skillsDir = Join-Path $ProjectRoot $toolConfig.SkillsDir
 
@@ -1270,42 +1183,6 @@ function Invoke-PlanifestSetup {
         Merge-AllowedTools -SettingsPath $settingsPath
     }
 
-    # Install context-mode enforcement hooks if --context-mode-mcp flag is set (REQ-004)
-    if ($ContextModeMcp -and $toolConfig.HooksSrc -and $toolConfig.HooksDir -and $toolConfig.SettingsFile) {
-        Install-ContextModeHooks `
-            -HooksSrcRel  $toolConfig.HooksSrc `
-            -HooksDirRel  $toolConfig.HooksDir `
-            -SettingsRel  $toolConfig.SettingsFile
-    }
-
-    # Write telemetry opt-in sentinel so skills know emission is authorised (REQ-004)
-    if ($StructuredTelemetryMcp) {
-        $sentinel = Join-Path $ProjectRoot '.claude\telemetry-enabled'
-        $sentinelDir = Split-Path -Parent $sentinel
-        if (-not (Test-Path $sentinelDir)) { New-Item -ItemType Directory -Path $sentinelDir -Force | Out-Null }
-        if (-not (Test-Path $sentinel)) {
-            New-Item -ItemType File -Path $sentinel -Force | Out-Null
-            Write-Host "  + .claude/telemetry-enabled (telemetry opt-in sentinel)"
-        } else {
-            Write-Host "  - .claude/telemetry-enabled (already exists)"
-        }
-    }
-
-    # Install telemetry hooks whenever --structured-telemetry-mcp is active (0000018 req-001)
-    # No longer requires --context-mode-mcp — that AND-condition silently left telemetry
-    # hooks unwired for any project passing --structured-telemetry-mcp alone.
-    if ($StructuredTelemetryMcp -and
-        $toolConfig.TelemetryHooksSrc -and $toolConfig.TelemetryHooksDir -and $toolConfig.SettingsFile) {
-        Install-TelemetryHooks `
-            -HooksSrcRel  $toolConfig.TelemetryHooksSrc `
-            -HooksDirRel  $toolConfig.TelemetryHooksDir `
-            -SettingsRel  $toolConfig.SettingsFile `
-            -BackendUrl   $BackendUrl
-        Test-TelemetryHooksInstalled `
-            -SettingsPath (Join-Path $ProjectRoot $toolConfig.SettingsFile) `
-            -ScriptDirPath $ScriptDir
-    }
-
     # Install Copilot adapter when tool is copilot (REQ-015)
     if ($ToolName -eq 'copilot') {
         Write-Host ""
@@ -1369,7 +1246,7 @@ function Invoke-PlanifestSetup {
 }
 
 # Write planifest-overrides/setup-config/{tool}.md — the tracked, git-versioned source
-# of truth for active setup flags/backendUrl (0000025 req-004, ADR-002 decision 1). This
+# of truth for active setup flags (0000025 req-004, ADR-002 decision 1). This
 # is additive: it does not replace Write-SetupFlagsMarker, and it is called BEFORE it so
 # the gitignored marker is always (re)written to match this file's values for the current
 # run (ADR-002 decision 3). On failure to write (e.g. permissions), warns and returns
@@ -1382,24 +1259,20 @@ function Write-SetupConfigOverride {
     $configFile = Join-Path $configDir "$ToolName.md"
 
     $flags = @()
-    if ($ContextModeMcp) { $flags += '--context-mode-mcp' }
-    if ($StructuredTelemetryMcp) { $flags += '--structured-telemetry-mcp' }
     if ($IncludeFullSkillLibrary) { $flags += '--include-full-skill-library' }
     if ($StrictOrchestrator) { $flags += '--strict-orchestrator' }
 
-    $backendUrlValue = if ($StructuredTelemetryMcp) { $BackendUrl } else { $null }
     $writtenAt = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
 
     $configJson = [ordered]@{
         tool       = $ToolName
         flags      = $flags
-        backendUrl = $backendUrlValue
         writtenAt  = $writtenAt
     } | ConvertTo-Json -Depth 10
 
     $fence = [char]96 + [char]96 + [char]96
     $content = "# Setup config: $ToolName`n`n" +
-        "> Tracked source of truth for active setup flags/backend-url for **$ToolName**`n" +
+        "> Tracked source of truth for active setup flags for **$ToolName**`n" +
         "> (0000025 req-004, ADR-002). The gitignored ``.planifest-setup-flags`` marker in`n" +
         "> this tool's config directory is a local completion-status cache, reconciled to`n" +
         "> match this file on every ``setup.sh``/``setup.ps1`` run.`n`n" +
@@ -1428,15 +1301,12 @@ function Write-SetupFlagsMarker {
     $markerPath = Join-Path $targetDir '.planifest-setup-flags'
 
     $flags = @()
-    if ($ContextModeMcp) { $flags += '--context-mode-mcp' }
-    if ($StructuredTelemetryMcp) { $flags += '--structured-telemetry-mcp' }
     if ($IncludeFullSkillLibrary) { $flags += '--include-full-skill-library' }
     if ($StrictOrchestrator) { $flags += '--strict-orchestrator' }
 
     $marker = [ordered]@{
         tool          = $ToolName
         flags         = $flags
-        backendUrl    = if ($StructuredTelemetryMcp) { $BackendUrl } else { $null }
         writtenAt     = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
         attemptStatus = 'completed'
     }
@@ -1451,7 +1321,7 @@ if (-not $Tool) {
     Write-Host ""
     Write-Host "Planifest Setup"
     Write-Host ""
-    Write-Host "Usage: .\planifest-framework\setup.ps1 [tool] [--context-mode-mcp]"
+    Write-Host "Usage: .\planifest-framework\setup.ps1 [tool] [flags]"
     Write-Host ""
     Write-Host "Tools:"
     foreach ($t in $ValidTools) {
@@ -1460,13 +1330,6 @@ if (-not $Tool) {
     Write-Host "  all"
     Write-Host ""
     Write-Host "Flags:"
-    Write-Host "  --context-mode-mcp           Install context-mode enforcement hooks (Claude Code only)"
-    Write-Host "                               (only needed if context-mode MCP plugin is installed)"
-    Write-Host "                               See: https://github.com/mksglu/context-mode"
-    Write-Host "  --structured-telemetry-mcp   Install structured telemetry hooks"
-    Write-Host "                               Requires --context-mode-mcp to also be set."
-    Write-Host "                               Context-pressure hook installed when both flags are active."
-    Write-Host "  --backend-url <url>          Override telemetry backend URL (default: http://localhost:3741)"
     Write-Host "  --strict-orchestrator        Write plan/.orchestrator-strict to enable strict mode."
     Write-Host "                               The check-orchestrator-presence hook will require the"
     Write-Host "                               orchestrator to ack each new session before proceeding."

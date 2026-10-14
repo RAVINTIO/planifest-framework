@@ -1,7 +1,9 @@
 # OpenCode - tool configuration (Tier 2: Bun/TS plugin shim)
 # Windows PowerShell equivalent of setup/opencode.sh
 
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+# This file lives in planifest-framework\setup\, so the framework root is one
+# level up and the project root two levels up. Parity with setup/opencode.sh.
+$ScriptDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $ProjectRoot = Split-Path -Parent $ScriptDir
 $OpenCodeJson = Join-Path $ProjectRoot "opencode.json"
 $PluginSrc = Join-Path $ScriptDir "hooks\adapters\opencode"
@@ -24,14 +26,9 @@ Write-Host "  + .opencode\plugins\@planifest\opencode-hooks\"
 
 # Copy shared hook scripts
 New-Item -ItemType Directory -Force -Path "$HooksDest\enforcement" | Out-Null
-New-Item -ItemType Directory -Force -Path "$HooksDest\telemetry" | Out-Null
 Get-ChildItem "$ScriptDir\hooks\enforcement\*.mjs" | ForEach-Object {
     Copy-Item $_.FullName "$HooksDest\enforcement\$($_.Name)" -Force
     Write-Host "  + .opencode\hooks\enforcement\$($_.Name)"
-}
-Get-ChildItem "$ScriptDir\hooks\telemetry\emit-phase-*.mjs" | ForEach-Object {
-    Copy-Item $_.FullName "$HooksDest\telemetry\$($_.Name)" -Force
-    Write-Host "  + .opencode\hooks\telemetry\$($_.Name)"
 }
 
 # Register plugin in opencode.json (idempotent)

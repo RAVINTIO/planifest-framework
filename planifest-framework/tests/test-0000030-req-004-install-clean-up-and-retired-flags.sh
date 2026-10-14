@@ -305,12 +305,15 @@ for f in "$SETUP_SH" "$SETUP_PS1"; do
                 "mcp__structured-telemetry-mcp__emit_event" \
                 "check-telemetry-failures.mjs" "check-telemetry-receipts.mjs" "phase-enum.mjs" \
                 "telemetry-enabled" ".telemetry-failures" ".telemetry-receipts" \
-                "not valid JSON" "stale entries may remain"; do
+                "not valid JSON" "stale entries may remain" "writeSettings("; do
     assert_contains "$needle" "$fenced" "$name: fenced block handles $needle"
   done
+  # writeSettings is the shared helper that writes a temporary file, then renames it
+  assert_equals "yes" "$(yes_no grep -q 'renameSync(tmp, sf)' "$f")" \
+    "$name: settings writes go through a temporary file then a rename"
 done
-assert_contains "Move-Item" "$(awk -v b="$FENCE_BEGIN" -v e="$FENCE_END" 'index($0,b){s=1} s{print} index($0,e){s=0}' "$SETUP_PS1")" \
-  "setup.ps1: clean-up writes through a temporary file then moves it"
+assert_equals "yes" "$(yes_no grep -q 'Move-Item -Path \$tmp' "$SETUP_PS1")" \
+  "setup.ps1: PowerShell-native settings writes also go through a temporary file"
 
 echo ""
 echo "=== NFR-001: no residue outside the fenced blocks in the setup and adapter files ==="
