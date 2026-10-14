@@ -102,6 +102,21 @@ Gate accepted: P0 (2026-10-14)
 
 ---
 
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T21:30:52Z` |
+| Model tier | primary |
+| Skills loaded | planifest-codegen-agent |
+| Agents spawned | `3` (batch 1) |
+| MCP calls | `0` |
+| Parallel task batches | `1` (in progress) |
+| Telemetry | confirmed-disabled |
+| Notes | Dependency map: REQ-001, REQ-002, and REQ-004 all edit the setup scripts, so their setup edits go to one agent (A: setup, REQ-004 plus the setup halves of REQ-001/002). Agent B owns the non-setup deletions of REQ-001/002 and every existing test file. Agent C owns REQ-003 text plus the refresh-setup skill edit from REQ-005. File sets are disjoint. REQ-005 self-hosting step and migration run last, inline, after integration. |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
