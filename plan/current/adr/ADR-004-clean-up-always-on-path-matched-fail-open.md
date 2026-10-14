@@ -56,6 +56,13 @@ If a settings file doesn't parse, the pass leaves it byte-identical. It names th
 **Risks:**
 - A person stored their own hook under `hooks/telemetry/` and it gets removed. The per-removal output makes that visible (R-003).
 
+## Implementation Notes
+
+Added at P5 on 2026-10-14:
+- Step 2 removes groups by matcher alone. That departs from the path-match rule above. It is accepted because the `structured-telemetry-mcp` server no longer exists, so no live hook can depend on that matcher.
+- Step 3 deletes the whole stale folder, including any file a person added there. Backlog 0000090 records the narrower design: delete shipped file names only, and remove an empty folder.
+- P5 hardening: deletes resolve the parent directory and refuse to act outside the project. PowerShell uses `-LiteralPath` and removes a link without following it. A failed delete or rename warns and continues. Temporary files keep the original file mode and are created exclusively.
+
 ## Related ADRs
 
 - 0000003-ADR-005 - extends (exit-zero failure mode)
