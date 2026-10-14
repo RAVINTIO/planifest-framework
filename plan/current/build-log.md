@@ -37,6 +37,11 @@ summary: "Working telemetry file maintained by the orchestrator throughout the p
 P0 exchange (feature direction): Q: Confirm next release scope (recommended run lifecycle and gate-write group) / A: Human redirected: "We need to remove Context Mode MCP and Telemetry MCP". Remaining 27 backlog entries left untouched pending scope.
 Adoption mode detected: standard-iterative (plan/_archive/ and docs/about.md present), awaiting confirmation.
 
+P0 exchange (telemetry removal depth): Q: Remove Telemetry MCP completely (hooks, backstops, setup flag, standard, build-log Telemetry field, skill instructions) or only the MCP wiring? / A: Confirmed the recommendation; build-log.md and product.yml id stay.
+
+P0 exchange (context-mode removal depth): Q: Apply complete removal to Context Mode too (hooks, flag, src/context-mode-hooks component and its product.yml components[] item, docs/context-mode.md, tests)? / A: Human asked what the product.yml entry meant; after explanation (only the components[] item and header comment change, file and id stay, product version unaffected) accepted.
+P0 exchange (existing installs): Q: Should setup remove stale settings.json entries and hook folders, accept the old flags with a notice, and ship a migration file? / A: Yes.
+
 ---
 
 <!-- Copy and fill in this block at each phase boundary:
