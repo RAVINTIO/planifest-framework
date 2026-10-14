@@ -10,10 +10,9 @@
  * Legacy fields also supported:
  *   { sessionId, workspaceRoot }
  *
- * Usage: node cursor.mjs <script> [phase]
+ * Usage: node cursor.mjs <script>
  *   e.g.  node cursor.mjs gate-write
  *         node cursor.mjs check-design
- *         node cursor.mjs emit-phase-start spec
  *
  * Exit codes are passed through from the delegate script.
  */
@@ -23,7 +22,6 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const SCRIPT_NAME = process.argv[2]; // e.g. "gate-write" or "check-design"
-const PHASE_ARG = process.argv[3];   // e.g. "spec" (for telemetry scripts only)
 
 const ADAPTER_DIR = dirname(new URL(import.meta.url).pathname);
 const HOOKS_DIR = dirname(ADAPTER_DIR);
@@ -63,16 +61,14 @@ try {
   };
 
   // Locate the target script
-  const scriptSubdir = SCRIPT_NAME.startsWith("emit-") ? "telemetry" : "enforcement";
-  const scriptPath = join(HOOKS_DIR, scriptSubdir, `${SCRIPT_NAME}.mjs`);
+  const scriptPath = join(HOOKS_DIR, "enforcement", `${SCRIPT_NAME}.mjs`);
 
   if (!existsSync(scriptPath)) {
     // Script not found — pass through silently (ADR-005)
     process.exit(0);
   }
 
-  const args = PHASE_ARG ? [scriptPath, PHASE_ARG] : [scriptPath];
-  const result = spawnSync(process.execPath, args, {
+  const result = spawnSync(process.execPath, [scriptPath], {
     input: JSON.stringify(envelope),
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],

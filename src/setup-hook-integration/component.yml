@@ -1,28 +1,26 @@
 # Planifest Component Manifest
 id: "setup-hook-integration"
 name: "Setup Hook Integration"
-feature: "0000027-backlog-batch-governance-tooling-fixes"
-version: "0.5.0"
+feature: "0000030-context-mode-and-telemetry-mcp-removal"
+version: "0.6.0"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
-summary: "setup.sh/ps1 and supporting scripts that install enforcement hooks, telemetry hooks, context-mode hooks, commit standards, and external skill management into any Planifest-managed project."
+summary: "setup.sh/ps1 and supporting scripts that install enforcement hooks, commit standards, and external skill management into any Planifest-managed project."
 systemContext: "Core setup infrastructure. Runs once per tool target and on re-runs. Installs hooks to .claude/hooks/, wires settings.json, registers the blocking commit-msg hook, writes Tier 1 adapter hook registrations for Cursor/Windsurf/Cline, and syncs external skills via skill-sync.sh."
 
 responsibilities:
-  - "Copy hook scripts from planifest-framework/hooks/context-mode/ to .claude/hooks/context-mode/ when --context-mode-mcp is passed"
-  - "Create .claude/hooks/context-mode/ directory if it does not exist"
   - "Make installed hook scripts executable (chmod +x) on Unix"
-  - "Write PreToolUse hook entries for Grep, Bash, and WebFetch into .claude/settings.json using additive merge"
-  - "Leave settings.json unchanged and skip script copying when --context-mode-mcp is absent"
-  - "Register emit-phase-start.mjs (PreToolUse) and emit-phase-end.mjs (Stop) hook entries in .claude/settings.json when --structured-telemetry-mcp is passed, alongside the existing context-pressure.mjs registration (0000027-req-001)"
-  - "Verify positive presence of all 3 telemetry hook entries after setup completes, failing loudly if any is missing rather than passing silently on a partial install (0000027-req-001)"
+  - "Write PreToolUse hook entries into .claude/settings.json using additive merge"
+  - "Accept the three retired integration flags with a one-line notice, exit 0, and never write them to the install marker (0000030-ADR-003)"
+  - "Run the always-on retired-integration clean-up on every setup run, path-matched, fail-open, with atomic settings writes (0000030-ADR-004)"
+  # BEGIN retired-integrations (0000030)
+  - "Own the removal of plan/.telemetry-failures and plan/.telemetry-receipts (0000030-ADR-005)"
+  # END retired-integrations (0000030)
   - "Relocate cline.sh/cline.ps1's boot file into .clinerules/00-planifest-boot.md so it no longer collides with the .clinerules/skills directory (0000027-req-002)"
 
 exceptions:
-  - "Must NOT remove previously installed hooks when flag is absent on re-run (no uninstall in v1)"
   - "Must NOT replace the entire settings.json — only merge hook entries additively"
-  - "Must NOT configure the MCP server connection — that is the user's responsibility"
   - "Must NOT wire hooks for non-Claude Code tools in this feature"
 
 stack:
@@ -43,19 +41,18 @@ stack:
 contract:
   apiSpec: "none"
   inputs:
-    - name: "--context-mode-mcp flag"
+    - name: "tool name and setup flags"
       type: "cli-argument"
-      description: "Opt-in flag passed to setup.sh or setup.ps1 that triggers hook installation"
+      description: "Arguments passed to setup.sh or setup.ps1 that select the target tool and optional features"
   outputs:
-    - name: ".claude/hooks/context-mode/"
+    - name: ".claude/hooks/enforcement/"
       type: "filesystem"
-      description: "Directory containing installed hook scripts"
+      description: "Directory containing installed enforcement hook scripts"
     - name: ".claude/settings.json (hooks section)"
       type: "filesystem"
       description: "PreToolUse hook entries added to the Claude Code settings file"
   consumedBy: []
-  consumes:
-    - "context-mode-hooks — source scripts copied from planifest-framework/hooks/context-mode/"
+  consumes: []
   breakingChangePolicy: "requires-human-approval"
 
 data:
@@ -67,16 +64,15 @@ data:
 
 scope:
   inScope:
-    - "setup.sh changes for --context-mode-mcp flag processing"
-    - "setup.ps1 changes for --context-mode-mcp flag processing"
+    - "setup.sh and setup.ps1 hook installation and settings.json merge"
     - "setup/claude-code.sh and setup/claude-code.ps1 hook path declarations"
     - "Claude Code only"
     - "setup.sh/setup.ps1 write .claude/.planifest-setup-flags at install time, in parity (0000020-setup-refresh-skill, REQ-008)"
-    - "setup.sh/setup.ps1 telemetry hook-config writer changes to register emit-phase-start.mjs/emit-phase-end.mjs (0000027-req-001)"
     - "cline.sh/cline.ps1 boot-file/skills-dir path collision fix (0000027-req-002)"
+    - "Retired integration flags accepted as no-ops, and the always-on retired-integration clean-up (0000030-ADR-003, ADR-004, ADR-005)"
   outOfScope:
     - "Hook wiring for Cursor, Windsurf, Cline, Antigravity"
-    - "Hook uninstall / removal logic"
+    - "Hook uninstall / removal logic, except the fixed retired-integration clean-up list"
     - "General setup.sh/setup.ps1 parity fixes unrelated to the flags-used marker (0000020-setup-refresh-skill)"
   deferred:
     - "Hook wiring for other tools pending hook architecture confirmation"
@@ -88,7 +84,6 @@ risk:
     - "Bash shebang on Windows — chmod/path handling differs (R-004)"
     - "settings.json hook schema assumption may be wrong (R-002)"
     - "setup.sh/setup.ps1 marker-write addition could drift out of parity between the two scripts (0000020-setup-refresh-skill, R-003)"
-    - "Resolved at P3 codegen: a resolve-phase.mjs interposing hook infers the phase from the Skill tool call and re-execs emit-phase-start.mjs/emit-phase-end.mjs with the argument supplied (0000027-req-001, ADR-001) — see planifest-framework/component.yml for the hook's own quirks/risks"
 
 quality:
   testCoverage:
@@ -96,11 +91,23 @@ quality:
     integration: 52
     e2e: 0
   techDebt:
+    # BEGIN retired-integrations (0000030)
+    - "Clean-up deletes whole stale hook folders and removes the emit_event group by matcher alone, accepted as 0000030 F6 (backlog 0000090)"
+    # END retired-integrations (0000030)
+    - "setup all stops at roo-code and TOOL_* values carry over (backlog 0000087)"
+    - "opencode setup.ps1 passes a null skills folder (backlog 0000088)"
+    - "No live PowerShell run in CI or locally (backlog 0000091)"
     - "setup.ps1 ConvertTo-Json depth: PowerShell default depth is 2; using -Depth 10 workaround. If settings.json nesting exceeds depth 10, content will be truncated to string."
   quirks:
     - "setup.ps1 hook entries use forward-slash paths in command values — this matches Claude Code hook config expectations even on Windows"
     - "Write-SetupFlagsMarker (0000020) verified statically only in this environment, no pwsh available (Q-006)"
     - "OpenCode's setup.ps1 tool config lacks a SkillsDir property, marker write silently skips for OpenCode on Windows, pre-existing gap (Q-007)"
+    - "NFR-002 idempotency ignores the writtenAt timestamp, which setup rewrites every run (Q-011)"
+    # BEGIN retired-integrations (0000030)
+    - "Clean-up whole-folder deletion and matcher-only emit_event removal accepted as F6 (Q-012, backlog 0000090)"
+    # END retired-integrations (0000030)
+    - "setup.ps1 clean-up, retired-flag branch, and Write-SettingsFile verified statically only (Q-013, backlog 0000091)"
+    - "Write-SettingsFile writes UTF-8 without a BOM (Q-014)"
     - "cline.ps1's boot-file relocation (0000027-req-002) verified statically only, no pwsh available in this environment, same constraint as Q-006"
 
 pipeline:
@@ -111,19 +118,16 @@ pipeline:
 metadata:
   createdAt: "2026-04-12"
   updatedAt: "2026-08-08"
-  # Updated by 0000027 (spec-agent) P1: seeded requirements-derived
-  # responsibilities/scope/risk entries for the phase_start/phase_end
-  # telemetry hook wiring gap (req-001) and the cline.sh/.ps1 boot-file
-  # path collision fix (req-002) ahead of P3 codegen.
-  # Updated by 0000027 (codegen-agent) P3: implemented both. cline.sh/.ps1
-  # boot file relocated to .clinerules/00-planifest-boot.md (req-002),
-  # verified via a new regression test (RED before fix, GREEN after) that
-  # also confirmed test-0000023-req-003's previously-failing "setup.sh all"
-  # assertion now passes. setup.sh/.ps1's merge_telemetry_hook_settings()
-  # extended to register emit-phase-start.mjs/emit-phase-end.mjs alongside
-  # context-pressure.mjs, plus a new positive-presence check
-  # (verify-telemetry-hooks.mjs) that fails loudly on a partial install
-  # (req-001).
+  # Updated by 0000027 (codegen-agent) P3: cline.sh/.ps1 boot file
+  # relocated to .clinerules/00-planifest-boot.md (req-002), verified via a
+  # new regression test (RED before fix, GREEN after) that also confirmed
+  # test-0000023-req-003's previously-failing "setup.sh all" assertion now
+  # passes.
+  # Updated by 0000030 (codegen-agent) P3: removed the retired hook and MCP
+  # integration text.
+  # Updated by 0000030 (docs-agent) P6: recorded the retired flags, the
+  # always-on clean-up, the P5 hardening (F1 to F5), and the new quirks and
+  # tech debt.
   createdBy: "agent"
   lastModifiedBy: "agent"
   skill: "planifest-codegen-agent"

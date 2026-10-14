@@ -108,7 +108,7 @@ The setup script copies skills into the directory your tool auto-discovers, adds
 | [schemas/](planifest-framework/schemas/) | Shared type definitions and the domain document envelope |
 | [standards/](planifest-framework/standards/) | Code quality, API design, database, deployment, infrastructure, monorepo, observability, testing, and backend/frontend stack-evaluation standards |
 | [setup/](planifest-framework/setup/) | Per-tool boot file templates — a `.sh` and `.ps1` pair for each supported tool |
-| [hooks/](planifest-framework/hooks/) | Git hooks, the CI workflow, and the telemetry/context-mode/enforcement adapters they wire up |
+| [hooks/](planifest-framework/hooks/) | Git hooks, the CI workflow, and the enforcement adapters they wire up |
 | [workflows/](planifest-framework/workflows/) | Agent workflow definitions: fast-path, feature-pipeline, change-pipeline, retrofit |
 | [scripts/](planifest-framework/scripts/) | Deterministic tooling: consistency checks, version derivation, regression promotion, skill sync |
 | [tests/](planifest-framework/tests/) | Per-feature test scripts plus the promoted regression pack |

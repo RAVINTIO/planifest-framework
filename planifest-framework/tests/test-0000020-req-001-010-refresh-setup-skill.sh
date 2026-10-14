@@ -47,10 +47,6 @@ echo ""
 echo "=== req-002: flag reconstruction with confidence ==="
 
 assert_contains "high" "$STEP3" "req-002: marker-sourced flags reported at high confidence"
-assert_contains "context-mode/\` directory exists with \`.mjs\` files" "$STEP3" \
-  "req-002: context-mode hook signal mapped to --context-mode-mcp"
-assert_contains "PLANIFEST_TELEMETRY_URL=<url>" "$STEP3" \
-  "req-002: telemetry backend URL signal mapped to --backend-url"
 assert_contains "plan/.orchestrator-strict\` file exists" "$STEP3" \
   "req-002: strict-orchestrator marker signal mapped"
 assert_contains "attribution.txt" "$STEP3" \

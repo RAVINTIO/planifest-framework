@@ -17,11 +17,50 @@ WORKFLOWS_SRC="$SCRIPT_DIR/workflows"
 SETUP_DIR="$SCRIPT_DIR/setup"
 
 VALID_TOOLS="claude-code cursor codex antigravity copilot windsurf cline roo-code opencode"
-CONTEXT_MODE_MCP=false
-STRUCTURED_TELEMETRY_MCP=false
-BACKEND_URL="http://localhost:3741"
 INCLUDE_FULL_SKILL_LIBRARY=false
 STRICT_ORCHESTRATOR=false
+
+# Shared Node helpers, prepended to every inline script that edits a tool's
+# settings file (0000030 ADR-004). If the file is not valid JSON, readSettings
+# leaves it byte-identical and returns null, so the caller skips that file and
+# setup carries on. writeSettings writes to a temporary file in the same folder,
+# then renames it into place, so a crash can never leave a truncated file.
+SETTINGS_JS_HELPERS='
+const __fs = require("fs"), __path = require("path");
+function readSettings(sf, label, what) {
+  if (!__fs.existsSync(sf)) return {};
+  try {
+    return JSON.parse(__fs.readFileSync(sf, "utf8").replace(/^﻿/, ""));
+  } catch (e) {
+    console.log("  ! " + label + " is not valid JSON (" + e.message + ") - left unchanged, skipped " + what);
+    return null;
+  }
+}
+function writeSettings(sf, s) {
+  // The temporary file has a random name and is created exclusively (wx), so a
+  // planted file or link at that name makes the write fail rather than write
+  // through. It keeps the mode of the target. On any failure the temporary file is
+  // removed, the target is left unchanged, and a warning is printed.
+  let tmp = null, created = false;
+  try {
+    __fs.mkdirSync(__path.dirname(sf), { recursive: true });
+    let mode = null;
+    try { mode = __fs.statSync(sf).mode & 0o7777; } catch (e) { mode = null; }
+    tmp = __path.join(__path.dirname(sf), "." + __path.basename(sf) + ".planifest-tmp-" +
+                      require("crypto").randomBytes(8).toString("hex"));
+    const fd = __fs.openSync(tmp, "wx", mode === null ? 0o666 : mode);
+    created = true;
+    try { __fs.writeFileSync(fd, JSON.stringify(s, null, 2) + "\n"); } finally { __fs.closeSync(fd); }
+    if (mode !== null) __fs.chmodSync(tmp, mode);
+    __fs.renameSync(tmp, sf);
+    return true;
+  } catch (e) {
+    if (created) { try { __fs.unlinkSync(tmp); } catch (e2) {} }
+    console.log("  ! could not write " + sf + " (" + e.message + ") - left unchanged");
+    return false;
+  }
+}
+'
 
 # --- Shared functions ---
 
@@ -272,141 +311,8 @@ copy_workflow() {
   echo "  + workflows/${name}.md"
 }
 
-context_mode_hook_command() {
-  # Builds the PreToolUse command string for a context-mode .mjs hook
-  # (REQ-004, 0000017 ADR-002). No Unix-shell dependency: `node <script>` is
-  # plain-invocation syntax understood by cmd.exe, PowerShell, and POSIX
-  # shells alike — no bash entry point, no jq. The `||` fallback surfaces a
-  # clear runtime message and still fails open (exit 0, no deny JSON) when
-  # the Node.js runtime itself is missing.
-  local hooks_dir="$1"
-  local script_name="$2"
-  local script_path="$hooks_dir/$script_name"
-  printf 'node "%s" || echo "[Planifest] context-mode enforcement (%s) did not run: Node.js runtime not found. Tool call proceeded unblocked." 1>&2' \
-    "$script_path" "$script_name"
-}
-
-merge_hook_settings() {
-  # Merge PreToolUse hook entries into .claude/settings.json (REQ-004, 0000017 req-004)
-  # Uses additive merge: existing content is preserved; Grep/Bash/WebFetch entries
-  # are removed then re-added to ensure idempotency on re-run.
-  # Requires jq or node (to edit settings.json) — the hooks themselves are .mjs.
-  local settings_file="$1"
-  local hooks_dir="$2"  # relative path used in the command value (e.g. .claude/hooks/context-mode)
-
-  local grep_cmd bash_cmd fetch_cmd
-  grep_cmd=$(context_mode_hook_command "$hooks_dir" "block-grep.mjs")
-  bash_cmd=$(context_mode_hook_command "$hooks_dir" "block-bash.mjs")
-  fetch_cmd=$(context_mode_hook_command "$hooks_dir" "block-webfetch.mjs")
-
-  if command -v jq >/dev/null 2>&1; then
-    local new_hooks
-    new_hooks=$(jq -n \
-      --arg grep_cmd  "$grep_cmd" \
-      --arg bash_cmd  "$bash_cmd" \
-      --arg fetch_cmd "$fetch_cmd" \
-      '[
-        {"matcher":"Grep",     "hooks":[{"type":"command","command":$grep_cmd}]},
-        {"matcher":"Bash",     "hooks":[{"type":"command","command":$bash_cmd}]},
-        {"matcher":"WebFetch", "hooks":[{"type":"command","command":$fetch_cmd}]}
-      ]')
-    if [ -f "$settings_file" ]; then
-      local merged
-      merged=$(jq \
-        --argjson new_hooks "$new_hooks" \
-        '
-          .hooks //= {} |
-          .hooks.PreToolUse //= [] |
-          .hooks.PreToolUse |= (
-            map(select(.matcher | IN("Grep","Bash","WebFetch") | not))
-            + $new_hooks
-          )
-        ' "$settings_file")
-      printf '%s\n' "$merged" > "$settings_file"
-      echo "  ~ .claude/settings.json (context-mode hook entries merged)"
-    else
-      mkdir -p "$(dirname "$settings_file")"
-      jq -n --argjson new_hooks "$new_hooks" \
-        '{"hooks":{"PreToolUse":$new_hooks}}' > "$settings_file"
-      echo "  + .claude/settings.json (created with context-mode hook entries)"
-    fi
-  elif command -v node >/dev/null 2>&1; then
-    PLANIFEST_GREP_CMD="$grep_cmd" PLANIFEST_BASH_CMD="$bash_cmd" PLANIFEST_FETCH_CMD="$fetch_cmd" \
-    PLANIFEST_SETTINGS="$settings_file" node -e '
-      const fs = require("fs"), path = require("path");
-      const sf = process.env.PLANIFEST_SETTINGS;
-      const newHooks = [
-        {matcher:"Grep",     hooks:[{type:"command",command:process.env.PLANIFEST_GREP_CMD}]},
-        {matcher:"Bash",     hooks:[{type:"command",command:process.env.PLANIFEST_BASH_CMD}]},
-        {matcher:"WebFetch", hooks:[{type:"command",command:process.env.PLANIFEST_FETCH_CMD}]}
-      ];
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^\uFEFF/,""));
-      s.hooks = s.hooks || {};
-      s.hooks.PreToolUse = (s.hooks.PreToolUse || [])
-        .filter(h => !["Grep","Bash","WebFetch"].includes(h.matcher))
-        .concat(newHooks);
-      fs.mkdirSync(path.dirname(sf),{recursive:true});
-      fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
-    '
-    if [ -f "$settings_file" ]; then
-      echo "  ~ .claude/settings.json (context-mode hook entries merged)"
-    else
-      echo "  + .claude/settings.json (created with context-mode hook entries)"
-    fi
-  else
-    echo "  ! Warning: neither jq nor node found — skipping settings.json hook wiring"
-    echo "  ! Manually add PreToolUse hooks for Grep/Bash/WebFetch to .claude/settings.json"
-  fi
-}
-
-install_context_mode_hooks() {
-  # Copy enforcement hook scripts to the target project and wire settings.json
-  # (REQ-004; ported to .mjs in 0000017 req-004 — no bash entry point, no jq).
-  local hooks_src_rel="$1"   # relative to SCRIPT_DIR  e.g. hooks/context-mode
-  local hooks_dir_rel="$2"   # relative to PROJECT_ROOT e.g. .claude/hooks/context-mode
-  local settings_rel="$3"    # relative to PROJECT_ROOT e.g. .claude/settings.json
-
-  local src="$SCRIPT_DIR/$hooks_src_rel"
-  local dest="$PROJECT_ROOT/$hooks_dir_rel"
-  local settings="$PROJECT_ROOT/$settings_rel"
-
-  if [ ! -d "$src" ]; then
-    echo "  ! Warning: hook scripts not found at $src — skipping hook installation"
-    return
-  fi
-
-  echo ""
-  echo "  Installing context-mode enforcement hooks"
-
-  # Setup-time Node.js runtime check (0000017 req-004): these hooks are .mjs —
-  # Node is required to run them at all. Warn clearly but still install and
-  # wire the hooks; the wired command itself fails open with a runtime
-  # message if Node turns out to be missing when Claude Code invokes it.
-  if ! command -v node >/dev/null 2>&1; then
-    echo "  ! Warning: Node.js runtime not found on this machine."
-    echo "  ! context-mode enforcement hooks (block-grep/block-bash/block-webfetch) require Node.js."
-    echo "  ! Hooks will be installed and wired, but will not enforce anything until Node.js is installed."
-  fi
-
-  # Create target directory
-  mkdir -p "$dest"
-
-  # Copy each script
-  for script in "$src"/*.mjs; do
-    [ -f "$script" ] || continue
-    local script_name
-    script_name="$(basename "$script")"
-    cp "$script" "$dest/$script_name"
-    echo "  + $hooks_dir_rel/$script_name"
-  done
-
-  # Merge PreToolUse wiring into settings.json
-  merge_hook_settings "$settings" "$hooks_dir_rel"
-}
-
 install_tier1_hooks() {
-  # Copy Tier 1 adapter + shared enforcement/telemetry scripts (REQ-009, REQ-013).
+  # Copy Tier 1 adapter + shared enforcement scripts (REQ-009, REQ-013).
   # The adapter uses dirname(ADAPTER_DIR) as HOOKS_DIR, so scripts must be siblings
   # of the adapters/ directory under TOOL_HOOKS_INSTALL_DIR.
   local adapter_src_rel="$1"       # e.g. hooks/adapters/cursor.mjs
@@ -430,7 +336,7 @@ install_tier1_hooks() {
   cp "$adapter_src" "$adapter_dest"
   echo "  + $adapter_dest_rel"
 
-  # Copy enforcement scripts (gate-write, check-design)
+  # Copy enforcement scripts (gate-write, check-design, and their shared modules)
   local enf_src="$SCRIPT_DIR/hooks/enforcement"
   local enf_dest="$hooks_install_dir/enforcement"
   if [ -d "$enf_src" ]; then
@@ -441,28 +347,6 @@ install_tier1_hooks() {
       script_name="$(basename "$script")"
       cp "$script" "$enf_dest/$script_name"
       echo "  + $hooks_install_dir_rel/enforcement/$script_name"
-    done
-  fi
-
-  # Copy telemetry scripts. The glob is *.mjs, matching install_enforcement_hooks()
-  # and install_telemetry_hooks() (0000028 req-002, ADR-002). It was previously
-  # emit-phase-*.mjs, narrower than its own callers need: emit-phase-start.mjs and
-  # emit-phase-end.mjs import shared modules from this directory
-  # (read-product-id.mjs, record-telemetry-failure.mjs, get-flag-path.mjs,
-  # emit-event.mjs), and an ESM import of a file the install never copied fails at
-  # module-load time, before the hook's own try/catch can run. Any future file
-  # added to hooks/telemetry/ is now installed for Cursor, Windsurf and Cline
-  # without a further setup.sh change.
-  local telem_src="$SCRIPT_DIR/hooks/telemetry"
-  local telem_dest="$hooks_install_dir/telemetry"
-  if [ -d "$telem_src" ]; then
-    mkdir -p "$telem_dest"
-    for script in "$telem_src"/*.mjs; do
-      [ -f "$script" ] || continue
-      local script_name
-      script_name="$(basename "$script")"
-      cp "$script" "$telem_dest/$script_name"
-      echo "  + $hooks_install_dir_rel/telemetry/$script_name"
     done
   fi
 
@@ -479,12 +363,12 @@ install_tier1_hook_registration() {
   local adapter_cmd="node $adapter_dest_rel gate-write"
 
   if command -v node >/dev/null 2>&1; then
-    PLANIFEST_ADAPTER_CMD="$adapter_cmd" PLANIFEST_SETTINGS="$settings" node -e '
-      const fs = require("fs"), path = require("path");
+    PLANIFEST_ADAPTER_CMD="$adapter_cmd" PLANIFEST_SETTINGS="$settings" PLANIFEST_SETTINGS_REL="$settings_rel" node -e "$SETTINGS_JS_HELPERS"'
       const adapterCmd = process.env.PLANIFEST_ADAPTER_CMD;
       const sf         = process.env.PLANIFEST_SETTINGS;
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^﻿/,""));
+      const rel        = process.env.PLANIFEST_SETTINGS_REL;
+      const s = readSettings(sf, rel, "Tier 1 adapter hook registration");
+      if (s === null) process.exit(0);
       s.hooks = s.hooks || {};
       // PreToolUse: adapter for Write and Edit (idempotent — remove then re-add)
       s.hooks.PreToolUse = (s.hooks.PreToolUse || [])
@@ -494,10 +378,9 @@ install_tier1_hook_registration() {
         {matcher:"Write", hooks:[{type:"command",command:adapterCmd}]},
         {matcher:"Edit",  hooks:[{type:"command",command:adapterCmd}]}
       );
-      fs.mkdirSync(path.dirname(sf),{recursive:true});
-      fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
+      writeSettings(sf, s);
+      console.log("  ~ " + rel + " (Tier 1 adapter hook registration written)");
     '
-    echo "  ~ $settings_rel (Tier 1 adapter hook registration written)"
   else
     echo "  ! Warning: node not found — skipping $settings_rel Tier 1 hook registration"
     echo "  ! Manually register: node $adapter_dest_rel gate-write for Write/Edit PreToolUse"
@@ -514,12 +397,12 @@ install_before_submit_hook_registration() {
   local adapter_cmd="node $adapter_dest_rel check-design"
 
   if command -v node >/dev/null 2>&1; then
-    PLANIFEST_ADAPTER_CMD="$adapter_cmd" PLANIFEST_SETTINGS="$settings" node -e '
-      const fs = require("fs"), path = require("path");
+    PLANIFEST_ADAPTER_CMD="$adapter_cmd" PLANIFEST_SETTINGS="$settings" PLANIFEST_SETTINGS_REL="$settings_rel" node -e "$SETTINGS_JS_HELPERS"'
       const adapterCmd = process.env.PLANIFEST_ADAPTER_CMD;
       const sf         = process.env.PLANIFEST_SETTINGS;
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^﻿/,""));
+      const rel        = process.env.PLANIFEST_SETTINGS_REL;
+      const s = readSettings(sf, rel, "beforeSubmitPrompt check-design registration");
+      if (s === null) process.exit(0);
       s.hooks = s.hooks || {};
       // beforeSubmitPrompt: check-design for scope injection (idempotent — remove then re-add)
       s.hooks.beforeSubmitPrompt = (s.hooks.beforeSubmitPrompt || [])
@@ -527,10 +410,9 @@ install_before_submit_hook_registration() {
       s.hooks.beforeSubmitPrompt.push(
         {matcher:"*", hooks:[{type:"command",command:adapterCmd}]}
       );
-      fs.mkdirSync(path.dirname(sf),{recursive:true});
-      fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
+      writeSettings(sf, s);
+      console.log("  ~ " + rel + " (beforeSubmitPrompt check-design hook registered)");
     '
-    echo "  ~ $settings_rel (beforeSubmitPrompt check-design hook registered)"
   else
     echo "  ! Warning: node not found — skipping beforeSubmitPrompt check-design registration"
     echo "  ! Manually register: node $adapter_dest_rel check-design for beforeSubmitPrompt"
@@ -540,18 +422,9 @@ install_before_submit_hook_registration() {
 install_enforcement_hooks() {
   # Copy enforcement hooks and wire PreToolUse/UserPromptSubmit (REQ-002, REQ-006, REQ-008).
   # Includes auto-trigger-orchestrator.mjs (REQ-002), gate-write.mjs, check-design.mjs,
-  # check-telemetry-failures.mjs (0000026, backlog 0000044 — deterministic backstop for
-  # the orchestrator's ADR-002 phase-start telemetry-failure-marker check),
-  # check-telemetry-receipts.mjs (req-004, feature 0000027, ADR-001 — cross-references
-  # build-log.md's per-phase Telemetry claims against plan/.telemetry-receipts/), and
-  # em-dash-guard.mjs (req-006, feature 0000028, ADR-003 — rejects U+2014 in scoped
+  # and em-dash-guard.mjs (req-006, feature 0000028, ADR-003 — rejects U+2014 in scoped
   # Planifest prose paths at write time, sibling to gate-write.mjs and ratchet-check.mjs).
-  # Always installed, regardless of MCP flags — both telemetry checks are
-  # UserPromptSubmit-shaped like the other enforcement hooks, not PostToolUse like
-  # context-pressure.mjs, and read plan/ state rather than requiring the telemetry
-  # hooks themselves to be active, so neither belongs behind --structured-telemetry-mcp
-  # or --context-mode-mcp — when telemetry is off, build-log.md's Telemetry field reads
-  # "confirmed-disabled" and check-telemetry-receipts.mjs correctly has nothing to flag.
+  # Always installed, whatever flags are passed.
   local hooks_src_rel="$1"   # e.g. hooks/enforcement
   local hooks_dir_rel="$2"   # e.g. .claude/hooks/enforcement
   local settings_rel="$3"    # e.g. .claude/settings.json
@@ -585,37 +458,31 @@ install_enforcement_hooks() {
   # files are mode 100644, so the shell could not exec them: the wired command
   # exited 126 (permission denied) and the hook silently never ran. Because a
   # PreToolUse hook that fails to start is indistinguishable from one that
-  # passed, gate-write, em-dash-guard, check-design, both telemetry backstops,
-  # auto-trigger-orchestrator and check-orchestrator-presence were all dead on
-  # every bash install, while ratchet-check worked purely because it happened
-  # to be committed executable.
+  # passed, gate-write, em-dash-guard, check-design, auto-trigger-orchestrator
+  # and check-orchestrator-presence were all dead on every bash install, while
+  # ratchet-check worked purely because it happened to be committed executable.
   #
   # Invoking through `node` removes the dependency on file mode entirely. This
-  # matches what setup.ps1 already did and what the context-mode hooks in this
-  # same file already did, which is why those kept working throughout.
+  # matches what setup.ps1 already did.
   local gate_cmd="node \"$hooks_dir_rel/gate-write.mjs\""
   local ratchet_cmd="node \"$hooks_dir_rel/ratchet-check.mjs\""
   local em_dash_cmd="node \"$hooks_dir_rel/em-dash-guard.mjs\""
   local trigger_cmd="node \"$hooks_dir_rel/auto-trigger-orchestrator.mjs\""
   local presence_cmd="node \"$hooks_dir_rel/check-orchestrator-presence.mjs\""
   local design_cmd="node \"$hooks_dir_rel/check-design.mjs\""
-  local telemetry_failures_cmd="node \"$hooks_dir_rel/check-telemetry-failures.mjs\""
-  local telemetry_receipts_cmd="node \"$hooks_dir_rel/check-telemetry-receipts.mjs\""
 
   if command -v node >/dev/null 2>&1; then
-    PLANIFEST_GATE="$gate_cmd" PLANIFEST_RATCHET="$ratchet_cmd" PLANIFEST_EM_DASH="$em_dash_cmd" PLANIFEST_TRIGGER="$trigger_cmd" PLANIFEST_PRESENCE="$presence_cmd" PLANIFEST_DESIGN="$design_cmd" PLANIFEST_TELEMETRY_FAILURES="$telemetry_failures_cmd" PLANIFEST_TELEMETRY_RECEIPTS="$telemetry_receipts_cmd" PLANIFEST_SETTINGS="$settings" node -e '
-      const fs = require("fs"), path = require("path");
+    PLANIFEST_GATE="$gate_cmd" PLANIFEST_RATCHET="$ratchet_cmd" PLANIFEST_EM_DASH="$em_dash_cmd" PLANIFEST_TRIGGER="$trigger_cmd" PLANIFEST_PRESENCE="$presence_cmd" PLANIFEST_DESIGN="$design_cmd" PLANIFEST_SETTINGS="$settings" PLANIFEST_SETTINGS_REL="$settings_rel" node -e "$SETTINGS_JS_HELPERS"'
       const gate     = process.env.PLANIFEST_GATE;
       const ratchet  = process.env.PLANIFEST_RATCHET;
       const emDash   = process.env.PLANIFEST_EM_DASH;
       const trigger  = process.env.PLANIFEST_TRIGGER;
       const presence = process.env.PLANIFEST_PRESENCE;
       const design   = process.env.PLANIFEST_DESIGN;
-      const telemetryFailures = process.env.PLANIFEST_TELEMETRY_FAILURES;
-      const telemetryReceipts = process.env.PLANIFEST_TELEMETRY_RECEIPTS;
       const sf       = process.env.PLANIFEST_SETTINGS;
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^\uFEFF/,""));
+      const rel      = process.env.PLANIFEST_SETTINGS_REL;
+      const s = readSettings(sf, rel, "enforcement hook wiring");
+      if (s === null) process.exit(0);
       s.hooks = s.hooks || {};
       // PreToolUse: gate-write + ratchet-check + em-dash-guard for Write and Edit
       // (idempotent: remove then re-add)
@@ -632,194 +499,25 @@ install_enforcement_hooks() {
         {matcher:"Write", hooks:[{type:"command",command:emDash}]},
         {matcher:"Edit",  hooks:[{type:"command",command:emDash}]}
       );
-      // UserPromptSubmit: auto-trigger first, then presence check, then check-design,
-      // then check-telemetry-failures, then check-telemetry-receipts
-      // (REQ-002, REQ-008, 0000026, req-004/0000027, idempotent)
+      // UserPromptSubmit: auto-trigger first, then presence check, then check-design
+      // (REQ-002, REQ-008, idempotent)
       s.hooks.UserPromptSubmit = (s.hooks.UserPromptSubmit || [])
         .filter(h => !(h.hooks||[]).some(e =>
           (e.command||"").includes("auto-trigger-orchestrator") ||
           (e.command||"").includes("check-orchestrator-presence") ||
-          (e.command||"").includes("check-design") ||
-          (e.command||"").includes("check-telemetry-failures") ||
-          (e.command||"").includes("check-telemetry-receipts")));
+          (e.command||"").includes("check-design")));
       s.hooks.UserPromptSubmit.push(
         {matcher:".*", hooks:[{type:"command",command:trigger}]},
         {matcher:".*", hooks:[{type:"command",command:presence}]},
-        {matcher:".*", hooks:[{type:"command",command:design}]},
-        {matcher:".*", hooks:[{type:"command",command:telemetryFailures}]},
-        {matcher:".*", hooks:[{type:"command",command:telemetryReceipts}]}
+        {matcher:".*", hooks:[{type:"command",command:design}]}
       );
-      fs.mkdirSync(path.dirname(sf),{recursive:true});
-      fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
+      writeSettings(sf, s);
+      console.log("  ~ " + rel + " (enforcement hooks wired)");
     '
-    echo "  ~ $settings_rel (enforcement hooks wired)"
   else
     echo "  ! Warning: node not found — skipping settings.json enforcement hook wiring"
-    echo "  ! Manually add gate-write, ratchet-check, em-dash-guard (Write/Edit PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence, check-design, check-telemetry-failures and check-telemetry-receipts (UserPromptSubmit) to $settings_rel"
+    echo "  ! Manually add gate-write, ratchet-check, em-dash-guard (Write/Edit PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence and check-design (UserPromptSubmit) to $settings_rel"
   fi
-}
-
-merge_telemetry_hook_settings() {
-  # Merge context-pressure (PostToolUse), emit-phase-start (PreToolUse), and
-  # emit-phase-end (Stop) hook entries into .claude/settings.json, plus the
-  # emit_event receipt hook (PostToolUse, req-004/ADR-001).
-  # Idempotent: each script's prior entry is removed before being re-added.
-  #
-  # Wiring design decision (req-001, feature 0000027): emit-phase-start.mjs
-  # (documented in its own header as a PreToolUse hook) and emit-phase-end.mjs
-  # (documented as a Stop hook) each require a positional <phase> CLI
-  # argument. A single hook entry is one fixed `command` string -- it cannot
-  # vary that argument as the pipeline moves through phases over the life of
-  # a session. Rather than modifying either telemetry script, both entries
-  # below route through hooks/telemetry/resolve-phase.mjs, which infers the
-  # active phase from an observable tool-lifecycle signal (which phase-agent
-  # Skill the orchestrator invoked) and re-execs the real script with that
-  # phase supplied. See resolve-phase.mjs's own header for the full mechanism
-  # and its documented limitation for multi-turn phases.
-  local settings_file="$1"
-  local hooks_dir="$2"   # relative path used in the command value
-  local backend_url="$3"
-
-  local pressure_cmd="PLANIFEST_TELEMETRY_URL=$backend_url node $hooks_dir/context-pressure.mjs"
-  local start_cmd="PLANIFEST_TELEMETRY_URL=$backend_url node $hooks_dir/resolve-phase.mjs start $hooks_dir/emit-phase-start.mjs"
-  local end_cmd="PLANIFEST_TELEMETRY_URL=$backend_url node $hooks_dir/resolve-phase.mjs end $hooks_dir/emit-phase-end.mjs"
-  local receipt_cmd="node $hooks_dir/emit-event-receipt.mjs"
-
-  if command -v jq >/dev/null 2>&1; then
-    local merged
-    if [ -f "$settings_file" ]; then
-      merged=$(jq \
-        --arg pressure "$pressure_cmd" \
-        --arg start "$start_cmd" \
-        --arg end "$end_cmd" \
-        --arg receipt "$receipt_cmd" \
-        '
-          .hooks //= {} |
-          .hooks.PostToolUse //= [] |
-          .hooks.PreToolUse //= [] |
-          .hooks.Stop //= [] |
-          .hooks.PostToolUse |= (
-            map(select(
-              (.hooks // []) | map(.command // "") |
-              (any(test("context-pressure")) or any(test("emit-event-receipt"))) | not
-            ))
-            + [
-              {"matcher":".*","hooks":[{"type":"command","command":$pressure,"async":true,"timeout":5000}]},
-              {"matcher":"mcp__structured-telemetry-mcp__emit_event","hooks":[{"type":"command","command":$receipt,"async":true,"timeout":5000}]}
-            ]
-          ) |
-          .hooks.PreToolUse |= (
-            map(select(
-              (.hooks // []) | map(.command // "") | any(test("resolve-phase.*emit-phase-start")) | not
-            ))
-            + [{"matcher":"Skill","hooks":[{"type":"command","command":$start}]}]
-          ) |
-          .hooks.Stop |= (
-            map(select(
-              (.hooks // []) | map(.command // "") | any(test("resolve-phase.*emit-phase-end")) | not
-            ))
-            + [{"matcher":".*","hooks":[{"type":"command","command":$end}]}]
-          )
-        ' "$settings_file")
-    else
-      merged=$(jq -n \
-        --arg pressure "$pressure_cmd" \
-        --arg start "$start_cmd" \
-        --arg end "$end_cmd" \
-        --arg receipt "$receipt_cmd" \
-        '{
-          "hooks": {
-            "PostToolUse": [
-              {"matcher":".*","hooks":[{"type":"command","command":$pressure,"async":true,"timeout":5000}]},
-              {"matcher":"mcp__structured-telemetry-mcp__emit_event","hooks":[{"type":"command","command":$receipt,"async":true,"timeout":5000}]}
-            ],
-            "PreToolUse": [{"matcher":"Skill","hooks":[{"type":"command","command":$start}]}],
-            "Stop": [{"matcher":".*","hooks":[{"type":"command","command":$end}]}]
-          }
-        }')
-    fi
-    mkdir -p "$(dirname "$settings_file")"
-    printf '%s\n' "$merged" > "$settings_file"
-    echo "  ~ .claude/settings.json (telemetry hooks merged: context-pressure, emit-phase-start, emit-phase-end, emit-event-receipt)"
-  elif command -v node >/dev/null 2>&1; then
-    PLANIFEST_PRESSURE_CMD="$pressure_cmd" PLANIFEST_START_CMD="$start_cmd" PLANIFEST_END_CMD="$end_cmd" PLANIFEST_RECEIPT_CMD="$receipt_cmd" PLANIFEST_SETTINGS="$settings_file" node -e '
-      const fs = require("fs"), path = require("path");
-      const pressureCmd = process.env.PLANIFEST_PRESSURE_CMD;
-      const startCmd    = process.env.PLANIFEST_START_CMD;
-      const endCmd      = process.env.PLANIFEST_END_CMD;
-      const receiptCmd  = process.env.PLANIFEST_RECEIPT_CMD;
-      const sf  = process.env.PLANIFEST_SETTINGS;
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^\uFEFF/,""));
-      s.hooks = s.hooks || {};
-      s.hooks.PostToolUse = (s.hooks.PostToolUse || [])
-        .filter(h => !(h.hooks||[]).some(e => (e.command||"").includes("context-pressure") || (e.command||"").includes("emit-event-receipt")))
-        .concat([
-          {matcher:".*",hooks:[{type:"command",command:pressureCmd,async:true,timeout:5000}]},
-          {matcher:"mcp__structured-telemetry-mcp__emit_event",hooks:[{type:"command",command:receiptCmd,async:true,timeout:5000}]}
-        ]);
-      s.hooks.PreToolUse = (s.hooks.PreToolUse || [])
-        .filter(h => !(h.hooks||[]).some(e => (e.command||"").includes("resolve-phase.mjs") && (e.command||"").includes("emit-phase-start")))
-        .concat([{matcher:"Skill",hooks:[{type:"command",command:startCmd}]}]);
-      s.hooks.Stop = (s.hooks.Stop || [])
-        .filter(h => !(h.hooks||[]).some(e => (e.command||"").includes("resolve-phase.mjs") && (e.command||"").includes("emit-phase-end")))
-        .concat([{matcher:".*",hooks:[{type:"command",command:endCmd}]}]);
-      fs.mkdirSync(path.dirname(sf),{recursive:true});
-      fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
-    '
-    echo "  ~ .claude/settings.json (telemetry hooks merged: context-pressure, emit-phase-start, emit-phase-end, emit-event-receipt)"
-  else
-    echo "  ! Warning: neither jq nor node found -- skipping telemetry settings.json wiring"
-  fi
-}
-
-verify_telemetry_hooks_installed() {
-  # Positive-presence check (req-001, acceptance criterion): fails loudly if
-  # any telemetry hook was copied to disk but never actually registered in
-  # the target tool's settings -- the exact partial-wiring regression this
-  # requirement exists to prevent from recurring silently.
-  local settings_file="$1"
-  local script_dir="$2"
-
-  if ! command -v node >/dev/null 2>&1; then
-    echo "  ! Warning: node not found -- skipping telemetry hook presence verification"
-    return 0
-  fi
-
-  node "$script_dir/scripts/verify-telemetry-hooks.mjs" "$settings_file" --with-receipt
-}
-
-install_telemetry_hooks() {
-  # Copy context-pressure hook script and wire PostToolUse in settings.json (REQ-008, REQ-010)
-  # Only called when --structured-telemetry-mcp is active (0000018 req-001).
-  local hooks_src_rel="$1"   # relative to SCRIPT_DIR  e.g. hooks/telemetry
-  local hooks_dir_rel="$2"   # relative to PROJECT_ROOT e.g. .claude/hooks/telemetry
-  local settings_rel="$3"    # relative to PROJECT_ROOT e.g. .claude/settings.json
-  local backend_url="$4"
-
-  local src="$SCRIPT_DIR/$hooks_src_rel"
-  local dest="$PROJECT_ROOT/$hooks_dir_rel"
-  local settings="$PROJECT_ROOT/$settings_rel"
-
-  if [ ! -d "$src" ]; then
-    echo "  ! Warning: telemetry hook scripts not found at $src — skipping"
-    return
-  fi
-
-  echo ""
-  echo "  Installing structured telemetry hooks"
-
-  mkdir -p "$dest"
-
-  for script in "$src"/*.mjs; do
-    [ -f "$script" ] || continue
-    local script_name
-    script_name="$(basename "$script")"
-    cp "$script" "$dest/$script_name"
-    echo "  + $hooks_dir_rel/$script_name"
-  done
-
-  merge_telemetry_hook_settings "$settings" "$hooks_dir_rel" "$backend_url"
 }
 
 merge_allowed_tools() {
@@ -829,16 +527,14 @@ merge_allowed_tools() {
   local settings_file="$1"
 
   if command -v node >/dev/null 2>&1; then
-    PLANIFEST_SETTINGS="$settings_file" node -e '
-      const fs = require("fs"), path = require("path");
+    PLANIFEST_SETTINGS="$settings_file" node -e "$SETTINGS_JS_HELPERS"'
       const sf = process.env.PLANIFEST_SETTINGS;
-      let s = {};
-      if (fs.existsSync(sf)) s = JSON.parse(fs.readFileSync(sf,"utf8").replace(/^﻿/,""));
+      const s = readSettings(sf, ".claude/settings.json", "allowedTools update");
+      if (s === null) process.exit(0);
       const existing = Array.isArray(s.allowedTools) ? s.allowedTools : [];
       if (!existing.includes("Agent")) {
         s.allowedTools = existing.concat(["Agent"]);
-        fs.mkdirSync(path.dirname(sf),{recursive:true});
-        fs.writeFileSync(sf, JSON.stringify(s,null,2)+"\n");
+        writeSettings(sf, s);
         console.log("  ~ .claude/settings.json (Agent added to allowedTools)");
       } else {
         console.log("  - .claude/settings.json (Agent already in allowedTools)");
@@ -849,6 +545,143 @@ merge_allowed_tools() {
     echo "  ! Manually add \"Agent\" to allowedTools in .claude/settings.json"
   fi
 }
+
+# BEGIN retired-integrations (0000030)
+# Always-on clean-up of the Context Mode and Telemetry integrations removed in
+# 0.29.0 (0000030 ADR-004, ADR-005). Runs for every tool on every setup run,
+# before normal wiring, in this order:
+#   1. settings hook entries, under any event, whose command runs a file under
+#      the tool's hooks/context-mode/ or hooks/telemetry/ folder, or
+#      hooks/enforcement/check-telemetry-failures.mjs or check-telemetry-receipts.mjs.
+#      A group left with no hooks is dropped.
+#   2. settings hook groups whose matcher is mcp__structured-telemetry-mcp__emit_event
+#   3. the stale hook folders and the check-telemetry-*.mjs and phase-enum.mjs copies
+#   4. .claude/telemetry-enabled, plan/.telemetry-failures/ and plan/.telemetry-receipts/
+# Entries match on command path, never on matcher alone, so a hand-added hook
+# stays. Prints one line per removal and nothing when nothing is found. A
+# settings file that is not valid JSON is left byte-identical and only its
+# clean-up is skipped. Without Node the whole pass is skipped. Setup carries on
+# in every case.
+cleanup_retired_integrations() {
+  local hooks_base_rel="$1"   # e.g. .claude/hooks or .cursor/hooks, empty if the tool installs no hook scripts
+  local settings_rel="$2"     # e.g. .claude/settings.json, empty if the tool has no settings file
+
+  if ! command -v node >/dev/null 2>&1; then
+    echo "  ! Warning: Node.js not found - skipped the retired Context Mode and Telemetry clean-up, stale entries may remain"
+    return 0
+  fi
+
+  # Steps 1 and 2: settings hook entries and groups
+  if [ -n "$hooks_base_rel" ] && [ -n "$settings_rel" ] && [ -f "$PROJECT_ROOT/$settings_rel" ]; then
+    PLANIFEST_SETTINGS="$PROJECT_ROOT/$settings_rel" PLANIFEST_SETTINGS_REL="$settings_rel" \
+    PLANIFEST_HOOKS_BASE="$hooks_base_rel" node -e "$SETTINGS_JS_HELPERS"'
+      const sf   = process.env.PLANIFEST_SETTINGS;
+      const rel  = process.env.PLANIFEST_SETTINGS_REL;
+      const base = process.env.PLANIFEST_HOOKS_BASE.replace(/\\/g, "/").replace(/\/+$/, "");
+      let s;
+      try {
+        s = JSON.parse(__fs.readFileSync(sf, "utf8").replace(/^﻿/, ""));
+      } catch (e) {
+        console.log("  ! " + rel + " is not valid JSON (" + e.message + ") - left unchanged, clean-up skipped for this file");
+        process.exit(0);
+      }
+      if (!s || typeof s !== "object" || !s.hooks || typeof s.hooks !== "object") process.exit(0);
+      const staleFolders = [base + "/context-mode/", base + "/telemetry/"];
+      const staleFiles = [base + "/enforcement/check-telemetry-failures.mjs",
+                          base + "/enforcement/check-telemetry-receipts.mjs"];
+      const STALE_MATCHER = "mcp__structured-telemetry-mcp__emit_event";
+      // Returns the stale script path a command runs, or null.
+      const stalePath = (cmd) => {
+        const c = String(cmd || "").replace(/\\/g, "/");
+        for (const f of staleFolders) {
+          const i = c.indexOf(f);
+          if (i >= 0) return c.slice(i).match(/^[^\s"\x27]+/)[0];
+        }
+        return staleFiles.find(f => c.includes(f)) || null;
+      };
+      let changed = false;
+      for (const event of Object.keys(s.hooks)) {
+        const groups = s.hooks[event];
+        if (!Array.isArray(groups)) continue;
+        // Step 1: drop entries by command path, then any group left empty
+        let kept = [];
+        for (const g of groups) {
+          if (g && typeof g === "object" && Array.isArray(g.hooks)) {
+            const hooks = g.hooks.filter(h => {
+              const p = stalePath(h && h.command);
+              if (p) console.log("  - " + rel + ": removed " + event + " hook running " + p);
+              return !p;
+            });
+            if (hooks.length !== g.hooks.length) {
+              changed = true;
+              if (hooks.length === 0) continue;
+              g.hooks = hooks;
+            }
+          } else if (g && typeof g === "object" && "command" in g) {
+            const p = stalePath(g.command);
+            if (p) {
+              console.log("  - " + rel + ": removed " + event + " hook running " + p);
+              changed = true;
+              continue;
+            }
+          }
+          kept.push(g);
+        }
+        // Step 2: drop groups for the retired emit_event matcher
+        kept = kept.filter(g => {
+          if (g && g.matcher === STALE_MATCHER) {
+            console.log("  - " + rel + ": removed " + event + " group for matcher " + STALE_MATCHER);
+            changed = true;
+            return false;
+          }
+          return true;
+        });
+        if (kept.length === 0 && groups.length > 0) delete s.hooks[event];
+        else s.hooks[event] = kept;
+      }
+      if (changed) writeSettings(sf, s);
+    ' || echo "  ! Warning: clean-up of $settings_rel did not finish - stale entries may remain"
+  fi
+
+  # Step 3: stale hook folders and installed copies
+  local stale=()
+  if [ -n "$hooks_base_rel" ]; then
+    stale+=("$hooks_base_rel/context-mode" "$hooks_base_rel/telemetry")
+    local f
+    for f in "$PROJECT_ROOT/$hooks_base_rel/enforcement/"check-telemetry-*.mjs; do
+      [ -e "$f" ] && stale+=("$hooks_base_rel/enforcement/$(basename "$f")")
+    done
+    stale+=("$hooks_base_rel/enforcement/phase-enum.mjs")
+  fi
+  # Step 4: project-level state the retired hooks and setup wrote
+  stale+=(".claude/telemetry-enabled" "plan/.telemetry-failures" "plan/.telemetry-receipts")
+
+  # Each delete first resolves its parent folder physically (cd -P, pwd -P) and
+  # refuses if that is outside the physical project root, so a linked plan/ or
+  # .claude/ never leads the delete out of the project. A stale path that is
+  # itself a link is removed as a link (no trailing slash), never its target.
+  local p phys_root phys_parent
+  phys_root=$(cd -P "$PROJECT_ROOT" && pwd -P)
+  for p in "${stale[@]}"; do
+    if [ -e "$PROJECT_ROOT/$p" ] || [ -L "$PROJECT_ROOT/$p" ]; then
+      phys_parent=$(cd -P "$(dirname "$PROJECT_ROOT/$p")" 2>/dev/null && pwd -P) || phys_parent=""
+      case "$phys_parent" in
+        "$phys_root"|"$phys_root"/*) ;;
+        *)
+          echo "  ! $p resolves outside the project - not removed"
+          continue
+          ;;
+      esac
+      # A failed delete warns and setup carries on (ADR-004 fails open)
+      if rm -rf "${phys_parent:?}/$(basename "$p")" 2>/dev/null; then
+        echo "  - $p (retired, removed)"
+      else
+        echo "  ! could not remove $p - left in place, delete it by hand"
+      fi
+    fi
+  done
+}
+# END retired-integrations (0000030)
 
 activate_guardrails() {
   echo ""
@@ -1160,6 +993,16 @@ setup_tool() {
   echo "  Setting up $tool"
   echo "  Skills directory: $TOOL_SKILLS_DIR/"
 
+  # Remove stale state from integrations retired in 0.29.0, before any wiring
+  # (0000030 ADR-004). Tier 1 tools keep hook scripts under TOOL_HOOKS_INSTALL_DIR.
+  # Tools with a settings file but no Tier 1 adapter (Claude Code) use .claude/hooks,
+  # the parent of the enforcement folder install_enforcement_hooks writes below.
+  local hooks_base_rel="${TOOL_HOOKS_INSTALL_DIR:-}"
+  if [ -z "$hooks_base_rel" ] && [ -n "${TOOL_SETTINGS_FILE:-}" ]; then
+    hooks_base_rel=".claude/hooks"
+  fi
+  cleanup_retired_integrations "$hooks_base_rel" "${TOOL_SETTINGS_FILE:-}"
+
   # Manifest cleanup — remove only previously installed directories on re-run
   local manifest="$skills_dir/.planifest-manifest"
   if [ -f "$manifest" ]; then
@@ -1205,13 +1048,8 @@ setup_tool() {
     append_override_instructions "$TOOL_BOOT_FILE"
   fi
 
-  # Install context-mode enforcement hooks if --context-mode-mcp flag is set (REQ-004)
-  if [ "$CONTEXT_MODE_MCP" = true ] && [ -n "${TOOL_HOOKS_SRC:-}" ] && [ -n "${TOOL_HOOKS_DIR:-}" ] && [ -n "${TOOL_SETTINGS_FILE:-}" ]; then
-    install_context_mode_hooks "$TOOL_HOOKS_SRC" "$TOOL_HOOKS_DIR" "$TOOL_SETTINGS_FILE"
-  fi
-
   # Install Planifest enforcement hooks unconditionally (REQ-008)
-  # Not gated on MCP flags — enforcement applies to all Planifest-enabled projects.
+  # Not gated on any flag — enforcement applies to all Planifest-enabled projects.
   # Skipped for Tier 1 tools — they use the adapter path instead (REQ-027).
   if [ -n "${TOOL_SETTINGS_FILE:-}" ] && ! [[ "${PLANIFEST_TIER:-}" =~ ^1 ]]; then
     install_enforcement_hooks "hooks/enforcement" ".claude/hooks/enforcement" "$TOOL_SETTINGS_FILE"
@@ -1238,33 +1076,11 @@ setup_tool() {
     install_before_submit_hook_registration "$TOOL_HOOK_ADAPTER_DEST" "$TOOL_SETTINGS_FILE"
   fi
 
-  # Write telemetry opt-in sentinel so skills know emission is authorised (REQ-004)
-  if [ "$STRUCTURED_TELEMETRY_MCP" = true ]; then
-    local sentinel="$PROJECT_ROOT/.claude/telemetry-enabled"
-    mkdir -p "$(dirname "$sentinel")"
-    if [ ! -f "$sentinel" ]; then
-      touch "$sentinel"
-      echo "  + .claude/telemetry-enabled (telemetry opt-in sentinel)"
-    else
-      echo "  - .claude/telemetry-enabled (already exists)"
-    fi
-  fi
-
-  # Install telemetry hooks whenever --structured-telemetry-mcp is active (0000018 req-001)
-  # No longer requires --context-mode-mcp — that AND-condition silently left telemetry
-  # hooks unwired for any project passing --structured-telemetry-mcp alone.
-  if [ "$STRUCTURED_TELEMETRY_MCP" = true ] && \
-     [ -n "${TOOL_TELEMETRY_HOOKS_SRC:-}" ] && [ -n "${TOOL_TELEMETRY_HOOKS_DIR:-}" ] && \
-     [ -n "${TOOL_SETTINGS_FILE:-}" ]; then
-    install_telemetry_hooks "$TOOL_TELEMETRY_HOOKS_SRC" "$TOOL_TELEMETRY_HOOKS_DIR" "$TOOL_SETTINGS_FILE" "$BACKEND_URL"
-    verify_telemetry_hooks_installed "$PROJECT_ROOT/$TOOL_SETTINGS_FILE" "$SCRIPT_DIR"
-  fi
-
   # Tier 3 tools: no hook system — print deterministic enforcement warning (REQ-012)
   if [ "${PLANIFEST_TIER:-}" = "3" ]; then
     echo ""
     echo "  ⚠  [Planifest] $tool does not support deterministic enforcement hooks."
-    echo "     Scope enforcement and telemetry emission are instruction-based only."
+    echo "     Scope enforcement is instruction-based only."
     echo "     Writes are NOT blocked at the tool level — agent instruction compliance"
     echo "     is the only enforcement mechanism for this tool."
   fi
@@ -1326,7 +1142,7 @@ TOML
 }
 
 # Write planifest-overrides/setup-config/{tool}.md — the tracked, git-versioned source
-# of truth for active setup flags/backendUrl (0000025 req-004, ADR-002 decision 1). This
+# of truth for active setup flags (0000025 req-004, ADR-002 decision 1). This
 # is additive: it does not replace write_setup_flags_marker, and it is called BEFORE it so
 # the gitignored marker is always (re)written to match this file's values for the current
 # run, satisfying ADR-002 decision 3's reconciliation rule. If the write fails (e.g.
@@ -1339,8 +1155,6 @@ write_setup_config_override() {
   local config_file="$config_dir/${tool}.md"
 
   local flags=()
-  [ "$CONTEXT_MODE_MCP" = true ] && flags+=("--context-mode-mcp")
-  [ "$STRUCTURED_TELEMETRY_MCP" = true ] && flags+=("--structured-telemetry-mcp")
   [ "$INCLUDE_FULL_SKILL_LIBRARY" = true ] && flags+=("--include-full-skill-library")
   [ "$STRICT_ORCHESTRATOR" = true ] && flags+=("--strict-orchestrator")
 
@@ -1349,9 +1163,6 @@ write_setup_config_override() {
     flags_json=$(printf '"%s",' "${flags[@]}")
     flags_json="[${flags_json%,}]"
   fi
-
-  local backend_url_json="null"
-  [ "$STRUCTURED_TELEMETRY_MCP" = true ] && backend_url_json="\"$BACKEND_URL\""
 
   local written_at
   written_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -1364,7 +1175,7 @@ write_setup_config_override() {
   if ! cat > "$config_file" << CONFIG_EOF
 # Setup config: $tool
 
-> Tracked source of truth for active setup flags/backend-url for **$tool**
+> Tracked source of truth for active setup flags for **$tool**
 > (0000025 req-004, ADR-002). The gitignored \`.planifest-setup-flags\` marker in
 > this tool's config directory is a local completion-status cache, reconciled to
 > match this file on every \`setup.sh\`/\`setup.ps1\` run.
@@ -1373,7 +1184,6 @@ write_setup_config_override() {
 {
   "tool": "$tool",
   "flags": $flags_json,
-  "backendUrl": $backend_url_json,
   "writtenAt": "$written_at"
 }
 \`\`\`
@@ -1399,8 +1209,6 @@ write_setup_flags_marker() {
   local marker="$PROJECT_ROOT/$tool_dir/.planifest-setup-flags"
 
   local flags=()
-  [ "$CONTEXT_MODE_MCP" = true ] && flags+=("--context-mode-mcp")
-  [ "$STRUCTURED_TELEMETRY_MCP" = true ] && flags+=("--structured-telemetry-mcp")
   [ "$INCLUDE_FULL_SKILL_LIBRARY" = true ] && flags+=("--include-full-skill-library")
   [ "$STRICT_ORCHESTRATOR" = true ] && flags+=("--strict-orchestrator")
 
@@ -1410,9 +1218,6 @@ write_setup_flags_marker() {
     flags_json="[${flags_json%,}]"
   fi
 
-  local backend_url_json="null"
-  [ "$STRUCTURED_TELEMETRY_MCP" = true ] && backend_url_json="\"$BACKEND_URL\""
-
   local written_at
   written_at="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 
@@ -1420,7 +1225,6 @@ write_setup_flags_marker() {
 {
   "tool": "$tool",
   "flags": $flags_json,
-  "backendUrl": $backend_url_json,
   "writtenAt": "$written_at",
   "attemptStatus": "completed"
 }
@@ -1445,26 +1249,21 @@ fi
 TOOL=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --context-mode-mcp) CONTEXT_MODE_MCP=true; shift ;;
-    --structured-telemetry-mcp) STRUCTURED_TELEMETRY_MCP=true; shift ;;
     --include-full-skill-library) INCLUDE_FULL_SKILL_LIBRARY=true; shift ;;
     --strict-orchestrator) STRICT_ORCHESTRATOR=true; shift ;;
+    # BEGIN retired-integrations (0000030)
+    # Flags for the Context Mode and Telemetry integrations, removed in 0.29.0
+    # (0000030 ADR-003). Setup still accepts them so a refresh from an old install
+    # marker succeeds. Each prints one notice and changes nothing. None is ever
+    # recorded in the install marker, and the --backend-url value is consumed
+    # without validation.
+    --context-mode-mcp|--structured-telemetry-mcp)
+      echo "  ! $1 was removed in 0.29.0 and has no effect."
+      shift ;;
     --backend-url)
-      if [[ -z "${2:-}" ]] || [[ "${2:-}" == -* ]]; then
-        echo "Error: --backend-url requires a value"; exit 1
-      fi
-      # Validated here, once, at parse time, rather than at each of its several
-      # downstream uses -- merge_telemetry_hook_settings() interpolates this
-      # value directly into a shell command string written into the target
-      # tool's hook config (backlog 0000055, found during 0000027's P5 review).
-      # Reject anything outside a plain http(s) URL shape before it can reach
-      # that interpolation; fail loudly (setup-time check, not a runtime hook --
-      # ADR-005's fail-open precedent does not apply here).
-      if ! [[ "$2" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?(/[A-Za-z0-9._/-]*)?$ ]]; then
-        echo "Error: --backend-url must be a plain http(s) URL (host[:port][/path]), got: $2"
-        exit 1
-      fi
-      BACKEND_URL="$2"; shift 2 ;;
+      echo "  ! $1 was removed in 0.29.0 and has no effect."
+      if [[ $# -ge 2 ]] && [[ "$2" != -* ]]; then shift 2; else shift; fi ;;
+    # END retired-integrations (0000030)
     -*) echo "Unknown flag: $1"; exit 1 ;;
     *) TOOL="$1"; shift ;;
   esac
@@ -1474,7 +1273,7 @@ if [ -z "$TOOL" ]; then
   echo ""
   echo "Planifest Setup"
   echo ""
-  echo "Usage: ./planifest-framework/setup.sh <tool> [--context-mode-mcp]"
+  echo "Usage: ./planifest-framework/setup.sh <tool> [flags]"
   echo ""
   echo "Tools:"
   for t in $VALID_TOOLS; do
@@ -1483,13 +1282,6 @@ if [ -z "$TOOL" ]; then
   echo "  all"
   echo ""
   echo "Flags:"
-  echo "  --context-mode-mcp           Install context-mode enforcement hooks (Claude Code only)"
-  echo "                               (only needed if context-mode MCP plugin is installed)"
-  echo "                               See: https://github.com/mksglu/context-mode"
-  echo "  --structured-telemetry-mcp   Install structured telemetry hooks"
-  echo "                               Requires --context-mode-mcp to also be set."
-  echo "                               Context-pressure hook installed when both flags are active."
-  echo "  --backend-url <url>          Override telemetry backend URL (default: http://localhost:3741)"
   echo "  --include-full-skill-library Copy curated open-source skills from external-skills/"
   echo "                               to the tool's skill directory. Each skill carries an"
   echo "                               attribution.txt with license and copyright details."
@@ -1520,7 +1312,10 @@ run_tool_setup() {
   local t="$1"
   # opencode has its own bespoke setup script (Tier 2: Bun plugin)
   if [ "$t" = "opencode" ]; then
-    bash "$SETUP_DIR/opencode.sh"
+    # Retired integration clean-up before the plugin install (0000030 ADR-004).
+    # opencode.json registers plugins only, so no settings hook entries to scan.
+    cleanup_retired_integrations ".opencode/hooks" ""
+    PLANIFEST_SETTINGS_JS_HELPERS="$SETTINGS_JS_HELPERS" bash "$SETUP_DIR/opencode.sh"
     write_setup_config_override "$t" || true
     write_setup_flags_marker "$t" ".opencode"
   else

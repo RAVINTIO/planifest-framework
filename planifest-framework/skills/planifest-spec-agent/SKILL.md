@@ -2,7 +2,7 @@
 name: planifest-spec-agent
 description: Produces requirements artifacts (execution plan, OpenAPI spec (if applicable), scope, risk register, domain glossary) for a feature. Invoked by the orchestrator during the Requirements step.
 bundle_templates: [component.template.yml, component-guide.md, data-contract.template.md, data-contract-guide.md, requirement.template.md, execution-plan.template.md, scope.template.md, risk-register.template.md, domain-glossary.template.md]
-bundle_standards: [formatting-standards.md, telemetry-standards.md]
+bundle_standards: [formatting-standards.md]
 hooks:
   phase: spec
 ---
@@ -103,15 +103,6 @@ When the confirmed design indicates a waved feature (features grouped into waves
 | Multiple component manifest drafts | Data contract before data ownership is confirmed |
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`spec_gap`**: when the spec cannot proceed without human input:
-```json
-{ "question": "<blocking question>", "phase_name": "spec" }
-```
 
 ## Commit Cadence (Hard Limit 7)
 

@@ -2,7 +2,7 @@
 name: planifest-verify-by-execution
 description: Verifies acceptance criteria by actually running the software (browser click-throughs, real API calls, CLI invocations, log/DB checks), never by reading test output alone. Loaded by the P4 validate-agent after CI passes.
 bundle_templates: [loop-state.template.md]
-bundle_standards: [testing-standards.md, telemetry-standards.md, build-target-standards.md]
+bundle_standards: [testing-standards.md, build-target-standards.md]
 hooks:
   phase: validate
 ---
@@ -52,7 +52,3 @@ Write `plan/current/verification-report.md`:
 |-------------|-----------|--------|---------|---------------------|
 | REQ-001 | {criterion} | {api-call} | verified | {status 201, body …} |
 ```
-
-## Telemetry
-
-Per `telemetry-standards.md` gate: emit `loop_iteration` per verification pass (loop_id `verify_by_execution`).

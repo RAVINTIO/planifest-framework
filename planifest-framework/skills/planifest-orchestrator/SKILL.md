@@ -2,7 +2,7 @@
 name: planifest-orchestrator
 description: Guides a human from an initial idea to a complete set of requirements, then executes the confirmed design pipeline to build it. Use this for new features or full pipeline runs.
 bundle_templates: [feature-brief.template.md, execution-plan.template.md, requirement.template.md, component.template.yml, component-guide.md, adr.template.md, domain-glossary.template.md, risk-register.template.md, scope.template.md, data-contract.template.md, iteration-log.template.md, design.template.md]
-bundle_standards: [stack-summary.md, monorepo-standards.md, api-design-standards.md, observability-standards.md, formatting-standards.md, library-standards/_version-policy.md, telemetry-standards.md, build-target-standards.md]
+bundle_standards: [stack-summary.md, monorepo-standards.md, api-design-standards.md, observability-standards.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md]
 hooks:
   phase: orchestrator
 ---
@@ -321,12 +321,12 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
 3b. **Read version**: read `docs/about.md` if it exists. Extract the `version` field from the frontmatter. Also scan `plan/_archive/` for the most recent feature's `design.md` or `about.md` and cross-reference to verify the version. **If `product.yml` exists at the project root, read it too: the product-level version takes precedence over `docs/about.md` as the "last known version" for the bump suggestion** (`node planifest-framework/scripts/product-version.mjs` derives it; ADR-002). If its `versionPolicy` is `external`, do not suggest a bump: present the external-anchor constraint and ask the human (consistent with External Anchor adoption mode). When `product.yml` is absent, behaviour is unchanged.
 
-   **Declared product id check (req-001, ADR-002 extension):** before this step completes, also check whether `product.yml` exists at the project root and contains a non-empty `id` field. This check applies regardless of component count: single-component projects are no longer exempt from declaring a product id (they remain exempt from needing `versionPolicy`/`components` populated). If `product.yml` is absent, or present without a non-empty `id` field, **hard-stop here** (do not proceed to the rest of Phase 0) and ask the human on the loop:
+   **Declared product id check (req-001, ADR-002 extension, ADR-007):** before this step completes, also check whether `product.yml` exists at the project root and contains a non-empty `id` field. This check applies regardless of component count: single-component projects are no longer exempt from declaring a product id (they remain exempt from needing `versionPolicy`/`components` populated). If `product.yml` is absent, or present without a non-empty `id` field, **hard-stop here** (do not proceed to the rest of Phase 0) and ask the human on the loop:
    ```
    {feature-id}: No declared product id found (product.yml is missing or has no `id` field).
-   Telemetry hooks source `product_id` from this field so events stay attributable to the
-   same product regardless of clone location or machine. What should the product id be?
-   (kebab-case, stable across releases)
+   The id gives the product a stable name for versioning (product.yml and
+   scripts/product-version.mjs) and for attributing archived runs, wherever the repo is
+   cloned. What should the product id be? (kebab-case, stable across releases)
    ```
    Once the human answers, create `product.yml` if it does not exist (a minimal file containing only `id: "{declared-id}"`) or add/update just the `id` field on an existing `product.yml`, leaving all other fields (`name`, `version`, `versionPolicy`, `components`) unchanged. Resume the rest of Phase 0 once `product.yml` has a declared `id`.
 
@@ -663,7 +663,7 @@ If the human asks for a change that would fundamentally alter the feature (diffe
 
 Toggle `reversal_protocol` (default off; ADR-003). This is the *agent-initiated* counterpart to Mid-Pipeline Requirement Changes: a P3–P6 agent blocked by an upstream design defect petitions for a scoped correction. Everything here operates strictly on live P0–P6 state; nothing archived at P7 is ever touched (ADR-001, ADR-008). Enforcement is deterministic per ADR-007: budget and cascade arithmetic live in the loop-state file, weakening is blocked by `ratchet-check.mjs`.
 
-**1. Petition.** The blocked agent files a defect report per `templates/defect-report.template.md` to `plan/current/defect-reports/{seq}-{slug}.md` (all five sections; ≥1 attempt evidenced), halts its task, and hands control to you. Emit `phase_reversal_petitioned`. A report against a previously **denied** defect (same binding artifact + blockage) escalates straight to the human: no re-assessment.
+**1. Petition.** The blocked agent files a defect report per `templates/defect-report.template.md` to `plan/current/defect-reports/{seq}-{slug}.md` (all five sections; ≥1 attempt evidenced), halts its task, and hands control to you. A report against a previously **denied** defect (same binding artifact + blockage) escalates straight to the human: no re-assessment.
 
 **2. Assess.** Spawn a fresh-context `planifest-reversal-assessor` (never the filer, ADR-006) with the report, the referenced artifacts, and the loop-state file. It writes a grant/deny verdict with rubric evidence, classification (additive | altering), and the invalidation cascade computed from traceability. DENY is the default.
 
@@ -734,22 +734,3 @@ Do not block if the human explicitly confirms their intent after a warning. Reco
 When routed to the Change Pipeline, confirm scope and invoke the **change-agent** skill per `planifest-framework/workflows/change-pipeline.md`. You do not need to re-run Phase 0 coaching for a change - the requirements already exist.
 
 ---
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope and emission conditions. The snippets below show the `data` field only.
-
-**Unified signal (0000018, ADR-001):** telemetry is gated by one condition: `--structured-telemetry-mcp` was passed to `setup.sh`/`setup.ps1`. When active, emission is mandatory, not best-effort (see below for what "mandatory" means when it fails). When the signal is genuinely absent, that's not a failure; proceed exactly as if telemetry didn't exist, no prompt.
-
-**Failure detection and interactive recovery (0000018, ADR-002): you own this check.** At the start of every phase (P0 through P9), before any phase work begins, check for a durable failure marker under `plan/.telemetry-failures/` (written by the telemetry hooks on emission error: see `telemetry-standards.md` for the exact format). The `check-telemetry-failures.mjs` hook (0000026, backlog 0000044) now backstops this: it runs on every `UserPromptSubmit` and, when any marker exists, injects an `additionalContext` reminder listing each marker's `hook`, `error_type`, `error_message`, and `occurrences`, so you no longer rely purely on your own phase-start discipline to notice one. The hook only surfaces the reminder; it never decides block-or-proceed and never deletes a marker. Acting on the surfaced reminder (steps 1-3 below) remains entirely your responsibility. If a marker exists and its root cause (`root_cause_key`) has not yet been acknowledged this pipeline run:
-
-1. Surface the block-or-proceed question: *"Telemetry emission failed: {error_type}, {error_message} (hook: {hook}). Block until resolved, or proceed without telemetry for the rest of this run?"*
-2. Record the human's answer in `plan/current/build-log.md` (a `Telemetry` line under the active phase block) and treat that root cause as acknowledged for the rest of this run: never re-ask for the same `root_cause_key` again this run. A different marker (different `root_cause_key`) appearing later is asked about separately.
-3. Delete the marker file once acknowledged: a cleared marker means "already asked about," not "resolved."
-
-For your own agent-driven emission (`spec_gap` below, and any other event you emit directly): if the `emit_event` call itself fails, stop immediately, state the exact error, and ask the same block-or-proceed question inline in the same turn: no marker involved, since you're already present to ask.
-
-**Every phase records a `Telemetry` line (0000018, req-005), no exceptions.** When you append or complete a phase block in `build-log.md`, fill its `Telemetry` field with exactly one of: `emitted` (the unified signal was active and no failure marker/emission error occurred this phase), `failed-with-recorded-choice` (per steps 1-3 above, or the inline agent-driven case), or `confirmed-disabled` (the unified signal was genuinely absent this run). A phase block is not complete until this field is filled; treat a blank `Telemetry` field the same as a missing phase block (Hard Limit 8).
-
-**Event type reference** (14 types, including `phase_start`, `phase_end`, `phase_skip`, `spec_gap`, `mcp_impact`), **ownership, and the JSON snippet for each event:** see `telemetry-standards.md`.
-

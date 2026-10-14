@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000028-telemetry-hardening-and-enforcement-fixes
+Last updated: 0000030-context-mode-and-telemetry-mcp-removal
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -15,10 +15,10 @@ Last updated: 0000028-telemetry-hardening-and-enforcement-fixes
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | PreToolUse block mechanism | active | Hook scripts block tool calls by writing a deny response to stdout; exit code alone is insufficient |
-| ADR-002 | Allowlist hardcoded vs configurable | active | Allowlist is hardcoded in the script; configuration adds complexity without proportional benefit |
-| ADR-003 | Unconditional vs pattern-based blocking | active | Pattern-based blocking (Grep/Bash/WebFetch) rather than unconditional; lets non-search tool calls through |
-| ADR-004 | Hook script ownership split | active | Each hook type (block-grep, block-bash, block-webfetch) is a separate script; no monolithic hook |
+| ADR-001 | PreToolUse block mechanism | superseded by 0000030-ADR-002 | Hook scripts block tool calls by writing a deny response to stdout; exit code alone is insufficient |
+| ADR-002 | Allowlist hardcoded vs configurable | superseded by 0000030-ADR-002 | Allowlist is hardcoded in the script; configuration adds complexity without proportional benefit |
+| ADR-003 | Unconditional vs pattern-based blocking | superseded by 0000030-ADR-002 | Pattern-based blocking (Grep/Bash/WebFetch) rather than unconditional; lets non-search tool calls through |
+| ADR-004 | Hook script ownership split | superseded by 0000030-ADR-002 | Each hook type (block-grep, block-bash, block-webfetch) is a separate script; no monolithic hook |
 
 ### Feature 0000003: hook-based-enforcement
 
@@ -68,7 +68,7 @@ Last updated: 0000028-telemetry-hardening-and-enforcement-fixes
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Explicit build target field | active | `design.md` Engineering Layer has a `Build target:` field; agents use it to select Docker vs host toolchain |
-| ADR-002 | Telemetry guidance centralised | active | All telemetry envelope docs live in `telemetry-standards.md`; skill files reference it rather than duplicating |
+| ADR-002 | Telemetry guidance centralised | superseded by 0000030-ADR-002 | All telemetry envelope docs live in `telemetry-standards.md`; skill files reference it rather than duplicating |
 | ADR-003 | Optimise-agent suggestion-only | active | planifest-optimise-agent produces suggestions only, never modifies code; human decides what to apply |
 | ADR-004 | Setup manifest for managed directories | active | `.planifest-manifest` tracks installed paths for idempotent re-run cleanup |
 | ADR-005 | Locale-tagged language quirks files | active | `quirks.md` files include locale tag (`en-GB`) so agents apply the correct language variant |
@@ -77,8 +77,8 @@ Last updated: 0000028-telemetry-hardening-and-enforcement-fixes
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | Plugin as canonical source for routing rules | active | Context-mode plugin is the source of truth for which tools to block; framework hook scripts read from it |
-| ADR-002 | No per-tool routing rules fallback | active | If the plugin is absent, hooks pass through silently rather than applying a hard-coded fallback list |
+| ADR-001 | Plugin as canonical source for routing rules | superseded by 0000030-ADR-002 | Context-mode plugin is the source of truth for which tools to block; framework hook scripts read from it |
+| ADR-002 | No per-tool routing rules fallback | superseded by 0000030-ADR-002 | If the plugin is absent, hooks pass through silently rather than applying a hard-coded fallback list |
 
 ### Feature 0000009: framework-rail-tightening
 
@@ -182,7 +182,7 @@ ADR files: [plan/_archive/0000017-ratchet-forgery-detection-and-telemetry-schema
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Ratchet-Approve: Agent Write on Explicit Instruction | accepted | Amends 0000016 ADR-004: agent may write `.ratchet-approve` only when the human states path, reason, and go-ahead in the same turn; format `path \| reason \| timestamp`; immediate dedicated commit; backstop kept with an explicit approver-facing message; consumption copied to `plan/ratchet-audit-log.md` |
-| ADR-002 | Cross-Platform Hook Runtime Unification (.sh → .mjs) | accepted | The 3 context-mode hooks become `.mjs` (Node-only): removes `jq` and the Git Bash/WSL requirement entirely; missing Node surfaces a message at setup and runtime while failing open |
+| ADR-002 | Cross-Platform Hook Runtime Unification (.sh → .mjs) | partly superseded by 0000030-ADR-002 | The 3 context-mode hooks become `.mjs` (Node-only): removes `jq` and the Git Bash/WSL requirement entirely; missing Node surfaces a message at setup and runtime while failing open |
 | ADR-003 | Scope Lock Suggested Answers via On-Demand Subagent | superseded by 0000025 ADR-003 | The orchestrator always offers "want me to suggest an answer?" at each Scope Lock question but only dispatches `planifest-scope-lock-agent` on explicit request; drafts are usage-only, consistency-checked, flagged, and never self-confirming. **Superseded:** 0000025-ADR-003 reverses the never-pre-draft, offer-then-opt-in default for the Scope Lock Challenge specifically, replacing it with default parallel drafting and batch presentation; per-item explicit accept/edit/reject and immediate build-log capture are unchanged |
 | ADR-004 | Structured P0 Discovery Pass and discovery.md Lifecycle | accepted | Every adoption mode runs a structured discovery pass before coaching, writing to `plan/current/discovery.md`: fresh each run, archived at P7; partial failures noted inline, never a hard block |
 
@@ -190,8 +190,8 @@ ADR files: [plan/_archive/0000017-ratchet-forgery-detection-and-telemetry-schema
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | Unify Telemetry Gating by Removing the --context-mode-mcp Coupling | accepted | Removes the `--context-mode-mcp` AND-condition from telemetry hook installation: `--structured-telemetry-mcp` alone becomes sufficient, closing the exact gap that caused 0000017's telemetry loss |
-| ADR-002 | Telemetry Failure Detection and Interactive Recovery | accepted | Hook-driven emission stays fire-and-forget (ADR-005, 0000003, unchanged) but now writes a durable failure marker on error, checked by the orchestrator at phase-start checkpoints; agent-driven emission stops and asks immediately inline. Human is asked once per distinct root cause per run |
+| ADR-001 | Unify Telemetry Gating by Removing the --context-mode-mcp Coupling | superseded by 0000030-ADR-002 | Removes the `--context-mode-mcp` AND-condition from telemetry hook installation: `--structured-telemetry-mcp` alone becomes sufficient, closing the exact gap that caused 0000017's telemetry loss |
+| ADR-002 | Telemetry Failure Detection and Interactive Recovery | superseded by 0000030-ADR-002 | Hook-driven emission stays fire-and-forget (ADR-005, 0000003, unchanged) but now writes a durable failure marker on error, checked by the orchestrator at phase-start checkpoints; agent-driven emission stops and asks immediately inline. Human is asked once per distinct root cause per run |
 | ADR-003 | discovery.md Elevated to Hard Limit Status | accepted | discovery.md's existence-and-completeness requirement elevated to Hard Limit status, matching build-log.md's Hard Limit 8 pattern: a self-audit finding from this feature's own P0 |
 
 ### Feature 0000019: self-description-and-session-hygiene-fixes
@@ -199,7 +199,7 @@ ADR files: [plan/_archive/0000017-ratchet-forgery-detection-and-telemetry-schema
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Repository self-description check is a separate script | accepted | `self-description-check.mjs` is a new, repository-scoped script wired into CI, deliberately not folded into `consistency-check.mjs`: different subject (repo self-description vs. `plan/current/`), different lifecycle (every PR vs. per-feature), different caller |
-| ADR-002 | context_pressure telemetry events map to phase: "orchestrator" | accepted | Fixes an unconditional HTTP 400 (invalid `phase` enum value `"monitoring"`) discovered live during this feature's own P0; maps to `"orchestrator"` as the semantically closest existing value, consistent with context hygiene being framed as an orchestrator responsibility |
+| ADR-002 | context_pressure telemetry events map to phase: "orchestrator" | superseded by 0000030-ADR-002 | Fixes an unconditional HTTP 400 (invalid `phase` enum value `"monitoring"`) discovered live during this feature's own P0; maps to `"orchestrator"` as the semantically closest existing value, consistent with context hygiene being framed as an orchestrator responsibility |
 
 ### Feature 0000020 - setup-refresh-skill
 
@@ -217,14 +217,14 @@ ADR files: [plan/_archive/0000020-setup-refresh-skill-2026-08-01/adr/](../plan/_
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | product.yml Extended to Single-Component Projects as Declared Product ID Home | accepted | `product.yml`'s `id` field becomes the canonical declared `product_id` for telemetry across all projects, including single-component ones; extends (does not supersede) 0000016 ADR-002, whose versioning-only decision remains fully in force |
+| ADR-001 | product.yml Extended to Single-Component Projects as Declared Product ID Home | partly superseded by 0000030-ADR-007 (rationale only) | `product.yml`'s `id` field becomes the canonical declared `product_id` for telemetry across all projects, including single-component ones; extends (does not supersede) 0000016 ADR-002, whose versioning-only decision remains fully in force |
 
 ### Feature 0000025: pipeline-gate-and-config-fixes-and-ship-agent-fixes
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Ship-agent PR Footer Default-Off with Opt-In Toggle | accepted | The hardcoded AI-attribution footer is removed from the P9 PR description template by default (both `gh pr create` and human-push paths); restorable only via a `planifest-overrides/instructions/` opt-in file, consistent with the existing `local-git-only` override pattern |
-| ADR-002 | Setup-Config Overrides Precedence | accepted | The new tracked `planifest-overrides/setup-config/{tool}.md` file is source of truth for setup flags/backend-url; the existing gitignored `.planifest-setup-flags` marker becomes a local cache reconciled to match it on setup/refresh; `.orchestrator-strict` explicitly out of scope (separate concern) |
+| ADR-002 | Setup-Config Overrides Precedence | accepted | The new tracked `planifest-overrides/setup-config/{tool}.md` file is source of truth for setup flags; the existing gitignored `.planifest-setup-flags` marker becomes a local cache reconciled to match it on setup/refresh; `.orchestrator-strict` explicitly out of scope (separate concern) |
 | ADR-003 | Scope Lock Default Drafted, Batch-Presented | accepted | Scope Lock Challenge now dispatches `planifest-scope-lock-agent` for all four scenario-path questions in parallel by default and presents them together for one batch accept/edit/reject pass: supersedes 0000017-ADR-003's opt-in-per-question default; explicitly scoped against 0000014-ADR-008's one-question-at-a-time convention, which is unchanged everywhere else |
 
 ### Feature 0000026: context-hook-and-telemetry-backstop-fixes
@@ -241,7 +241,7 @@ ADR files: [plan/_archive/0000027-backlog-batch-governance-tooling-fixes-2026-08
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | Telemetry emit_event Receipt Backstop | accepted | Extends the `check-telemetry-failures.mjs` hook family with a new `emit-event-receipt.mjs` (PostToolUse, matched on the `emit_event` MCP tool call) writing a durable receipt per successful call, and `check-telemetry-receipts.mjs` (sibling hook) cross-referencing build-log's per-phase "Telemetry: emitted" claims against those receipts: closes the remaining half of backlog 0000044 not already covered by 0000026 |
+| ADR-001 | Telemetry emit_event Receipt Backstop | superseded by 0000030-ADR-002 | Extends the `check-telemetry-failures.mjs` hook family with a new `emit-event-receipt.mjs` (PostToolUse, matched on the `emit_event` MCP tool call) writing a durable receipt per successful call, and `check-telemetry-receipts.mjs` (sibling hook) cross-referencing build-log's per-phase "Telemetry: emitted" claims against those receipts: closes the remaining half of backlog 0000044 not already covered by 0000026 |
 | ADR-002 | Framework Update Policy as a New P0 Step | accepted | Adds a dedicated P0 Start Actions step (Resume Detection 1a) detecting a `planifest-framework/` dependency update and gating on human confirmation of both the update and its provenance, documented in `standards/framework-update-policy.md`: deliberately not an extension of `planifest-migrator` (different I/O shape) nor a new standalone skill (disproportionate to the mechanism's actual complexity) |
 | ADR-003 | Skill-Scope Principle: Does This Skill Earn Its Place | accepted | Records the governance test (does this skill provide governance or traceability the host tool cannot) with `planifest-test-writer`/`implementer`/`refactor`/`verify-by-execution` as worked examples (three retain, one retain-marginal); referenced from the orchestrator's Capability Skills guidance for future skill additions |
 | ADR-004 | Minimal Default Phase 1 Artifact Set | accepted | Names execution plan, requirements, scope, risk register, and domain glossary as the always-produced Phase 1 set; OpenAPI/Operational Model/SLO Definitions/Cost Model each gated by an explicit, checkable trigger condition: reflected identically in `feature-pipeline.md` and `planifest-spec-agent`, closing the "documentation theatre" gap from backlog 0000021 |
@@ -252,8 +252,8 @@ ADR files: [plan/_archive/0000028-telemetry-hardening-and-enforcement-fixes-2026
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | Network-Level Retry Semantics for Telemetry Emission | accepted | A telemetry emission failure is retried only when it is network-level, identified by `!err.name.startsWith("http_")`; an HTTP 4xx or 5xx means a listener answered and rejected the event and is never retried. Budget: 2 retries, 3 attempts total, fixed 300ms gaps, on top of the unchanged 3s per-attempt abort. Retry exhaustion writes the durable marker exactly as before, so a genuinely-down backend still surfaces. Narrows the definition of failure rather than adding a queue, which NFR-002 forbids |
-| ADR-002 | Shared Module Placement and Install Topology | accepted | Each duplicated helper becomes one module inside the existing `hooks/enforcement/` and `hooks/telemetry/` trees, never a new top-level `shared/` directory that would need its own install glob in all three `setup.sh` paths. Placement follows install condition: `enforcement/` installs unconditionally, `telemetry/` only under `--structured-telemetry-mcp`, so any helper with an enforcement caller lives in `enforcement/` and is imported cross-directory. `read-stdin.mjs` was moved to `enforcement/` mid-implementation for exactly this reason, and its copy count was 13, not the 7 first recorded. Tier 1's telemetry glob widened from `emit-phase-*.mjs` to `*.mjs` in both `setup.sh` and `setup.ps1`, a latent bug independent of the extraction. No commit may contain a caller importing a module absent from that same commit |
+| ADR-001 | Network-Level Retry Semantics for Telemetry Emission | superseded by 0000030-ADR-002 | A telemetry emission failure is retried only when it is network-level, identified by `!err.name.startsWith("http_")`; an HTTP 4xx or 5xx means a listener answered and rejected the event and is never retried. Budget: 2 retries, 3 attempts total, fixed 300ms gaps, on top of the unchanged 3s per-attempt abort. Retry exhaustion writes the durable marker exactly as before, so a genuinely-down backend still surfaces. Narrows the definition of failure rather than adding a queue, which NFR-002 forbids |
+| ADR-002 | Shared Module Placement and Install Topology | partly superseded by 0000030-ADR-002 | Each duplicated helper becomes one module inside the existing `hooks/enforcement/` and `hooks/telemetry/` trees, never a new top-level `shared/` directory that would need its own install glob in all three `setup.sh` paths. Placement follows install condition: `enforcement/` installs unconditionally, `telemetry/` only under `--structured-telemetry-mcp`, so any helper with an enforcement caller lives in `enforcement/` and is imported cross-directory. `read-stdin.mjs` was moved to `enforcement/` mid-implementation for exactly this reason, and its copy count was 13, not the 7 first recorded. Tier 1's telemetry glob widened from `emit-phase-*.mjs` to `*.mjs` in both `setup.sh` and `setup.ps1`, a latent bug independent of the extraction. No commit may contain a caller importing a module absent from that same commit |
 | ADR-003 | Em Dash Guard Attachment Point and Bypass | accepted | The guard is a `PreToolUse(Write, Edit)` hook, `hooks/enforcement/em-dash-guard.mjs`, sibling to `gate-write.mjs` rather than a modification of it, so a defect in one cannot disable the other. A git hook was rejected because the character would already be on disk by commit time. Scoped to five prefixes: `plan/current/`, `docs/`, and `planifest-framework/` skills, templates and standards. Since Claude Code offers no per-call skip flag, the bypass is an in-content sentinel comment, visible in the artifact's own diff, reusable and writable by either party, deliberately unlike `.ratchet-approve`, which guards a commitment being weakened rather than a single character of punctuation |
 | ADR-004 | Self-Modification Sequencing for Hook Extraction and Reinstall | accepted | When a feature rewrites the hooks executing its own build, rewire one caller at a time: edit, commit, re-run `setup.sh` for that edit alone, then assert a real side effect (event received, marker written, process spawned), never merely that the process returned. Exit 0 is uninformative by design (NFR-001), so a hook broken mid-edit degrades to a silent no-op, and an ESM import of a missing module fails before the hook's own try/catch runs. One `setup.sh` re-run at the end was rejected because it collapses good straight to multiply-broken with no way to bisect. A separate worktree was rejected outright by repo instruction |
 
@@ -264,7 +264,21 @@ ADR files: [plan/_archive/0000029-context-mode-removal-and-boot-file-regeneratio
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Boot Files Are Disposable Build Outputs | accepted | `write_boot_file`/`Write-PlanifestBootFile` overwrite the boot file unconditionally on every setup run; the skip-if-exists guard protected hand-editing, a workflow the framework does not support, while silently blocking template fixes from ever reaching installed repos. Durable customization belongs exclusively in `planifest-overrides/instructions/`, re-applied every run |
-| ADR-002 | Boot Templates Never Name Third-Party MCP Plugins | accepted | Removes the unconditional context-mode instruction from `templates/standard-boot.md` (shipped into 6 of 9 tools' boot files) after the plugin injected a fabricated system-reminder instructing the agent to conceal a change from the human. Standing rule: boot-file text is trusted instruction text and never endorses a named third-party plugin; tool availability belongs to host-tool configuration, not template prose. The opt-in `--context-mode-mcp` hook path is untouched |
+| ADR-002 | Boot Templates Never Name Third-Party MCP Plugins | accepted | Removes the unconditional third-party plugin instruction from `templates/standard-boot.md` (shipped into 6 of 9 tools' boot files) after the plugin injected a fabricated system-reminder instructing the agent to conceal a change from the human. Standing rule: boot-file text is trusted instruction text and never endorses a named third-party plugin; tool availability belongs to host-tool configuration, not template prose. The opt-in hook path was untouched at the time |
+
+### Feature 0000030: context-mode-and-telemetry-mcp-removal
+
+ADR files: [plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10-14/adr/](../plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10-14/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack Unchanged | accepted | The feature removes code and keeps the declared stack: Bash, PowerShell, Node `.mjs` hooks, Markdown, and GitHub Actions |
+| ADR-002 | Remove the Context Mode and Telemetry MCP Integrations Completely | accepted | Both optional MCP integrations leave the framework entirely, including pipeline text, and their earlier ADRs become superseded |
+| ADR-003 | Retired Flags Stay Accepted as No-Ops | accepted | Setup keeps accepting `--context-mode-mcp`, `--structured-telemetry-mcp`, and `--backend-url`, prints a one-line notice, and never records them |
+| ADR-004 | Setup Clean-Up Is Always On, Path-Matched, and Fails Open | accepted | Every setup run removes stale integration state by exact path match, writes atomically, and never blocks the install |
+| ADR-005 | Setup Takes Ownership of Retiring Telemetry State | accepted | `setup-hook-integration` owns removal of every stale artifact, including the `plan/.telemetry-*` folders the old hooks wrote |
+| ADR-006 | Self-Hosting Order and Migration Last | accepted | This repo removes its own wiring in one final step, entries before files, and the downstream migration file is the last P3 commit |
+| ADR-007 | Keep the Product ID Hard-Stop With a New Rationale | accepted | The P0 hard-stop on `product.yml` `id` stays, now justified by versioning and archive attribution rather than telemetry |
 
 ---
 

@@ -8,9 +8,8 @@
  * Cline PreToolUse envelope shape:
  *   { toolName, toolInput, sessionId?, workspacePath? }
  *
- * Usage: node cline.mjs <script> [phase]
+ * Usage: node cline.mjs <script>
  *   e.g.  node cline.mjs gate-write
- *         node cline.mjs emit-phase-start spec
  */
 
 import { spawnSync } from "node:child_process";
@@ -18,7 +17,6 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const SCRIPT_NAME = process.argv[2];
-const PHASE_ARG = process.argv[3];
 
 const ADAPTER_DIR = dirname(new URL(import.meta.url).pathname);
 const HOOKS_DIR = dirname(ADAPTER_DIR);
@@ -47,13 +45,11 @@ try {
     event: "PreToolUse",
   };
 
-  const scriptSubdir = SCRIPT_NAME.startsWith("emit-") ? "telemetry" : "enforcement";
-  const scriptPath = join(HOOKS_DIR, scriptSubdir, `${SCRIPT_NAME}.mjs`);
+  const scriptPath = join(HOOKS_DIR, "enforcement", `${SCRIPT_NAME}.mjs`);
 
   if (!existsSync(scriptPath)) process.exit(0);
 
-  const args = PHASE_ARG ? [scriptPath, PHASE_ARG] : [scriptPath];
-  const result = spawnSync(process.execPath, args, {
+  const result = spawnSync(process.execPath, [scriptPath], {
     input: JSON.stringify(envelope),
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],

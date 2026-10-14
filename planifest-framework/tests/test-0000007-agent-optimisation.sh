@@ -105,14 +105,11 @@ assert_contains "Never write"                 "$OPTIMISE" "req-003: hard limit �
 echo ""
 echo "=== req-004: skill boilerplate removal ==="
 
-TELEMETRY_POINTER="telemetry-standards.md"
-
-# Phase skills that emit telemetry events — must reference telemetry-standards.md
+# Phase skills — must declare bundle_standards
 for skill in planifest-adr-agent planifest-spec-agent planifest-security-agent \
              planifest-docs-agent planifest-validate-agent planifest-change-agent \
              planifest-codegen-agent planifest-ship-agent; do
   SKILL_CONTENT=$(cat "$SKILLS/$skill/SKILL.md")
-  assert_contains "$TELEMETRY_POINTER" "$SKILL_CONTENT" "req-004: $skill references telemetry-standards.md"
   assert_contains "bundle_standards" "$SKILL_CONTENT" "req-004: $skill has bundle_standards in frontmatter"
 done
 
@@ -130,20 +127,6 @@ for skill in planifest-adr-agent planifest-spec-agent planifest-security-agent \
 done
 
 # -----------------------------------------------------------------------
-
-echo ""
-echo "=== req-005: telemetry standards extraction ==="
-
-TELEM_FILE="$STANDARDS/telemetry-standards.md"
-assert_file_exists "$TELEM_FILE" "req-005: telemetry-standards.md exists"
-
-TELEM=$(cat "$TELEM_FILE")
-assert_contains "phase_start"       "$TELEM" "req-005: telemetry-standards has phase_start event"
-assert_contains "phase_end"         "$TELEM" "req-005: telemetry-standards has phase_end event"
-assert_contains "schema_version"    "$TELEM" "req-005: telemetry-standards has schema_version in envelope"
-assert_contains "emit_event"        "$TELEM" "req-005: telemetry-standards references emit_event"
-assert_contains "telemetry-enabled" "$TELEM" "req-005: telemetry-standards references telemetry-enabled sentinel"
-assert_contains "orchestrator"      "$TELEM" "req-005: telemetry-standards documents phase_start/phase_end ownership"
 
 # -----------------------------------------------------------------------
 

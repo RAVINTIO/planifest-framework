@@ -28,7 +28,7 @@ These are the core working directories:
 - `plan/` — The current change being planned.
   - `plan/current/design.md` — Confirmed design and build plan.
   - `plan/current/feature-brief.md` — The initiating human-authored brief.
-  - `plan/current/build-log.md` — Working telemetry file maintained throughout the pipeline run.
+  - `plan/current/build-log.md` — Working log file maintained throughout the pipeline run.
   - `plan/current/iteration-log.md` — Audit trail of the pipeline run.
   - `plan/_archive/` — Historical plans filed here after merge.
   - `plan/changelog/` — A record of all changes (`{feature-id}-{YYYY-MM-DD}.md`).
@@ -60,36 +60,6 @@ Installs:
 - Supporting files (templates, standards, schemas)
 - A boot file for your tool (e.g. `CLAUDE.md`, `AGENTS.md`)
 - Git guardrails and the orchestrator sentinel (activated automatically)
-
-#### Option: Context-Mode (recommended)
-
-[context-mode](https://github.com/mksglu/context-mode) routes large output — search results, file analysis, web fetches — into a sandboxed knowledge base. Only summaries enter the context window, so the agent stays fast and focused on large codebases.
-
-Install context-mode first, then pass `--context-mode-mcp` during setup:
-
-```bash
-# macOS / Linux
-./planifest-framework/setup.sh claude-code --context-mode-mcp
-```
-
-```powershell
-# Windows (PowerShell)
-.\planifest-framework\setup.ps1 claude-code --context-mode-mcp
-```
-
-See [docs/context-mode.md](../docs/context-mode.md) for prerequisites.
-
-#### Option: Structured Telemetry
-
-Requires [structured-telemetry-mcp](https://github.com/anthropics/structured-telemetry-mcp) to be running, then pass `--structured-telemetry-mcp`:
-
-```bash
-./planifest-framework/setup.sh claude-code --structured-telemetry-mcp
-```
-
-```powershell
-.\planifest-framework\setup.ps1 claude-code --structured-telemetry-mcp
-```
 
 See [tool-setup-reference.md](tool-setup-reference.md) for what each tool expects.
 

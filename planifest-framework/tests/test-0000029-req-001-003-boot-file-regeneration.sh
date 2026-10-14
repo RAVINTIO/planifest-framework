@@ -5,8 +5,7 @@
 #          file from the current template (skip-if-exists guard removed), with
 #          planifest-overrides/instructions/ content re-applied every run.
 # req-002: templates/standard-boot.md carries no context-mode MCP reference;
-#          generated boot files carry none; the opt-in --context-mode-mcp
-#          hook-install path is untouched.
+#          generated boot files carry none.
 # req-003: planifest-overrides/instructions/custom-001-local-git-only.md
 #          (repo-local config, not distributed source) authorizes pull/push/PR
 #          creation and names commits-to-main and PR-merge as human-only.
@@ -97,16 +96,6 @@ echo "=== (f) req-002: regenerated CLAUDE.md is context-mode free ==="
 
 assert_equals "0" "$(grep_count "context-mode" "$WS/CLAUDE.md")" \
   "(f): zero 'context-mode' occurrences in generated CLAUDE.md"
-
-# ── (g) req-002: opt-in --context-mode-mcp path untouched ───────────────────
-
-echo ""
-echo "=== (g) req-002: install_context_mode_hooks still present in setup.sh ==="
-
-assert_equals "yes" "$(grep_has "install_context_mode_hooks" "$FRAMEWORK/setup.sh")" \
-  "(g): install_context_mode_hooks function still exists (out of scope, untouched)"
-assert_equals "yes" "$(grep_has "context-mode-mcp" "$FRAMEWORK/setup.sh")" \
-  "(g): --context-mode-mcp flag still parsed (out of scope, untouched)"
 
 # ── (h) req-003: repo-local git-permission override wording ─────────────────
 

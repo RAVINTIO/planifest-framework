@@ -25,8 +25,8 @@ Two setup scripts are provided - use whichever matches your OS:
 
 | Flag | Purpose |
 |------|---------|
-| `--context-mode-mcp` | Installs [context-mode](https://github.com/mksglu/context-mode) enforcement hooks (Claude Code only). Routing rules are provided by the plugin's system prompt. |
-| `--structured-telemetry-mcp` | Installs `.claude/telemetry-enabled` sentinel and (with `--context-mode-mcp`) the `context-pressure.mjs` PostToolUse hook. |
+| `--strict-orchestrator` | Makes the orchestrator sentinel strict: writes to `plan/current/` need an active orchestrator run. |
+| `--include-full-skill-library` | Installs the full third-party skill library alongside the Planifest skills. |
 
 ---
 
@@ -77,10 +77,6 @@ For each tool, the script:
     ├── feature-pipeline.md
     ├── change-pipeline.md
     └── retrofit.md
-└── hooks/context-mode/ (if --context-mode-mcp)
-    ├── block-bash.sh
-    ├── block-grep.sh
-    └── block-webfetch.sh
 CLAUDE.md
 ```
 
@@ -292,26 +288,6 @@ All seven tools share these conventions:
    ```
 
 ---
-
-## Context-Mode Integration
-
-When the `--context-mode-mcp` flag is passed, the setup script installs enforcement hooks for Claude Code. Routing rules are provided automatically by the context-mode plugin's system prompt — no separate file is needed.
-
-### Enforcement Hooks (Claude Code Only)
-
-For Claude Code, the script installs physical guardrails that prevent the agent from bypassing the routing rules.
-
-- **Hook scripts** are copied from `planifest-framework/hooks/context-mode/` to `.claude/hooks/context-mode/`.
-- **Settings integration**: `.claude/settings.json` is updated (via `jq` on Unix or PowerShell on Windows) to register these scripts as `PreToolUse` hooks.
-
-| Hook | Intercepted Tool | Logic |
-|------|-----------------|-------|
-| `block-grep.sh` | `Grep` | Always blocked. Redirects to `ctx_execute`. |
-| `block-bash.sh` | `Bash` | Blocked if command matches patterns: `grep`, `rg`, `curl`, `wget`. |
-| `block-webfetch.sh` | `WebFetch` | Always blocked. Redirects to `ctx_fetch_and_index`. |
-
-**Bash Allowlist**: The following commands are always allowed through `block-bash.sh`:
-`git`, `mkdir`, `rm`, `mv`, `cd`, `ls`, `npm install`, `pip install`.
 
 ---
 

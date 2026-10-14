@@ -2,7 +2,7 @@
 name: planifest-change-agent
 description: Handles targeted modifications to existing features: loads domain context, implements the minimum change, validates, and updates documentation. Invoked via the Change Pipeline route.
 bundle_templates: [component.template.yml, change-summary.template.md]
-bundle_standards: [code-quality-standards.md, telemetry-standards.md]
+bundle_standards: [code-quality-standards.md]
 ---
 
 # Planifest - change-agent
@@ -23,8 +23,6 @@ bundle_standards: [code-quality-standards.md, telemetry-standards.md]
 ### Phase 1 - Domain Context
 
 Before changing anything, read:
-
-> **Context-Mode Protocol:** when available, run the domain context reads and blast radius analysis as a single `ctx_batch_execute` call rather than sequential reads.
 
 **Precision Reading Protocol:**
 Do not exhaust token limits by loading all files. Read top-down selectively:
@@ -129,28 +127,4 @@ Schema changed: yes/no
 Migration proposed: yes/no
 Consumers affected: {list or "none"}
 Blast radius: {list of components in the dependency chain}
-```
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`deviation`**: when implementation diverges from the confirmed design:
-```json
-{ "component_id": "<component>", "description": "<what changed and why>", "severity": "low" | "medium" | "high" }
-```
-
-**`migration_proposal`**: before writing a migration proposal file:
-```json
-{ "component_id": "<component>", "proposal_path": "src/<id>/docs/migrations/proposed-<desc>.md", "destructive": true | false }
-```
-
-**`self_correction`**: when retrying a failed action:
-```json
-{ "phase_name": "change", "attempt_number": <n>, "action_id": "<action>", "correction_type": "<type>" }
-```
-
-**`retry_limit_exceeded`**: when the 5-attempt escalation ceiling is hit:
-```json
-{ "phase_name": "change", "action_id": "<action>", "attempt_count": 5 }
 ```

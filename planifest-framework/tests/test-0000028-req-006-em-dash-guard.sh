@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for feature 0000028-telemetry-hardening-and-enforcement-fixes
+# Tests for feature 0000028-hardening-and-enforcement-fixes
 # req-006: em dash write-time guard and cleanup (ADR-003)
 #
 # Covers:
