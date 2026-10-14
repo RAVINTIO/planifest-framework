@@ -31,7 +31,7 @@ summary: "Working telemetry file maintained by the orchestrator throughout the p
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Telemetry | confirmed-disabled |
-| Notes | Pre-flight: on merged feat/0000029 branch; checked out main, set upstream to origin/main, fast-forwarded to 6a50af1; created feat/pending (local only, push deferred until scope is chosen). Backlog pickup in progress. |
+| Notes | Pre-flight: on merged feat/0000029 branch; checked out main, set upstream to origin/main, fast-forwarded to 6a50af1; created feat/pending (local only, push deferred until scope is chosen). Backlog pickup in progress. Backlog discard (human instruction, remove anything about the context-mode MCP or telemetry MCP): 0000022, 0000056, 0000066, 0000067, 0000068, 0000069, 0000070, 0000072. |
 
 ---
 
