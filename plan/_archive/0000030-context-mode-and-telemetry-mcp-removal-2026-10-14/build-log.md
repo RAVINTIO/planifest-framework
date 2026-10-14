@@ -209,7 +209,22 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Telemetry | confirmed-disabled |
-| Notes | Sub-agent reads this archived log and writes build-report.md. |
+| Notes | Sub-agent (haiku, cheaper tier) wrote build-report.md. Findings: zero cheaper-tier use before P8, tier split mismatch in the summary, under-counted self-corrections, P2 inline ADRs with a late block, P4 batch count with no agents, and the P5 stop rule overridden by the continuous-run authorisation. |
+
+---
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:40:58Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Version 0.29.0 from product-version.mjs, higher than the last tag v0.28.1. product.yml version and feature updated. Push and PR by the agent: the human asked for this during P1, and no local-git-only text appears in the override contents. No restore-pr-attribution override, so the PR has no attribution footer. Gate not stopped: the human authorised a continuous run through P9. |
 
 ---
 
