@@ -13,7 +13,7 @@ graph TD
         SKILLS["skills/ (orchestrator + phase agents)"]
         STANDARDS["standards/, templates/"]
         ENFORCE["hooks/enforcement/\n(gate-write, ratchet-check, check-design,\nem-dash-guard)"]
-        ENFSHARED["hooks/enforcement/ shared modules\n(read-stdin.mjs, phase-enum.mjs)\nalways installed"]
+        ENFSHARED["hooks/enforcement/ shared modules\n(read-stdin.mjs)\nalways installed"]
     end
 
     subgraph "Claude Code Runtime"

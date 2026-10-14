@@ -43,7 +43,7 @@ flowchart TD
         CD["check-design.mjs\n(scope injection)"]
         RC["ratchet-check.mjs\n(criteria/scope weakening block,\narmed while a loop is active)"]
         ED["em-dash-guard.mjs\n(U+2014 rejected in Planifest prose,\nsentinel bypass, 0000028)"]
-        SHE["read-stdin.mjs, phase-enum.mjs\n(shared modules, always installed)"]
+        SHE["read-stdin.mjs\n(shared module, always installed)"]
     end
 
     subgraph Setup["Setup (planifest-framework/)"]
