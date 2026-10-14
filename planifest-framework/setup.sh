@@ -654,8 +654,12 @@ cleanup_retired_integrations() {
           continue
           ;;
       esac
-      rm -rf "${phys_parent:?}/$(basename "$p")"
-      echo "  - $p (retired, removed)"
+      # A failed delete warns and setup carries on (ADR-004 fails open)
+      if rm -rf "${phys_parent:?}/$(basename "$p")" 2>/dev/null; then
+        echo "  - $p (retired, removed)"
+      else
+        echo "  ! could not remove $p - left in place, delete it by hand"
+      fi
     fi
   done
 }

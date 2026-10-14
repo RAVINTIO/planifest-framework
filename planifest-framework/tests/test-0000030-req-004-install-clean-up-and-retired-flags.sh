@@ -414,6 +414,38 @@ assert_contains "pwd -P" "$sh_fenced" "setup.sh clean-up: resolves the parent fo
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
+echo "=== P5 F4: a failed delete warns and setup carries on, exit 0 ==="
+
+if [ "$(id -u)" = "0" ]; then
+  echo "  SKIP: running as root, a read-only folder cannot block a delete"
+else
+  WS=$(make_workspace)
+  LOCKED="$WS/.claude/hooks/telemetry"
+  mkdir -p "$LOCKED"
+  echo "// stale" > "$LOCKED/emit-phase-start.mjs"
+  chmod 555 "$LOCKED"
+  trap 'chmod 755 "$LOCKED" 2>/dev/null' EXIT
+  out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
+  assert_exit_zero $? "undeletable folder: setup exits 0"
+  assert_contains "could not remove .claude/hooks/telemetry" "$out" "undeletable folder: warning printed"
+  assert_contains "Setup complete." "$out" "undeletable folder: rest of install finishes"
+  chmod 755 "$LOCKED"
+  trap - EXIT
+  rm -rf "$WS"
+fi
+
+# PowerShell twin (static)
+ps1_fenced=$(awk -v b="$FENCE_BEGIN" -v e="$FENCE_END" 'index($0,b){s=1} s{print} index($0,e){s=0}' "$SETUP_PS1")
+assert_contains "could not remove" "$ps1_fenced" "setup.ps1 clean-up: a failed delete warns"
+assert_contains "catch" "$(printf '%s\n' "$ps1_fenced" | sed -n '/foreach (\$p in \$stale)/,$p')" \
+  "setup.ps1 clean-up: each delete is wrapped in try/catch"
+ws_fn=$(sed -n '/^function Write-SettingsFile/,/^}/p' "$SETUP_PS1")
+assert_contains "catch" "$ws_fn" "setup.ps1 Write-SettingsFile: a failed rename is caught"
+assert_contains 'Remove-Item -LiteralPath $tmp' "$ws_fn" "setup.ps1 Write-SettingsFile: temporary file removed on failure"
+assert_contains "left unchanged" "$ws_fn" "setup.ps1 Write-SettingsFile: failure warns, original untouched"
+
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
 echo "=== req-004: setup.sh and setup.ps1 parity (static) ==="
 
 for f in "$SETUP_SH" "$SETUP_PS1"; do
@@ -435,7 +467,7 @@ for f in "$SETUP_SH" "$SETUP_PS1"; do
   assert_equals "yes" "$(yes_no grep -q 'renameSync(tmp, sf)' "$f")" \
     "$name: settings writes go through a temporary file then a rename"
 done
-assert_equals "yes" "$(yes_no grep -q 'Move-Item -Path \$tmp' "$SETUP_PS1")" \
+assert_equals "yes" "$(yes_no grep -q 'Move-Item -LiteralPath \$tmp' "$SETUP_PS1")" \
   "setup.ps1: PowerShell-native settings writes also go through a temporary file"
 
 echo ""

@@ -92,8 +92,18 @@ function Write-SettingsFile {
     $dir = Split-Path -Parent $SettingsPath
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
     $tmp = Join-Path $dir (".{0}.planifest-tmp-{1}" -f (Split-Path -Leaf $SettingsPath), $PID)
-    Set-Content -Path $tmp -Value $Content -Encoding UTF8
-    Move-Item -Path $tmp -Destination $SettingsPath -Force
+    # A failed write or rename warns, removes the temporary file, and leaves the
+    # original untouched. Setup carries on (ADR-004 fails open). Returns $true
+    # when the file was written.
+    try {
+        Set-Content -LiteralPath $tmp -Value $Content -Encoding UTF8 -ErrorAction Stop
+        Move-Item -LiteralPath $tmp -Destination $SettingsPath -Force -ErrorAction Stop
+        return $true
+    } catch {
+        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+        Write-Host "  ! could not write $SettingsPath ($($_.Exception.Message)) - left unchanged"
+        return $false
+    }
 }
 
 # The same helpers for inline Node scripts, mirroring SETTINGS_JS_HELPERS in
@@ -345,7 +355,7 @@ function Merge-EnforcementHookSettings {
         })
         $existing.hooks.UserPromptSubmit = $filtered + $autoTriggerEntry + $presenceEntry + $userPromptEntry
 
-        Write-SettingsFile -SettingsPath $SettingsPath -Content ($existing | ConvertTo-Json -Depth 10)
+        $null = Write-SettingsFile -SettingsPath $SettingsPath -Content ($existing | ConvertTo-Json -Depth 10)
         Write-Host "  ~ $SettingsRel (enforcement hook entries merged)"
     }
     else {
@@ -355,7 +365,7 @@ function Merge-EnforcementHookSettings {
                 UserPromptSubmit = @($autoTriggerEntry, $presenceEntry, $userPromptEntry)
             }
         }
-        Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
+        $null = Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
         Write-Host "  + $SettingsRel (created with enforcement hook entries)"
     }
 }
@@ -380,7 +390,7 @@ function Merge-AllowedTools {
 
     if ($existing -notcontains 'Agent') {
         $settings['allowedTools'] = $existing + @('Agent')
-        Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
+        $null = Write-SettingsFile -SettingsPath $SettingsPath -Content ($settings | ConvertTo-Json -Depth 10)
         Write-Host "  ~ .claude/settings.json (Agent added to allowedTools)"
     } else {
         Write-Host "  - .claude/settings.json (Agent already in allowedTools)"
@@ -656,7 +666,7 @@ if (changed) writeSettings(sf, s);
         $stale += "$base/context-mode", "$base/telemetry"
         $enfDir = Join-Path $ProjectRoot "$base/enforcement"
         if (Test-Path -LiteralPath $enfDir) {
-            Get-ChildItem -LiteralPath $enfDir -Filter 'check-telemetry-*.mjs' -Force | ForEach-Object {
+            Get-ChildItem -LiteralPath $enfDir -Filter 'check-telemetry-*.mjs' -Force -ErrorAction SilentlyContinue | ForEach-Object {
                 $stale += "$base/enforcement/$($_.Name)"
             }
         }
@@ -689,12 +699,17 @@ if (changed) writeSettings(sf, s);
                 Write-Host "  ! $p resolves outside the project - not removed"
                 continue
             }
-            if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
-                (Get-Item -LiteralPath $full -Force).Delete()
-            } else {
-                Remove-Item -LiteralPath $full -Recurse -Force
+            # A failed delete warns and setup carries on (ADR-004 fails open)
+            try {
+                if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                    (Get-Item -LiteralPath $full -Force).Delete()
+                } else {
+                    Remove-Item -LiteralPath $full -Recurse -Force -ErrorAction Stop
+                }
+                Write-Host "  - $p (retired, removed)"
+            } catch {
+                Write-Host "  ! could not remove $p - left in place, delete it by hand"
             }
-            Write-Host "  - $p (retired, removed)"
         }
     }
 }
