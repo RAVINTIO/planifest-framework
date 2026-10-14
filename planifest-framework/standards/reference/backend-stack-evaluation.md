@@ -104,7 +104,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…â˜…**
 - Pino (structured JSON logging) is excellent and Fastify integrates it natively.
-- OpenTelemetry JS SDK is mature. Auto-instrumentation for HTTP, database, and queue libraries.
+- OTel JS SDK is mature. Auto-instrumentation for HTTP, database, and queue libraries.
 - Prometheus client (`prom-client`) is well-maintained.
 - Stack traces are readable but async gaps can make them incomplete without `--async-stack-traces`.
 
@@ -235,7 +235,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…**
 - `structlog` for structured logging, but stdlib `logging` (which LLMs default to) is less structured.
-- OpenTelemetry Python SDK exists but is less mature than JS/Java/Go equivalents.
+- OTel Python SDK exists but is less mature than JS/Java/Go equivalents.
 - Prometheus client available. Sentry integration is excellent.
 - Tracebacks are clear but async tracebacks can be confusing.
 
@@ -369,7 +369,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…â˜…â˜…**
 - `slog` (structured logging) is in the standard library since Go 1.21.
-- OpenTelemetry Go SDK is mature and widely adopted.
+- OTel Go SDK is mature and widely adopted.
 - Prometheus client library is the reference implementation (Prometheus itself is written in Go).
 - Stack traces are clean. `pprof` for CPU/memory profiling is built into the standard library.
 - The entire CNCF observability stack (Prometheus, Jaeger, Grafana agent) is written in Go.
@@ -497,7 +497,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 
 ### Third-Party Integration Coverage
 **Coverage: ~55%**
-- **Excellent SDKs for:** AWS (official `aws-sdk-rust`), PostgreSQL (sqlx, diesel), Redis, gRPC (tonic), S3, Prometheus, OpenTelemetry.
+- **Excellent SDKs for:** AWS (official `aws-sdk-rust`), PostgreSQL (sqlx, diesel), Redis, gRPC (tonic), S3, Prometheus, OTel.
 - **Good community libraries for:** GCP, Stripe, Twilio, MongoDB, Auth0.
 - **Must write wrappers for:** Most CRM platforms (Salesforce, HubSpot, Shopify), many SaaS APIs (SendGrid, Slack, Segment, Monday.com, Adyen, Mixpanel, Cloudinary, Square, PayPal). The Rust SDK ecosystem is the weakest of all evaluated languages for third-party integrations.
 
@@ -510,7 +510,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…â˜…**
 - `tracing` crate is excellent for structured logging and distributed tracing.
-- OpenTelemetry Rust SDK exists but is less mature than Go/Java equivalents.
+- OTel Rust SDK exists but is less mature than Go/Java equivalents.
 - Prometheus metrics via `metrics` crate.
 - Stack traces require `RUST_BACKTRACE=1` but are then clear.
 - `tokio-console` for async runtime debugging.
@@ -649,7 +649,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 **Score: â˜…â˜…â˜…â˜…â˜…**
 - Micrometer (metrics abstraction) is best in class.
 - Spring Boot Actuator provides health, metrics, and info endpoints out of the box.
-- OpenTelemetry Java agent provides zero-code instrumentation.
+- OTel Java agent provides zero-code instrumentation.
 - SLF4J + Logback for structured logging is mature and well-configured by default.
 - JFR (Java Flight Recorder) for production profiling is unmatched.
 
@@ -783,7 +783,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 
 ### Observability
 **Score: â˜…â˜…â˜…â˜…**
-- OpenTelemetry .NET SDK is well-maintained (Microsoft contributes actively).
+- OTel .NET SDK is well-maintained (Microsoft contributes actively).
 - Built-in `ILogger` with structured logging. Serilog for advanced structured logging.
 - Health checks built into ASP.NET Core middleware.
 - `dotnet-trace`, `dotnet-dump`, `dotnet-counters` for production diagnostics.
@@ -905,7 +905,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…**
 - Less mature than Node.js ecosystem.
-- OpenTelemetry support exists but with fewer auto-instrumentation options.
+- OTel support exists but with fewer auto-instrumentation options.
 - Structured logging available but less ecosystem support than Pino.
 
 ### Operational Stability
@@ -1020,7 +1020,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…**
 - Structured logging via Semantic Logger or Lograge.
-- OpenTelemetry Ruby SDK exists but is less mature.
+- OTel Ruby SDK exists but is less mature.
 - New Relic and DataDog have excellent Ruby agents (historically strong).
 
 ### Operational Stability
@@ -1148,8 +1148,8 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 
 ### Observability
 **Score: â˜…â˜…â˜…**
-- `:telemetry` library is the standard instrumentation mechanism.
-- OpenTelemetry Erlang/Elixir SDK exists but is less mature.
+- The Erlang event-instrumentation library is the standard instrumentation mechanism.
+- OTel Erlang/Elixir SDK exists but is less mature.
 - BEAM has built-in process introspection (`:observer`).
 - Structured logging via Logger backends.
 
@@ -1162,7 +1162,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 
 ### Ecosystem Completeness
 **Score: â˜…â˜…â˜…**
-- Web framework (Phoenix), database (Ecto), auth (limited - phx.gen.auth), caching (Cachex, ETS), job queues (Oban), testing (ExUnit), monitoring (telemetry), serialisation (Jason).
+- Web framework (Phoenix), database (Ecto), auth (limited - phx.gen.auth), caching (Cachex, ETS), job queues (Oban), testing (ExUnit), monitoring (event instrumentation), serialisation (Jason).
 - Gaps: Auth libraries, CRM integrations, analytics integrations.
 
 ### Horizontal Scalability
@@ -1405,7 +1405,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 
 ### Observability
 **Score: â˜…â˜…â˜…**
-- Inherits Java ecosystem. ZIO has `zio-telemetry` for OpenTelemetry.
+- Inherits Java ecosystem. ZIO has an integration library for OTel.
 - Less direct support than Spring Boot's Actuator.
 
 ### Operational Stability
@@ -1527,7 +1527,7 @@ This document evaluates backend frameworks and languages for use in **Planifest'
 ### Observability
 **Score: â˜…â˜…â˜…**
 - Monolog for structured logging.
-- OpenTelemetry PHP SDK exists but is less mature.
+- OTel PHP SDK exists but is less mature.
 - Laravel Telescope for debugging (development).
 - Sentry/DataDog integrations are available.
 
@@ -1861,7 +1861,7 @@ For a complete Planifest-managed system with agent-generated microservices:
 │  └──â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  └──â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜  └──â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     │
 │                                                          │
 │  Shared contracts: OpenAPI + protobuf                    │
-│  Shared observability: OpenTelemetry -> DataDog/Grafana   │
+│  Shared observability: OTel -> DataDog/Grafana            │
 │  Orchestration: Kubernetes / ECS Fargate                 │
 └──â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
@@ -1878,7 +1878,7 @@ For a complete Planifest-managed system with agent-generated microservices:
 **Cross-cutting:**
 - **API contracts:** OpenAPI specs generated by the spec-agent, implemented by codegen-agents
 - **Service communication:** gRPC between internal services (Go and Rust excel here), REST/JSON for external-facing APIs
-- **Observability:** OpenTelemetry across all languages - each has a mature SDK
+- **Observability:** OTel across all languages - each has a mature SDK
 
 ### 4. Rationale - Why These Choices
 
