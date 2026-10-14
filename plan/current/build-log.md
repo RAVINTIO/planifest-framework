@@ -109,11 +109,25 @@ Gate accepted: P0 (2026-10-14)
 | Start | `2026-10-14T21:30:52Z` |
 | Model tier | primary |
 | Skills loaded | planifest-codegen-agent |
-| Agents spawned | `3` (batch 1) |
+| Agents spawned | `3` (A: opus, primary; B and C: sonnet, primary) |
 | MCP calls | `0` |
-| Parallel task batches | `1` (in progress) |
+| Parallel task batches | `1` |
 | Telemetry | confirmed-disabled |
 | Notes | Dependency map: REQ-001, REQ-002, and REQ-004 all edit the setup scripts, so their setup edits go to one agent (A: setup, REQ-004 plus the setup halves of REQ-001/002). Agent B owns the non-setup deletions of REQ-001/002 and every existing test file. Agent C owns REQ-003 text plus the refresh-setup skill edit from REQ-005. File sets are disjoint. REQ-005 self-hosting step and migration run last, inline, after integration. |
+
+
+P3 outcome (2026-10-14T22:00:10Z):
+- Suite: 43 feature suites and 14 regression suites pass (baseline before P3: 57 and 22; the difference is deleted telemetry and context-mode tests plus 3 new 0000030 tests).
+- Deviation (TDD protocol): each agent ran RED then GREEN inline instead of dispatching separate test-writer, implementer, and refactor sub-agents. Reason: most work was deletion, where the test is an absence check.
+- Deviation (agent A): the marker and setup-config drop the `backendUrl` field instead of writing null. Every existing settings writer now skips a malformed file and writes through a temp file (needed for ADR-004 exit-0 behaviour). Fixed 4 pre-existing bugs in its files: opencode setup resolved paths from setup/, `local` outside a function in setup/opencode.sh, PowerShell Tier 1 `.Replace('','\')` throw, and a raw newline in a JS string. The NFR-002 idempotency test ignores `writtenAt`, which predates this feature.
+- Deviation (agent B): deleted test-0000024-req-001-declared-product-id.sh, because every section exercised the id through telemetry hooks. The req-003 test now asserts the hard-stop exists.
+- Correction (orchestrator): restored backend-stack-evaluation.md, where agent C had renamed OpenTelemetry to OTel to satisfy the grep. Widened the NFR-001 allowlist for general uses, feature IDs, and absence assertions in tests.
+- Orchestrator fixes: removed a ctx_fetch_and_index row from build-assessment-agent and backendUrl from refresh-setup.
+- Backlog filed: 0000087 (setup all stops at roo-code, TOOL_* carry-over), 0000088 (opencode PowerShell null skills folder), 0000089 (test-0000010 depends on working directory).
+- REQ-005 self-hosting step done in order: settings entries removed first (5 entries plus the emit_event matcher group), then .claude/hooks/telemetry, 3 enforcement copies, .claude/telemetry-enabled, plan/.telemetry-failures. .claude/ and CLAUDE.md are untracked, so only setup-config is versioned. Migration file is the last P3 commit (0e6b485).
+- Telemetry markers: two fetch-failed markers appeared in plan/.telemetry-failures/ during the baseline run (local MCP server not running). Not raised as a block-or-proceed question: the human had already decided to remove telemetry, and the self-hosting step deleted the folder.
+- Versions: planifest-framework 0.29.0, setup-hook-integration 0.6.0, product version derives 0.29.0.
+- Gate passed under continuous run.
 
 ---
 
