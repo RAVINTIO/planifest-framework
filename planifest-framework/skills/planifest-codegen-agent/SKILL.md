@@ -2,7 +2,7 @@
 name: planifest-codegen-agent
 description: Generates the full implementation from the requirements set - application code, tests, infrastructure, configuration. Invoked during Phase 3.
 bundle_templates: [component.template.yml, data-contract.template.md]
-bundle_standards: [code-quality-standards.md, testing-standards.md, stack-summary.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md, telemetry-standards.md]
+bundle_standards: [code-quality-standards.md, testing-standards.md, stack-summary.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md]
 hooks:
   phase: codegen
 ---
@@ -27,8 +27,6 @@ When `Build target: docker` is declared in `plan/current/design.md`:
 ## Input
 
 **Precision Reading Protocol:** scope your context by navigating precisely: do not read the entire `plan/` directory unconditionally.
-
-> **Context-Mode Protocol:** when available, use `ctx_execute_file` for analysis-only reads and `ctx_execute(language:"shell")` for grepping across `src/`; use `Read` only when editing.
 
 - Component Manifest at `src/{component-id}/component.yml` - read the YAML frontmatter first to determine if the body is needed.
 - Execution Plan at `plan/current/execution-plan.md` - read for architecture overview.
@@ -188,30 +186,6 @@ Follows the canonical Parallelism Directive (Parallelism Rules) in `planifest-fr
 If you cannot identify any parallelism opportunity, state the dependency reason explicitly in the build log before proceeding sequentially.
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`deviation`**: when implementation diverges from the confirmed design:
-```json
-{ "component_id": "<component>", "description": "<what changed and why>", "severity": "low" | "medium" | "high" }
-```
-
-**`migration_proposal`**: before writing a migration proposal file:
-```json
-{ "component_id": "<component>", "proposal_path": "src/<id>/docs/migrations/proposed-<desc>.md", "destructive": true | false }
-```
-
-**`self_correction`**: when retrying a failed action:
-```json
-{ "phase_name": "codegen", "attempt_number": <n>, "action_id": "<action>", "correction_type": "<type>" }
-```
-
-**`retry_limit_exceeded`**: when the 5-attempt escalation ceiling is hit:
-```json
-{ "phase_name": "codegen", "action_id": "<action>", "attempt_count": 5 }
-```
 
 ## Commit Cadence (Hard Limit 7)
 

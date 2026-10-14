@@ -3,7 +3,7 @@ name: planifest-reversal-assessor
 description: Fresh-context REJECT-default judgement of design-defect reports. Decides whether a P3–P6 blockage justifies a governed reversal of an upstream artifact. Spawned by the orchestrator; never the agent that filed the report.
 recommended_model: sonnet
 bundle_templates: [defect-report.template.md, revision-log.template.md]
-bundle_standards: [telemetry-standards.md]
+bundle_standards: []
 hooks:
   phase: codegen
 ---
@@ -55,13 +55,4 @@ Write `plan/current/defect-reports/{seq}-verdict.md`:
 
 ## What would change this verdict (DENY only)
 {Specific missing evidence.}
-```
-
-## Telemetry
-
-Per `telemetry-standards.md` gate:
-
-**`phase_reversal_granted` / `phase_reversal_denied`**
-```json
-{ "report": "<seq>-<slug>", "classification": "additive | altering", "cascade_size": <n>, "budget_remaining": <n> }
 ```

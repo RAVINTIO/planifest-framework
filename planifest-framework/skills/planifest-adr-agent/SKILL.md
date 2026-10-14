@@ -2,7 +2,7 @@
 name: planifest-adr-agent
 description: Produces Architecture Decision Records for each significant decision in the requirements. Invoked by the orchestrator during Phase 2.
 bundle_templates: [adr.template.md]
-bundle_standards: [formatting-standards.md, telemetry-standards.md]
+bundle_standards: [formatting-standards.md]
 hooks:
   phase: adr
 ---
@@ -51,15 +51,6 @@ A decision does **not** require an ADR if it is already documented in the design
 |------------------|--------------------|
 | ADRs for stack choices that do not reference each other | ADR-B that says "given the decision in ADR-A, we choose..." |
 | ADRs for independent components (no shared decisions) | ADR for data ownership after component boundaries are settled |
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`adr_decision`**: after each ADR is written to disk:
-```json
-{ "adr_id": "ADR-001", "title": "<decision title>", "chosen_option": "<option selected>" }
-```
 
 ## Commit Cadence (Hard Limit 7)
 

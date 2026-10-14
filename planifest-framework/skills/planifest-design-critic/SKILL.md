@@ -3,7 +3,7 @@ name: planifest-design-critic
 description: Fresh-context REJECT-default critique of P1 spec and P2 ADR artifacts before the human sees them. Spawned by the orchestrator as a subagent; report-only until promoted.
 recommended_model: sonnet
 bundle_templates: [loop-state.template.md]
-bundle_standards: [telemetry-standards.md]
+bundle_standards: []
 hooks:
   phase: adr
 ---
@@ -63,7 +63,3 @@ Write `plan/current/critic-verdict-{iteration}.md`:
 ## Findings (severity-ordered)
 - [{critical|major|minor}] {artifact}: {specific, actionable finding}
 ```
-
-## Telemetry
-
-Per `telemetry-standards.md` gate: emit `loop_iteration` after each review pass (loop_id `design_critic`).

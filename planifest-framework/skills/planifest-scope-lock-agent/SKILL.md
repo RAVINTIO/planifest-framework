@@ -3,7 +3,7 @@ name: planifest-scope-lock-agent
 description: Drafts a single suggested Scope Lock Challenge answer. Dispatched automatically, in parallel with three sibling instances, by default during P0 (ADR-003, req-007); each instance scoped to exactly one item. Never self-confirms: the human's per-item accept/edit/reject is the only thing that counts as scope confirmation.
 recommended_model: sonnet
 bundle_templates: []
-bundle_standards: [telemetry-standards.md]
+bundle_standards: []
 hooks:
   phase: orchestrator
 ---
@@ -40,7 +40,3 @@ Return to the orchestrator; do not write any file yourself:
 
 **Consistency check:** {no confirmed decisions to check yet | clean, no contradiction found | ⚠ flag: {specific contradiction / unresolved concern / gap}}
 ```
-
-## Telemetry
-
-Per `telemetry-standards.md` gate: no dedicated event type exists for this skill. The orchestrator's own Scope Lock build-log entries (written only on explicit human confirmation) are the durable record.

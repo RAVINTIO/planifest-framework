@@ -2,7 +2,7 @@
 name: planifest-ship-agent
 description: Phases 7, 8, and 9: archives plan/current/ (P7), spawns build-assessment-agent (P8), then creates a git tag and raises or describes the PR (P9).
 bundle_templates: [iteration-log.template.md]
-bundle_standards: [formatting-standards.md, telemetry-standards.md]
+bundle_standards: [formatting-standards.md]
 hooks:
   phase: ship
 ---
@@ -251,23 +251,4 @@ After the confirmation above, emit this advisory (do not block, do not ask for c
 
 ```
 ⚡ For best results on your next feature, start a fresh session before beginning P0.
-```
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope and emission conditions.
-
-**`phase_start`**: before Step 1 (P7):
-```json
-{ "phase_name": "archive" }
-```
-
-**`phase_start`**: before Step 9 (P9):
-```json
-{ "phase_name": "ship" }
-```
-
-**`phase_end`**: after Step 11:
-```json
-{ "phase_name": "ship", "status": "pass", "duration_ms": <elapsed> }
 ```

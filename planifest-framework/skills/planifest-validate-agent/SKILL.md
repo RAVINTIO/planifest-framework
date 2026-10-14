@@ -2,7 +2,7 @@
 name: planifest-validate-agent
 description: Runs CI checks (lint, typecheck, test, build) and self-corrects up to 5 times. Invoked during Phase 4.
 bundle_templates: []
-bundle_standards: [code-quality-standards.md, testing-standards.md, api-design-standards.md, database-standards.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md, telemetry-standards.md]
+bundle_standards: [code-quality-standards.md, testing-standards.md, api-design-standards.md, database-standards.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md]
 hooks:
   phase: validate
 ---
@@ -31,8 +31,6 @@ When `Build target: docker` is declared in `plan/current/design.md`:
 - The project's CI check commands (read `package.json`, `Makefile`, or equivalent)
 
 ## Process
-
-> When `ctx_execute` is available, run CI checks through it so large test/build output stays in the sandbox; only the failure summary enters context.
 
 Run the project's CI checks in this strict order:
 
@@ -98,7 +96,7 @@ Do NOT proceed to the next pipeline phase if any check is failing. The pipeline 
 
 ## Parallelism Directive
 
-**Pre-Execution Parallelism Plan:** before executing any CI check, identify independent checks and dispatch them in a single parallel batch (multiple Bash or ctx_execute calls in one message); state the dependency reason for anything run serially.
+**Pre-Execution Parallelism Plan:** before executing any CI check, identify independent checks and dispatch them in a single parallel batch (multiple Bash calls in one message); state the dependency reason for anything run serially.
 
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|
@@ -110,25 +108,6 @@ Do NOT proceed to the next pipeline phase if any check is failing. The pipeline 
 **Dispatch order:** Batch 1 (parallel): lint + typecheck. Batch 2 (after Batch 1 passes): test suite. Batch 3 (after Batch 2 passes): build. Never run lint → wait → typecheck → wait as a serial chain without a stated dependency reason.
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`validation_failure`**: for each test or check failure:
-```json
-{ "failure_type": "test" | "lint" | "type" | "build", "phase_name": "validate", "attempt_number": <n>, "action_id": "<suite or check name>" }
-```
-
-**`self_correction`**: when retrying after a failure:
-```json
-{ "phase_name": "validate", "attempt_number": <n>, "action_id": "<action>", "correction_type": "fix_and_retry" }
-```
-
-**`retry_limit_exceeded`**: when the 5-attempt escalation ceiling is hit:
-```json
-{ "phase_name": "validate", "action_id": "<action>", "attempt_count": 5 }
-```
 
 ## Commit Cadence (Hard Limit 7)
 

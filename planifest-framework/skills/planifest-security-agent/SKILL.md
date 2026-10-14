@@ -2,7 +2,7 @@
 name: planifest-security-agent
 description: Performs a security review of the implementation, producing a security report with specific findings. Invoked during Phase 5.
 bundle_templates: [security-report.template.md]
-bundle_standards: [formatting-standards.md, telemetry-standards.md]
+bundle_standards: [formatting-standards.md]
 hooks:
   phase: security
 ---
@@ -14,8 +14,6 @@ hooks:
 ---
 
 ## Input
-
-> When `ctx_batch_execute` is available, use it for the full security scan; use `ctx_execute_file` to analyse specific flagged files.
 
 - The validated implementation and any Infrastructure as Code (Terraform, Pulumi, CDK, etc., if declared in the stack) at `src/{component-id}/` (all components in the feature)
 - Design at `plan/current/design.md`
@@ -83,31 +81,6 @@ Top actions before production:
 | Secrets scan + input validation scan (independent grep patterns) | Summary risk rating before all section findings are complete |
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`security_finding`**: for each vulnerability or risk identified:
-```json
-{ "component_id": "<component>", "title": "<short description>", "severity": "low" | "medium" | "high" | "critical", "cwe": "<CWE-NNN>" }
-```
-`cwe` is optional, omit if not applicable.
-
-**`deviation`**: if output diverges from the confirmed design (non-security divergence):
-```json
-{ "component_id": "<component>", "description": "<deviation>", "severity": "low" | "medium" | "high" }
-```
-
-**`self_correction`**: when retrying a failed check or analysis:
-```json
-{ "phase_name": "security", "attempt_number": <n>, "action_id": "<action>", "correction_type": "<type>" }
-```
-
-**`retry_limit_exceeded`**: when the 5-attempt escalation ceiling is hit:
-```json
-{ "phase_name": "security", "action_id": "<action>", "attempt_count": 5 }
-```
 
 ## Commit Cadence (Hard Limit 7)
 

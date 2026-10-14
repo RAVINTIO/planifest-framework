@@ -63,11 +63,13 @@ Skip this step if Step 2 already produced a recovered flag set.
 
    | Signal | Implies | Confidence |
    |--------|---------|-----------|
-   | `{tool-dir}/hooks/context-mode/` directory exists with `.mjs` files | `--context-mode-mcp` | high |
-   | `{tool-dir}/hooks/telemetry/` directory exists with `context-pressure.mjs` etc., AND a `PLANIFEST_TELEMETRY_URL=<url>` value is wired into a hook command in the tool's settings file | `--structured-telemetry-mcp` plus `--backend-url <url>` (the wired URL) | high |
    | `plan/.orchestrator-strict` file exists | `--strict-orchestrator` | high |
    | `attribution.txt` files present under `{tool-dir}/skills/*/` (alongside `SKILL.md`) | `--include-full-skill-library` | medium (attribution.txt could theoretically exist without the flag if a skill was added manually - flag as medium, not high) |
    | None of the above signals present for a given flag | that flag was not used | high (absence of a signal is itself a confident signal) |
+
+   <!-- BEGIN retired-integrations (0000030) -->
+   Setup ignores the three retired flags `--context-mode-mcp`, `--structured-telemetry-mcp` and `--backend-url`. A refresh never detects or offers them.
+   <!-- END retired-integrations (0000030) -->
 
 3. Build the full flag list and the exact command that will be run: `setup.sh {tool} {flags...}` (or `setup.ps1 {tool} {flags...}` on Windows).
 

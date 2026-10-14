@@ -2,7 +2,7 @@
 name: planifest-docs-agent
 description: Produces complete per-component documentation, system-wide registry, dependency graph, and iteration log audit trail. Invoked during the Documentation step.
 bundle_templates: [iteration-log.template.md, recommendations.template.md]
-bundle_standards: [formatting-standards.md, telemetry-standards.md]
+bundle_standards: [formatting-standards.md]
 hooks:
   phase: docs
 ---
@@ -127,8 +127,6 @@ Write `plan/changelog/{feature-id}-<YYYY-MM-DD>.md`. Read `planifest-framework/t
 
 ### Drift Detection
 
-> When `ctx_batch_execute` is available, run all drift checks as a single batch call rather than sequential file reads.
-
 Perform these specific drift checks:
 
 | Check | Source of Truth | Verify Against | Action if Drift Found |
@@ -158,30 +156,6 @@ Do not flag legitimate absences as drift. Do flag missing artifacts that should 
 | 2+ independent living-doc updates (no shared content dependency), e.g. `component-registry.md`, `decisions-index.md`, `architecture-overview.md` edited in a single parallel batch instead of serially | A living doc that reads another living doc's newly-written content in the same run |
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
-
-## Telemetry
-
-See `planifest-framework/standards/telemetry-standards.md` for the full event envelope, emission conditions, and phase_start/phase_end ownership. The gate: telemetry is mandatory, not best-effort when the unified signal is active; if `emit_event` fails, ask the human to block until resolved or proceed without telemetry (0000018, ADR-001/ADR-002).
-
-**`doc_gap`**: when documentation is missing or incomplete for a component:
-```json
-{ "component_id": "<component>", "description": "<what is missing>" }
-```
-
-**`deviation`**: if output diverges from the confirmed design:
-```json
-{ "component_id": "<component>", "description": "<deviation>", "severity": "low" | "medium" | "high" }
-```
-
-**`self_correction`**: when retrying a failed documentation action:
-```json
-{ "phase_name": "docs", "attempt_number": <n>, "action_id": "<action>", "correction_type": "<type>" }
-```
-
-**`retry_limit_exceeded`**: when the 5-attempt escalation ceiling is hit:
-```json
-{ "phase_name": "docs", "action_id": "<action>", "attempt_count": 5 }
-```
 
 ## Commit Cadence (Hard Limit 7)
 
