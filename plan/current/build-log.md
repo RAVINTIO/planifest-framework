@@ -66,8 +66,24 @@ P0 exchange (run mode): Q: Check after each phase, or continuous run? (recommend
 P0->P1 gate checklist: all items pass. NFR item met by measurable framework targets (residual-reference count, setup idempotency, clean-up correctness) because latency, availability, and scalability do not apply to a framework with no runtime service.
 Capability skills proposal: none relevant to a Bash, PowerShell, and Node hook stack; not surfaced.
 
+P0 note: human asked mid-P1 to push and create the PR when it is time (P9).
 P0 exchange (design confirmation): Q: Confirm design? / A: Yes.
 Gate accepted: P0 (2026-10-14)
+
+---
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T21:26:36Z` |
+| Model tier | primary |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Telemetry | confirmed-disabled |
+| Notes | Continuous run. Agents spawned: 1 (sonnet, primary tier) wrote scope, risk register, and glossary in parallel with the orchestrator writing 5 requirements and the execution plan. design_critic toggle off (default, no loop-toggles override), not run. No OpenAPI, operational model, SLO, cost model, or data contract: no API, runtime service, spend, or schema. Glossary flags 2 unnamed concepts (final step, removed Planifest hook), wording kept, non-blocking. Gate passed under continuous run at 2026-10-14T21:28:45Z. |
 
 ---
 
