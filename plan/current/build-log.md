@@ -27,9 +27,9 @@ summary: "Working telemetry file maintained by the orchestrator throughout the p
 | Start | `2026-10-14T06:00:45Z` |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator |
-| Agents spawned | `0` |
+| Agents spawned | `4` (planifest-scope-lock-agent x4, sonnet, primary tier) |
 | MCP calls | `0` |
-| Parallel task batches | `0` |
+| Parallel task batches | `1` |
 | Telemetry | confirmed-disabled |
 | Notes | Pre-flight: on merged feat/0000029 branch; checked out main, set upstream to origin/main, fast-forwarded to 6a50af1; created feat/pending (local only, push deferred until scope is chosen). Backlog pickup in progress. Backlog discard (human instruction, remove anything about the context-mode MCP or telemetry MCP): 0000022, 0000056, 0000066, 0000067, 0000068, 0000069, 0000070, 0000072. |
 
@@ -45,6 +45,22 @@ P0 exchange (existing installs): Q: Should setup remove stale settings.json entr
 P0 exchange (identity): Q: Adoption mode standard-iterative, version 0.28.1 -> 0.29.0, feature ID 0000030-context-mode-and-telemetry-mcp-removal? / A: Yes.
 Adoption mode: standard-iterative, confirmed by human on 2026-10-14
 Version confirmed: 0.29.0
+
+Scope Lock (happy path): Setup (fresh or re-run) leaves no Context Mode or Telemetry hooks or entries, old flags print a notice and exit 0, a second run changes nothing, and the pipeline runs with no telemetry text, field, or checks. [source: agent-draft-accepted]
+Scope Lock (first-run path): A flagless first install wires only enforcement hooks, the always-on clean-up finds nothing and prints nothing, and the marker records only live flags. [source: agent-draft-accepted]
+Scope Lock (error path): Old flags including --backend-url never fail setup; clean-up removes only entries whose command path points at a removed Planifest hook and lists each removal; malformed settings.json is left untouched with the parse error named and only clean-up skipped; no Node skips clean-up with a warning and exits 0. [source: agent-draft-accepted]
+Scope Lock (cross-session continuity): Setup is idempotent and removes settings entries before folders; each removal step in this repo is its own commit; this repo's own telemetry hook wiring is removed in one final step, entries before files. [source: agent-draft-accepted]
+Scope Lock clarification (A): --backend-url accepted as a no-op with a notice, no URL validation. [source: agent-draft-accepted]
+Scope Lock clarification (B): setup/opencode.sh and Tier 1 adapter installs (Cursor, Windsurf, Cline) in scope for install and clean-up. [source: agent-draft-accepted]
+Scope Lock clarification (C): clean-up also removes .claude/telemetry-enabled, plan/.telemetry-failures/, plan/.telemetry-receipts/, and matches entries under every hook event. [source: agent-draft-accepted]
+Scope Lock clarification (D): keep the product.yml id hard-stop with a new rationale (versioning and archive attribution); 0000024 ADR-001 partly superseded. [source: agent-draft-accepted]
+Scope Lock clarification (E): remove refresh-setup detection rows for both integrations; setup writes the marker without removed flags. [source: agent-draft-accepted]
+Scope Lock clarification (F): residual-reference NFR names its allowed files exactly (setup clean-up blocks, their tests, the migration file, refresh-setup removed-flag note). [source: agent-draft-accepted]
+Scope Lock clarification (G): migration file committed last, targets downstream installs only. [source: agent-draft-accepted]
+Scope Lock clarification (H): setup writes settings.json via temp file then rename. [source: agent-draft-accepted]
+Scope Lock clarification (I): root CLAUDE.md emit-phase line removed in the same step as this repo's settings clean-up. [source: agent-draft-accepted]
+P0 exchange (scope lock batch): Q: Accept, edit, or reject drafts 1-4 and gaps A-I / A: "Accept all" (explicit, given in the per-item reply format offered).
+Scope Lock complete. All four scenario paths captured.
 
 ---
 
