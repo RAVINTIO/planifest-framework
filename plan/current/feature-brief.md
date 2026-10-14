@@ -1,7 +1,7 @@
 ---
 title: "Feature Brief - Context Mode and Telemetry MCP removal"
 summary: "Remove the Context Mode MCP and Telemetry MCP integrations from the framework, and clean up installs that already have them."
-status: "draft"
+status: "approved"
 version: "0.1.0"
 ---
 # Feature Brief - Context Mode and Telemetry MCP removal

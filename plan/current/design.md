@@ -97,4 +97,4 @@ From `planifest-overrides/instructions/`:
 - Human instruction this session: don't push `feat/` until the scope and feature ID are settled. Both are now settled, so pushing resumes per `custom-001` once this design is confirmed.
 
 ## Confirmation
-Human confirmed this design before proceeding: pending // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 14 Oct 2026 @ 10:26 p.m. BST

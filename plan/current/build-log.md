@@ -66,6 +66,9 @@ P0 exchange (run mode): Q: Check after each phase, or continuous run? (recommend
 P0->P1 gate checklist: all items pass. NFR item met by measurable framework targets (residual-reference count, setup idempotency, clean-up correctness) because latency, availability, and scalability do not apply to a framework with no runtime service.
 Capability skills proposal: none relevant to a Bash, PowerShell, and Node hook stack; not surfaced.
 
+P0 exchange (design confirmation): Q: Confirm design? / A: Yes.
+Gate accepted: P0 (2026-10-14)
+
 ---
 
 <!-- Copy and fill in this block at each phase boundary:
