@@ -45,7 +45,6 @@ FILES+=(
   "$FRAMEWORK/pipeline-reference.md"
   "$FRAMEWORK/project-operations.md"
   "$FRAMEWORK/tool-setup-reference.md"
-  "$FRAMEWORK/standards/reference/backend-stack-evaluation.md"
   "$FRAMEWORK/standards/agent-dispatch-standards.md"
   "$ROOT/refresh-planifest-framework-dir.ps1"
   "$FRAMEWORK/component.yml"
