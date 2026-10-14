@@ -5,7 +5,9 @@
 # Registers the @planifest/opencode-hooks plugin in opencode.json.
 # Requires: Bun runtime (bundled with OpenCode).
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# This file lives in planifest-framework/setup/, so the framework root is one
+# level up and the project root two levels up.
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 OPENCODE_JSON="$PROJECT_ROOT/opencode.json"
 PLUGIN_SRC="$SCRIPT_DIR/hooks/adapters/opencode"
@@ -29,18 +31,12 @@ echo "  + .opencode/plugins/@planifest/opencode-hooks/"
 
 # Copy shared hook scripts for the plugin to delegate to
 HOOKS_DEST="$PROJECT_ROOT/.opencode/hooks"
-mkdir -p "$HOOKS_DEST/enforcement" "$HOOKS_DEST/telemetry"
+mkdir -p "$HOOKS_DEST/enforcement"
 
 for script in "$SCRIPT_DIR/hooks/enforcement/"*.mjs; do
   [ -f "$script" ] || continue
   cp "$script" "$HOOKS_DEST/enforcement/$(basename "$script")"
   echo "  + .opencode/hooks/enforcement/$(basename "$script")"
-done
-
-for script in "$SCRIPT_DIR/hooks/telemetry/emit-phase-"*.mjs; do
-  [ -f "$script" ] || continue
-  cp "$script" "$HOOKS_DEST/telemetry/$(basename "$script")"
-  echo "  + .opencode/hooks/telemetry/$(basename "$script")"
 done
 
 # Register plugin in opencode.json (idempotent)
@@ -51,7 +47,7 @@ if [ -f "$OPENCODE_JSON" ]; then
   if jq -e --arg ref "$PLUGIN_REF" '.plugins | index($ref)' "$OPENCODE_JSON" > /dev/null 2>&1; then
     echo "  - opencode.json (plugin already registered)"
   else
-    local merged
+    merged=""
     merged=$(jq --arg ref "$PLUGIN_REF" '.plugins //= [] | .plugins += [$ref]' "$OPENCODE_JSON")
     printf '%s\n' "$merged" > "$OPENCODE_JSON"
     echo "  ~ opencode.json (plugin registered)"
