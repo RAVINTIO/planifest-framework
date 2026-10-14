@@ -2,7 +2,7 @@
  * @planifest/opencode-hooks — Tier 2 OpenCode plugin shim (ADR-001, ADR-002).
  *
  * Implements the OpenCode plugin interface to bridge OpenCode's JS/TS plugin
- * API to Planifest's shared enforcement and telemetry hook scripts.
+ * API to Planifest's shared enforcement hook scripts.
  *
  * Registered in opencode.json under the "plugins" array by setup/opencode.sh.
  *
@@ -20,9 +20,6 @@ import { randomUUID } from "node:crypto";
 const PLUGIN_DIR = dirname(new URL(import.meta.url).pathname);
 const HOOKS_DIR = dirname(PLUGIN_DIR); // planifest-framework/hooks/
 
-const BACKEND_URL = process.env.PLANIFEST_TELEMETRY_URL;
-const ACTIVE_PHASE = process.env.PLANIFEST_PHASE ?? "codegen";
-
 function getSessionId(cwd: string): string {
   if (process.env.PLANIFEST_SESSION_ID) return process.env.PLANIFEST_SESSION_ID;
   try {
@@ -37,14 +34,12 @@ function getSessionId(cwd: string): string {
   }
 }
 
-function delegateToScript(scriptName: string, phase: string | undefined, envelope: object): number {
-  const subdir = scriptName.startsWith("emit-") ? "telemetry" : "enforcement";
-  const scriptPath = join(HOOKS_DIR, subdir, `${scriptName}.mjs`);
+function delegateToScript(scriptName: string, envelope: object): number {
+  const scriptPath = join(HOOKS_DIR, "enforcement", `${scriptName}.mjs`);
 
   if (!existsSync(scriptPath)) return 0;
 
-  const args = phase ? [scriptPath, phase] : [scriptPath];
-  const result = Bun.spawnSync([process.execPath, ...args], {
+  const result = Bun.spawnSync([process.execPath, scriptPath], {
     stdin: new TextEncoder().encode(JSON.stringify(envelope)),
     stdout: "pipe",
     stderr: "pipe",
@@ -72,19 +67,16 @@ export default {
 
   /**
    * Fires before every tool use.
-   * Delegates to gate-write.mjs for Write/Edit; emit-phase-start.mjs for all tools.
+   * Delegates to gate-write.mjs for Write/Edit.
    */
   async onPreToolUse(event: Record<string, unknown>) {
     const cwd = (event.cwd as string) ?? process.cwd();
     const toolName = (event.toolName as string) ?? (event.tool_name as string) ?? "";
     const envelope = buildEnvelope(event, cwd);
 
-    // Telemetry: emit phase_start (deduplicated by flag file)
-    delegateToScript("emit-phase-start", ACTIVE_PHASE, envelope);
-
     // Enforcement: gate write/edit operations
     if (/write|edit/i.test(toolName)) {
-      const exitCode = delegateToScript("gate-write", undefined, envelope);
+      const exitCode = delegateToScript("gate-write", envelope);
       if (exitCode === 2) {
         // Block the tool call — OpenCode reads this as a cancellation
         return { block: true };
@@ -95,17 +87,6 @@ export default {
   },
 
   /**
-   * Fires after every tool use (including Stop/turn-end equivalent).
-   * Delegates to emit-phase-end.mjs.
-   */
-  async onPostToolUse(event: Record<string, unknown>) {
-    if (!BACKEND_URL) return;
-    const cwd = (event.cwd as string) ?? process.cwd();
-    const envelope = buildEnvelope(event, cwd);
-    delegateToScript("emit-phase-end", ACTIVE_PHASE, envelope);
-  },
-
-  /**
    * Fires on each user prompt submission.
    * Delegates to check-design.mjs for scope context injection.
    */
@@ -113,6 +94,6 @@ export default {
     const cwd = (event.cwd as string) ?? process.cwd();
     const envelope = buildEnvelope(event, cwd);
     // check-design.mjs writes additionalContext JSON to stdout
-    delegateToScript("check-design", undefined, envelope);
+    delegateToScript("check-design", envelope);
   },
 };
