@@ -87,6 +87,21 @@ Gate accepted: P0 (2026-10-14)
 
 ---
 
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T21:30:24Z` |
+| Model tier | primary |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Pipeline error, self-reported: this block was appended after the ADRs were written, not before (Hard Limit 8). 7 ADRs written inline: they share one supersession list and ADR-003 to ADR-007 depend on ADR-002, so they were not split across subagents. ADR-002 supersedes 11 prior ADRs fully and 3 partly. design_critic off (default), not run. Gate passed under continuous run at 2026-10-14T21:30:24Z. |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
