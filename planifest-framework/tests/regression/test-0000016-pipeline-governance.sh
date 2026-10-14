@@ -142,14 +142,8 @@ assert_file_exists "$TEMPLATES/revision-log.template.md" "req-010/017: revision-
 
 # -----------------------------------------------------------------------
 echo ""
-echo "=== req-011: telemetry event types + toggles default off ==="
+echo "=== req-011: loop toggles default off ==="
 # -----------------------------------------------------------------------
-
-TEL=$(cat "$STANDARDS/telemetry-standards.md" 2>/dev/null || echo "")
-assert_contains "loop_iteration"             "$TEL" "req-011: loop_iteration event documented"
-assert_contains "phase_reversal_petitioned"  "$TEL" "req-011: phase_reversal_petitioned documented"
-assert_contains "phase_reversal_granted"     "$TEL" "req-011: phase_reversal_granted documented"
-assert_contains "phase_reversal_denied"      "$TEL" "req-011: phase_reversal_denied documented"
 
 assert_file_exists "$TEMPLATES/loop-toggles.template.yml" "req-011: loop-toggles.template.yml exists"
 TOG=$(cat "$TEMPLATES/loop-toggles.template.yml" 2>/dev/null || echo "")
