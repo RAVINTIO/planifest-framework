@@ -638,10 +638,23 @@ cleanup_retired_integrations() {
   # Step 4: project-level state the retired hooks and setup wrote
   stale+=(".claude/telemetry-enabled" "plan/.telemetry-failures" "plan/.telemetry-receipts")
 
-  local p
+  # Each delete first resolves its parent folder physically (cd -P, pwd -P) and
+  # refuses if that is outside the physical project root, so a linked plan/ or
+  # .claude/ never leads the delete out of the project. A stale path that is
+  # itself a link is removed as a link (no trailing slash), never its target.
+  local p phys_root phys_parent
+  phys_root=$(cd -P "$PROJECT_ROOT" && pwd -P)
   for p in "${stale[@]}"; do
     if [ -e "$PROJECT_ROOT/$p" ] || [ -L "$PROJECT_ROOT/$p" ]; then
-      rm -rf "${PROJECT_ROOT:?}/$p"
+      phys_parent=$(cd -P "$(dirname "$PROJECT_ROOT/$p")" 2>/dev/null && pwd -P) || phys_parent=""
+      case "$phys_parent" in
+        "$phys_root"|"$phys_root"/*) ;;
+        *)
+          echo "  ! $p resolves outside the project - not removed"
+          continue
+          ;;
+      esac
+      rm -rf "${phys_parent:?}/$(basename "$p")"
       echo "  - $p (retired, removed)"
     fi
   done

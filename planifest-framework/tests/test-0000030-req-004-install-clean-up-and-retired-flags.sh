@@ -376,6 +376,44 @@ assert_equals "0" "$(printf '%s\n' "$ps1_fenced" | grep -c 'Test-Path \$full' ||
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
+echo "=== P5 F3: clean-up never deletes outside the project through a link ==="
+
+# A stale path that is itself a link: the link goes, the folder it points to stays.
+WS=$(make_workspace)
+OUTSIDE=$(mktemp -d -t planifest_0000030_outside_XXXXXX)
+mkdir -p "$OUTSIDE/target" "$WS/plan"
+echo "keep me" > "$OUTSIDE/target/sentinel.txt"
+ln -s "$OUTSIDE/target" "$WS/plan/.telemetry-failures"
+out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
+assert_exit_zero $? "linked leaf: setup exits 0"
+assert_equals "yes" "$(yes_no exists "$OUTSIDE/target/sentinel.txt")" \
+  "linked leaf: file behind the link survives"
+assert_equals "no" "$(yes_no test -L "$WS/plan/.telemetry-failures")" "linked leaf: the link is removed"
+rm -rf "$WS" "$OUTSIDE"
+
+# A parent folder that is a link out of the project: nothing under it is deleted.
+WS=$(make_workspace)
+OUTSIDE=$(mktemp -d -t planifest_0000030_outside_XXXXXX)
+mkdir -p "$OUTSIDE/.telemetry-failures"
+echo "keep me" > "$OUTSIDE/.telemetry-failures/sentinel.txt"
+ln -s "$OUTSIDE" "$WS/plan"
+out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
+assert_exit_zero $? "linked parent: setup exits 0"
+assert_equals "yes" "$(yes_no exists "$OUTSIDE/.telemetry-failures/sentinel.txt")" \
+  "linked parent: folder outside the project is not deleted"
+assert_contains "plan/.telemetry-failures resolves outside the project" "$out" \
+  "linked parent: refusal is reported"
+rm -rf "$WS" "$OUTSIDE"
+
+# PowerShell twin (static)
+ps1_fenced=$(awk -v b="$FENCE_BEGIN" -v e="$FENCE_END" 'index($0,b){s=1} s{print} index($0,e){s=0}' "$SETUP_PS1")
+assert_contains "resolves outside the project" "$ps1_fenced" \
+  "setup.ps1 clean-up: refuses a path whose parent is a link"
+sh_fenced=$(awk -v b="$FENCE_BEGIN" -v e="$FENCE_END" 'index($0,b){s=1} s{print} index($0,e){s=0}' "$SETUP_SH")
+assert_contains "pwd -P" "$sh_fenced" "setup.sh clean-up: resolves the parent folder physically"
+
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
 echo "=== req-004: setup.sh and setup.ps1 parity (static) ==="
 
 for f in "$SETUP_SH" "$SETUP_PS1"; do

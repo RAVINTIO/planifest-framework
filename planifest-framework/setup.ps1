@@ -669,10 +669,26 @@ if (changed) writeSettings(sf, s);
     # also finds a dangling link, which Test-Path reports as missing. A symlink
     # or junction is deleted as a link, so Windows PowerShell 5.1 never recurses
     # into the folder it points to.
+    # Parity with setup.sh: before a delete, every folder between the project
+    # root and the stale path must be a real folder, not a symlink or junction,
+    # so a linked plan\ or .claude\ never leads the delete out of the project.
+    $rootFull = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\', '/')
     foreach ($p in $stale) {
         $full = Join-Path $ProjectRoot $p
         $item = Get-Item -LiteralPath $full -Force -ErrorAction SilentlyContinue
         if ($item) {
+            $inside = $false
+            $dir = Split-Path -Parent $full
+            while ($dir) {
+                if ([System.IO.Path]::GetFullPath($dir).TrimEnd('\', '/') -eq $rootFull) { $inside = $true; break }
+                $d = Get-Item -LiteralPath $dir -Force -ErrorAction SilentlyContinue
+                if (-not $d -or ($d.Attributes -band [System.IO.FileAttributes]::ReparsePoint)) { break }
+                $dir = Split-Path -Parent $dir
+            }
+            if (-not $inside) {
+                Write-Host "  ! $p resolves outside the project - not removed"
+                continue
+            }
             if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
                 (Get-Item -LiteralPath $full -Force).Delete()
             } else {
