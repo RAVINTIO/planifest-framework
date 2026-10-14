@@ -160,11 +160,11 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 | Start | `2026-10-14T22:07:37Z` |
 | Model tier | primary |
 | Skills loaded | planifest-security-agent |
-| Agents spawned | `1` |
+| Agents spawned | `2` (reviewer, fixer; opus, primary) |
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Telemetry | confirmed-disabled |
-| Notes | In progress. |
+| Notes | Fresh-context review: 0 Critical, 0 High, 2 Medium (F1, F2), 4 Low (F3 to F6). F1 to F5 fixed test-first (commits d38a183, 0ee9cee, 7b31fbb, 6ab403a, 00ddc06). req-004 test grew from 166 to 220 assertions. F6 accepted: ADR-004 implementation notes and backlog 0000090. Backlog 0000091 filed for CI with no tests or pwsh. Residual risk Low. Suite after fixes: 44 feature and 14 regression suites pass. P5 STOP rule would apply (Medium findings before fixes) but the human authorised a continuous run through P9; findings are surfaced in the PR. |
 
 ---
 
