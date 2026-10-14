@@ -2,25 +2,17 @@
  * Shared hook helper: read the JSON payload a hook receives on stdin.
  *
  * Extracted per req-002 / 0000028-ADR-002 from the 12 copies that previously
- * lived one-per-hook across hooks/enforcement/ and hooks/telemetry/.
+ * lived one-per-hook across hooks/enforcement/ and a sibling hook folder.
  *
- * PLACEMENT (0000028-ADR-002): this module lives in hooks/enforcement/, not
- * hooks/telemetry/, because hooks/enforcement/ is the always-installed
- * superset. check-telemetry-receipts.mjs and check-telemetry-failures.mjs are
- * enforcement hooks installed unconditionally (setup.sh install_enforcement_
- * hooks(), and setup.sh's Tier 1 enforcement copy), whereas hooks/telemetry/
- * is installed only under --structured-telemetry-mcp. A telemetry-side
- * placement would leave those two enforcement hooks importing an absent file
- * on every install without telemetry, which fails at ESM module-load time,
- * before the hook's own top-level try/catch can run, and so breaks the
- * exit-zero-on-every-path invariant instead of degrading gracefully.
- * Telemetry hooks import this module across the sibling directory boundary
- * (../enforcement/read-stdin.mjs), which is always safe in the other
- * direction.
+ * PLACEMENT (0000028-ADR-002): this module lives in hooks/enforcement/, the
+ * always-installed folder, so every hook that imports it finds it on every
+ * install. A missing import fails at ESM module-load time, before the hook's
+ * own top-level try/catch can run, and so breaks the exit-zero-on-every-path
+ * invariant.
  *
  * DELIBERATE BEHAVIOUR CHANGE (req-002 acceptance criteria): this shared copy
  * always wires process.stdin.on("error", reject). Before extraction only
- * hooks/telemetry/context-pressure.mjs did so; the other 11 copies wired
+ * one copy did so; the other 11 copies wired
  * "data" and "end" but no "error" handler, so a stdin stream error left the
  * returned promise unsettled forever and the hook hung rather than exiting 0.
  * That hang violates NFR-001 (a hook must never block the session). Every

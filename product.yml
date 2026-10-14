@@ -1,9 +1,7 @@
 # product.yml — product-level version manifest (ADR-002, feature 0000016)
 #
-# Created at 0000023-framework-pipeline-fixes P9 — this project crossed from
-# 1 to effectively-always-had 3 components (planifest-framework,
-# setup-hook-integration, context-mode-hooks) without a product.yml existing
-# yet; created now per the ship-agent's P9 Step 9 case 3.
+# Created at 0000023-framework-pipeline-fixes P9, per the ship-agent's P9
+# Step 9 case 3.
 #
 # components[] revised 2026-08-08: holds {id, path} pointers to each
 # component's own component.yml, not a cached version — versions are read
@@ -24,5 +22,3 @@ components:
     path: "planifest-framework/component.yml"
   - id: "setup-hook-integration"
     path: "src/setup-hook-integration/component.yml"
-  - id: "context-mode-hooks"
-    path: "src/context-mode-hooks/component.yml"

@@ -22,15 +22,6 @@ GEMINI.md
 _temp/*
 !_temp/.gitkeep
 
-# Telemetry failure markers (0000018) - may echo user-configured URL/error
-# strings verbatim; never intended to be committed
-plan/.telemetry-failures/
-
-# Telemetry receipts (0000028 req-004) - written per successful emit_event by
-# emit-event-receipt.mjs and read by check-telemetry-receipts.mjs. Local and
-# ephemeral, same treatment as the failure markers above
-plan/.telemetry-receipts/
-
 # Local-only working files - anything named *.local-only.* stays on this
 # machine (helper scripts, scratch notes) and is never committed
 *.local-only.*
