@@ -52,7 +52,7 @@ US-002 implies more than three acceptance criteria, so it is split across REQ-00
 - `planifest-framework/standards/reference/backend-stack-evaluation.md`: names OpenTelemetry and the Elixir `:telemetry` library, which are general observability tools
 - Feature IDs that contain these words, such as `0000029-context-mode-removal-...` and `0000030-context-mode-and-telemetry-mcp-removal`
 - The retired-flag and clean-up blocks in `setup.sh`, `setup.ps1`, and `setup/*.sh` / `setup/*.ps1`, each fenced by a marker comment so the check can find the block
-- The tests for REQ-004 and REQ-005
+- The tests for REQ-003, REQ-004, and REQ-005, plus comments and absence assertions in older tests (for example `test-0000029-...` asserting `standard-boot.md` has no `context-mode` text)
 - `planifest-framework/migrations/migrate-remove-context-mode-and-telemetry.md`
 - The retired-flag note in `planifest-refresh-setup/SKILL.md`
 - The superseded entries and this feature's entry in `docs/decisions-index.md`, and this feature's iteration log
