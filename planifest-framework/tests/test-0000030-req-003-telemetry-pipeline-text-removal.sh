@@ -25,7 +25,7 @@ filtered() {
   case "$f" in
     */decisions-index.md)
       awk '/^### Feature 0000030/{skip=1} /^### Feature /&&!/^### Feature 0000030/{skip=0}
-           !skip && !/superseded/ {print}' "$f" ;;
+           !skip && !/superseded/ && !/^### Feature / {print}' "$f" ;;
     *)
       awk '/BEGIN retired-integrations \(0000030\)/{skip=1; next}
            /END retired-integrations \(0000030\)/{skip=0; next}
