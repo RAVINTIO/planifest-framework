@@ -1,8 +1,8 @@
 # Planifest Component Manifest
 id: "setup-hook-integration"
 name: "Setup Hook Integration"
-feature: "0000027-backlog-batch-governance-tooling-fixes"
-version: "0.5.0"
+feature: "0000030-context-mode-and-telemetry-mcp-removal"
+version: "0.6.0"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
