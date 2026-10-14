@@ -43,3 +43,21 @@ For as long as the enforcement block has existed, `setup.sh` pushed commands suc
 ## Q-007: OpenCode's `setup.ps1` tool config does not return a `SkillsDir`-bearing object (pre-existing)
 
 `setup/opencode.ps1` performs its install as a sequence of top-level statements rather than returning a config object like every other `setup/<tool>.ps1`, so `Invoke-PlanifestSetup`'s `$toolConfig.SkillsDir` is empty for OpenCode on Windows. This predates 0000020 and is out of scope for this feature per `plan/current/scope.md` (general `setup.ps1` parity drift), but it means the new `Write-SetupFlagsMarker` call is guarded to skip silently for OpenCode on Windows rather than error. OpenCode's marker write works correctly on the `setup.sh` side (bespoke branch in `run_tool_setup`, see ADR-002 implementation notes).
+
+## Q-011: NFR-002 idempotency ignores `writtenAt` (0000030)
+
+Setup rewrites the `writtenAt` timestamp in the install marker on every run, so two runs never produce byte-identical markers. The 0000030 idempotency test hashes the marker with the `writtenAt` line removed. Any later idempotency check must do the same. This predates 0000030.
+
+<!-- BEGIN retired-integrations (0000030) -->
+## Q-012: clean-up deletes whole stale folders and removes the `emit_event` group by matcher alone (F6, accepted)
+
+The clean-up deletes `hooks/context-mode/` and `hooks/telemetry/` as whole folders, so a file a person stored there is lost. It also removes hook groups with the matcher `mcp__structured-telemetry-mcp__emit_event` without checking the command path. Both departures are accepted because the folders are Planifest install locations, the server behind the matcher no longer exists, and setup prints every removal. 0000030-ADR-004 records the deviation. Backlog 0000090 holds the narrower design: delete shipped file names only, and remove an empty folder.
+<!-- END retired-integrations (0000030) -->
+
+## Q-013: PowerShell changes in 0000030 have static checks only (backlog 0000091)
+
+The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), the exclusive temporary file (F5), the BOM-less `Write-SettingsFile`, and the PowerShell retired-flag branch were never run, because no `pwsh` exists in this environment and CI runs no PowerShell. Source-text assertions in `test-0000030-req-004-install-clean-up-and-retired-flags.sh` check them. Same constraint as Q-006 and Q-008. Backlog 0000091 adds a CI PowerShell job.
+
+## Q-014: `Write-SettingsFile` writes UTF-8 without a BOM (0000030)
+
+`Write-SettingsFile` in `setup.ps1` now writes UTF-8 without a byte order mark. Windows PowerShell 5.1 `Set-Content -Encoding UTF8` wrote one. Readers in this repo strip a leading BOM, so files written by older runs still parse.

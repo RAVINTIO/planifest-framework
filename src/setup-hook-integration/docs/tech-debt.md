@@ -34,3 +34,25 @@ These items covered tests of a hook integration that setup no longer installs.
 **Severity:** Low
 **Status:** ✅ Fixed 2026-04-25
 **Fix applied:** Subcommand routing block added before the arg-parsing loop. `setup.ps1 add-skill <name> <tool>` now delegates to `skill-sync.ps1 -Operation add`; same for `remove-skill`, `preserve-skill`, `unpreserve-skill`.
+
+## TD-007: `setup.sh all` stops at roo-code, `TOOL_*` values carry over (backlog 0000087)
+
+**File:** `planifest-framework/setup.sh`
+**Status:** Open. Filed during 0000030 P3. See backlog 0000087.
+
+## TD-008: opencode PowerShell setup passes a null skills folder (backlog 0000088)
+
+**File:** `planifest-framework/setup/opencode.ps1`
+**Status:** Open. Filed during 0000030 P3. See backlog 0000088. Related to Q-007.
+
+<!-- BEGIN retired-integrations (0000030) -->
+## TD-009: clean-up deletes whole folders and matches the `emit_event` group by matcher alone (backlog 0000090)
+
+**File:** `planifest-framework/setup.sh`, `planifest-framework/setup.ps1`
+**Status:** Open, accepted in 0000030 P5 as security finding F6. See backlog 0000090 and Q-012.
+<!-- END retired-integrations (0000030) -->
+
+## TD-010: no live PowerShell run in CI or locally (backlog 0000091)
+
+**File:** `.github/workflows/planifest.yml`
+**Status:** Open. 0000030 P4 found that CI runs no test suite and no `pwsh`. See backlog 0000091 and Q-013.
