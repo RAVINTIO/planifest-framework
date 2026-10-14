@@ -291,6 +291,76 @@ fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
+echo "=== P5 F1: malformed opencode.json stays byte-identical, exit 0 ==="
+
+WS=$(make_workspace)
+printf '{ "plugins": [ broken\n' > "$WS/opencode.json"
+sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+out=$(cd "$WS" && bash planifest-framework/setup.sh opencode 2>&1)
+assert_exit_zero $? "malformed opencode.json: setup exits 0"
+assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+  "malformed opencode.json: file byte-identical"
+assert_contains "opencode.json is not valid JSON" "$out" "malformed opencode.json: warning names the file"
+assert_contains "Setup complete." "$out" "malformed opencode.json: rest of install finishes"
+rm -rf "$WS"
+
+WS=$(make_workspace)
+printf '{\n  "theme": "dark",\n  "plugins": ["other-plugin"]\n}\n' > "$WS/opencode.json"
+out=$(cd "$WS" && bash planifest-framework/setup.sh opencode 2>&1)
+assert_exit_zero $? "valid opencode.json: setup exits 0"
+reg=$(node -e 'const j=require(process.argv[1]);console.log(j.theme+" "+j.plugins.join(","))' "$WS/opencode.json")
+assert_equals "dark other-plugin,.opencode/plugins/@planifest/opencode-hooks/index.ts" "$reg" \
+  "valid opencode.json: plugin appended, other keys kept"
+assert_equals "0" "$(find "$WS" -maxdepth 1 -name '*.planifest-tmp*' | wc -l | tr -d ' ')" \
+  "valid opencode.json: no temporary file left behind"
+rm -rf "$WS"
+
+if PATH="$NO_NODE_PATH" command -v node >/dev/null 2>&1; then
+  echo "  SKIP: node is on the system PATH ($NO_NODE_PATH), cannot simulate a missing Node"
+else
+  WS=$(make_workspace)
+  printf '{ "plugins": [ broken\n' > "$WS/opencode.json"
+  sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+  out=$(cd "$WS" && PATH="$NO_NODE_PATH" bash planifest-framework/setup.sh opencode 2>&1)
+  assert_exit_zero $? "opencode without node: setup exits 0"
+  assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+    "opencode without node: malformed opencode.json byte-identical"
+  assert_contains "opencode.json" "$(printf '%s\n' "$out" | grep '^  !' || true)" \
+    "opencode without node: warning names opencode.json"
+  rm -rf "$WS"
+
+  WS=$(make_workspace)
+  out=$(cd "$WS" && PATH="$NO_NODE_PATH" bash planifest-framework/setup.sh opencode 2>&1)
+  assert_exit_zero $? "opencode without node, fresh: setup exits 0"
+  assert_equals "yes" "$(yes_no has_text "opencode-hooks/index.ts" "$WS/opencode.json")" \
+    "opencode without node, fresh: opencode.json created with the plugin"
+  rm -rf "$WS"
+fi
+
+# Run the opencode tool script on its own, outside setup.sh: it must still
+# leave a malformed file alone and exit 0.
+WS=$(make_workspace)
+printf 'not json at all\n' > "$WS/opencode.json"
+sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+out=$(cd "$WS" && bash planifest-framework/setup/opencode.sh 2>&1)
+assert_exit_zero $? "opencode.sh alone, malformed: exits 0"
+assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+  "opencode.sh alone, malformed: file byte-identical"
+rm -rf "$WS"
+
+# PowerShell twin (static: pwsh is not installed in CI)
+OPENCODE_PS1="$FRAMEWORK/setup/opencode.ps1"
+assert_equals "no" "$(yes_no grep -q 'ConvertTo-Json.*| *Set-Content \$OpenCodeJson' "$OPENCODE_PS1")" \
+  "opencode.ps1: no direct Set-Content onto opencode.json"
+assert_equals "yes" "$(yes_no grep -q 'Write-SettingsFile' "$OPENCODE_PS1")" \
+  "opencode.ps1: writes through the atomic Write-SettingsFile helper"
+assert_equals "yes" "$(yes_no grep -q 'is not valid JSON' "$OPENCODE_PS1")" \
+  "opencode.ps1: warns and skips on a malformed file"
+assert_equals "yes" "$(yes_no grep -q 'catch' "$OPENCODE_PS1")" \
+  "opencode.ps1: a parse failure is caught, not thrown"
+
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
 echo "=== req-004: setup.sh and setup.ps1 parity (static) ==="
 
 for f in "$SETUP_SH" "$SETUP_PS1"; do

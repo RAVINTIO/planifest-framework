@@ -32,7 +32,7 @@ function readSettings(sf, label, what) {
   try {
     return JSON.parse(__fs.readFileSync(sf, "utf8").replace(/^﻿/, ""));
   } catch (e) {
-    console.log("  ! " + label + " is not valid JSON - left unchanged, skipped " + what);
+    console.log("  ! " + label + " is not valid JSON (" + e.message + ") - left unchanged, skipped " + what);
     return null;
   }
 }
@@ -1280,7 +1280,7 @@ run_tool_setup() {
     # Retired integration clean-up before the plugin install (0000030 ADR-004).
     # opencode.json registers plugins only, so no settings hook entries to scan.
     cleanup_retired_integrations ".opencode/hooks" ""
-    bash "$SETUP_DIR/opencode.sh"
+    PLANIFEST_SETTINGS_JS_HELPERS="$SETTINGS_JS_HELPERS" bash "$SETUP_DIR/opencode.sh"
     write_setup_config_override "$t" || true
     write_setup_flags_marker "$t" ".opencode"
   else

@@ -106,7 +106,7 @@ function readSettings(sf, label, what) {
   try {
     return JSON.parse(__fs.readFileSync(sf, 'utf8').replace(/^﻿/, ''));
   } catch (e) {
-    console.log('  ! ' + label + ' is not valid JSON - left unchanged, skipped ' + what);
+    console.log('  ! ' + label + ' is not valid JSON (' + e.message + ') - left unchanged, skipped ' + what);
     return null;
   }
 }
