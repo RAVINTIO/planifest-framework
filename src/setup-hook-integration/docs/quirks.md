@@ -1,8 +1,8 @@
 # Quirks — setup-hook-integration
 
-## Q-001 — context-mode `block-bash.sh` hook fires on git commit messages containing URLs
+## Q-001: retired
 
-The context-mode blocking hook intercepts Bash commands containing URL patterns. When `git commit -m "..."` includes an `https://` URL in the message body, the hook blocks the command. Workaround: keep URLs out of commit message bodies, or use multi-line commits via a heredoc that separates the subject (URL-free) from the body.
+This quirk described a hook that setup no longer installs.
 
 ## Q-002 — `jq` not available on Windows; node used as fallback
 
@@ -18,7 +18,7 @@ Before any external skills are added, `external-skills.json` does not exist. `cm
 
 ## Q-005 — Windows `mktemp` paths not recognized as git repos
 
-`mktemp -d` on Windows/Git Bash creates directories under a path that git treats as having "dubious ownership". `git init` in these directories succeeds but subsequent `git config` calls fail with exit 128. This affects the telemetry integration tests (see TD-004).
+`mktemp -d` on Windows/Git Bash creates directories under a path that git treats as having "dubious ownership". `git init` in these directories succeeds but subsequent `git config` calls fail with exit 128. This affects the integration tests that create a temporary repo.
 
 ## Q-006: `Write-SetupFlagsMarker` (0000020) verified statically only, no pwsh in this dev environment
 
@@ -30,13 +30,13 @@ Same constraint as Q-006. `cline.ps1`'s `BootFile` was relocated from `.clinerul
 
 ## Q-009: hooks are installed as copies, so a shared module exists at runtime only if a glob copies it (0000028)
 
-Installed hooks are plain `cp` copies, never symlinks, so an `import` in a hook resolves against `.claude/hooks/`, not against `planifest-framework/hooks/`. A shared module is therefore present at runtime only because some `setup.sh` code path actually copied it. `install_tier1_hooks()` copied telemetry with the narrow glob `emit-phase-*.mjs`, which would have installed the callers and dropped every shared module they import, on Cursor, Windsurf and Cline. It is now `*.mjs`, matching the two non-tier-1 install functions and `setup.ps1`'s `Install-Tier1Hooks`. The failure this would have caused is not graceful: an ESM import of an absent module throws at module-load time, before the hook's own `try/catch`, so the hook exits non-zero rather than exiting 0 as NFR-001 requires.
+Installed hooks are plain `cp` copies, never symlinks, so an `import` in a hook resolves against `.claude/hooks/`, not against `planifest-framework/hooks/`. A shared module is therefore present at runtime only because some `setup.sh` code path actually copied it. A narrow install glob would install the callers and drop every shared module they import. The install functions use `*.mjs` for this reason. The failure this would have caused is not graceful: an ESM import of an absent module throws at module-load time, before the hook's own `try/catch`, so the hook exits non-zero rather than exiting 0 as NFR-001 requires.
 
 Copying is also additive only. `setup.sh` never prunes, so a module renamed or deleted upstream leaves a stale copy behind. There are currently no orphans, but a `*.mjs` glob makes this worth watching in a way an implicit allowlist did not.
 
 ## Q-010: `setup.sh` wrote enforcement hook commands as bare `.mjs` paths and they never ran (fixed 0000028)
 
-For as long as the enforcement block has existed, `setup.sh` pushed commands such as `.claude/hooks/enforcement/gate-write.mjs` into `settings.json` with no interpreter prefix, while the hook sources are committed with mode `100644` and `cp` propagates that mode. The shell could not execute the wired command and returned 126. Claude Code treats any exit other than 2 as non-blocking, so seven enforcement hooks silently did not run: the write gate, both telemetry backstops, all three `UserPromptSubmit` orchestrator checks, and 0000028's own em dash guard. Only `ratchet-check.mjs` worked, and only because its source file happens to carry mode `100755`.
+For as long as the enforcement block has existed, `setup.sh` pushed commands such as `.claude/hooks/enforcement/gate-write.mjs` into `settings.json` with no interpreter prefix, while the hook sources are committed with mode `100644` and `cp` propagates that mode. The shell could not execute the wired command and returned 126. Claude Code treats any exit other than 2 as non-blocking, so seven enforcement hooks silently did not run: the write gate, two retired backstops, all three `UserPromptSubmit` orchestrator checks, and 0000028's own em dash guard. Only `ratchet-check.mjs` worked, and only because its source file happens to carry mode `100755`.
 
 `setup.ps1` had always written `node $HooksDir/gate-write.mjs`, so the two scripts disagreed and the PowerShell form was the correct one. Fixed at 0000028 P5 by prefixing every enforcement command string with `node`, which is also the only portable form since Windows has no exec bit. Worth remembering when reading test evidence: the P4 suite invoked the hook as `node em-dash-guard.mjs` and passed, because it tested the hook rather than the command string `setup.sh` actually writes.
 

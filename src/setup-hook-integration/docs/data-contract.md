@@ -28,8 +28,7 @@ A single JSON file per repo (not a database table, a local, uncommitted, plain-t
 | Field | Type | Nullable | Default | Constraints |
 |-------|------|----------|---------|------------|
 | `tool` | string | no | none | One of the tool identifiers `setup.sh`/`setup.ps1` recognise (`claude-code`, `cursor`, `windsurf`, `cline`, `codex`, `opencode`, `antigravity`, `copilot`, `roo-code`) |
-| `flags` | array of string | no | `[]` | Each entry is a flag exactly as passed to `setup.sh`/`setup.ps1` (e.g. `--context-mode-mcp`, `--strict-orchestrator`, `--include-full-skill-library`) |
-| `backendUrl` | string | yes | none | Present only when `--structured-telemetry-mcp` is in `flags`; the URL passed to `--backend-url` |
+| `flags` | array of string | no | `[]` | Each entry is a flag exactly as passed to `setup.sh`/`setup.ps1` (e.g. `--strict-orchestrator`, `--include-full-skill-library`) |
 | `writtenAt` | string (ISO 8601 UTC) | no | none | Timestamp of the write; updated on every write (install or refresh-skill pre-deletion write) |
 | `attemptStatus` | string enum: `completed` \| `pending` | no | `completed` | `completed` after a successful `setup.sh`/`setup.ps1` install write (REQ-008); `pending` after the refresh skill's pre-deletion write (REQ-009), until a subsequent `completed` write from a successful re-invocation (REQ-005) supersedes it |
 | `attemptedCommand` | string | yes | none | Present only when `attemptStatus` is `pending` or when the file was last written by the refresh skill; the exact command REQ-009 recorded and REQ-005/REQ-006 use for re-invocation or reporting |
@@ -44,7 +43,7 @@ A single JSON file per repo (not a database table, a local, uncommitted, plain-t
 
 - The file, when present, always corresponds to the most recent install or refresh attempt for the tool named in `tool`, it is overwritten in place on every write, never appended to
 - `attemptStatus: pending` never persists past a successful `setup.sh`/`setup.ps1` completion; REQ-005 on success writes `attemptStatus: completed` (via the same REQ-008 write path), closing the window REQ-010 detects
-- `attemptedCommand` and `backendUrl`, when absent, mean exactly that (no flag/telemetry backend was in effect), never inferred or defaulted from other state
+- `attemptedCommand`, when absent, means exactly that (no refresh attempt was recorded), never inferred or defaulted from other state
 - The file is local, uncommitted repo state (not checked into version control), it describes *this* repo's current install, not a shared or synced record
 
 ---

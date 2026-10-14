@@ -4,9 +4,7 @@
 
 | Dependency | Source | Nature |
 |---|---|---|
-| `context-mode-hooks` (src/context-mode-hooks/) | Internal component | Hook scripts copied to `.claude/hooks/context-mode/` |
 | `planifest-framework/hooks/enforcement/` | Framework source | `gate-write.mjs`, `check-design.mjs` copied to `.claude/hooks/enforcement/` |
-| `planifest-framework/hooks/telemetry/` | Framework source | Telemetry hooks copied when `--structured-telemetry-mcp` active |
 | `planifest-framework/hooks/commit-msg` | Framework source | Registered via `git config core.hooksPath` |
 | `planifest-framework/skills/` | Framework source | Skill SKILL.md files copied to tool skills directory |
 | `planifest-framework/scripts/skill-sync.sh` | Framework source | Called for `add-skill`, `remove-skill`, `preserve-skill`, `unpreserve-skill` subcommands and on re-run sync |
