@@ -179,7 +179,7 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Telemetry | confirmed-disabled |
-| Notes | Gate A: docs/ exists. Gate B (continuous run, auto-accepted): this run removed two integrations and changed setup behaviour. Auto-accepted: updating docs/component-registry.md, docs/dependency-graph.md, docs/architecture-overview.md, docs/decisions-index.md, and src/setup-hook-integration/docs/. No api-index (no API). In progress. |
+| Notes | Gate A: docs/ exists. Gate B (continuous run, auto-accepted): this run removed two integrations and changed setup behaviour. Auto-accepted: updating docs/component-registry.md, docs/dependency-graph.md, docs/architecture-overview.md, docs/decisions-index.md, and src/setup-hook-integration/docs/. No api-index (no API). Docs sub-agent (sonnet) synced src/setup-hook-integration/docs and component.yml to P3/P5 reality (2 commits), and added ADR-003 to ADR-005 to architecture-overview.md. It wrapped passages that must name retired paths in BEGIN/END retired-integrations fences, the declared NFR-001 allowlist mechanism. Drift: component boundaries, dependency direction, ADR compliance, and domain terms all match. One drift fixed (architecture-overview ADR list). Orchestrator wrote iteration-log.md and recommendations.md. Tech-debt rows map to already-filed backlog 0000087 to 0000091, so no duplicate entries were filed. Manifests parse as YAML. Suite: 44 feature and 14 regression suites pass. cross_model_review toggle off (default), not run. Gate passed under continuous run. |
 
 ---
 
