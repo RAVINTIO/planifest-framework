@@ -224,7 +224,7 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Telemetry | confirmed-disabled |
-| Notes | Version 0.29.0 from product-version.mjs, higher than the last tag v0.28.1. product.yml version and feature updated. Push and PR by the agent: the human asked for this during P1, and no local-git-only text appears in the override contents. No restore-pr-attribution override, so the PR has no attribution footer. Gate not stopped: the human authorised a continuous run through P9. |
+| Notes | Version 0.29.0 from product-version.mjs, higher than the last tag v0.28.1. product.yml version and feature updated. Push and PR by the agent: the human asked for this during P1, and no local-git-only text appears in the override contents. No restore-pr-attribution override, so the PR has no attribution footer. Gate not stopped: the human authorised a continuous run through P9. Tag v0.29.0 pushed. PR #57 raised. Marker tracking pre-flight: no tracked markers. First commit attempt rejected by the commit-msg hook (87-char subject), retried with a shorter subject. |
 
 ---
 

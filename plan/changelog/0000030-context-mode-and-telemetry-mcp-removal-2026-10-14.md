@@ -2,7 +2,7 @@
 
 **Feature:** Context Mode and Telemetry MCP removal
 **Pipeline run:** P0 to P9 completed in continuous mode. No phases skipped.
-**PR:** pending
+**PR:** https://github.com/planifest/planifest-framework/pull/57
 
 ## What Was Built
 
