@@ -33,6 +33,10 @@ summary: "Working telemetry file maintained by the orchestrator throughout the p
 | Telemetry | confirmed-disabled |
 | Notes | Pre-flight: on merged feat/0000029 branch; checked out main, set upstream to origin/main, fast-forwarded to 6a50af1; created feat/pending (local only, push deferred until scope is chosen). Backlog pickup in progress. Backlog discard (human instruction, remove anything about the context-mode MCP or telemetry MCP): 0000022, 0000056, 0000066, 0000067, 0000068, 0000069, 0000070, 0000072. |
 
+
+P0 exchange (feature direction): Q: Confirm next release scope (recommended run lifecycle and gate-write group) / A: Human redirected: "We need to remove Context Mode MCP and Telemetry MCP". Remaining 27 backlog entries left untouched pending scope.
+Adoption mode detected: standard-iterative (plan/_archive/ and docs/about.md present), awaiting confirmation.
+
 ---
 
 <!-- Copy and fill in this block at each phase boundary:
