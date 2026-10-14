@@ -153,6 +153,21 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 
 ---
 
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:07:37Z` |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Telemetry | confirmed-disabled |
+| Notes | In progress. |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
