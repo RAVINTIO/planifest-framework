@@ -446,6 +446,34 @@ assert_contains "left unchanged" "$ws_fn" "setup.ps1 Write-SettingsFile: failure
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
+echo "=== P5 F5: a rewritten settings file keeps its mode, temp file is exclusive ==="
+
+WS=$(make_workspace)
+seed_claude_stale_state "$WS"
+chmod 600 "$WS/.claude/settings.json"
+out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
+assert_exit_zero $? "0600 settings: setup exits 0"
+assert_contains "block-grep.mjs" "$out" "0600 settings: clean-up rewrote the file"
+mode=$(node -e 'console.log((require("fs").statSync(process.argv[1]).mode & 0o777).toString(8))' "$WS/.claude/settings.json")
+assert_equals "600" "$mode" "0600 settings: mode 0600 kept after the rewrite"
+assert_equals "0" "$(find "$WS/.claude" -name '*.planifest-tmp*' | wc -l | tr -d ' ')" \
+  "0600 settings: no temporary file left behind"
+rm -rf "$WS"
+
+for f in "$SETUP_SH" "$SETUP_PS1"; do
+  name=$(basename "$f")
+  helper=$(sed -n '/^function writeSettings/,/^}/p' "$f")
+  assert_contains "randomBytes" "$helper" "$name writeSettings: temporary name is random"
+  assert_contains "wx" "$helper" "$name writeSettings: temporary file is created exclusively"
+  assert_contains "statSync(sf).mode" "$helper" "$name writeSettings: copies the target's mode"
+  assert_contains "unlinkSync(tmp)" "$helper" "$name writeSettings: removes the temporary file on failure"
+done
+ws_fn=$(sed -n '/^function Write-SettingsFile/,/^}/p' "$SETUP_PS1")
+assert_contains "CreateNew" "$ws_fn" "setup.ps1 Write-SettingsFile: temporary file is created exclusively"
+assert_contains "NewGuid" "$ws_fn" "setup.ps1 Write-SettingsFile: temporary name is random"
+
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
 echo "=== req-004: setup.sh and setup.ps1 parity (static) ==="
 
 for f in "$SETUP_SH" "$SETUP_PS1"; do

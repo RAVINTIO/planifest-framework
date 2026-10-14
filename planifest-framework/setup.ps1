@@ -91,16 +91,27 @@ function Write-SettingsFile {
     param([string]$SettingsPath, [string]$Content)
     $dir = Split-Path -Parent $SettingsPath
     if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-    $tmp = Join-Path $dir (".{0}.planifest-tmp-{1}" -f (Split-Path -Leaf $SettingsPath), $PID)
+    # The temporary file has a random name and is created exclusively
+    # (CreateNew), so a planted file or link at that name makes the write fail
+    # rather than write through. It is UTF-8 without a byte order mark.
+    $tmp = Join-Path $dir (".{0}.planifest-tmp-{1}" -f (Split-Path -Leaf $SettingsPath), [guid]::NewGuid().ToString('N'))
+    $created = $false
     # A failed write or rename warns, removes the temporary file, and leaves the
     # original untouched. Setup carries on (ADR-004 fails open). Returns $true
     # when the file was written.
     try {
-        Set-Content -LiteralPath $tmp -Value $Content -Encoding UTF8 -ErrorAction Stop
+        $stream = [System.IO.File]::Open($tmp, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+        $created = $true
+        try {
+            $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes($Content + [Environment]::NewLine)
+            $stream.Write($bytes, 0, $bytes.Length)
+        } finally {
+            $stream.Dispose()
+        }
         Move-Item -LiteralPath $tmp -Destination $SettingsPath -Force -ErrorAction Stop
         return $true
     } catch {
-        Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+        if ($created) { Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue }
         Write-Host "  ! could not write $SettingsPath ($($_.Exception.Message)) - left unchanged"
         return $false
     }
@@ -121,10 +132,28 @@ function readSettings(sf, label, what) {
   }
 }
 function writeSettings(sf, s) {
-  __fs.mkdirSync(__path.dirname(sf), { recursive: true });
-  const tmp = __path.join(__path.dirname(sf), '.' + __path.basename(sf) + '.planifest-tmp-' + process.pid);
-  __fs.writeFileSync(tmp, JSON.stringify(s, null, 2) + '\n');
-  __fs.renameSync(tmp, sf);
+  // The temporary file has a random name and is created exclusively (wx), so a
+  // planted file or link at that name makes the write fail rather than write
+  // through. It keeps the mode of the target. On any failure the temporary file is
+  // removed, the target is left unchanged, and a warning is printed.
+  let tmp = null, created = false;
+  try {
+    __fs.mkdirSync(__path.dirname(sf), { recursive: true });
+    let mode = null;
+    try { mode = __fs.statSync(sf).mode & 0o7777; } catch (e) { mode = null; }
+    tmp = __path.join(__path.dirname(sf), '.' + __path.basename(sf) + '.planifest-tmp-' +
+                      require('crypto').randomBytes(8).toString('hex'));
+    const fd = __fs.openSync(tmp, 'wx', mode === null ? 0o666 : mode);
+    created = true;
+    try { __fs.writeFileSync(fd, JSON.stringify(s, null, 2) + '\n'); } finally { __fs.closeSync(fd); }
+    if (mode !== null) __fs.chmodSync(tmp, mode);
+    __fs.renameSync(tmp, sf);
+    return true;
+  } catch (e) {
+    if (created) { try { __fs.unlinkSync(tmp); } catch (e2) {} }
+    console.log('  ! could not write ' + sf + ' (' + e.message + ') - left unchanged');
+    return false;
+  }
 }
 '@
 

@@ -37,10 +37,28 @@ function readSettings(sf, label, what) {
   }
 }
 function writeSettings(sf, s) {
-  __fs.mkdirSync(__path.dirname(sf), { recursive: true });
-  const tmp = __path.join(__path.dirname(sf), "." + __path.basename(sf) + ".planifest-tmp-" + process.pid);
-  __fs.writeFileSync(tmp, JSON.stringify(s, null, 2) + "\n");
-  __fs.renameSync(tmp, sf);
+  // The temporary file has a random name and is created exclusively (wx), so a
+  // planted file or link at that name makes the write fail rather than write
+  // through. It keeps the mode of the target. On any failure the temporary file is
+  // removed, the target is left unchanged, and a warning is printed.
+  let tmp = null, created = false;
+  try {
+    __fs.mkdirSync(__path.dirname(sf), { recursive: true });
+    let mode = null;
+    try { mode = __fs.statSync(sf).mode & 0o7777; } catch (e) { mode = null; }
+    tmp = __path.join(__path.dirname(sf), "." + __path.basename(sf) + ".planifest-tmp-" +
+                      require("crypto").randomBytes(8).toString("hex"));
+    const fd = __fs.openSync(tmp, "wx", mode === null ? 0o666 : mode);
+    created = true;
+    try { __fs.writeFileSync(fd, JSON.stringify(s, null, 2) + "\n"); } finally { __fs.closeSync(fd); }
+    if (mode !== null) __fs.chmodSync(tmp, mode);
+    __fs.renameSync(tmp, sf);
+    return true;
+  } catch (e) {
+    if (created) { try { __fs.unlinkSync(tmp); } catch (e2) {} }
+    console.log("  ! could not write " + sf + " (" + e.message + ") - left unchanged");
+    return false;
+  }
 }
 '
 
