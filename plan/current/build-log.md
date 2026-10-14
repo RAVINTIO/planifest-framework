@@ -168,6 +168,21 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 
 ---
 
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:31:07Z` |
+| Model tier | primary |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Telemetry | confirmed-disabled |
+| Notes | Gate A: docs/ exists. Gate B (continuous run, auto-accepted): this run removed two integrations and changed setup behaviour. Auto-accepted: updating docs/component-registry.md, docs/dependency-graph.md, docs/architecture-overview.md, docs/decisions-index.md, and src/setup-hook-integration/docs/. No api-index (no API). In progress. |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
