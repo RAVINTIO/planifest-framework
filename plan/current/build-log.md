@@ -62,6 +62,10 @@ Scope Lock clarification (I): root CLAUDE.md emit-phase line removed in the same
 P0 exchange (scope lock batch): Q: Accept, edit, or reject drafts 1-4 and gaps A-I / A: "Accept all" (explicit, given in the per-item reply format offered).
 Scope Lock complete. All four scenario paths captured.
 
+P0 exchange (run mode): Q: Check after each phase, or continuous run? (recommended 1) / A: "2. But all the way to p9 without stopping". Continuous through P9, including the P9 gate the orchestrator otherwise always stops at. Recorded in plan/.run-mode and design.md.
+P0->P1 gate checklist: all items pass. NFR item met by measurable framework targets (residual-reference count, setup idempotency, clean-up correctness) because latency, availability, and scalability do not apply to a framework with no runtime service.
+Capability skills proposal: none relevant to a Bash, PowerShell, and Node hook stack; not surfaced.
+
 ---
 
 <!-- Copy and fill in this block at each phase boundary:
