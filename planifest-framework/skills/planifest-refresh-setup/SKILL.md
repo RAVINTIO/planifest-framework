@@ -58,7 +58,7 @@ Before running full detection, check whether this is a recovery scenario:
 
 Skip this step if Step 2 already produced a recovered flag set.
 
-1. Check `{tool-dir}/.planifest-setup-flags` for the target tool. If it exists and is well-formed (see schema in `src/setup-hook-integration/docs/data-contract.md`), read `flags`, `backendUrl`, and report every flag at **high** confidence, source: marker file.
+1. Check `{tool-dir}/.planifest-setup-flags` for the target tool. If it exists and is well-formed (see schema in `src/setup-hook-integration/docs/data-contract.md`), read `flags` and report every flag at **high** confidence, source: marker file.
 2. If the marker file is absent, incomplete, or for a different tool than the one being refreshed, infer flags from installed hook wiring instead:
 
    | Signal | Implies | Confidence |
@@ -92,7 +92,6 @@ Immediately after confirmation and before Step 6's deletion, write to `{tool-dir
 {
   "tool": "{tool}",
   "flags": [confirmed flags],
-  "backendUrl": "{url or null}",
   "writtenAt": "{ISO 8601 UTC timestamp}",
   "attemptStatus": "pending",
   "attemptedCommand": "{exact command from Step 3.3}"
