@@ -131,6 +131,21 @@ P3 outcome (2026-10-14T22:00:10Z):
 
 ---
 
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:00:24Z` |
+| Model tier | primary |
+| Skills loaded | planifest-validate-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Telemetry | confirmed-disabled |
+| Notes | In progress. |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
