@@ -1,12 +1,12 @@
 ---
-version: "0.28.1"
-feature: "0000029-context-mode-removal-and-boot-file-regeneration-fix"
-updated: "09 Aug 2026"
+version: "0.29.0"
+feature: "0000030-context-mode-and-telemetry-mcp-removal"
+updated: "14 Oct 2026"
 ---
 # About
 
 | Field | Value |
 |-------|-------|
-| Version | `0.28.1` |
-| Last feature | `0000029-context-mode-removal-and-boot-file-regeneration-fix` |
-| Updated | `09 Aug 2026` |
+| Version | `0.29.0` |
+| Last feature | `0000030-context-mode-and-telemetry-mcp-removal` |
+| Updated | `14 Oct 2026` |

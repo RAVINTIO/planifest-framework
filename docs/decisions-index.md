@@ -268,7 +268,7 @@ ADR files: [plan/_archive/0000029-context-mode-removal-and-boot-file-regeneratio
 
 ### Feature 0000030: context-mode-and-telemetry-mcp-removal
 
-ADR files: [plan/current/adr/](../plan/current/adr/)
+ADR files: [plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10-14/adr/](../plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10-14/adr/)
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|

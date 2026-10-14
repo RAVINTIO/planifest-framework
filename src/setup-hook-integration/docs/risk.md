@@ -1,6 +1,6 @@
 # Risk — setup-hook-integration
 
-Derived from `plan/current/risk-register.md` — component-scoped items only.
+Derived from `plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10-14/risk-register.md` — component-scoped items only.
 
 | ID | Risk | Severity | Mitigation | Status |
 |---|---|---|---|---|

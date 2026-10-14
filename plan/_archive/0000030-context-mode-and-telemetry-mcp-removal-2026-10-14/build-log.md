@@ -183,6 +183,21 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 
 ---
 
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:36:15Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Archive by `git mv` per item and explicit-path deletes, not a glob delete (backlog 0000075). |
+
+---
+
 <!-- Copy and fill in this block at each phase boundary:
 
 ### Px: {Phase Name}
