@@ -1,8 +1,8 @@
 ---
-title: "Build Log - pending"
+title: "Build Log - 0000030-context-mode-and-telemetry-mcp-removal"
 summary: "Working telemetry file maintained by the orchestrator throughout the pipeline run."
 ---
-# Build Log - pending
+# Build Log - 0000030-context-mode-and-telemetry-mcp-removal
 
 > Created at P0. Appended by the orchestrator at each phase boundary. Survives session changes.
 
@@ -10,7 +10,7 @@ summary: "Working telemetry file maintained by the orchestrator throughout the p
 
 | Field | Value |
 |-------|-------|
-| Feature ID | `pending` |
+| Feature ID | `0000030-context-mode-and-telemetry-mcp-removal` |
 | Pipeline start | `2026-10-14T06:00:45Z` |
 | Tool | `Claude Code` |
 | Primary model | `claude-opus-5-5` |
@@ -41,6 +41,10 @@ P0 exchange (telemetry removal depth): Q: Remove Telemetry MCP completely (hooks
 
 P0 exchange (context-mode removal depth): Q: Apply complete removal to Context Mode too (hooks, flag, src/context-mode-hooks component and its product.yml components[] item, docs/context-mode.md, tests)? / A: Human asked what the product.yml entry meant; after explanation (only the components[] item and header comment change, file and id stay, product version unaffected) accepted.
 P0 exchange (existing installs): Q: Should setup remove stale settings.json entries and hook folders, accept the old flags with a notice, and ship a migration file? / A: Yes.
+
+P0 exchange (identity): Q: Adoption mode standard-iterative, version 0.28.1 -> 0.29.0, feature ID 0000030-context-mode-and-telemetry-mcp-removal? / A: Yes.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-14
+Version confirmed: 0.29.0
 
 ---
 

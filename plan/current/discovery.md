@@ -1,8 +1,8 @@
 ---
-title: "Discovery - pending (proposed 0000030-context-mode-and-telemetry-mcp-removal)"
+title: "Discovery - 0000030-context-mode-and-telemetry-mcp-removal"
 summary: "Raw P0 discovery-pass findings: what the orchestrator knew before coaching began."
 ---
-# Discovery - pending (proposed 0000030-context-mode-and-telemetry-mcp-removal)
+# Discovery - 0000030-context-mode-and-telemetry-mcp-removal
 
 > Created at the start of P0, before the first coaching question, in every adoption mode.
 > Raw findings only; decisions belong in `design.md`, the Q&A audit trail in `build-log.md`.
