@@ -10,18 +10,26 @@
 - `planifest-framework/templates/standard-boot.md` — source template for generated boot files
 - `external-skills.json` manifest — records installed external skills
 - Claude Code, Cursor, Windsurf, Cline, Codex, OpenCode, Copilot, Antigravity, Roo Code tool targets
+- Acceptance of the three retired integration flags as no-ops (0000030-ADR-003)
+<!-- BEGIN retired-integrations (0000030) -->
+- The always-on clean-up of the retired integrations, including deleting `plan/.telemetry-failures/` and `plan/.telemetry-receipts/` (0000030-ADR-004, ADR-005)
+<!-- END retired-integrations (0000030) -->
+- `setup/opencode.sh` registration of the plugin in `opencode.json` through Node
 - `<tool-dir>/.planifest-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
 
 ## Out of Scope
 
 - The content of individual skill SKILL.md files (owned by each skill)
-- MCP server configuration — user's responsibility
-- Hook uninstall / removal logic — not implemented in v1
+- MCP server configuration is the user's responsibility. Setup installs no MCP integration since 0000030
+- Hook uninstall / removal logic, except the fixed retired-integration clean-up list (0000030). Setup does not remove any other hook
 - Automated rollback on failed setup — not implemented
 - Skill content validation beyond YAML frontmatter presence
 
 ## Deferred
 
+- Narrower clean-up that deletes shipped file names only (backlog 0000090)
+- Live PowerShell checks in CI (backlog 0000091)
+- `setup all` stopping at roo-code (backlog 0000087) and the opencode PowerShell null skills folder (backlog 0000088)
 - `setup.ps1` skill subcommand routing (TD-006) — add in next iteration
 - `validate_skill_name()` security guard (TD-001/002/003) — add via change-agent
 - Automated test coverage for `skill-sync.sh` operations — future iteration

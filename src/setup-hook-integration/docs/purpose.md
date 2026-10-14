@@ -13,4 +13,7 @@ When a developer runs `setup.sh <tool>`, this component:
 5. **Writes the boot template** — generates `CLAUDE.md`, `AGENTS.md`, etc. from `templates/standard-boot.md`.
 6. **Records the flags used** (0000020), writes `<tool-dir>/.planifest-setup-flags` on successful completion, so the `planifest-refresh-setup` skill can reconstruct and re-apply the same flags later without the human on the loop having to remember or reverse-engineer them.
 
+7. **Accepts the three retired integration flags** (see 0000030-ADR-003). Each prints a one-line notice and changes nothing, so a refresh from an old marker still succeeds.
+8. **Cleans up the retired integrations** (0000030). Every run, for every tool, removes stale settings entries, hook folders, and state files before it wires anything. See 0000030-ADR-004 and 0000030-ADR-005.
+
 It is designed to be re-run safely (idempotent) and is the single entry point for all tool-specific configuration.
