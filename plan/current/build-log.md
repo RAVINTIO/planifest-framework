@@ -142,7 +142,14 @@ P3 outcome (2026-10-14T22:00:10Z):
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Telemetry | confirmed-disabled |
-| Notes | In progress. |
+| Notes | See P4 notes below. 1 self-correction cycle. |
+
+Library audit: skipped, no dependency added. Lint: bash -n on every tracked .sh and node --check on every .mjs pass. Relative imports all resolve. Type-check and build: not applicable (no compiled code). CI-equivalent: self-description-check passes. Code/doc parity passes by construction (src/ changes ship with plan/ and component.yml).
+Self-correction cycle 1: Check: semantic correctness. Error: req-001 AC1/AC2 and req-002 AC1/AC3 had no mapped test, and NFR-001 had no repo-wide check. Root cause: P3 tests covered setup behaviour and skill text only. Fix: added test-0000030-req-001-002-removed-files-and-residue.sh (15 assertions), and removed stale phase-enum mentions from two docs diagrams that the new check exposed. Result: pass.
+Coverage: REQ-001 AC1, AC2, AC3 (removed-files test, req-004 test fresh install); REQ-002 AC1, AC2, AC3 (removed-files test, req-004 test for claude-code, cursor, opencode, full suite); REQ-003 AC1, AC2, AC3 (req-003 test, NFR-001 check); REQ-004 AC1, AC2, AC3 (req-004 test); REQ-005 AC1, AC2, AC3 (req-005 test; AC2 by commit order 0e6b485). All pass.
+Test: run-tests.sh from repo root: 44 feature suites, 14 regression suites, 0 failed. From inside tests/: test-0000010 fails as on main (backlog 0000089).
+Finding: CI (.github/workflows/planifest.yml) runs only code/doc parity and self-description-check. It runs no test suite and no pwsh. Assumption A-002 is false: setup.ps1 has static checks only. Carried to P5 and P6 as a recommendation.
+verify_by_execution toggle off (default), not run. The req-004 test already runs setup against fixture projects.
 
 ---
 
