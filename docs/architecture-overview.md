@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000028-telemetry-hardening-and-enforcement-fixes
+Last updated: 0000030-context-mode-and-telemetry-mcp-removal
 
 ---
 
@@ -17,8 +17,7 @@ Planifest is a CLI tooling framework that enforces a structured design pipeline 
 
 | Component | Type | Purpose | Status |
 |-----------|------|---------|--------|
-| `context-mode-hooks` | component-pack | PreToolUse hook scripts blocking Grep, Bash, and WebFetch when context-mode routing rules apply | active |
-| `setup-hook-integration` | component-pack | setup.sh/ps1 and skill-sync: installs enforcement hooks, telemetry hooks, context-mode hooks, commit standards, external skill management, and (0000020) a per-tool flags-used marker into any Planifest-managed project | active |
+| `setup-hook-integration` | component-pack | setup.sh/ps1 and skill-sync: installs enforcement hooks, commit standards, external skill management, and (0000020) a per-tool flags-used marker into any Planifest-managed project | active |
 | `planifest-refresh-setup` | skill (standalone, not a src/ component) | Detects a Planifest install's target tool, reconstructs the setup flags in effect from the flags-used marker or hook wiring, confirms with the human on the loop, and safely re-invokes setup.sh/setup.ps1; see `planifest-framework/skills/planifest-refresh-setup/SKILL.md` | active |
 
 ---
@@ -111,45 +110,11 @@ Shared mechanics (state file, append-only run log, stop rules, escalation format
 
 ---
 
-## Telemetry (0000018)
+## Shared hook modules (0000028)
 
-Telemetry emission is gated by one unified signal, `--structured-telemetry-mcp` passed to `setup.sh`/`setup.ps1`, which alone wires the 3 hook-driven emitters (`hooks/telemetry/emit-phase-start.mjs`, `emit-phase-end.mjs`, `context-pressure.mjs`) and writes the `.claude/telemetry-enabled` sentinel that agent-driven `emit_event` calls check. Prior to 0000018, hook installation additionally required `--context-mode-mcp`, an unrelated AND-condition that silently left telemetry unwired for any project passing `--structured-telemetry-mcp` alone (root cause of 0000017's fully-silent telemetry run).
+Hook files import their shared helper by relative path instead of carrying their own copy. `read-stdin.mjs` lives in `hooks/enforcement/`, which installs unconditionally, so every hook that imports it finds it on every install. A helper with an always-installed caller belongs in that tree. The reverse placement would leave an always-installed hook importing an absent module, which fails at ESM module-load time before the hook's own `try/catch` runs and so defeats the exit-zero invariant.
 
-When the signal is active, emission is mandatory, not best-effort:
-- **Hook-driven failures** stay fire-and-forget (ADR-005, 0000003, unchanged: never blocks the session) but now write a durable JSON marker to `plan/.telemetry-failures/<hook>--<error_type>--<slug>.json` instead of swallowing the error with no trace.
-- **`planifest-orchestrator`** checks for markers at the start of every phase (P0–P9) and surfaces a block-or-proceed question to the human once per distinct root cause per run, recording the answer as a `Telemetry` field in the active `build-log.md` phase block.
-- **Agent-driven failures** (any phase skill's direct `emit_event` call) stop and ask the same question inline, in the same turn; no marker involved.
-
-**`product_id` sourcing (0000024):** every event's `product_id` is sourced from `product.yml`'s `id` field, a durable, human-declared identity, confirmed by the orchestrator at P0 (hard-stop prompt if absent). There is no filesystem-path fallback: an absent, unparseable, or `id`-less `product.yml` is treated as an emission failure and routed through the same failure-marker mechanism described above, never a silent path-shaped value. `product.yml` now applies to single-component projects too for this purpose (extends 0000016 ADR-002, see `docs/decisions-index.md`), distinct from its pre-existing multi-component versioning role.
-
-**`emit_event` argument name (0000024):** the MCP tool's top-level call argument is `envelope`, not `event`: this was silently broken for every agent-driven call (12 of 14 event types) since `structured-telemetry-mcp` renamed the argument; only hook-driven `phase_start`/`phase_end`/`context_pressure` (which POST directly via HTTP, bypassing this MCP tool) were unaffected. Fixed and live-reverified this feature (0000017's RCA follow-up, previously unexecuted).
-
-**What counts as an emission failure (0000028, ADR-001):** a network-level `fetch` rejection is retried, an HTTP error status is not. The two shapes previously reached the same catch block and produced the same durable marker, so a routine backend restart (a 1 to 2 second window between the old daemon exiting and the new one binding the port) interrupted the human on the loop with a block-or-proceed decision about something that had already self-corrected. The retry budget is 2 retries, 3 attempts total, fixed 300ms gaps, on top of the unchanged 3s per-attempt abort. Retry exhaustion writes the marker exactly as before, so a genuinely-down backend still surfaces. A 4xx or 5xx means a listener answered and rejected the event, which is a real failure and is never retried. There is still no queue, buffer, or local fallback: what narrowed is the definition of failure, not the delivery guarantee. When the marker write itself fails, a single stderr line naming the hook, the marker path and the write error is printed, so a failing marker write is never fully silent.
-
-Full protocol and event envelope: `planifest-framework/standards/telemetry-standards.md`.
-
----
-
-## Shared Hook Modules (0000028)
-
-Before 0000028 every hook file carried its own copy of each helper it needed, by convention rather than accident. Six helpers now live in exactly one module each, imported by relative path:
-
-| Module | Location | Importers | Why it lives there |
-|--------|----------|-----------|--------------------|
-| `read-stdin.mjs` | `hooks/enforcement/` | 13 (8 enforcement, 5 telemetry) | Its callers include `check-telemetry-receipts.mjs` and `check-telemetry-failures.mjs`, which install unconditionally |
-| `phase-enum.mjs` | `hooks/enforcement/` | 3 | `check-telemetry-receipts.mjs` (enforcement) needs it; `resolve-phase.mjs` and `emit-event-receipt.mjs` import it cross-directory |
-| `emit-event.mjs` | `hooks/telemetry/` | 3 | All callers (`context-pressure`, `emit-phase-start`, `emit-phase-end`) are in `telemetry/`; holds the fetch, abort and retry block |
-| `record-telemetry-failure.mjs` | `hooks/telemetry/` | 4 | All callers in `telemetry/`; holds the durable marker write and its stderr fallback |
-| `read-product-id.mjs` | `hooks/telemetry/` | 3 | All callers in `telemetry/` |
-| `get-flag-path.mjs` | `hooks/telemetry/` | 2 | Both callers in `telemetry/` |
-
-Placement follows one rule, stated in ADR-002 and verified against `setup.sh` rather than assumed: `hooks/enforcement/` installs unconditionally, `hooks/telemetry/` only when `--structured-telemetry-mcp` is passed, so `enforcement/` is the always-present superset and any helper with an enforcement caller belongs there. The reverse placement would leave an always-installed hook importing an absent module on the majority install, which fails at ESM module-load time before the hook's own `try/catch` runs and so defeats the exit-zero invariant outright.
-
-Two consequences are worth carrying forward. `resolve-phase.mjs` makes no `fetch` call of its own and spawns the emit hooks as child processes, so it inherits the retry fix without a code change. And `emit-event-receipt.mjs`'s `KNOWN_PHASES` path-traversal guard (CWE-22, added at 0000027) is now derived from the same `phase-enum.mjs` as the two lookup tables, so the security guard cannot drift out of step with them.
-
-`getSessionId()` was deliberately left with 4 copies. They span 3 genuinely different behaviour profiles across two independent axes (a 2-priority versus a 4-priority resolution chain, and whether the session file is created or only read), so a single parameterised function would need two flags with every caller passing a different combination. That is a behaviour change wearing a refactor's clothes, and it is recorded as tech debt rather than done quietly.
-
-Self-modification sequencing (ADR-004) governs how such an extraction is applied to hooks that are executing the build doing the editing: rewire one caller, commit, re-run `setup.sh` for that edit alone, then assert a real side effect. Exit 0 proves nothing here by design.
+Self-modification sequencing (ADR-004) governs how such a change is applied to hooks that are executing the build doing the editing. Rewire one caller, commit, re-run `setup.sh` for that edit alone, then assert a real side effect. Exit 0 proves nothing here by design.
 
 ---
 
@@ -166,7 +131,7 @@ No components own persistent data. Planifest operates on local filesystem artifa
 | Node.js (built-ins only: fs, path, child_process, os, url) | Runtime | All hook adapters and enforcement scripts |
 | Bash | Runtime | setup.sh, test scripts, hook install scripts |
 | PowerShell 7+ | Runtime | setup.ps1, test_setup.ps1, PowerShell hook scripts |
-| git (core.hooksPath) | CLI | setup.sh/ps1 (commit-msg hook installation): `hooks/telemetry/*.mjs` no longer depend on `git` (0000024 removed the `git rev-parse --show-toplevel` `product_id` derivation entirely; see Telemetry section above) |
+| git (core.hooksPath) | CLI | setup.sh/ps1 (commit-msg hook installation) |
 
 ---
 
@@ -178,22 +143,20 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-002 (0000003):** Common envelope shape: all adapters normalise to `{ session_id, cwd, tool_input, event }` before delegating
 - **ADR-005 (0000003):** Exit-zero failure mode: hooks never block on unexpected errors (NFR-003)
 - **ADR-003 (0000011):** Hook adapter architecture: delegating pattern; adapters translate envelopes, enforcement logic lives only in shared scripts
-- **ADR-001 (0000018):** Unified telemetry gating: `--structured-telemetry-mcp` alone wires telemetry hooks, removing the `--context-mode-mcp` coupling bug
-- **ADR-002 (0000018):** Telemetry failure detection and interactive recovery: durable failure markers plus block-or-proceed prompting, once per distinct root cause per run
 - **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches build-log.md's Hard Limit 8 enforcement pattern
 - **ADR-001 (0000020):** Hardcoded, non-extensible deletion allowlist for the refresh skill, enforced in a dedicated script, not prose alone (P5 security finding)
 - **ADR-002 (0000020):** Single marker file (`.planifest-setup-flags`) serves as both install-time record and refresh retry cache, not two separate files
 - **ADR-003 (0000020):** Mandatory human confirmation gate before any refresh action, regardless of flag-reconstruction confidence
 - **ADR-004 (0000020):** Tool selection is explicit input to the refresh skill, never silently auto-resolved when multiple installs are present
 - **ADR-005 (0000020):** No automatic retry on a failed setup re-invocation; retry is always human-initiated
-- **ADR-001 (0000024):** `product.yml` extended to single-component projects as the declared `product_id` home for telemetry: extends, not supersedes, 0000016 ADR-002's versioning-only scope
+- **ADR-001 (0000024):** `product.yml` extended to single-component projects as the declared product id home (stable name for versioning and for attributing archived runs): extends, not supersedes, 0000016 ADR-002's versioning-only scope
 - **ADR-001 (0000025):** Ship-agent PR footer defaults off; restorable only via a `planifest-overrides/instructions/` opt-in file
 - **ADR-002 (0000025):** `planifest-overrides/setup-config/{tool}.md` (tracked) is source of truth over the gitignored `.planifest-setup-flags` marker; reconciled on setup/refresh; `.orchestrator-strict` explicitly out of scope
 - **ADR-003 (0000025):** Scope Lock Challenge defaults to always-drafted, batch-presented answers: supersedes **ADR-003 (0000017)**, scoped narrowly against `0000014-ADR-008`'s one-question-at-a-time convention (unchanged everywhere else)
-- **ADR-001 (0000028):** Network-level retry semantics: only a `fetch` rejection is retried (2 retries, 300ms gaps), never an HTTP error status, since only the former is the signature of a transient listener gap
-- **ADR-002 (0000028):** Shared hook modules live inside the existing `hooks/enforcement/` and `hooks/telemetry/` trees, placed by install condition (`enforcement/` is the always-present superset), never in a new top-level `shared/` directory
+- **ADR-002 (0000028):** Shared hook modules live inside the existing `hooks/enforcement/` tree, which installs unconditionally, never in a new top-level `shared/` directory
 - **ADR-003 (0000028):** The em dash guard attaches as a `PreToolUse(Write, Edit)` sibling of `gate-write.mjs`, not a git hook, with a reusable in-content sentinel as the bypass so the exemption is visible in the artifact's own diff
 - **ADR-004 (0000028):** Self-modification sequencing: when editing the hooks running the build, rewire one caller at a time and verify a real side effect, because exit 0 cannot distinguish a working hook from a silently broken one
+- **ADR-002 (0000030):** The retired hook and MCP integrations are removed from the framework. Setup ignores their flags and a re-run cleans up the old install.
 
 ---
 

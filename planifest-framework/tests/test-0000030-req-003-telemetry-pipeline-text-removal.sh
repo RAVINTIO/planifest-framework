@@ -65,7 +65,8 @@ for f in "${FILES[@]}"; do
     assert_equals "exists" "missing" "req-003: $rel exists"
     continue
   fi
-  hits=$(filtered "$f" | grep -iE "$PATTERN" | head -3)
+  # Feature ids such as 0000029-context-mode-removal-... name history, not live text.
+  hits=$(filtered "$f" | sed -E 's/[0-9]{7}-[a-z0-9-]*(context-mode|telemetry)[a-z0-9-]*//g' | grep -iE "$PATTERN" | head -3)
   assert_equals "" "$hits" "req-003: $rel has no telemetry or context-mode text"
 done
 
