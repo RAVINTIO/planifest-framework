@@ -3,7 +3,7 @@
 # 0000027 that have no runtime behaviour to execute: req-003 (subagent
 # backlog filing), req-005 (framework update policy), req-007 (skill-scope
 # ADR pointer), req-008 (minimal Phase 1 artifact set). Follows this repo's
-# established convention (see test-skill-telemetry.sh) of asserting exact
+# established convention of asserting exact
 # required content exists rather than executing prose.
 
 set -uo pipefail

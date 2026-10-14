@@ -85,39 +85,27 @@ assert_equals '"claude-code"' "$(read_config_field "planifest-overrides/setup-co
 assert_equals "[]" "$(read_config_field "planifest-overrides/setup-config/claude-code.md" "flags")" \
   "(a): tracked file flags empty when no flags passed"
 
-assert_equals "null" "$(read_config_field "planifest-overrides/setup-config/claude-code.md" "backendUrl")" \
-  "(a): tracked file backendUrl null when telemetry flag not passed"
-
 cd "$SCRIPT_DIR"
 rm -rf "$WS"
 
-# ── (b): flags/backendUrl match between tracked file and marker ─────────────
+# ── (b): flags match between tracked file and marker ─────────────
 
 echo ""
 echo "=== (b): setup.sh claude-code with flags — tracked file and marker agree ==="
 
 WS=$(make_workspace); cd "$WS"
-bash planifest-framework/setup.sh claude-code --context-mode-mcp --structured-telemetry-mcp \
-  --strict-orchestrator --backend-url http://example.test:9999 >/dev/null 2>&1
+bash planifest-framework/setup.sh claude-code --strict-orchestrator \
+  --include-full-skill-library >/dev/null 2>&1
 assert_exit_zero $? "(b): setup exits 0 with all flags"
 
 CONFIG_FLAGS="$(read_config_field "planifest-overrides/setup-config/claude-code.md" "flags")"
 MARKER_FLAGS="$(read_marker_field ".claude/.planifest-setup-flags" "flags")"
 
-assert_contains "--context-mode-mcp" "$CONFIG_FLAGS" "(b): tracked file records --context-mode-mcp"
-assert_contains "--structured-telemetry-mcp" "$CONFIG_FLAGS" "(b): tracked file records --structured-telemetry-mcp"
+assert_contains "--include-full-skill-library" "$CONFIG_FLAGS" "(b): tracked file records --include-full-skill-library"
 assert_contains "--strict-orchestrator" "$CONFIG_FLAGS" "(b): tracked file records --strict-orchestrator"
 
 assert_equals "$MARKER_FLAGS" "$CONFIG_FLAGS" \
   "(b): tracked file flags match marker flags for the same run"
-
-CONFIG_URL="$(read_config_field "planifest-overrides/setup-config/claude-code.md" "backendUrl")"
-MARKER_URL="$(read_marker_field ".claude/.planifest-setup-flags" "backendUrl")"
-
-assert_equals '"http://example.test:9999"' "$CONFIG_URL" \
-  "(b): tracked file records custom --backend-url"
-assert_equals "$MARKER_URL" "$CONFIG_URL" \
-  "(b): tracked file backendUrl matches marker backendUrl for the same run"
 
 cd "$SCRIPT_DIR"
 rm -rf "$WS"

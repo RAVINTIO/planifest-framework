@@ -6,8 +6,7 @@
 # <tool-dir>/.planifest-setup-flags for non-Claude-Code tools, since the marker
 # doubles as the refresh skill's retry cache per tool, see ADR-002 and
 # src/setup-hook-integration/docs/data-contract.md) on every successful install,
-# recording the tool name, flags passed, backend URL (if telemetry was enabled),
-# a timestamp, and attemptStatus: completed.
+# recording the tool name, flags passed, a timestamp, and attemptStatus: completed.
 
 set -uo pipefail
 
@@ -59,32 +58,25 @@ assert_equals '"claude-code"' "$(read_json_field ".claude/.planifest-setup-flags
 assert_equals "[]" "$(read_json_field ".claude/.planifest-setup-flags" "flags")" \
   "(a): flags field is empty array when no flags passed"
 
-assert_equals "null" "$(read_json_field ".claude/.planifest-setup-flags" "backendUrl")" \
-  "(a): backendUrl is null when telemetry flag not passed"
-
 assert_equals '"completed"' "$(read_json_field ".claude/.planifest-setup-flags" "attemptStatus")" \
   "(a): attemptStatus is completed after a successful install"
 
 cd "$SCRIPT_DIR"
 rm -rf "$WS"
 
-# ── (b): setup.sh records every flag passed, plus backend URL ───────────────
+# ── (b): setup.sh records every flag passed ───────────────
 
 echo ""
 echo "=== (b): setup.sh claude-code with all flags records them all ==="
 
 WS=$(make_workspace); cd "$WS"
-bash planifest-framework/setup.sh claude-code --context-mode-mcp --structured-telemetry-mcp \
-  --strict-orchestrator --backend-url http://example.test:9999 >/dev/null 2>&1
+bash planifest-framework/setup.sh claude-code --strict-orchestrator \
+  --include-full-skill-library >/dev/null 2>&1
 assert_exit_zero $? "(b): setup exits 0 with all flags"
 
 FLAGS_JSON="$(read_json_field ".claude/.planifest-setup-flags" "flags")"
-assert_contains "--context-mode-mcp" "$FLAGS_JSON" "(b): --context-mode-mcp recorded"
-assert_contains "--structured-telemetry-mcp" "$FLAGS_JSON" "(b): --structured-telemetry-mcp recorded"
 assert_contains "--strict-orchestrator" "$FLAGS_JSON" "(b): --strict-orchestrator recorded"
-
-assert_equals '"http://example.test:9999"' "$(read_json_field ".claude/.planifest-setup-flags" "backendUrl")" \
-  "(b): custom --backend-url value recorded"
+assert_contains "--include-full-skill-library" "$FLAGS_JSON" "(b): --include-full-skill-library recorded"
 
 cd "$SCRIPT_DIR"
 rm -rf "$WS"
