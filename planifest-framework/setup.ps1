@@ -655,8 +655,8 @@ if (changed) writeSettings(sf, s);
     if ($base) {
         $stale += "$base/context-mode", "$base/telemetry"
         $enfDir = Join-Path $ProjectRoot "$base/enforcement"
-        if (Test-Path $enfDir) {
-            Get-ChildItem -Path $enfDir -Filter 'check-telemetry-*.mjs' | ForEach-Object {
+        if (Test-Path -LiteralPath $enfDir) {
+            Get-ChildItem -LiteralPath $enfDir -Filter 'check-telemetry-*.mjs' -Force | ForEach-Object {
                 $stale += "$base/enforcement/$($_.Name)"
             }
         }
@@ -665,10 +665,19 @@ if (changed) writeSettings(sf, s);
     # Step 4: project-level state the retired hooks and setup wrote
     $stale += '.claude/telemetry-enabled', 'plan/.telemetry-failures', 'plan/.telemetry-receipts'
 
+    # -LiteralPath, because -Path treats [ and * as wildcards. Get-Item -Force
+    # also finds a dangling link, which Test-Path reports as missing. A symlink
+    # or junction is deleted as a link, so Windows PowerShell 5.1 never recurses
+    # into the folder it points to.
     foreach ($p in $stale) {
         $full = Join-Path $ProjectRoot $p
-        if (Test-Path $full) {
-            Remove-Item -Path $full -Recurse -Force
+        $item = Get-Item -LiteralPath $full -Force -ErrorAction SilentlyContinue
+        if ($item) {
+            if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+                (Get-Item -LiteralPath $full -Force).Delete()
+            } else {
+                Remove-Item -LiteralPath $full -Recurse -Force
+            }
             Write-Host "  - $p (retired, removed)"
         }
     }

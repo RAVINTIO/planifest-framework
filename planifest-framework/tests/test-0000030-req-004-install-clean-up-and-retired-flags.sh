@@ -361,6 +361,21 @@ assert_equals "yes" "$(yes_no grep -q 'catch' "$OPENCODE_PS1")" \
 
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
+echo "=== P5 F2: setup.ps1 clean-up deletes links, not their targets (static) ==="
+
+ps1_fenced=$(awk -v b="$FENCE_BEGIN" -v e="$FENCE_END" 'index($0,b){s=1} s{print} index($0,e){s=0}' "$SETUP_PS1")
+assert_equals "0" "$(printf '%s\n' "$ps1_fenced" | grep -c 'Remove-Item -Path' || true)" \
+  "setup.ps1 clean-up: no Remove-Item -Path (wildcards, follows links)"
+assert_contains "Remove-Item -LiteralPath" "$ps1_fenced" "setup.ps1 clean-up: deletes by -LiteralPath"
+assert_contains "ReparsePoint" "$ps1_fenced" "setup.ps1 clean-up: checks for a link or junction"
+assert_contains ".Delete()" "$ps1_fenced" "setup.ps1 clean-up: removes a link itself, without recursing"
+assert_contains 'Get-Item -LiteralPath $full -Force -ErrorAction SilentlyContinue' "$ps1_fenced" \
+  "setup.ps1 clean-up: finds dangling links with Get-Item, not Test-Path"
+assert_equals "0" "$(printf '%s\n' "$ps1_fenced" | grep -c 'Test-Path \$full' || true)" \
+  "setup.ps1 clean-up: no Test-Path on the delete target"
+
+# ─────────────────────────────────────────────────────────────────────────────
+echo ""
 echo "=== req-004: setup.sh and setup.ps1 parity (static) ==="
 
 for f in "$SETUP_SH" "$SETUP_PS1"; do
