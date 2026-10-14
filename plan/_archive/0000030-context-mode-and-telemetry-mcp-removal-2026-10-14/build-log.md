@@ -194,7 +194,22 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Telemetry | confirmed-disabled |
-| Notes | Archive by `git mv` per item and explicit-path deletes, not a glob delete (backlog 0000075). |
+| Notes | Archive by `git mv` per item and explicit-path deletes, not a glob delete (backlog 0000075). Cross-reference check updated 2 incoming links (docs/decisions-index.md ADR folder, src/setup-hook-integration/docs/risk.md). Removed an empty untracked plan/current/external-skills/ left by a test run. No regression candidates tagged. Archive committed at 98e90c0. |
+
+---
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-14T22:38:20Z` |
+| Model tier | cheaper |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Sub-agent reads this archived log and writes build-report.md. |
 
 ---
 
@@ -221,12 +236,12 @@ verify_by_execution toggle off (default), not run. The req-004 test already runs
 
 | Metric | Value |
 |--------|-------|
-| Total phases completed | `{{count}}` |
-| Total agents spawned | `{{count}}` |
-| Total MCP calls | `{{count}}` |
-| Phases using parallelism | `{{count}}` |
-| Primary tier agent calls | `{{count}}` |
-| Cheaper tier agent calls | `{{count}}` |
-| Self-corrections | `{{count}}` |
-| Phases skipped | `{{list or "none"}}` |
-| Phases with a recorded telemetry gap | `{{count, phases where Telemetry was failed-with-recorded-choice, or "0"}}` |
+| Total phases completed | `8` at P7 (P0 to P7). P8 and P9 follow in their own blocks |
+| Total agents spawned | `11` before P8 (P0 4, P1 1, P3 3, P5 2, P6 1) |
+| Total MCP calls | `0` |
+| Phases using parallelism | `4` (P0, P1, P3, P6) |
+| Primary tier agent calls | `11` (7 sonnet, 4 opus) |
+| Cheaper tier agent calls | `0` |
+| Self-corrections | `1` (P4). P5 fixes counted as findings, not self-corrections |
+| Phases skipped | none |
+| Phases with a recorded telemetry gap | `0`. This feature retires the field |
