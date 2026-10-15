@@ -37,3 +37,4 @@ Pending migration `migrate-remove-context-mode-and-telemetry.md`: left in place 
 P0 exchange (triage): Q: Brief or backlog? / A: Backlog 0000091 and 0000077, as two runs on one branch.
 P0 exchange (decomposition): Q: One combined run or two? / A: Two runs, 0000091 first, then 0000077 with 0000084, all on one branch.
 Backlog pickup: 0000091 pulled in. 0000077 and 0000084 left for the second run. All other entries left.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-15
