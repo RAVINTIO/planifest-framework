@@ -40,3 +40,4 @@ Backlog pickup: 0000091 pulled in. 0000077 and 0000084 left for the second run. 
 Adoption mode: standard-iterative, confirmed by human on 2026-10-15
 Version confirmed: 0.30.0
 Baseline: run-tests.sh passes on macOS from the repo root on 2026-10-15 (44 feature suites, 14 regression suites, 0 failed).
+P0 exchange (backlog): Q: Fold 0000050 (live pwsh check of Write-SetupFlagsMarker) into this run? / A: Yes. Pulled in.
