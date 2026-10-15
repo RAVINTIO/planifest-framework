@@ -45,3 +45,8 @@ P0 exchange (PowerShell versions): Q: PowerShell 7 only, or 7 and 5.1? / A: Powe
 P0 exchange (test platforms): Q: macOS runners only, or Linux, macOS, and Windows with local checks on Mac only? / A: B. CI runs on all three platforms. The human on the loop can check only macOS locally, so the Linux and Windows jobs get checked only in GitHub Actions.
 P0 exchange (brief): Q: Confirm the drafted feature brief? / A: Confirmed as written.
 Clarification resolved: "only Mac testing" means local checks run on macOS only. CI still runs on all three platforms (see the test platforms exchange).
+Scope Lock (happy path): A PR to main runs the existing checks plus the suite on Linux and macOS and test_setup.ps1 with the marker check on Windows, all green in under 10 minutes. [source: agent-draft-accepted]
+Scope Lock (first-run path): The first run is this feature's own PR on fresh runners. It is also the first test of the Linux-suite and windows-latest pwsh assumptions, and fixes land on the same PR. [source: agent-draft-accepted]
+Scope Lock (error path): A broken test or broken setup.ps1 turns its job red, the other jobs still finish, and the log names the failure. [source: agent-draft-accepted]
+Scope Lock (cross-session continuity): An interrupted run puts nothing durable at risk. Recovery is a re-run or a new commit on a fresh runner. [source: agent-draft-accepted]
+Scope Lock note: the human on the loop accepted all four items explicitly with "Accept all".
