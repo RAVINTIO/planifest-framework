@@ -44,3 +44,4 @@ P0 exchange (backlog): Q: Fold 0000050 (live pwsh check of Write-SetupFlagsMarke
 P0 exchange (PowerShell versions): Q: PowerShell 7 only, or 7 and 5.1? / A: PowerShell 7 only. Windows PowerShell 5.1 deferred to the backlog. Human added: only Mac testing is supported for now (meaning under clarification).
 P0 exchange (test platforms): Q: macOS runners only, or Linux, macOS, and Windows with local checks on Mac only? / A: B. CI runs on all three platforms. The human on the loop can check only macOS locally, so the Linux and Windows jobs get checked only in GitHub Actions.
 P0 exchange (brief): Q: Confirm the drafted feature brief? / A: Confirmed as written.
+Clarification resolved: "only Mac testing" means local checks run on macOS only. CI still runs on all three platforms (see the test platforms exchange).
