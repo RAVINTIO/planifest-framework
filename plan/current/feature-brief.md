@@ -71,6 +71,8 @@ One wave. All three stories ship together.
 - A job in `.github/workflows/planifest.yml` that runs `bash planifest-framework/tests/run-tests.sh` on `ubuntu-latest` and `macos-latest`.
 - A job that runs `planifest-framework/tests/test_setup.ps1` under `pwsh` on `windows-latest`.
 - A new assertion in `test_setup.ps1` that parses `.planifest-setup-flags` and checks its fields, with and without flags.
+- `run-tests.sh` prints the names of failed suites before its summary.
+- The suite matrix sets `fail-fast: false`, so one platform's failure never cancels the other.
 - Any fix the new jobs show to be needed in the tests or setup scripts.
 
 ### Out of Scope
@@ -124,5 +126,6 @@ One wave. All three stories ship together.
 - [ ] On a pull request to `main`, CI runs `run-tests.sh` on `ubuntu-latest` and `macos-latest`, and either job fails if the suite exits non-zero.
 - [ ] On a pull request to `main`, CI runs `test_setup.ps1` under `pwsh` on `windows-latest`, and the job fails if the script throws.
 - [ ] `test_setup.ps1` parses `.planifest-setup-flags` after a plain run and after a run with `--include-full-skill-library`. It fails unless `tool`, `flags`, `writtenAt`, and `attemptStatus` are present, `flags` is an array, and `flags` matches the flags passed.
+- [ ] When a suite fails, `run-tests.sh` lists each failed suite by file name before its summary, and the Linux and macOS jobs both run to completion.
 - [ ] All new jobs pass on this feature's PR, and each finishes in under 10 minutes.
 - [ ] `docs/` describes the new CI jobs, and a backlog entry records the 5.1 deferral.
