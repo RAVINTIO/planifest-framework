@@ -19,7 +19,7 @@ version: "0.1.0"
 | 1 - Specification | pass | All artifacts produced: yes | 4 requirements, 12 acceptance criteria |
 | 2 - ADRs | pass | 3 ADRs generated | Consistency check merged two REQ-001 criteria |
 | 3 - Code Generation | pass | Implementation complete: yes | 0 deviations. 3 TDD agents in one parallel batch. |
-| 4 - Validation | pass | CI clean: yes | 2 cycles |
+| 4 - Validation | pass | CI clean: yes | 3 cycles (cycle 3 after P8) |
 | 5 - Security | pass | Critical findings: 0 | Overall Low, 5 low findings |
 | 6 - Docs & Ship | pass | All docs synced: yes | |
 
@@ -34,6 +34,7 @@ version: "0.1.0"
 
 1. CI run 38944104004: `test-0000030-req-001-002-removed-files-and-residue.sh` expected product version `0.29.0` and found `0.30.0` on Linux and macOS. The P3 bump caused it. The test now compares with `planifest-framework/component.yml`.
 2. REQ-004 criterion 2 had static coverage only. `test_setup.ps1` now feeds three broken markers to the helper. CI run 38944916328 rejected all three.
+3. The NFR-002 re-run failed twice on macOS in `test-attribution-validation.sh` with a broken pipe. Eight suites piped printf or echo into `grep -q` under pipefail. They now use here-strings, and a new guard suite blocks the pattern.
 
 ## Quirks
 

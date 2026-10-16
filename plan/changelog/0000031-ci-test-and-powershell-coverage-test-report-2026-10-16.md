@@ -12,6 +12,7 @@
 | `test-0000031-req-004-setup-flags-marker-check.sh` | req-004 | pass |
 | `test_setup.ps1` (Windows CI job, PowerShell 7) | req-003, req-004 | pass |
 | `test-0000030-req-001-002-removed-files-and-residue.sh` (edited) | 0000030 req-001 | pass |
+| `test-0000031-no-pipe-into-grep-q.sh` (P4 cycle 3 guard) | none (NFR-002) | pass |
 
 **Summary:** CI run 38944916328: 48 feature suites passed on Linux and macOS, 14 regression suites passed, and `test_setup.ps1` passed on Windows. 0 failed, 0 skipped.
 

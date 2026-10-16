@@ -10,6 +10,7 @@
 - **Failures are named.** `run-tests.sh` lists each failed suite by file name before its summary.
 - **`setup.ps1` runs in CI.** A `setup-powershell` job runs `test_setup.ps1` under PowerShell 7 on `windows-latest`.
 - **The setup-flags marker is checked live.** `test_setup.ps1` parses `.planifest-setup-flags` after a plain run and a flagged run, and rejects three broken markers. This closes backlog 0000050.
+- **A random test failure is fixed.** Eight suites piped output into `grep -q` under pipefail, which failed at random on macOS. They now use here-strings, and a guard suite blocks the pattern.
 - **A brittle version check is fixed.** A 0000030 test compared the product version with a fixed `0.29.0`. It now reads `planifest-framework/component.yml`.
 
 ## Artifacts Produced
