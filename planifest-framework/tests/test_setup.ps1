@@ -81,6 +81,31 @@ function Assert-SetupFlagsMarker {
     Write-Host "  PASS: setup-flags marker at '$Path' is valid (flags: [$foundText])"
 }
 
+# Writes a broken marker and expects Assert-SetupFlagsMarker to throw a FAIL
+# message. Throws if the helper accepts the broken marker.
+function Assert-MarkerRejected {
+    param(
+        [Parameter(Mandatory = $true)][string]$Case,
+        [Parameter(Mandatory = $true)][string]$Content,
+        [Parameter(Mandatory = $true)][string]$Folder
+    )
+
+    $path = Join-Path $Folder ".planifest-setup-flags-$([guid]::NewGuid().ToString())"
+    Set-Content -LiteralPath $path -Value $Content -NoNewline -Encoding UTF8
+    $rejected = $false
+    try { Assert-SetupFlagsMarker -Path $path -ExpectedFlags @() }
+    catch {
+        if ($_.Exception.Message -notlike 'FAIL: setup-flags marker*') {
+            throw "FAIL: broken marker case '$Case' threw an unexpected error: $($_.Exception.Message)"
+        }
+        $rejected = $true
+    }
+    if (-not $rejected) {
+        throw "FAIL: broken marker case '$Case' was accepted"
+    }
+    Write-Host "  PASS: broken marker case '$Case' was rejected"
+}
+
 try {
     # Copy the framework into the test workspace
     $scriptPath = $MyInvocation.MyCommand.Path
@@ -110,6 +135,12 @@ try {
     }
 
     Assert-SetupFlagsMarker -Path ".claude\.planifest-setup-flags" -ExpectedTool 'claude-code' -ExpectedFlags @()
+
+    $brokenDir = Join-Path $testDir 'broken-markers'
+    New-Item -ItemType Directory -Path $brokenDir -Force | Out-Null
+    Assert-MarkerRejected -Case 'invalid JSON' -Folder $brokenDir -Content '{ "tool": "claude-code", "flags": [ '
+    Assert-MarkerRejected -Case 'missing field' -Folder $brokenDir -Content '{ "tool": "claude-code", "flags": [], "writtenAt": "2026-01-01T00:00:00Z" }'
+    Assert-MarkerRejected -Case 'flags as a string' -Folder $brokenDir -Content '{ "tool": "claude-code", "flags": "--strict-orchestrator", "writtenAt": "2026-01-01T00:00:00Z", "attemptStatus": "completed" }'
 
     Write-Host "--- Testing: cursor ---"
     & .\planifest-framework\setup.ps1 cursor

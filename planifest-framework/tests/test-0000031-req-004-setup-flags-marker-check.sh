@@ -49,4 +49,14 @@ if [ -n "$def_line" ] && [ -n "$first_call" ] && [ "$def_line" -lt "$first_call"
 assert_equals "yes" "$order" "req-004: helper is defined before its first call"
 assert_equals "2" "$call_count" "req-004: helper is called after the plain and flagged runs"
 
+# Negative cases: broken markers must make the helper throw (acceptance criterion 2).
+assert_equals "yes" "$(yes_no has 'function Assert-MarkerRejected')" \
+  "req-004: defines a helper that expects a broken marker to be rejected"
+assert_equals "yes" "$(yes_no has "Assert-MarkerRejected -Case 'invalid JSON'")" \
+  "req-004: rejects a marker that is not valid JSON"
+assert_equals "yes" "$(yes_no has "Assert-MarkerRejected -Case 'missing field'")" \
+  "req-004: rejects a marker with a missing field"
+assert_equals "yes" "$(yes_no has "Assert-MarkerRejected -Case 'flags as a string'")" \
+  "req-004: rejects a marker whose flags field is a string"
+
 print_summary
