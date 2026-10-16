@@ -1,12 +1,12 @@
 ---
-version: "0.29.0"
-feature: "0000030-context-mode-and-telemetry-mcp-removal"
-updated: "14 Oct 2026"
+version: "0.30.0"
+feature: "0000031-ci-test-and-powershell-coverage"
+updated: "16 Oct 2026"
 ---
 # About
 
 | Field | Value |
 |-------|-------|
-| Version | `0.29.0` |
-| Last feature | `0000030-context-mode-and-telemetry-mcp-removal` |
-| Updated | `14 Oct 2026` |
+| Version | `0.30.0` |
+| Last feature | `0000031-ci-test-and-powershell-coverage` |
+| Updated | `16 Oct 2026` |
