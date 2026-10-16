@@ -197,3 +197,17 @@ P6 end: 2026-10-16T18:14:49Z
 | Notes | none |
 
 P4 reopened after P8 (NFR-002 reliability check). Cycle 3: Check: test (CI run 38945865743, both attempts). Error: `test-attribution-validation.sh` failed on macOS with `printf: write error: Broken pipe`. Root cause: suites piped printf or echo into `grep -q` under `set -o pipefail`. `grep -q` exits at the first match, the writer gets SIGPIPE, and pipefail fails the check at random. Eight suites had the pattern. Fix: feed `grep -q` from a here-string, plus a guard suite `test-0000031-no-pipe-into-grep-q.sh` (RED then GREEN). Local suite: 48 feature suites and 14 regression suites pass. Self-corrections now 3.
+NFR-002 met: CI run 38947839649 passed on both attempts on `1efef77`. Longest job: Test suite (macos-latest), 4m44s.
+P8 end: 2026-10-16T18:40:55Z
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-16T18:40:55Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Version derived by `product-version.mjs`: 0.30.0. PR #58 is a draft shared with 0000032 on the same branch. |
