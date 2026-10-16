@@ -155,3 +155,6 @@ P5 end: 2026-10-16T18:12:40Z
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Continuous run. |
+P6 Gate B: docs update assessment (continuous run, auto-accepted). This run added CI jobs and test assertions. Auto-accepted: updating `docs/architecture-overview.md`, `docs/decisions-index.md`, `docs/component-registry.md`, and `docs/dependency-graph.md`.
+P6 notes: Inline, not decomposed. The edits share one set of facts and total about 60 lines, so dispatch would cost more than it saves. Deviation: `src/setup-hook-integration/docs/` and its `component.yml` were updated docs-only, recorded in `iteration-log.md`. Backlog 0000092 to 0000094 filed. Picked-up entries 0000091 and 0000050 removed. Drift: none found.
+P6 end: 2026-10-16T18:14:49Z
