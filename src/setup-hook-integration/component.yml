@@ -96,17 +96,17 @@ quality:
     # END retired-integrations (0000030)
     - "setup all stops at roo-code and TOOL_* values carry over (backlog 0000087)"
     - "opencode setup.ps1 passes a null skills folder (backlog 0000088)"
-    - "No live PowerShell run in CI or locally (backlog 0000091)"
+    - "Live PowerShell CI covers test_setup.ps1 only. Stale-entry clean-up and retired flags have no live PowerShell test (TD-010, partly resolved in 0000031)"
     - "setup.ps1 ConvertTo-Json depth: PowerShell default depth is 2; using -Depth 10 workaround. If settings.json nesting exceeds depth 10, content will be truncated to string."
   quirks:
     - "setup.ps1 hook entries use forward-slash paths in command values — this matches Claude Code hook config expectations even on Windows"
-    - "Write-SetupFlagsMarker (0000020) verified statically only in this environment, no pwsh available (Q-006)"
+    - "Write-SetupFlagsMarker (0000020) runs live in the Windows CI job since 0000031 (Q-006, resolved)"
     - "OpenCode's setup.ps1 tool config lacks a SkillsDir property, marker write silently skips for OpenCode on Windows, pre-existing gap (Q-007)"
     - "NFR-002 idempotency ignores the writtenAt timestamp, which setup rewrites every run (Q-011)"
     # BEGIN retired-integrations (0000030)
     - "Clean-up whole-folder deletion and matcher-only emit_event removal accepted as F6 (Q-012, backlog 0000090)"
     # END retired-integrations (0000030)
-    - "setup.ps1 clean-up, retired-flag branch, and Write-SettingsFile verified statically only (Q-013, backlog 0000091)"
+    - "setup.ps1 stale-entry clean-up and retired-flag branch verified statically only. Write-SettingsFile runs live in the Windows CI job since 0000031 (Q-013)"
     - "Write-SettingsFile writes UTF-8 without a BOM (Q-014)"
     - "cline.ps1's boot-file relocation (0000027-req-002) verified statically only, no pwsh available in this environment, same constraint as Q-006"
 

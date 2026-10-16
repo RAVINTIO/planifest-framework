@@ -55,4 +55,4 @@ These items covered tests of a hook integration that setup no longer installs.
 ## TD-010: no live PowerShell run in CI or locally (backlog 0000091)
 
 **File:** `.github/workflows/planifest.yml`
-**Status:** Open. 0000030 P4 found that CI runs no test suite and no `pwsh`. See backlog 0000091 and Q-013.
+**Status:** Partly resolved in 0000031. CI now runs the suite on Linux and macOS and `test_setup.ps1` under PowerShell 7 on Windows. Stale-entry clean-up and retired flags still have no live PowerShell test, see Q-013.
