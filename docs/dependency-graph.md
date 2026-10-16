@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last updated:** 0000030-context-mode-and-telemetry-mcp-removal (14 Oct 2026). The two retired hook integrations and their external services are removed from the graph.
+**Last updated:** 0000031-ci-test-and-powershell-coverage (16 Oct 2026). No component dependency changed. CI now runs the framework tests, as described in `architecture-overview.md`.
 **Maintained by:** planifest-docs-agent
 
 ---

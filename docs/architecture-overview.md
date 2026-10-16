@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000030-context-mode-and-telemetry-mcp-removal
+Last updated: 0000031-ci-test-and-powershell-coverage
 
 ---
 
@@ -118,6 +118,23 @@ Self-modification sequencing (ADR-004) governs how such a change is applied to h
 
 ---
 
+## Continuous integration (0000031)
+
+`.github/workflows/planifest.yml` runs four jobs on every pull request to `main`.
+
+| Job | Runner | What it checks |
+|-----|--------|----------------|
+| `validate-branch` | `ubuntu-latest` | A change under `src/` also touches `plan/`, `docs/`, or a `component.yml` |
+| `self-description-check` | `ubuntu-latest` | The README matches the repository structure (0000019) |
+| `test-suite` | `ubuntu-latest` and `macos-latest`, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
+| `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.planifest-setup-flags` marker checks |
+
+The `test-suite` and `setup-powershell` jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Both declare `permissions: contents: read` and `timeout-minutes: 10` (0000031-ADR-003). Windows PowerShell 5.1 has no CI coverage (0000031-ADR-001).
+
+A red check doesn't block a merge until branch protection marks it as required. Only the human on the loop can change that setting.
+
+---
+
 ## Data Ownership
 
 No components own persistent data. Planifest operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.planifest-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `planifest-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `planifest-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
@@ -131,6 +148,7 @@ No components own persistent data. Planifest operates on local filesystem artifa
 | Node.js (built-ins only: fs, path, child_process, os, url) | Runtime | All hook adapters and enforcement scripts |
 | Bash | Runtime | setup.sh, test scripts, hook install scripts |
 | PowerShell 7+ | Runtime | setup.ps1, test_setup.ps1, PowerShell hook scripts |
+| GitHub Actions hosted runners | CI | `ubuntu-latest`, `macos-latest`, and `windows-latest` jobs in `.github/workflows/planifest.yml` (0000031) |
 | git (core.hooksPath) | CLI | setup.sh/ps1 (commit-msg hook installation) |
 
 ---

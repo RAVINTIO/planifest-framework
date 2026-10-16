@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000030-context-mode-and-telemetry-mcp-removal
+Last updated: 0000031-ci-test-and-powershell-coverage
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -279,6 +279,16 @@ ADR files: [plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-10
 | ADR-005 | Setup Takes Ownership of Retiring Telemetry State | accepted | `setup-hook-integration` owns removal of every stale artifact, including the `plan/.telemetry-*` folders the old hooks wrote |
 | ADR-006 | Self-Hosting Order and Migration Last | accepted | This repo removes its own wiring in one final step, entries before files, and the downstream migration file is the last P3 commit |
 | ADR-007 | Keep the Product ID Hard-Stop With a New Rationale | accepted | The P0 hard-stop on `product.yml` `id` stays, now justified by versioning and archive attribution rather than telemetry |
+
+### Feature 0000031: ci-test-and-powershell-coverage
+
+ADR files: [plan/_archive/0000031-ci-test-and-powershell-coverage-2026-10-16/adr/](../plan/_archive/0000031-ci-test-and-powershell-coverage-2026-10-16/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | CI platform matrix | accepted | The suite runs on `ubuntu-latest` and `macos-latest` with `fail-fast: false`, and `test_setup.ps1` runs under PowerShell 7 on `windows-latest`. Windows PowerShell 5.1 and Git Bash on Windows are not tested. |
+| ADR-002 | New CI jobs stay repository-only | accepted | The suite and Windows jobs go in this repository's workflow only, never in the consumer copy at `planifest-framework/hooks/planifest.yml`. Extends 0000019-ADR-001. |
+| ADR-003 | CI job security posture | accepted | New jobs keep the `pull_request` trigger and set `permissions: contents: read`, no secrets, and `timeout-minutes: 10` |
 
 ---
 
