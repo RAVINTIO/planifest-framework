@@ -94,3 +94,17 @@ P2 end: 2026-10-16T17:54:48Z
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Dependency map: REQ-001 and REQ-003 both edit `.github/workflows/planifest.yml`, so one agent does both in turn. REQ-002 (`run-tests.sh`) and REQ-004 (`test_setup.ps1`) touch separate files. Three agents run in one parallel batch. Agents don't commit, to avoid git index lock clashes. The orchestrator commits each requirement as its agent returns. No local `pwsh`, so REQ-003 and REQ-004 live checks wait for CI at P4. |
+P3 results: REQ-002 `f93f0ed`, REQ-004 `31a5eb3`, REQ-001 and REQ-003 in one commit. Each agent confirmed RED then GREEN. The local suite passes (47 feature suites, 14 regression suites). The Windows job and the PowerShell assertions have not run yet. They run for the first time in CI at P4. Framework component bumped to 0.30.0.
+P3 end: 2026-10-16T18:00:50Z
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-16T18:00:50Z` |
+| Model tier | primary |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | CI runs on a draft pull request, because the jobs trigger on `pull_request` only. |
