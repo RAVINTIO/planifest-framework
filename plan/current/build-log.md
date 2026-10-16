@@ -39,3 +39,4 @@ P0 exchange (version): Q: Minor bump 0.30.0 to 0.31.0 for the Feature Pipeline? 
 Version confirmed: 0.31.0
 P0 exchange (backlog 0000077): Q: Pull in, leave, or discard? / A: Pull in. The entry folder is deleted in the same commit that folds it into the feature brief.
 P0 exchange (backlog 0000084): Q: Pull in, leave, or discard? / A: Pull in. The entry folder is deleted in the same commit that folds it into the feature brief.
+P0 exchange (backlog 0000081): Q: Pull in, leave, or discard? / A: Leave.
