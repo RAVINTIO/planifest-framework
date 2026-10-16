@@ -17,7 +17,7 @@ assert_not_contains() {
   local haystack="$2"
   local message="${3:-not-contains assertion}"
 
-  if printf '%s' "$haystack" | grep -qF "$needle"; then
+  if grep -qF "$needle" <<<"$haystack"; then
     echo "  FAIL: $message"
     echo "        needle '$needle' was found but should be absent"
     ((FAIL++)) || true

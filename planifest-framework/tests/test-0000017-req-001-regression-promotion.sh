@@ -50,13 +50,13 @@ fi
 
 # Verify manifest contains the promotion record
 MANIFEST_CONTENT=$(cat "$MANIFEST" 2>/dev/null || echo "")
-if printf '%s' "$MANIFEST_CONTENT" | grep -q "test-0000016-pipeline-governance.sh"; then
+if grep -q "test-0000016-pipeline-governance.sh" <<<"$MANIFEST_CONTENT"; then
   assert_equals "0" "0" "req-001: manifest records 0000016 promotion"
 else
   assert_equals "found" "missing" "req-001: 0000016 entry in manifest"
 fi
 
-if printf '%s' "$MANIFEST_CONTENT" | grep -q "0000016-pipeline-governance-and-loop-engineering"; then
+if grep -q "0000016-pipeline-governance-and-loop-engineering" <<<"$MANIFEST_CONTENT"; then
   assert_equals "0" "0" "req-001: manifest records correct source feature"
 else
   assert_equals "found" "missing" "req-001: source feature in manifest"
@@ -114,7 +114,7 @@ else
   assert_equals "0" "$SECOND_RC" "req-001: idempotent promotion exit code"
 fi
 
-if printf '%s' "$SECOND_PROMOTE" | grep -q "already in the regression pack"; then
+if grep -q "already in the regression pack" <<<"$SECOND_PROMOTE"; then
   assert_equals "0" "0" "req-001: second promotion recognized as already promoted"
 else
   assert_equals "0" "0" "req-001: idempotent promotion (message varies)"

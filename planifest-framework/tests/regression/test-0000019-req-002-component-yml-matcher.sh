@@ -90,7 +90,7 @@ PASS_COMMIT_OUTPUT=$(cd "$WORK_PASS" && git diff --cached --name-only > /dev/nul
 PASS_COMMIT_OUTPUT=$(cd "$WORK_PASS" && bash "$PRE_COMMIT" 2>&1)
 PASS_COMMIT_EXIT=$?
 assert_exit_zero "$PASS_COMMIT_EXIT" "pre-commit: always exits 0 (advisory)"
-assert_equals "no" "$(echo "$PASS_COMMIT_OUTPUT" | grep -q "PLANIFEST ADVISORY" && echo yes || echo no)" \
+assert_equals "no" "$(grep -q "PLANIFEST ADVISORY" <<<"$PASS_COMMIT_OUTPUT" && echo yes || echo no)" \
   "pre-commit: src/ + component.yml staged — no advisory warning printed"
 
 rm -rf "$BASE_PASS"
@@ -116,7 +116,7 @@ WORK_FAIL=$(setup_repo "$BASE_FAIL")
 FAIL_PUSH_OUTPUT=$(cd "$WORK_FAIL" && bash "$PRE_PUSH" 2>&1)
 FAIL_PUSH_EXIT=$?
 assert_equals "1" "$FAIL_PUSH_EXIT" "pre-push: src/ only, no manifest/plan/docs — rejected (exit 1)"
-assert_equals "yes" "$(echo "$FAIL_PUSH_OUTPUT" | grep -q "PLANIFEST ENFORCEMENT FAILED" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -q "PLANIFEST ENFORCEMENT FAILED" <<<"$FAIL_PUSH_OUTPUT" && echo yes || echo no)" \
   "pre-push: rejection message printed for the fail case"
 
 (
@@ -127,7 +127,7 @@ assert_equals "yes" "$(echo "$FAIL_PUSH_OUTPUT" | grep -q "PLANIFEST ENFORCEMENT
 FAIL_COMMIT_OUTPUT=$(cd "$WORK_FAIL" && bash "$PRE_COMMIT" 2>&1)
 FAIL_COMMIT_EXIT=$?
 assert_exit_zero "$FAIL_COMMIT_EXIT" "pre-commit: always exits 0 (advisory) even for the fail case"
-assert_equals "yes" "$(echo "$FAIL_COMMIT_OUTPUT" | grep -q "PLANIFEST ADVISORY" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -q "PLANIFEST ADVISORY" <<<"$FAIL_COMMIT_OUTPUT" && echo yes || echo no)" \
   "pre-commit: src/ only staged, no manifest/plan/docs — advisory warning printed"
 
 rm -rf "$BASE_FAIL"
