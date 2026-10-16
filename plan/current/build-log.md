@@ -51,3 +51,4 @@ Scope Lock (error path): A broken test or broken setup.ps1 turns its job red, th
 Scope Lock (cross-session continuity): An interrupted run puts nothing durable at risk. Recovery is a re-run or a new commit on a fresh runner. [source: agent-draft-accepted]
 Scope Lock note: the human on the loop accepted all four items explicitly with "Accept all".
 P0 exchange (failure reporting): Q: Add a failed-suite list to run-tests.sh and fail-fast: false to the matrix? / A: Add both. Brief scope and acceptance criteria updated.
+P0 exchange (run mode): Q: Check after each phase, or continuous run? / A: Continuous run.
