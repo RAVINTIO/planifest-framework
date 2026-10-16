@@ -37,3 +37,4 @@ P0 exchange (adoption mode): Q: Confirm Standard Iterative (archive and docs/abo
 Adoption mode: standard-iterative, confirmed by human on 2026-10-16
 P0 exchange (version): Q: Minor bump 0.30.0 to 0.31.0 for the Feature Pipeline? / A: Yes.
 Version confirmed: 0.31.0
+P0 exchange (backlog 0000077): Q: Pull in, leave, or discard? / A: Pull in. The entry folder is deleted in the same commit that folds it into the feature brief.
