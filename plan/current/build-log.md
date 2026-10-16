@@ -108,3 +108,4 @@ P3 end: 2026-10-16T18:00:50Z
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | CI runs on a draft pull request, because the jobs trigger on `pull_request` only. |
+P4 cycle 1: Check: test (CI run 38944104004). Error: `test-0000030-req-001-002-removed-files-and-residue.sh` expected product version 0.29.0, got 0.30.0, on ubuntu and macos. Root cause: the 0000030 test hard-coded the version, and the P3 bump to 0.30.0 broke it. The P3 agents ran the suite before the bump. Fix: compare the derived version with `planifest-framework/component.yml`. Result: passes locally. Windows job passed, and both live marker checks passed, so backlog 0000050 is verified.
