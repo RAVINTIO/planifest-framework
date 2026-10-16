@@ -35,3 +35,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 P0 exchange (pre-flight): Q: Merge PR #58 before starting? / A: No. 0000032 runs on the same branch, so PR #58 stays a draft until both runs ship.
 P0 exchange (adoption mode): Q: Confirm Standard Iterative (archive and docs/about.md present)? / A: Yes.
 Adoption mode: standard-iterative, confirmed by human on 2026-10-16
+P0 exchange (version): Q: Minor bump 0.30.0 to 0.31.0 for the Feature Pipeline? / A: Yes.
+Version confirmed: 0.31.0
