@@ -40,3 +40,4 @@ Version confirmed: 0.31.0
 P0 exchange (backlog 0000077): Q: Pull in, leave, or discard? / A: Pull in. The entry folder is deleted in the same commit that folds it into the feature brief.
 P0 exchange (backlog 0000084): Q: Pull in, leave, or discard? / A: Pull in. The entry folder is deleted in the same commit that folds it into the feature brief.
 P0 exchange (backlog 0000081): Q: Pull in, leave, or discard? / A: Leave.
+P0 exchange (backlog remainder): Q: Leave the other 30 entries (0000020 to 0000094) as one batch? / A: Leave all 30.
