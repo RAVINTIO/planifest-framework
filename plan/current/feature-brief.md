@@ -85,7 +85,7 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 
 - [ ] AC-3: When `planifest-framework/` exists and no sentinel exists, the auto-trigger hook says no Planifest run is active. It tells the agent to triage the request as Fast Path, Change Pipeline, or Feature Pipeline before acting. It keeps the instruction to load the skill, and it no longer claims the skill isn't loaded.
 - [ ] AC-4: The ship skill requires any P9 handover note to route each next step through a track. The note never says a code change needs no P0.
-- [ ] AC-5: After P9, the orchestrator asks the human on the loop to clear context. It takes on no new work in the same session.
+- [ ] AC-5: Ship Step 12 asks the human on the loop to run `/clear` or start a new session. If a new request arrives in the same session, the orchestrator refuses that work and repeats the request. The orchestrator's Context Hygiene section matches.
 
 ### Write-gate scope
 
