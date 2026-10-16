@@ -58,3 +58,15 @@ P0 note: Remaining Scope Lock flags resolved as recommended defaults in the brie
 P0 exchange (run mode): Q: Check after each phase, or continuous run (recommended)? / A: Yes to the recommendation: continuous.
 P0 exchange (design): Q: Confirm the design as written? / A: Yes.
 Gate accepted: P0 (2026-10-16T23:25:01Z)
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-16T23:25:18Z` |
+| Model tier | primary |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `3` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Continuous run. Component manifest lives at `planifest-framework/component.yml` (backlog 0000061), so no `src/` manifest is written. No API, deployed service, or new spend, so OpenAPI, operational model, SLOs, and cost model are omitted. |
