@@ -32,4 +32,4 @@ As the human on the loop, I see CI fail when `Write-SetupFlagsMarker` writes a `
 - [ ] The Windows CI job from REQ-003 runs these checks and passes.
 
 ## Dependencies
-- REQ-003 runs these assertions live. Nothing runs them locally, because the human on the loop has no `pwsh`.
+- REQ-003 runs these assertions live. They run locally only on a Mac with `pwsh` installed.
