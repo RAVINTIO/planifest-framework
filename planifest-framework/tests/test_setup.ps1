@@ -9,6 +9,78 @@ New-Item -ItemType Directory -Path $testDir -Force | Out-Null
 
 $originalLocation = Get-Location
 
+# Checks the .planifest-setup-flags marker that Write-SetupFlagsMarker writes.
+# Every failure throws a FAIL message that names the field and the value found.
+function Assert-SetupFlagsMarker {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [string]$ExpectedTool = 'claude-code',
+        [string[]]$ExpectedFlags = @()
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "FAIL: setup-flags marker not found at '$Path'"
+    }
+
+    $raw = Get-Content -LiteralPath $Path -Raw
+    try {
+        $marker = $raw | ConvertFrom-Json -ErrorAction Stop
+    }
+    catch {
+        throw "FAIL: setup-flags marker is not valid JSON (found: '$raw'): $($_.Exception.Message)"
+    }
+    if ($null -eq $marker) {
+        throw "FAIL: setup-flags marker parsed to nothing (found: '$raw')"
+    }
+
+    $present = @($marker.PSObject.Properties.Name)
+    foreach ($field in @('tool', 'flags', 'writtenAt', 'attemptStatus')) {
+        if ($present -notcontains $field) {
+            throw "FAIL: setup-flags marker is missing field '$field' (found fields: $($present -join ', '))"
+        }
+    }
+
+    if ($marker.tool -ne $ExpectedTool) {
+        throw "FAIL: setup-flags marker field 'tool' expected '$ExpectedTool' but found '$($marker.tool)'"
+    }
+
+    if ($marker.attemptStatus -ne 'completed') {
+        throw "FAIL: setup-flags marker field 'attemptStatus' expected 'completed' but found '$($marker.attemptStatus)'"
+    }
+
+    # Read writtenAt from the raw text. ConvertFrom-Json in PowerShell 7 turns
+    # ISO date strings into DateTime objects, which would hide the written format.
+    if ($raw -match '"writtenAt"\s*:\s*"([^"]*)"') {
+        $writtenAt = $Matches[1]
+    }
+    else {
+        throw "FAIL: setup-flags marker field 'writtenAt' is not a string in the raw text (found: '$raw')"
+    }
+    if ($writtenAt -notmatch '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$') {
+        throw "FAIL: setup-flags marker field 'writtenAt' expected yyyy-MM-ddTHH:mm:ssZ but found '$writtenAt'"
+    }
+
+    # ConvertTo-Json can collapse a one-item array to a string, so check the raw text too.
+    if ($raw -notmatch '"flags"\s*:\s*\[') {
+        throw "FAIL: setup-flags marker field 'flags' is not a JSON array literal in the raw text (found: '$raw')"
+    }
+
+    # Wrap in @() so an empty or one-item value does not unroll.
+    $actualFlags = @($marker.flags)
+    $expected = @($ExpectedFlags)
+    $foundText = $actualFlags -join ', '
+    if ($actualFlags.Count -ne $expected.Count) {
+        throw "FAIL: setup-flags marker field 'flags' expected $($expected.Count) item(s) [$($expected -join ', ')] but found $($actualFlags.Count) [$foundText]"
+    }
+    for ($i = 0; $i -lt $expected.Count; $i++) {
+        if ($actualFlags[$i] -ne $expected[$i]) {
+            throw "FAIL: setup-flags marker field 'flags' item $i expected '$($expected[$i])' but found '$($actualFlags[$i])'"
+        }
+    }
+
+    Write-Host "  PASS: setup-flags marker at '$Path' is valid (flags: [$foundText])"
+}
+
 try {
     # Copy the framework into the test workspace
     $scriptPath = $MyInvocation.MyCommand.Path
@@ -37,6 +109,8 @@ try {
         throw "FAIL: Workflow command not created for claude-code"
     }
 
+    Assert-SetupFlagsMarker -Path ".claude\.planifest-setup-flags" -ExpectedTool 'claude-code' -ExpectedFlags @()
+
     Write-Host "--- Testing: cursor ---"
     & .\planifest-framework\setup.ps1 cursor
 
@@ -59,6 +133,8 @@ try {
         throw "FAIL: no external skill dirs with SKILL.md + attribution.txt found after --include-full-skill-library"
     }
     Write-Host "  PASS: $($extSkillDirs.Count) external skill(s) installed"
+
+    Assert-SetupFlagsMarker -Path ".claude\.planifest-setup-flags" -ExpectedTool 'claude-code' -ExpectedFlags @('--include-full-skill-library')
 
     $manifest = Get-Content -Path ".claude\skills\.planifest-manifest" -Raw
     $extSkillName = $extSkillDirs[0].Name
