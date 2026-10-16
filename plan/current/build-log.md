@@ -70,3 +70,5 @@ Gate accepted: P0 (2026-10-16T23:25:01Z)
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Continuous run. Component manifest lives at `planifest-framework/component.yml` (backlog 0000061), so no `src/` manifest is written. No API, deployed service, or new spend, so OpenAPI, operational model, SLOs, and cost model are omitted. |
+P1 notes: 4 requirements, 60 requirement-level acceptance criteria (12, 13, 16, 19) covering brief AC-1 to AC-11. req-001 also stages the archive in the P9 marker commit so build-report.md and P8/P9 build-log blocks are committed before the tag. Documented defaults A-003 to A-008 in the execution plan. Backlog 0000102 filed (setup.ps1 hook parity). Design critic toggle at default (off). Untracked backlog 0000099 to 0000101 from other product sessions left uncommitted.
+P1 end: 2026-10-16T23:29:56Z
