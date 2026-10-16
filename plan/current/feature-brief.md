@@ -97,3 +97,41 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 - [ ] AC-8: A new Bash PreToolUse hook exits 2 with a stderr reason for a command that writes under `src/` when no `design.md` exists. It detects redirects, `tee`, `sed -i`, and `cp` or `mv` targets.
 - [ ] AC-9: When `design.md` exists, the Bash hook applies the same component-path check as `gate-write.mjs`. Read-only commands that mention `src/` pass.
 - [ ] AC-10: `setup.sh` and `setup.ps1` register the Bash hook for Claude Code. The setup tests assert the registration.
+
+## Scope Boundaries
+
+### In Scope
+- Ship skill: sentinel, ack, and run-mode deletion timing, the P9 handover-note rule, and the related commit and check steps
+- Orchestrator skill: Resume Detection step 2a, and the post-P9 context clear before new work
+- `auto-trigger-orchestrator.mjs` message
+- `gate-write.mjs` scope, and stderr block reasons in every enforcement hook that exits 2
+- A new Bash PreToolUse shell-write guard, registered by `setup.sh` and `setup.ps1` for Claude Code
+- Tests for each change, run by `run-tests.sh` and the 0000031 CI jobs
+
+### Out of Scope
+- Registering the shell-write guard for tools other than Claude Code
+- Extending `ratchet-check.mjs` to shell writes
+- Fast Path writes through `gate-write` (backlog 0000081)
+- Downstream product runbooks that push to `main`
+
+### Deferred
+- Nothing deferred
+
+## Non-Functional Requirements
+
+| NFR | Target | Measurement |
+|-----|--------|-------------|
+| Hook latency | Each changed or new hook completes in under 200 ms per call on the CI runners | Timed in the hook test suites |
+| Fail-open | Every hook exits 0 on an unexpected error, per the existing enforcement ADR | A test feeds malformed stdin to each changed or new hook |
+| Shell-guard false positives | Zero blocks on a fixed corpus of read-only commands that mention `src/` | Corpus test in the new hook's suite |
+
+## Constraints and Assumptions
+
+### Constraints
+- No em dashes in Planifest artifacts. Write "human on the loop", not "user" or "developer".
+- Hooks stay dependency-free Node ES modules that read stdin through `read-stdin.mjs`.
+- The shell-write guard is a heuristic. It cannot see writes from inside an arbitrary script, so the boot file must also state that `src/` changes go through **Write** or **Edit**.
+
+### Assumptions
+- Claude Code shows a PreToolUse block reason from stderr when the hook exits 2.
+- Claude Code passes the Bash command as `tool_input.command` to a PreToolUse hook.
