@@ -56,3 +56,46 @@ jobs:
 
       - name: Verify README matches repository structure
         run: node planifest-framework/scripts/self-description-check.mjs .
+
+  # The test-suite and setup-powershell jobs test this repository's own
+  # framework and are deliberately NOT mirrored into
+  # planifest-framework/hooks/planifest.yml (the copy setup.sh ships to
+  # consumer repos). Consumers don't change the framework, so these tests
+  # tell them nothing new. See ADR-002 (feature 0000031).
+  test-suite:
+    name: Test suite (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run the framework test suite
+        run: bash planifest-framework/tests/run-tests.sh
+
+  setup-powershell:
+    name: Setup under PowerShell 7 (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PowerShell version
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            Write-Error "PowerShell 7 or later is required."
+            exit 1
+          }
+
+      - name: Run test_setup.ps1
+        shell: pwsh
+        run: ./planifest-framework/tests/test_setup.ps1
