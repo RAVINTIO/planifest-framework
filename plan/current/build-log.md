@@ -66,7 +66,7 @@ P0 end: 2026-10-16T17:52:23Z
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Continuous run. |
-P1 notes: Installed skills under `.claude/skills/` predate 0000030 and still reference the deleted telemetry standard. This run reads phase skills from `planifest-framework/skills/`. Component manifest: the framework manifest lives at `planifest-framework/component.yml` (backlog 0000061), so no `src/` manifest was written. Loop toggles are at defaults, so the design critic stayed off. Requirements: 4. Acceptance criteria: 13.
+P1 notes: Installed skills under `.claude/skills/` predate 0000030 and still reference the deleted telemetry standard. This run reads phase skills from `planifest-framework/skills/`. Component manifest: the framework manifest lives at `planifest-framework/component.yml` (backlog 0000061), so no `src/` manifest was written. Loop toggles are at defaults, so the design critic stayed off. Requirements: 4. Acceptance criteria: 12.
 P1 end: 2026-10-16T17:54:07Z
 
 ### P2: ADRs
@@ -80,3 +80,5 @@ P1 end: 2026-10-16T17:54:07Z
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Continuous run. |
+P2 notes: 3 ADRs. `consistency-check.mjs` flagged REQ-001 with 4 acceptance criteria. Two were merged, so REQ-001 has 3 and the feature has 12.
+P2 end: 2026-10-16T17:54:48Z

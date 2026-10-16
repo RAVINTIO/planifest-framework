@@ -24,9 +24,8 @@ As the human on the loop, I see CI fail a pull request when `run-tests.sh` fails
 - The consumer copy at `planifest-framework/hooks/planifest.yml` stays unchanged.
 
 ## Acceptance Criteria
-- [ ] On a pull request to `main`, the suite job runs on `ubuntu-latest` and on `macos-latest`.
 - [ ] If `run-tests.sh` exits non-zero, that matrix leg fails, and the other leg still runs to completion.
-- [ ] Both legs pass on this feature's pull request, each in under 10 minutes.
+- [ ] On this feature's pull request to `main`, the suite job runs on `ubuntu-latest` and `macos-latest`, and both legs pass in under 10 minutes.
 - [ ] `planifest-framework/hooks/planifest.yml` has no diff against `main`.
 
 ## Dependencies
