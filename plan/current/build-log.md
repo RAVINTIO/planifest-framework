@@ -74,3 +74,4 @@ P1 notes: 4 requirements, 60 requirement-level acceptance criteria (12, 13, 16, 
 P1 end: 2026-10-16T23:29:56Z
 P1 review (A-003): Q: Find the repository root by walking up from cwd to the first folder holding planifest-framework/ or .git, not git rev-parse? / A: Yes.
 P1 review (A-004): Q: Compare real paths, resolving a missing target through its nearest existing parent? / A: Yes.
+P1 review (A-005): Q: Apply the plan/current/ sentinel check to shell writes too? / A: Accept.
