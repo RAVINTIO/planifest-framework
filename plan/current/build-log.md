@@ -55,3 +55,6 @@ P0 exchange (post-P9 context): Q: Rewrite ship Step 12 so it asks for /clear and
 P0 exchange (resume evidence): Q: Step 2a reads the feature ID from the sentinel, picks the latest archive, and uses build-report.md to choose P8 or P9 marker deletion? / A: Confirm. AC-2 updated.
 P0 exchange (sentinel timing): Q: Why does the sentinel not stay until P9? Keep markers committed and delete before the tag, or gitignore them and delete after Step 11? / A: Keep committed, delete before the tag. P2 needs ADRs superseding 0000015 ADR-001 (signal) and ADR-002 (advisory post-P9).
 P0 note: Remaining Scope Lock flags resolved as recommended defaults in the brief (AC-6 to AC-11, NFRs, out-of-scope), presented for confirmation in the design review because the human asked to move quickly.
+P0 exchange (run mode): Q: Check after each phase, or continuous run (recommended)? / A: Yes to the recommendation: continuous.
+P0 exchange (design): Q: Confirm the design as written? / A: Yes.
+Gate accepted: P0 (2026-10-16T23:25:01Z)
