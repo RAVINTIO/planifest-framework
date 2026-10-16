@@ -52,3 +52,17 @@ Scope Lock (cross-session continuity): An interrupted run puts nothing durable a
 Scope Lock note: the human on the loop accepted all four items explicitly with "Accept all".
 P0 exchange (failure reporting): Q: Add a failed-suite list to run-tests.sh and fail-fast: false to the matrix? / A: Add both. Brief scope and acceptance criteria updated.
 P0 exchange (run mode): Q: Check after each phase, or continuous run? / A: Continuous run.
+Design confirmed by the human on the loop at 2026-10-16T17:52:23Z.
+P0 end: 2026-10-16T17:52:23Z
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-16T17:52:23Z` |
+| Model tier | primary |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Continuous run. |

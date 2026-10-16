@@ -1,7 +1,7 @@
 ---
 title: "Feature Brief - CI test and PowerShell coverage"
 summary: "Make CI run the framework test suite on Linux and macOS, and run setup.ps1 under PowerShell 7 on Windows."
-status: "draft"
+status: "approved"
 version: "0.30.0"
 ---
 # Feature Brief - CI test and PowerShell coverage
