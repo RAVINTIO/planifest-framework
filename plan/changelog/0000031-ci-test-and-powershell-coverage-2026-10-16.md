@@ -2,7 +2,7 @@
 
 **Feature:** CI test and PowerShell coverage
 **Pipeline run:** P0 to P9 in continuous mode. No phases skipped.
-**PR:** https://github.com/planifest/planifest-framework/pull/58 (shared with 0000032 on the same branch)
+**PR:** https://github.com/planifest/planifest-framework/pull/58 (draft, shared with 0000032 on the same branch)
 
 ## What Was Built
 

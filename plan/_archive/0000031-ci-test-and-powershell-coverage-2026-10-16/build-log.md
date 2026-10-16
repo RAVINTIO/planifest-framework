@@ -211,3 +211,4 @@ P8 end: 2026-10-16T18:40:55Z
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Version derived by `product-version.mjs`: 0.30.0. PR #58 is a draft shared with 0000032 on the same branch. |
+P9 result: option 1. Branch and tag `v0.30.0` pushed. PR #58 description updated, still a draft. P9 end: 2026-10-16T18:50:52Z
