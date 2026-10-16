@@ -73,3 +73,4 @@ Gate accepted: P0 (2026-10-16T23:25:01Z)
 P1 notes: 4 requirements, 60 requirement-level acceptance criteria (12, 13, 16, 19) covering brief AC-1 to AC-11. req-001 also stages the archive in the P9 marker commit so build-report.md and P8/P9 build-log blocks are committed before the tag. Documented defaults A-003 to A-008 in the execution plan. Backlog 0000102 filed (setup.ps1 hook parity). Design critic toggle at default (off). Untracked backlog 0000099 to 0000101 from other product sessions left uncommitted.
 P1 end: 2026-10-16T23:29:56Z
 P1 review (A-003): Q: Find the repository root by walking up from cwd to the first folder holding planifest-framework/ or .git, not git rev-parse? / A: Yes.
+P1 review (A-004): Q: Compare real paths, resolving a missing target through its nearest existing parent? / A: Yes.
