@@ -89,14 +89,21 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 
 ### Write-gate scope
 
-- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. Tests cover both cases.
-- [ ] AC-7: Every enforcement hook that exits 2 writes its reason to stderr. Tests assert that stderr is not empty on each block path.
+- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. The root is the git top-level of `cwd`, or `cwd` when git can't resolve it. Tests cover both cases, and a `..` path that leaves the root.
+- [ ] AC-7: Every enforcement hook that exits 2 writes a plain-text reason to stderr. It keeps any existing stdout output, so the Windsurf adapter and `ratchet-check.mjs`'s JSON still work. Tests assert that stderr is not empty on each block path.
 
 ### Shell-write guard
 
-- [ ] AC-8: A new Bash PreToolUse hook exits 2 with a stderr reason for a command that writes under `src/` when no `design.md` exists. It detects redirects, `tee`, `sed -i`, and `cp` or `mv` targets.
-- [ ] AC-9: When `design.md` exists, the Bash hook applies the same component-path check as `gate-write.mjs`. Read-only commands that mention `src/` pass.
-- [ ] AC-10: `setup.sh` and `setup.ps1` register the Bash hook for Claude Code. The setup tests assert the registration.
+- [ ] AC-8: A new Bash PreToolUse hook exits 2 with a stderr reason for a command that writes to a gated path. It detects these writers:
+  - redirects (`>`, `>>`) and `tee`
+  - in-place edits (`sed -i`, `perl -i`)
+  - `cp`, `mv`, `install`, and `ln` targets
+  - `rm`, `touch`, and `mkdir`
+
+  When it can't parse a command, it writes a warning to stderr and allows it. Git commands that write files are a documented limit.
+- [ ] AC-9: The Bash hook and `gate-write.mjs` share one module for path rules, so the gated paths match exactly. These are every repository path outside the always-permitted list. With no `design.md` it blocks, and with one it applies the component-path check. Read-only commands and writes outside the repository pass.
+- [ ] AC-10: `setup.sh` and `setup.ps1` register the Bash hook for Claude Code. Running setup twice leaves exactly one registration. The setup tests assert both.
+- [ ] AC-11: A 0.31.0 migration in `planifest-framework/migrations/` tells downstream projects to re-run setup, so they gain the Bash hook and the new hook messages.
 
 ## Scope Boundaries
 
@@ -105,12 +112,15 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 - Orchestrator skill: Resume Detection step 2a, and the post-P9 context clear before new work
 - `auto-trigger-orchestrator.mjs` message
 - `gate-write.mjs` scope, and stderr block reasons in every enforcement hook that exits 2
-- A new Bash PreToolUse shell-write guard, registered by `setup.sh` and `setup.ps1` for Claude Code
+- A new Bash PreToolUse shell-write guard sharing `gate-write.mjs`'s path rules, registered by `setup.sh` and `setup.ps1` for Claude Code
+- A 0.31.0 migration telling downstream projects to re-run setup
+- Two ADRs superseding 0000015 ADR-001 (interrupted-run signal) and ADR-002 (advisory post-P9 message)
 - Tests for each change, run by `run-tests.sh` and the 0000031 CI jobs
 
 ### Out of Scope
 - Registering the shell-write guard for tools other than Claude Code
 - Extending `ratchet-check.mjs` to shell writes
+- Shell writes made by git commands, scripts, or variables the guard can't parse
 - Fast Path writes through `gate-write` (backlog 0000081)
 - Downstream product runbooks that push to `main`
 
@@ -122,15 +132,16 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 | NFR | Target | Measurement |
 |-----|--------|-------------|
 | Hook latency | Each changed or new hook completes in under 200 ms per call on the CI runners | Timed in the hook test suites |
-| Fail-open | Every hook exits 0 on an unexpected error, per the existing enforcement ADR | A test feeds malformed stdin to each changed or new hook |
-| Shell-guard false positives | Zero blocks on a fixed corpus of read-only commands that mention `src/` | Corpus test in the new hook's suite |
+| Fail-open | Every hook exits 0 on an unexpected error, per the existing enforcement ADR | Tests feed malformed stdin, JSON with no `command`, and a non-string `command` to each changed or new hook |
+| Shell-guard false positives | Zero blocks on a fixed corpus of read-only commands that mention gated paths | Corpus test in the new hook's suite |
+| Shell-guard detection | Blocks every command in a fixed corpus of AC-8 writer forms aimed at gated paths | Corpus test in the new hook's suite |
 
 ## Constraints and Assumptions
 
 ### Constraints
 - No em dashes in Planifest artifacts. Write "human on the loop", not "user" or "developer".
 - Hooks stay dependency-free Node ES modules that read stdin through `read-stdin.mjs`.
-- The shell-write guard is a heuristic. It cannot see writes from inside an arbitrary script, so the boot file must also state that `src/` changes go through **Write** or **Edit**.
+- The shell-write guard is a heuristic. It cannot see writes from inside an arbitrary script, so the boot file must also state that code changes go through **Write** or **Edit**.
 
 ### Assumptions
 - Claude Code shows a PreToolUse block reason from stderr when the hook exits 2.
