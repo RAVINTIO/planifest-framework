@@ -42,3 +42,4 @@ P0 exchange (backlog 0000084): Q: Pull in, leave, or discard? / A: Pull in. The 
 P0 exchange (backlog 0000081): Q: Pull in, leave, or discard? / A: Leave.
 P0 exchange (backlog remainder): Q: Leave the other 30 entries (0000020 to 0000094) as one batch? / A: Leave all 30.
 P0 exchange (user stories): Q: Accept the four drafted stories (run lifecycle, post-run triage, write-gate scope, shell-write guard)? / A: Accept the four. Mapping to 0000077 suggested actions: run lifecycle = 1, post-run triage = 2, 5, 6, shell-write guard = 3, write-gate scope = 4 plus all of 0000084.
+Backlog filed at human request (scope of 0000032 unchanged): 0000095 roadmap area, 0000096 multi-release initiative run, 0000097 quality gates for agent workflow evaluation, 0000098 park feature.
