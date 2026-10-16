@@ -33,3 +33,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Notes | Same branch as 0000031 (`feat/0000031-ci-tests-and-governance-lapses`), shared draft PR #58, per the human. Pending migration `migrate-remove-context-mode-and-telemetry.md` does not apply: this repo is the framework source and has no stale hook entries. |
 
 P0 exchange (pre-flight): Q: Merge PR #58 before starting? / A: No. 0000032 runs on the same branch, so PR #58 stays a draft until both runs ship.
+P0 exchange (adoption mode): Q: Confirm Standard Iterative (archive and docs/about.md present)? / A: Yes.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-16
