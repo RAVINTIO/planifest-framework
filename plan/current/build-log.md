@@ -110,3 +110,34 @@ P3 end: 2026-10-16T18:00:50Z
 | Notes | CI runs on a draft pull request, because the jobs trigger on `pull_request` only. |
 P4 cycle 1: Check: test (CI run 38944104004). Error: `test-0000030-req-001-002-removed-files-and-residue.sh` expected product version 0.29.0, got 0.30.0, on ubuntu and macos. Root cause: the 0000030 test hard-coded the version, and the P3 bump to 0.30.0 broke it. The P3 agents ran the suite before the bump. Fix: compare the derived version with `planifest-framework/component.yml`. Result: passes locally. Windows job passed, and both live marker checks passed, so backlog 0000050 is verified.
 P4 cycle 2: Check: semantic coverage. Gap: REQ-004 criterion 2 (broken markers are rejected) had static coverage only. Fix: `test_setup.ps1` now writes three broken markers and expects a FAIL from each, in the Windows job. Static test RED (4 failed) then GREEN (18 passed).
+P4 result: CI run 38944916328 all green. Test suite (ubuntu-latest) 2m13s, Test suite (macos-latest) 4m9s, Setup under PowerShell 7 (Windows) 42s. The Windows job rejected all three broken markers. Library audit: no dependency manifests changed. Lint, typecheck, and build: not applicable to Bash, PowerShell, and YAML.
+
+| REQ | AC | Covered by | Result |
+|-----|----|-----------|--------|
+| REQ-001 | Leg fails on non-zero exit, other leg completes | test-0000031-req-001-003 (fail-fast false), CI run 38944104004 (both legs ran to the end when red) | pass |
+| REQ-001 | Both legs pass in under 10 minutes | CI run 38944916328 | pass |
+| REQ-001 | Consumer workflow unchanged | test-0000031-req-001-003 | pass |
+| REQ-002 | Failed suites listed, exit 1 | test-0000031-req-002, CI run 38944104004 log | pass |
+| REQ-002 | No heading when all pass, exit 0 | test-0000031-req-002 | pass |
+| REQ-002 | Summary wording kept | test-0000031-req-002 | pass |
+| REQ-003 | Windows job runs test_setup.ps1 under PowerShell 7 | test-0000031-req-001-003, CI run 38944916328 | pass |
+| REQ-003 | Job fails and shows FAIL when the script throws | $ErrorActionPreference Stop plus thrown FAIL messages, CI run 38944916328 broken-marker cases | pass |
+| REQ-003 | Passes in under 10 minutes | CI run 38944916328 (42s) | pass |
+| REQ-004 | Valid markers pass for plain and flagged runs | CI run 38944916328 | pass |
+| REQ-004 | Broken markers throw FAIL naming the field | test_setup.ps1 negative cases, CI run 38944916328 | pass |
+| REQ-004 | Windows job runs the checks and passes | CI run 38944916328 | pass |
+
+Self-corrections: 2. NFR-002 (two consecutive green runs) is checked by a re-run on the final commit before P9.
+P4 end: 2026-10-16T18:12:16Z
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-16T18:12:16Z` |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Continuous run. |
