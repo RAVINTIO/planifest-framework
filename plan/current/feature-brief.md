@@ -73,3 +73,27 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 | Compute | none |
 | CI | GitHub Actions |
 | Build target | local |
+
+## Acceptance Criteria
+
+### Run lifecycle
+
+- [ ] AC-1: The ship skill deletes `.orchestrator-active`, `.orchestrator-ack`, and `.run-mode` only after the P9 Step 11 confirmation. The final P9 commit includes those deletions. The P7 Step 7 commit and the Step 9b check no longer refer to them.
+- [ ] AC-2: Resume detection step 2a resumes P8 or P9 at the first incomplete step when the sentinel is present, `plan/current/` is empty, and the feature's archive exists. It no longer runs only the clean-up.
+
+### Post-run triage
+
+- [ ] AC-3: When `planifest-framework/` exists and no sentinel exists, the auto-trigger hook says no Planifest run is active. It tells the agent to triage the request as Fast Path, Change Pipeline, or Feature Pipeline before acting. It keeps the instruction to load the skill, and it no longer claims the skill isn't loaded.
+- [ ] AC-4: The ship skill requires any P9 handover note to route each next step through a track. The note never says a code change needs no P0.
+- [ ] AC-5: After P9, the orchestrator asks the human on the loop to clear context. It takes on no new work in the same session.
+
+### Write-gate scope
+
+- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. Tests cover both cases.
+- [ ] AC-7: Every enforcement hook that exits 2 writes its reason to stderr. Tests assert that stderr is not empty on each block path.
+
+### Shell-write guard
+
+- [ ] AC-8: A new Bash PreToolUse hook exits 2 with a stderr reason for a command that writes under `src/` when no `design.md` exists. It detects redirects, `tee`, `sed -i`, and `cp` or `mv` targets.
+- [ ] AC-9: When `design.md` exists, the Bash hook applies the same component-path check as `gate-write.mjs`. Read-only commands that mention `src/` pass.
+- [ ] AC-10: `setup.sh` and `setup.ps1` register the Bash hook for Claude Code. The setup tests assert the registration.
