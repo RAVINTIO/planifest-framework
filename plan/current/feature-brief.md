@@ -79,7 +79,7 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 ### Run lifecycle
 
 - [ ] AC-1: The ship skill deletes `.orchestrator-active`, `.orchestrator-ack`, and `.run-mode` after P8 completes and before the Step 9 tag. It commits the deletions, then tags. Push and PR stay optional per the project's settings and the human's choice, so the tag and any later push never carry the markers. The P7 Step 7 commit and the Step 9b check no longer refer to them.
-- [ ] AC-2: Resume detection step 2a resumes P8 or P9 at the first incomplete step when the sentinel is present, `plan/current/` is empty, and the feature's archive exists. It no longer runs only the clean-up.
+- [ ] AC-2: Resume Detection step 2a reads the feature ID from the sentinel and picks the latest `plan/_archive/{feature-id}-*` directory. With no `build-report.md` there, it resumes at P8. With one, it resumes at the P9 marker deletion. With no matching archive, it stops and asks the human on the loop.
 
 ### Post-run triage
 
