@@ -53,3 +53,4 @@ Scope Lock flags raised by the drafting agents (to resolve as clarifying questio
 P0 exchange (P9 order): Q: Delete markers, commit, tag, push and PR, then confirm? / A: Yes, but push and PR stay optional, because not every project wants them. AC-1 now deletes and commits the markers after P8 and before the Step 9 tag.
 P0 exchange (post-P9 context): Q: Rewrite ship Step 12 so it asks for /clear and refuses new work in the same session? / A: Confirm. AC-5 updated.
 P0 exchange (resume evidence): Q: Step 2a reads the feature ID from the sentinel, picks the latest archive, and uses build-report.md to choose P8 or P9 marker deletion? / A: Confirm. AC-2 updated.
+P0 exchange (sentinel timing): Q: Why does the sentinel not stay until P9? Keep markers committed and delete before the tag, or gitignore them and delete after Step 11? / A: Keep committed, delete before the tag. P2 needs ADRs superseding 0000015 ADR-001 (signal) and ADR-002 (advisory post-P9).
