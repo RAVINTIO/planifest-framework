@@ -26,10 +26,10 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 |-------|-------|
 | Start | `2026-10-14T23:21:04Z` |
 | Model tier | primary |
-| Skills loaded | planifest-orchestrator |
-| Agents spawned | `0` |
+| Skills loaded | planifest-orchestrator, planifest-scope-lock-agent |
+| Agents spawned | `4` (corrected at P8, was 0) |
 | MCP calls | `0` |
-| Parallel task batches | `0` |
+| Parallel task batches | `1` (corrected at P8, was 0) |
 | Notes | First of two runs on branch `feat/0000031-ci-tests-and-governance-lapses`. The second run picks up backlog 0000077 and 0000084. |
 
 Context reset: skipped. The session held only the triage for this run, with no residue from a prior run.
