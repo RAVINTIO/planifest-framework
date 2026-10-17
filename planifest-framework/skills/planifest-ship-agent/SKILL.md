@@ -29,6 +29,7 @@ No exceptions. Including single-line acknowledgements.
 3. Credentials are never in your context.
 4. Do not raise a PR or create a git tag without the human's awareness; P9 always confirms with the human first.
 5. **One question at a time.**
+6. **Handover notes route through a track.** Any P9 handover note, next-steps list, or runbook pointer routes each next step through Fast Path, Change Pipeline, or Feature Pipeline. A code change always needs a track. The note never says a code change needs no P0, and never points to a runbook that pushes to `main`.
 
 ## P7: Archive
 
@@ -253,6 +254,8 @@ Build report: plan/_archive/{feature-id}-{YYYY-MM-DD}/build-report.md
 
 plan/current/ is empty and ready for the next feature.
 ```
+
+If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline (Hard Limit 6).
 
 ### Step 12: New session recommendation
 
