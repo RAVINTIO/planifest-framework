@@ -87,10 +87,55 @@ function skipBacktick(s, i) {
   throw new ParseError("unbalanced backtick");
 }
 
-// skipGroup: index after the bracket that closes the ( or { at i.
+// skipHeredocBodies: the index after the here-document bodies that start at
+// start. Each entry of heredocs is { delim, strip }, and the list empties.
+function skipHeredocBodies(s, start, heredocs) {
+  let i = start;
+  while (heredocs.length) {
+    const { delim, strip } = heredocs.shift();
+    for (;;) {
+      if (i >= s.length) return s.length;
+      let nl = s.indexOf("\n", i);
+      if (nl < 0) nl = s.length;
+      let line = s.slice(i, nl);
+      if (strip) line = line.replace(/^\t+/, "");
+      i = nl + 1;
+      if (line === delim) break;
+    }
+  }
+  return i;
+}
+
+// readDelimiter: the here-document delimiter word that starts at or after k,
+// with quotes removed. Returns { delim, end } where end is the index after it.
+function readDelimiter(s, k) {
+  while (s[k] === " " || s[k] === "\t") k++;
+  let delim = "";
+  while (k < s.length && !/[\s;&|()<>]/.test(s[k])) {
+    const c = s[k];
+    if (c === "'" || c === '"') {
+      const end = s.indexOf(c, k + 1);
+      if (end < 0) throw new ParseError("unbalanced quote in a here-document delimiter");
+      delim += s.slice(k + 1, end);
+      k = end + 1;
+    } else if (c === "\\") {
+      delim += s[k + 1] ?? "";
+      k += 2;
+    } else {
+      delim += c;
+      k++;
+    }
+  }
+  return { delim, end: k };
+}
+
+// skipGroup: index after the bracket that closes the ( or { at i. It skips
+// here-document bodies inside the group, so an apostrophe in a commit message
+// body isn't read as an open quote.
 function skipGroup(s, i) {
   const open = s[i];
   const close = open === "(" ? ")" : "}";
+  const heredocs = [];
   let depth = 0;
   for (let j = i; j < s.length; j++) {
     const c = s[j];
@@ -98,6 +143,13 @@ function skipGroup(s, i) {
     else if (c === "'") j = skipSingle(s, j);
     else if (c === '"') j = skipDouble(s, j);
     else if (c === "`") j = skipBacktick(s, j);
+    else if (s.startsWith("<<<", j)) j += 2; // a here-string, not a here-document
+    else if (c === "<" && s[j + 1] === "<") {
+      const strip = s[j + 2] === "-";
+      const { delim, end } = readDelimiter(s, j + (strip ? 3 : 2));
+      heredocs.push({ delim, strip });
+      j = end - 1;
+    } else if (c === "\n" && heredocs.length) j = skipHeredocBodies(s, j + 1, heredocs) - 1;
     else if (c === open) depth++;
     else if (c === close && --depth === 0) return j + 1;
   }
@@ -136,23 +188,6 @@ function tokenise(s) {
     if (tokens.length) commands.push(tokens);
     tokens = [];
   };
-  const skipHeredocBodies = (start) => {
-    let i = start;
-    while (heredocs.length) {
-      const { delim, strip } = heredocs.shift();
-      for (;;) {
-        if (i >= s.length) return s.length;
-        let nl = s.indexOf("\n", i);
-        if (nl < 0) nl = s.length;
-        let line = s.slice(i, nl);
-        if (strip) line = line.replace(/^\t+/, "");
-        i = nl + 1;
-        if (line === delim) break;
-      }
-    }
-    return i;
-  };
-
   let i = 0;
   while (i < s.length) {
     const c = s[i];
@@ -161,7 +196,7 @@ function tokenise(s) {
     if (c === " " || c === "\t" || c === "\r") { endWord(); i++; continue; }
     if (c === "\n") {
       endCommand();
-      i = heredocs.length ? skipHeredocBodies(i + 1) : i + 1;
+      i = skipHeredocBodies(s, i + 1, heredocs);
       continue;
     }
     if (c === "#" && !word) {

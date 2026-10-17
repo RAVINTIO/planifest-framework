@@ -13,6 +13,46 @@
 
 set -uo pipefail
 
+# load_detection_corpus <root>: fills CORPUS with the detection corpus. The
+# root is the native fixture path for the absolute-path entry. Req-009 sources
+# this file with REQ008_CORPUS_ONLY=1 to reuse the same list.
+load_detection_corpus() {
+  CORPUS=(
+    "echo x > src/a.js"
+    "echo x >> src/a.js"
+    "printf x 2> src/err.log"
+    "make &> src/build.log"
+    "printf x | tee src/a.js"
+    "printf x | tee -a /tmp/ok.txt src/a.js"
+    "sed -i 's/a/b/' src/a.js"
+    "sed -i.bak 's/a/b/' src/a.js"
+    "sed -i '' 's/a/b/' src/a.js"
+    "perl -pi -e 's/a/b/' src/a.js"
+    "perl -i.bak -pe 's/a/b/' src/a.js"
+    "cp /tmp/a.js src/a.js"
+    "cp -r /tmp/dir src/"
+    "cp -t src/ /tmp/a.js"
+    "mv /tmp/a.js src/a.js"
+    "install -m 644 /tmp/a.js src/a.js"
+    "ln -s /tmp/a.js src/a.js"
+    "rm src/a.js"
+    "rm -rf src"
+    "touch src/new.js"
+    "mkdir -p src/new"
+    "cd src && echo x > a.js"
+    "ls; echo x > src/a.js"
+    "cat > src/a.js <<'EOF'
+body line
+EOF"
+    "echo x > $1/src/a.js"
+    "FOO=1 touch src/a.js"
+  )
+}
+
+if [ "${REQ008_CORPUS_ONLY:-}" = "1" ]; then
+  return 0 2>/dev/null || exit 0
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 
@@ -56,37 +96,7 @@ run_guard() {
 
 ROOT="$(make_git_fixture plain)"
 
-# The detection corpus. Req-009 reuses the same list for its design.md runs.
-CORPUS=(
-  "echo x > src/a.js"
-  "echo x >> src/a.js"
-  "printf x 2> src/err.log"
-  "make &> src/build.log"
-  "printf x | tee src/a.js"
-  "printf x | tee -a /tmp/ok.txt src/a.js"
-  "sed -i 's/a/b/' src/a.js"
-  "sed -i.bak 's/a/b/' src/a.js"
-  "sed -i '' 's/a/b/' src/a.js"
-  "perl -pi -e 's/a/b/' src/a.js"
-  "perl -i.bak -pe 's/a/b/' src/a.js"
-  "cp /tmp/a.js src/a.js"
-  "cp -r /tmp/dir src/"
-  "cp -t src/ /tmp/a.js"
-  "mv /tmp/a.js src/a.js"
-  "install -m 644 /tmp/a.js src/a.js"
-  "ln -s /tmp/a.js src/a.js"
-  "rm src/a.js"
-  "rm -rf src"
-  "touch src/new.js"
-  "mkdir -p src/new"
-  "cd src && echo x > a.js"
-  "ls; echo x > src/a.js"
-  "cat > src/a.js <<'EOF'
-body line
-EOF"
-  "echo x > $(native "$ROOT")/src/a.js"
-  "FOO=1 touch src/a.js"
-)
+load_detection_corpus "$(native "$ROOT")"
 
 # =============================================================================
 echo ""
