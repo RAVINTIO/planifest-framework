@@ -82,4 +82,22 @@ assert_contains "Step 9 tag" "$STEP2B" "req-002 K-3: step 2b continues to the St
 assert_contains "Tell the human on the loop" "$STEP2B" "req-002 K-3: step 2b tells the human on the loop"
 lacks "Delete \`plan/.orchestrator-active\`" "$STEP2B" "req-002 K-3: step 2b has no sentinel delete instruction"
 
+echo ""
+echo "=== req-002 (N-8): step 2b applies step 2a's archive rule ==="
+
+assert_contains "a human on the loop deleted the sentinel by hand" "$STEP2B" \
+  "req-002 N-8: step 2b names a hand-deleted sentinel as a trigger"
+assert_contains "If that directory has no \`build-report.md\`, load the \`planifest-ship-agent\` skill and resume at P8" "$STEP2B" \
+  "req-002 N-8: step 2b resumes at P8 without a build report"
+assert_contains "If that directory has a \`build-report.md\`, load the \`planifest-ship-agent\` skill and resume at the P9 marker step" "$STEP2B" \
+  "req-002 N-8: step 2b resumes at the P9 marker step only with a build report"
+assert_contains "If no directory matches, stop and ask the human on the loop" "$STEP2B" \
+  "req-002 N-8: step 2b stops and asks when no archive matches"
+assert_contains "sits inside \`plan/_archive/\`" "$STEP2B" \
+  "req-002 N-8: step 2b confirms the directory sits inside plan/_archive/"
+P8_LINE=$(grep -n -F 'resume at P8' <<< "$STEP2B" | head -1 | cut -d: -f1)
+TAG_LINE=$(grep -n -F 'Step 9 tag' <<< "$STEP2B" | head -1 | cut -d: -f1)
+assert_equals "yes" "$([ -n "$P8_LINE" ] && [ -n "$TAG_LINE" ] && [ "$P8_LINE" -lt "$TAG_LINE" ] && echo yes || echo no)" \
+  "req-002 N-8: the P8 branch comes before the Step 9 tag"
+
 print_summary
