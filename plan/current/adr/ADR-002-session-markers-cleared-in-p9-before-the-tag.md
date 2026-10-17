@@ -46,6 +46,11 @@ At P0 the human on the loop chose to keep the markers committed and delete them 
   4. If it has one, it resumes at the P9 marker step.
   5. If no directory matches, or the sentinel holds `pending`, it stops and asks the human on the loop. It deletes no marker.
 - Step 2a never deletes markers on its own and never starts fresh.
+- **Refinements after the P5 security review:**
+  - K-1: Step 2a checks the sentinel ID against `^[0-9]{7}-[a-z0-9-]+$` before use. A `pending` or other non-matching ID stops and asks the human on the loop. Step 2a confirms the chosen directory sits inside `plan/_archive/` and quotes the ID in every shell command.
+  - K-2: The marker step runs `git status --porcelain plan/_archive/` first. It reports changes outside this feature's archive directory to the human on the loop and stages only `plan/_archive/{feature-id}-{YYYY-MM-DD}/`.
+  - K-3: The marker step stages the archive first. It then deletes the markers, stages the deletions, and commits as one uninterrupted sequence. A new Resume Detection step 2b catches a sentinel that is absent on disk but still committed. It finishes the marker commit and continues to the Step 9 tag.
+  - K-4: If nothing is staged and no marker is tracked, the marker step skips the commit and continues to the tag.
 
 ## Alternatives Considered
 
@@ -76,7 +81,7 @@ At P0 the human on the loop chose to keep the markers committed and delete them 
 
 **Risks:**
 - A downstream run already past P7 under the old skill has no markers to read. If one is mid-close-out when it upgrades, step 2a finds no match and stops to ask.
-- If the marker commit fails after the deletions, the working tree holds deleted markers that aren't committed. The `git ls-files` check stops the tag in that case.
+- If the marker commit fails after the deletions, the working tree holds deleted markers that aren't committed. The `git ls-files` check stops the tag in that case. Resume Detection step 2b finishes that commit in the next session.
 
 ## Related ADRs
 

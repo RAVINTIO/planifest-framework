@@ -53,6 +53,9 @@ As the human on the loop, I want the ship skill to delete the session markers in
 - Within the marker step, the delete instructions come before the `git commit` line, checked by line number.
 - The ship skill has no `Step 9b` heading. No section from `### Step 9` to the end of the file names a marker path.
 - The P9 Step 10 section still offers both options: agent pushes and the human pushes.
+- The marker step runs `git status --porcelain plan/_archive/` and then stages only `plan/_archive/{feature-id}-{YYYY-MM-DD}/`. It never stages the whole of `plan/_archive/` (security finding K-2).
+- The marker step's code block runs the delete, the `git rm --cached` line, and the commit on consecutive lines, and the prose names one uninterrupted sequence (K-3).
+- The commit line reads `git diff --cached --quiet || git commit ...`, and the prose skips the commit when nothing is staged and no marker is tracked (K-4).
 - The updated 0000023 and 0000025 suites and the new suite pass under `run-tests.sh` on the 0000031 CI jobs.
 
 ## Acceptance Criteria

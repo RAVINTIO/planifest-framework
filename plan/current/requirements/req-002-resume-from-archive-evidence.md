@@ -36,6 +36,8 @@ As the human on the loop, I want an interrupted close-out to resume from archive
 - Orchestrator step 2a names `plan/.orchestrator-active` as the feature-ID source and the `plan/_archive/{feature-id}-*` pattern.
 - Orchestrator step 2a names `build-report.md`, with "resume at P8" for its absence and the P9 marker step for its presence.
 - Orchestrator step 2a tells the agent to stop and ask the human on the loop when no archive matches.
+- Orchestrator step 2a checks the ID against `^[0-9]{7}-[a-z0-9-]+$` before it lists the archive. It confirms the directory sits inside `plan/_archive/` and quotes the ID in commands (security finding K-1).
+- Orchestrator step 2b handles a sentinel that is absent on disk but still committed. It reads the ID from `HEAD`, tells the human on the loop, and resumes at the P9 marker step before the Step 9 tag (K-3).
 - The orchestrator skill no longer contains `Cleanup complete. Starting fresh.`
 - The new suite passes under `run-tests.sh` on the 0000031 CI jobs.
 
