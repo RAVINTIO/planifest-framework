@@ -257,10 +257,16 @@ plan/current/ is empty and ready for the next feature.
 
 If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline (Hard Limit 6).
 
-### Step 12: New session recommendation
+### Step 12: Blocking context clear
 
-After the confirmation above, emit this advisory (do not block, do not ask for confirmation, do not repeat it):
+This step blocks new work (0000032 ADR-003). After the confirmation above:
+
+1. Ask the human on the loop to run `/clear`, or the host tool's equivalent, or to start a new session.
+2. If a new request arrives in the same session, refuse that work and repeat the request to clear context.
+3. Don't start triage, P0, or any edit for the new request in this session.
+
+Use this message:
 
 ```
-⚡ For best results on your next feature, start a fresh session before beginning P0.
+P9: This run is complete. Run /clear (or your tool's equivalent) or start a new session before the next request. I won't start new work in this session.
 ```

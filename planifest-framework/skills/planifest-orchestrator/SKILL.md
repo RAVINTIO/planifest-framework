@@ -192,6 +192,8 @@ When the human says "pause", "pause session", or similar:
 
 Two clear points bookend a pipeline run: Phase 0 Start Actions step -1 (before coaching begins) and Phase 9 completion (after shipping). At both points, issue `/clear` (or the host tool's equivalent context-clear operation) so the session does not carry residual or completed-cycle context forward. If the host platform has no programmatic context-clear, flag it to the human and wait for confirmation instead: `{phase}: This tool has no programmatic context clear available; please clear context manually, then confirm you're ready to continue.`
 
+**After P9 (blocking, 0000032 ADR-003):** the Phase 9 clear point matches ship Step 12. Ask for `/clear` or a new session. Then refuse any new request in the same session and repeat the request to clear context. Start no triage, P0, or edit for it. If the host has no programmatic context clear, the fallback above still applies. After P9 it also refuses new work until the human on the loop confirms a cleared context or a new session.
+
 **Dynamic compaction (advisory, non-blocking):** during a long-running session, watch for context accumulating in ways that no longer serve the active phase: completed phases' full working detail once their gate has passed, superseded draft content, or repeated large tool outputs already summarised in an artifact on disk. When you notice this, prompt the human (or use the host tool's own compaction mechanism if it can be invoked directly): *"This session's context has grown with content from completed phases. Want me to compact it before continuing?"* This is advisory; never delay or block pipeline progress waiting on a compaction decision; if the human doesn't respond or declines, proceed exactly as before.
 
 ---
@@ -631,7 +633,7 @@ Executed by the ship-agent immediately after P8 completes, as part of its close-
 
 **Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human.
 
-**Completion context reset:** once the P9 gate above is confirmed and shipping is fully complete, apply the Context Hygiene `/clear`-or-flag procedure so the next session starts cold rather than carrying this completed cycle forward.
+**Completion context reset:** once the P9 gate above is confirmed and shipping is fully complete, apply the Context Hygiene "After P9" rule. The reset blocks new work: refuse any new request in this session until the human on the loop clears context or starts a new session.
 
 ---
 
