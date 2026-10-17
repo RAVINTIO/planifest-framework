@@ -51,7 +51,7 @@
 
 import { homedir } from "node:os";
 import { basename, isAbsolute, resolve } from "node:path";
-import { evaluateWrite, resolveRoot, toRootRelative } from "./path-rules.mjs";
+import { evaluateWrite, resolveRoot, toRootRelative, unjudgeable } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const PREFIX = "[Planifest]";
@@ -555,6 +555,11 @@ function judgeCommand(cwd, command) {
 
   // judge: the block reason for literal from base, or null when it passes.
   const judge = (writer, base, literal) => {
+    const tooLong = unjudgeable(base, literal);
+    if (tooLong) {
+      warnings.push(tooLong.replace("Write allowed.", "Command allowed."));
+      return null;
+    }
     const relPath = toRootRelative(root, base, literal);
     if (relPath === null) return null; // outside the repository root
     const result = evaluateWrite(root, relPath);

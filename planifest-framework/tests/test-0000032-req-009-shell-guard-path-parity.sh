@@ -215,6 +215,21 @@ assert_equals "" "$OUT$ERR" "req-009: a non-string command prints nothing"
 
 # =============================================================================
 echo ""
+echo "=== req-009: a path too long to judge warns and passes quickly (F7) ==="
+
+DEEP_CMD="echo x > src/$(printf 'a/%.0s' $(seq 1 20000))x.js"
+T0=$(node -e 'process.stdout.write(String(Date.now()))')
+run_guard "$PLAIN" "$DEEP_CMD"
+T1=$(node -e 'process.stdout.write(String(Date.now()))')
+echo "  deep path call: $((T1 - T0)) ms"
+assert_equals "0" "$CODE" "req-009: F7 a 20,000-segment target passes"
+assert_contains "Warning" "$ERR" "req-009: F7 a 20,000-segment target writes a warning"
+assert_equals "yes" "$([ $((T1 - T0)) -lt 2000 ] && echo yes || echo no)" "req-009: F7 a 20,000-segment target returns within 2 seconds"
+run_guard "$PLAIN" "cd $(printf 'a/%.0s' $(seq 1 300)) && echo x > y.js"
+assert_equals "2" "$CODE" "req-009: F7 a deep cd base still judges the target against the starting folder"
+
+# =============================================================================
+echo ""
 echo "=== req-009: each call finishes in under 200 ms ==="
 
 # Times one guard process per command, Node start-up included. Each command

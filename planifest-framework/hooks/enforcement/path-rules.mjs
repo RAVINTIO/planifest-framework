@@ -27,6 +27,7 @@
  *   toRootRelative(root, cwd, target) root-relative path, or null when outside the root
  *   evaluateWrite(root, relPath)     { allowed, reason?, warning? } for a root-relative path
  *   judgeWrite(cwd, target)          resolveRoot, toRootRelative, and evaluateWrite in one call
+ *   unjudgeable(base, target)        a warning when the path is too long to judge, or null
  *   norm(p)                          the shared comparison normalisation
  */
 
@@ -59,6 +60,30 @@ const UNPARSEABLE_WARNING =
   "[Planifest] Warning: Could not parse component paths from " +
   "plan/current/design.md. Ensure a '## Component Paths' section exists. " +
   "Write allowed.\n";
+
+// Paths past these limits are too long to judge. Resolving one through the
+// file system can take tens of seconds, which outlasts the hook timeout (F7).
+export const MAX_PATH_CHARS = 4096;
+export const MAX_PATH_SEGMENTS = 256;
+
+const tooLong = (p) =>
+  p.length > MAX_PATH_CHARS || p.split(/[\\/]+/).length > MAX_PATH_SEGMENTS;
+
+/**
+ * A one-line warning when target, or target resolved against base, is over
+ * MAX_PATH_CHARS characters or MAX_PATH_SEGMENTS segments. Returns null for a
+ * path the rules can judge. Makes no file-system call.
+ */
+export function unjudgeable(base, target) {
+  if (typeof target !== "string") return null;
+  let long = tooLong(target);
+  if (!long && typeof base === "string") long = tooLong(resolve(base, target));
+  if (!long) return null;
+  return (
+    `[Planifest] Warning: the path '${target.slice(0, 80)}...' is too long to judge ` +
+    `(over ${MAX_PATH_CHARS} characters or ${MAX_PATH_SEGMENTS} segments). Write allowed.\n`
+  );
+}
 
 export function norm(p) {
   return normalize(p).replace(/\\/g, "/").toLowerCase();
@@ -146,6 +171,7 @@ export function resolveRoot(cwd) {
 export function toRootRelative(root, cwd, target) {
   try {
     if (typeof target !== "string" || !target) return null;
+    if (unjudgeable(cwd, target)) return null; // no slow file-system walk (F7)
     const base = realPathOf(resolve(cwd));
     const abs = realPathOf(isAbsolute(target) ? resolve(target) : resolve(base, target));
     const absSlashed = abs.replace(/\\/g, "/");
@@ -247,10 +273,14 @@ export function evaluateWrite(root, relPath) {
 
 /**
  * Judges a write to target from cwd. A target outside the repository root,
- * or a cwd that can't be used, returns { allowed: true, outside: true }.
- * Otherwise returns the evaluateWrite result with the root and relPath added.
+ * or a cwd that can't be used, returns { allowed: true, outside: true }. A
+ * path too long to judge returns { allowed: true, warning } before any
+ * file-system walk (F7). Otherwise returns the evaluateWrite result with the
+ * root and relPath added.
  */
 export function judgeWrite(cwd, target) {
+  const tooLongWarning = typeof cwd === "string" ? unjudgeable(cwd, target) : null;
+  if (tooLongWarning) return { allowed: true, warning: tooLongWarning };
   const root = resolveRoot(cwd);
   if (!root) return { allowed: true, outside: true };
   const relPath = toRootRelative(root, cwd, target);

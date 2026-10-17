@@ -220,6 +220,42 @@ fi
 
 # =============================================================================
 echo ""
+echo "=== req-006: a path too long to judge warns and passes quickly (F7) ==="
+
+# time_gate <payload file>: runs gate-write and sets CODE, OUT, ERR, and MS.
+time_gate() {
+  local errfile="$WORK/stderr.txt" t0 t1
+  t0=$(node -e 'process.stdout.write(String(Date.now()))')
+  OUT=$(node "$GATE_WRITE" 2>"$errfile" < "$1")
+  CODE=$?
+  t1=$(node -e 'process.stdout.write(String(Date.now()))')
+  ERR=$(cat "$errfile")
+  MS=$((t1 - t0))
+}
+
+DEEP="$WORK/deep.json"
+node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Write",tool_input:{file_path:"src/"+"a/".repeat(20000)+"x.js"}}))' \
+  "$(native "$ROOT")" > "$DEEP"
+time_gate "$DEEP"
+echo "  deep path call: ${MS} ms"
+assert_equals "0" "$CODE" "req-006: F7 a 20,000-segment path passes"
+assert_equals "" "$OUT" "req-006: F7 a 20,000-segment path prints no stdout"
+assert_contains "Warning" "$ERR" "req-006: F7 a 20,000-segment path writes a warning"
+assert_equals "yes" "$([ "$MS" -lt 2000 ] && echo yes || echo no)" "req-006: F7 a 20,000-segment path returns within 2 seconds"
+
+node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Write",tool_input:{file_path:"src/"+"b".repeat(5000)+".js"}}))' \
+  "$(native "$ROOT")" > "$DEEP"
+time_gate "$DEEP"
+assert_equals "0" "$CODE" "req-006: F7 a path over 4096 characters passes"
+assert_contains "Warning" "$ERR" "req-006: F7 a path over 4096 characters writes a warning"
+
+node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Write",tool_input:{file_path:"src/"+"a/".repeat(200)+"x.js"}}))' \
+  "$(native "$ROOT")" > "$DEEP"
+time_gate "$DEEP"
+assert_equals "2" "$CODE" "req-006: F7 a 200-segment path is still judged"
+
+# =============================================================================
+echo ""
 echo "=== req-006: gate-write fails open on bad input ==="
 
 run_gate_raw "not json"
