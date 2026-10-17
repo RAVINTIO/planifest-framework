@@ -1,8 +1,8 @@
 ---
-title: "Build Log - 0000032 (slug pending)"
+title: "Build Log - 0000032-governance-continuity-and-write-gate-scope"
 summary: "Working log file maintained by the orchestrator throughout the pipeline run."
 ---
-# Build Log - 0000032 (slug pending)
+# Build Log - 0000032-governance-continuity-and-write-gate-scope
 
 > Created at P0. Appended by the orchestrator at each phase boundary. Survives session changes.
 

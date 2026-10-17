@@ -76,7 +76,7 @@ Not applicable. The feature has no IaC.
 | R-005 | Mitigated for normal input. F7 breaks the target on crafted input. |
 | R-006 | Mitigated. Stdout is unchanged. |
 | R-007 | Accepted, but F1 widens it |
-| A-001 to A-003 | Open. They can't be tested offline. |
+| Execution-plan A-001 to A-003 | Open. They can't be tested offline. Backlog 0000118 tracks a live check. |
 
 ## Re-review rounds
 

@@ -20,7 +20,7 @@ version: "0.1.0"
 
 The new shell guard (req-008 and req-009) must block exactly when `gate-write.mjs` blocks a **Write** to the same path. Two copies of the rules would drift apart. Hooks must also finish in under 200 ms per call (design NFR). They must stay dependency-free and fail open (0000003-ADR-005).
 
-`gate-write.mjs` lowercases and forward-slashes every path before it compares them (0000009-ADR-005). The sentinel check for `plan/current/` (0000005-ADR-003) runs first, inside the same hook. A-003 and A-004 in the execution plan record the root and real-path rules, and the human on the loop confirmed both.
+`gate-write.mjs` lowercases and forward-slashes every path before it compares them (0000009-ADR-005). The sentinel check for `plan/current/` (0000005-ADR-003) runs first, inside the same hook. A-003 and A-004 in the execution plan record the root and real-path rules. The human on the loop confirmed both at P1. The P5 fixes for F1, N-4, and N-5 later changed the root rule in A-003, so it goes back to the human on the loop for reconfirmation at P9.
 
 ## Decision
 
