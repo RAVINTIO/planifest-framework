@@ -258,6 +258,47 @@ fi
 
 # =============================================================================
 echo ""
+echo "=== req-006: CLAUDE_PROJECT_DIR only starts the marker walk (N-4) ==="
+
+# Set to a subfolder, the walk climbs to the repository root.
+N4="$WORK/n4/repo"
+mkdir -p "$N4/planifest-framework" "$N4/plan/current" "$N4/src" "$N4/lib"
+CLAUDE_PROJECT_DIR="$N4/src" run_gate "$N4/src" "../lib/x.js"
+assert_equals "2" "$CODE" "req-006: N-4 CLAUDE_PROJECT_DIR set to src/ still gates ../lib/x.js"
+CLAUDE_PROJECT_DIR="$N4/src" run_gate "$N4/src" "../plan/current/x.md"
+assert_equals "2" "$CODE" "req-006: N-4 CLAUDE_PROJECT_DIR set to src/ keeps the sentinel check"
+assert_contains "plan/.orchestrator-active" "$OUT" "req-006: N-4 the sentinel reason names the root sentinel"
+CLAUDE_PROJECT_DIR="$N4/src" run_gate "$N4/src" "../.claude/settings.json"
+assert_equals "2" "$CODE" "req-006: N-4 CLAUDE_PROJECT_DIR set to src/ gates ../.claude/settings.json"
+
+# Set to the repository's parent, which holds no marker, the walk from cwd decides.
+N4P="$WORK/n4p"
+mkdir -p "$N4P/repo/planifest-framework" "$N4P/repo/plan/current"
+: > "$N4P/repo/plan/.orchestrator-active"
+write_design "$N4P/repo" "src/"
+CLAUDE_PROJECT_DIR="$N4P" run_gate "$N4P/repo" "src/x.js"
+assert_equals "0" "$CODE" "req-006: N-4 CLAUDE_PROJECT_DIR set to the parent doesn't lock out a covered write"
+CLAUDE_PROJECT_DIR="$N4P" run_gate "$N4P/repo" "plan/current/x.md"
+assert_equals "0" "$CODE" "req-006: N-4 CLAUDE_PROJECT_DIR set to the parent finds the repository sentinel"
+
+# Set to an unrelated folder that holds no marker, the walk from cwd decides.
+UNRELATED="$WORK/unrelated"
+mkdir -p "$UNRELATED"
+CLAUDE_PROJECT_DIR="$UNRELATED" run_gate "$N4" "src/other/x.js"
+assert_equals "2" "$CODE" "req-006: N-4 an unmarked unrelated CLAUDE_PROJECT_DIR doesn't ungate src/other/x.js"
+
+# A CLAUDE_PROJECT_DIR that names a file is ignored.
+: > "$WORK/a-file"
+CLAUDE_PROJECT_DIR="$WORK/a-file" run_gate "$N4" "src/x.js"
+assert_equals "2" "$CODE" "req-006: N-4 a CLAUDE_PROJECT_DIR that names a file falls back to cwd"
+
+# The root found from CLAUDE_PROJECT_DIR wins, because an agent can change
+# cwd but can't change the hook's environment.
+CLAUDE_PROJECT_DIR="$N4" run_gate "$DESIGNED" "$(native "$N4/src/x.js")"
+assert_equals "2" "$CODE" "req-006: N-4 a cd into another repository doesn't ungate the project"
+
+# =============================================================================
+echo ""
 echo "=== req-006: a path too long to judge warns and passes quickly (F7) ==="
 
 # time_gate <payload file>: runs gate-write and sets CODE, OUT, ERR, and MS.

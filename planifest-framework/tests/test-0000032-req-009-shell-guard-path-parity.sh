@@ -211,6 +211,34 @@ assert_equals "$(gate_code "$MONO/packages/app" "src/x.js")" "$CODE" "req-009: N
 
 # =============================================================================
 echo ""
+echo "=== req-009: CLAUDE_PROJECT_DIR only starts the guard's marker walk (N-4) ==="
+
+N4="$WORK/n4/repo"
+mkdir -p "$N4/planifest-framework" "$N4/plan/current" "$N4/src" "$N4/lib"
+for target in "../lib/x.js" "../plan/current/x.md" "../.claude/settings.json"; do
+  CLAUDE_PROJECT_DIR="$(native "$N4/src")" run_guard "$N4/src" "echo hi > $target"
+  assert_equals "2" "$CODE" "req-009: N-4 CLAUDE_PROJECT_DIR set to src/ still gates $target"
+  assert_equals "$(CLAUDE_PROJECT_DIR="$(native "$N4/src")" gate_code "$N4/src" "$target")" "$CODE" \
+    "req-009: N-4 guard and gate-write agree on $target"
+done
+
+N4P="$WORK/n4p"
+mkdir -p "$N4P/repo/planifest-framework" "$N4P/repo/plan/current"
+: > "$N4P/repo/plan/.orchestrator-active"
+write_design "$N4P/repo" "src/"
+CLAUDE_PROJECT_DIR="$(native "$N4P")" run_guard "$N4P/repo" "echo hi > src/x.js"
+assert_equals "0" "$CODE" "req-009: N-4 CLAUDE_PROJECT_DIR set to the parent doesn't lock the guard out"
+
+UNRELATED="$WORK/unrelated"
+mkdir -p "$UNRELATED"
+CLAUDE_PROJECT_DIR="$(native "$UNRELATED")" run_guard "$N4" "echo hi > src/other/x.js"
+assert_equals "2" "$CODE" "req-009: N-4 an unmarked unrelated CLAUDE_PROJECT_DIR doesn't ungate src/other/x.js"
+
+CLAUDE_PROJECT_DIR="$(native "$N4")" run_guard "$OTHER" "echo hi > $(native "$N4")/src/x.js"
+assert_equals "2" "$CODE" "req-009: N-4 a cd into another repository doesn't ungate the project"
+
+# =============================================================================
+echo ""
 echo "=== req-009: both hooks take their rules from path-rules.mjs ==="
 
 GUARD_SRC="$(cat "$GUARD")"

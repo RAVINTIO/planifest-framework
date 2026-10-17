@@ -10,9 +10,10 @@
  *
  * Constraints (ADR-004):
  *   - Node built-in modules only, and no process spawn.
- *   - The repository root is CLAUDE_PROJECT_DIR when it names a folder.
- *     Otherwise it is the nearest folder at or above cwd that holds
- *     planifest-framework/, then the nearest folder that holds .git, then cwd.
+ *   - The repository root is the nearest folder that holds
+ *     planifest-framework/, else the nearest that holds .git. The walk starts
+ *     at CLAUDE_PROJECT_DIR when it names a folder and finds a marker, and
+ *     at cwd otherwise. With no marker, the root is cwd.
  *     A marker inside plan/ or docs/ of a higher marked folder never counts,
  *     because those prefixes are always permitted and anyone can plant one.
  *   - Both sides of the root comparison are real paths, with symbolic links
@@ -111,54 +112,65 @@ function realPathOf(p) {
   return join(realpathSync(current), ...missing);
 }
 
+// markedRoot: the nearest trusted marked folder at or above start, a real
+// path, or null when no folder holds a marker. A folder holding
+// planifest-framework/ beats one holding only .git (a .git file counts, for
+// worktrees). A folder that sits inside plan/ or docs/ of a higher marked
+// folder is never a root. Those prefixes are always permitted, so a marker
+// planted there must not move the root (F1).
+function markedRoot(start) {
+  // Every marked folder from start up to the file-system root, nearest first.
+  const marked = [];
+  let dir = start;
+  for (;;) {
+    const framework = isDirectory(join(dir, "planifest-framework"));
+    const git = existsSync(join(dir, ".git"));
+    if (framework || git) marked.push({ dir, framework, git });
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+
+  const planted = (candidate) =>
+    marked.some(({ dir: above }) => {
+      if (above === candidate.dir) return false;
+      const rel = relative(above, candidate.dir);
+      if (!rel || rel.startsWith("..") || isAbsolute(rel)) return false;
+      const first = norm(rel).split("/")[0];
+      return ALWAYS_PERMITTED_PREFIXES.some((prefix) => prefix === first + "/");
+    });
+  const trusted = marked.filter((m) => !planted(m));
+
+  const framework = trusted.find((m) => m.framework);
+  if (framework) return framework.dir;
+  const git = trusted.find((m) => m.git);
+  return git ? git.dir : null;
+}
+
 /**
- * The repository root for cwd, as a real path (ADR-004, security finding F1).
- *   1. CLAUDE_PROJECT_DIR, when it is set and names a folder.
- *   2. The nearest folder at or above cwd that holds planifest-framework/.
- *      The nearest, not the outermost, so a marker planted above the
- *      repository can't move the root (N-5).
- *   3. The nearest folder at or above cwd that holds .git (a .git file counts,
- *      for worktrees).
- *   4. The real path of cwd.
- * A folder that sits inside plan/ or docs/ of a higher marked folder is never
- * a root. Those prefixes are always permitted, so a marker planted there must
- * not move the root. Returns null, and never throws, when cwd is missing or
- * unreadable.
+ * The repository root for cwd, as a real path (ADR-004, findings F1, N-4,
+ * and N-5).
+ *   1. The marked root found by walking up from CLAUDE_PROJECT_DIR, when the
+ *      variable names a folder and the walk finds a marker. The variable is a
+ *      starting point, never the root itself (N-4). It wins over cwd because
+ *      an agent can change cwd with cd but can't change the hook's
+ *      environment.
+ *   2. The marked root found by walking up from cwd.
+ *   3. The real path of cwd.
+ * Each walk takes the nearest folder holding planifest-framework/, then the
+ * nearest holding .git (N-5). Returns null, and never throws, when cwd is
+ * missing or unreadable.
  */
 export function resolveRoot(cwd) {
   try {
     if (typeof cwd !== "string" || !cwd || !isDirectory(cwd)) return null;
     const projectDir = process.env.CLAUDE_PROJECT_DIR;
-    if (projectDir && isDirectory(projectDir)) return realpathSync(projectDir);
-
-    const start = realpathSync(cwd);
-    // Every marked folder from cwd up to the file-system root, nearest first.
-    const marked = [];
-    let dir = start;
-    for (;;) {
-      const framework = isDirectory(join(dir, "planifest-framework"));
-      const git = existsSync(join(dir, ".git"));
-      if (framework || git) marked.push({ dir, framework, git });
-      const parent = dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
+    if (projectDir && isDirectory(projectDir)) {
+      const fromProject = markedRoot(realpathSync(projectDir));
+      if (fromProject) return fromProject;
     }
-
-    const planted = (candidate) =>
-      marked.some(({ dir: above }) => {
-        if (above === candidate.dir) return false;
-        const rel = relative(above, candidate.dir);
-        if (!rel || rel.startsWith("..") || isAbsolute(rel)) return false;
-        const first = norm(rel).split("/")[0];
-        return ALWAYS_PERMITTED_PREFIXES.some((prefix) => prefix === first + "/");
-      });
-    const trusted = marked.filter((m) => !planted(m));
-
-    const framework = trusted.find((m) => m.framework);
-    if (framework) return framework.dir;
-    const git = trusted.find((m) => m.git);
-    if (git) return git.dir;
-    return start;
+    const start = realpathSync(cwd);
+    return markedRoot(start) ?? start;
   } catch {
     return null;
   }
