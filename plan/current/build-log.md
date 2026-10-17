@@ -211,3 +211,15 @@ P6 Gate A: docs/ exists.
 P6 Gate B: docs update assessment (continuous run, auto-accepted). This run changed the run lifecycle, added a shared path-rules module and a Bash shell-write guard, and superseded 0000015 ADR-001 and ADR-002. Auto-accepted: updating `docs/architecture-overview.md`, `docs/decisions-index.md`, `docs/component-registry.md`, and `docs/dependency-graph.md`, plus `src/setup-hook-integration/docs/` if the setup registration changes it.
 P6 notes: Living docs updated (adf673d, c85caa5, c7a3c71), setup component docs (9005438), framework manifest P9 duties (5c8570f). Recommendations (5694dc8), iteration log (1031367), changelog (e8c37c0). Backlog 0000118 (live Claude Code check) and 0000119 (shell guard long-term design) filed as tech debt. Drift fixed: glossary (folder set, step 2b, flagged concepts named), risk register (R-005, overall level, RA-003 renamed from A-003 to stop a clash with the execution plan), ADR-004 confirmation note, build-log title, setup test-coverage line (60f49ba, fed9f36). Archived 0000015 ADRs left unedited, matching earlier supersessions. Full suite passes.
 P6 end: 2026-10-17T22:29:41Z
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-17T22:30:02Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent (0.31.0 source copy) |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Continuous run. Followed planifest-framework/skills/planifest-ship-agent/SKILL.md, because the installed .claude/ copy is 0.30.0 and deletes the markers at P7. |
