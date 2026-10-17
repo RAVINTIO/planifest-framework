@@ -4,11 +4,13 @@
  *
  * Fires on every user prompt. Performs two fast file-existence checks:
  *   1. planifest-framework/ exists → this is a planifest project
- *   2. plan/.orchestrator-active does NOT exist → orchestrator not yet loaded
+ *   2. plan/.orchestrator-active does NOT exist → no run is active
  *
  * If both conditions are met, outputs an instruction to the model to load
- * the planifest-orchestrator skill. The instruction appears inline in the
- * model's context before it processes the user prompt.
+ * the planifest-orchestrator skill and triage the request before acting.
+ * The instruction appears inline in the model's context before it processes
+ * the user prompt. The hook can't tell whether the skill is already loaded,
+ * so the message doesn't claim either way (0000032 ADR-003, req-003).
  *
  * If either condition fails, exits 0 silently (no output, no effect).
  *
@@ -33,7 +35,7 @@ try {
   const frameworkPath = join(cwd, "planifest-framework");
   if (!existsSync(frameworkPath)) process.exit(0);
 
-  // Check 2 — is the orchestrator already active?
+  // Check 2 — is a run already active?
   const sentinelPath = join(cwd, "plan", ".orchestrator-active");
   if (existsSync(sentinelPath)) process.exit(0);
 
@@ -41,8 +43,9 @@ try {
   // Claude Code injects this output into the model's context before the prompt.
   process.stdout.write(
     "SYSTEM INSTRUCTION: This is a Planifest project (planifest-framework/ detected) " +
-    "and the orchestrator has not been loaded yet for this session. " +
-    "Load the planifest-orchestrator skill now, before responding to the user's prompt. " +
+    "and no Planifest run is active. " +
+    "Load the planifest-orchestrator skill before responding to the prompt. " +
+    "Then triage the request as Fast Path, Change Pipeline, or Feature Pipeline before acting. " +
     "Begin with resume detection as described in the skill.\n"
   );
 

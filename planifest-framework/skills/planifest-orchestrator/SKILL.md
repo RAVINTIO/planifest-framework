@@ -120,7 +120,7 @@ Do not assume you know the formatting or content of any Planifest template or ph
 
 ## Routing Directive
 
-Every request must be triaged before any action is taken. Route to exactly one of four tracks.
+Every request must be triaged before any action is taken. This includes every request after P9, whether or not a run is active. Route to exactly one of four tracks.
 
 ### Standalone Skills
 
