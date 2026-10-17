@@ -12,6 +12,10 @@
 
 set -uo pipefail
 
+# The hooks prefer CLAUDE_PROJECT_DIR as the root. A Claude Code session sets
+# it, so clear it here and set it only in the cases that test it.
+unset CLAUDE_PROJECT_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 
@@ -162,6 +166,56 @@ if [ -L "$LINK" ]; then
   assert_equals "2" "$CODE" "req-006: symlinked cwd gates the real {root}/src/a.js"
 else
   echo "  SKIP: req-006: symbolic links are not available on this host"
+fi
+
+# =============================================================================
+echo ""
+echo "=== req-006: a planted marker can't move the root (F1) ==="
+
+# plan/ is always permitted, so an agent can plant a marker there. The root
+# must stay at the outer repository.
+PLANTED="$(make_git_fixture planted)"
+mkdir -p "$PLANTED/plan/x/.git" "$PLANTED/plan/x/planifest-framework"
+run_gate "$PLANTED/plan/x" "$(native "$PLANTED/src/x.js")"
+assert_equals "2" "$CODE" "req-006: planted plan/x/.git and planifest-framework/ don't move the root"
+run_gate "$PLANTED/plan/x" "../../src/x.js"
+assert_equals "2" "$CODE" "req-006: planted markers don't move the root for a relative target"
+
+PLANTED_GIT="$(make_git_fixture planted-git)"
+mkdir -p "$PLANTED_GIT/plan/x/.git"
+run_gate "$PLANTED_GIT/plan/x" "$(native "$PLANTED_GIT/src/x.js")"
+assert_equals "2" "$CODE" "req-006: a planted plan/x/.git alone doesn't move the root"
+
+PLANTED_DOCS="$(make_git_fixture planted-docs)"
+mkdir -p "$PLANTED_DOCS/docs/y/z/.git"
+run_gate "$PLANTED_DOCS/docs/y/z" "$(native "$PLANTED_DOCS/src/x.js")"
+assert_equals "2" "$CODE" "req-006: a planted docs/y/z/.git doesn't move the root"
+
+# The outermost planifest-framework/ wins over a nearer .git.
+OUTER_PF="$WORK/outer-pf"
+mkdir -p "$OUTER_PF/planifest-framework" "$OUTER_PF/plan/current" "$OUTER_PF/vendor/lib/.git"
+run_gate "$OUTER_PF/vendor/lib" "$(native "$OUTER_PF/src/x.js")"
+assert_equals "2" "$CODE" "req-006: the outermost planifest-framework/ beats a nearer .git"
+
+# A nested .git outside plan/ and docs/ is still the nearest root when no
+# planifest-framework/ exists above it.
+NESTED="$(make_git_fixture nested)"
+mkdir -p "$NESTED/vendor/lib/.git"
+run_gate "$NESTED/vendor/lib" "$(native "$NESTED/src/x.js")"
+assert_equals "0" "$CODE" "req-006: a nested repository outside plan/ is its own root"
+
+echo ""
+echo "=== req-006: CLAUDE_PROJECT_DIR names the root when set (F1) ==="
+
+CLAUDE_PROJECT_DIR="$NESTED" run_gate "$NESTED/vendor/lib" "$(native "$NESTED/src/x.js")"
+assert_equals "2" "$CODE" "req-006: CLAUDE_PROJECT_DIR is the root, ahead of the nearer .git"
+CLAUDE_PROJECT_DIR="$WORK/no-such-dir" run_gate "$NESTED/vendor/lib" "$(native "$NESTED/src/x.js")"
+assert_equals "0" "$CODE" "req-006: a CLAUDE_PROJECT_DIR that doesn't exist falls back to the walk"
+CLAUDE_PROJECT_DIR="$NESTED" run_gate "$NESTED" "$(native "$OUTSIDE/a.js")"
+assert_equals "0" "$CODE" "req-006: a target outside CLAUDE_PROJECT_DIR passes"
+if [ -L "$LINK" ]; then
+  CLAUDE_PROJECT_DIR="$LINK" run_gate "$ROOT" "$(native "$ROOT/src/a.js")"
+  assert_equals "2" "$CODE" "req-006: CLAUDE_PROJECT_DIR resolves to its real path"
 fi
 
 # =============================================================================

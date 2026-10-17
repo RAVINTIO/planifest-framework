@@ -14,6 +14,7 @@
 # stdout contract, tagged by test-writer for human review at P7
 
 set -uo pipefail
+unset CLAUDE_PROJECT_DIR # the hooks prefer it as the root (0000032 F1)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"

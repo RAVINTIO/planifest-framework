@@ -6,6 +6,7 @@
 # (Bash mktemp -d returns /tmp/... paths that Node.js resolves to \tmp\... on Windows.)
 
 set -uo pipefail
+unset CLAUDE_PROJECT_DIR # the hooks prefer it as the root (0000032 F1)
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"

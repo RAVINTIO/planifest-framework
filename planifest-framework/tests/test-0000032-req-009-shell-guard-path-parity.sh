@@ -14,6 +14,10 @@
 
 set -uo pipefail
 
+# The hooks prefer CLAUDE_PROJECT_DIR as the root. A Claude Code session sets
+# it, so clear it here and set it only in the cases that test it.
+unset CLAUDE_PROJECT_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 
@@ -156,6 +160,26 @@ for path in "src/a.js" "lib/a.js"; do
   run_guard "$OTHER" "touch $path"
   assert_equals "$(gate_code "$OTHER" "$path")" "$CODE" "req-009: guard and gate-write agree on $path with a design.md"
 done
+
+# =============================================================================
+echo ""
+echo "=== req-009: a planted marker can't move the guard's root (F1) ==="
+
+PLANTED="$(make_git_fixture planted)"
+mkdir -p "$PLANTED/plan/x/.git" "$PLANTED/plan/x/planifest-framework"
+run_guard "$PLANTED/plan/x" "echo hi > $(native "$PLANTED")/src/x.js"
+assert_equals "2" "$CODE" "req-009: planted markers in plan/x don't move the root for an absolute target"
+run_guard "$PLANTED/plan/x" "echo hi > ../../src/x.js"
+assert_equals "2" "$CODE" "req-009: planted markers in plan/x don't move the root for a relative target"
+assert_equals "$(gate_code "$PLANTED/plan/x" "../../src/x.js")" "$CODE" \
+  "req-009: guard and gate-write agree with planted markers"
+
+NESTED="$(make_git_fixture nested)"
+mkdir -p "$NESTED/vendor/lib/.git"
+run_guard "$NESTED/vendor/lib" "echo hi > $(native "$NESTED")/src/x.js"
+assert_equals "0" "$CODE" "req-009: a nested repository outside plan/ is its own root"
+CLAUDE_PROJECT_DIR="$(native "$NESTED")" run_guard "$NESTED/vendor/lib" "echo hi > $(native "$NESTED")/src/x.js"
+assert_equals "2" "$CODE" "req-009: the guard takes CLAUDE_PROJECT_DIR as the root"
 
 # =============================================================================
 echo ""

@@ -13,6 +13,10 @@
 
 set -uo pipefail
 
+# The hooks prefer CLAUDE_PROJECT_DIR as the root. A Claude Code session sets
+# it, so clear it here and set it only in the cases that test it.
+unset CLAUDE_PROJECT_DIR
+
 # load_detection_corpus <root>: fills CORPUS with the detection corpus. The
 # root is the native fixture path for the absolute-path entry. Req-009 sources
 # this file with REQ008_CORPUS_ONLY=1 to reuse the same list.
