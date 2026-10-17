@@ -139,6 +139,35 @@ assert_contains "src/a.js" "$ERR" "req-008: a cd base change resolves the target
 
 # =============================================================================
 echo ""
+echo "=== req-008: a cd that may not run can't move the base (F2) ==="
+
+for cmd in \
+  "false && cd /tmp; echo hi > src/x.js" \
+  "(cd /tmp); echo hi > src/x.js" \
+  "cd /tmp | true; echo hi > src/x.js" \
+  "cd /tmp || true; echo hi > src/x.js" \
+  "cd /tmp & echo hi > src/x.js" \
+  "cd /tmp && echo hi > src/x.js" \
+  'cd "$DIR" && echo hi > src/x.js' \
+  "(cd src && echo x > a.js)"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: F2 blocks: $cmd"
+done
+
+# A relative target is judged against both the starting folder and the
+# folder after cd. It passes only when both judgements pass.
+run_guard "$ROOT" "cd /tmp && echo hi > x.txt"
+assert_equals "2" "$CODE" "req-008: F2 cd /tmp && echo hi > x.txt blocks, because {root}/x.txt is gated"
+run_guard "$ROOT" "cd /tmp && echo hi > plan/x.md"
+assert_equals "0" "$CODE" "req-008: F2 cd /tmp && echo hi > plan/x.md passes, because both bases pass"
+assert_equals "" "$ERR" "req-008: F2 a pass on both bases writes no stderr"
+run_guard "$ROOT" "(cd src; echo x > a.js); echo x > plan/a.md"
+assert_equals "2" "$CODE" "req-008: F2 a cd inside parentheses still applies inside them"
+run_guard "$ROOT" "(cd plan); echo x > docs/a.md"
+assert_equals "0" "$CODE" "req-008: F2 the base returns to the outer value at )"
+
+# =============================================================================
+echo ""
 echo "=== req-008: parse failures and targets with no literal prefix warn ==="
 
 run_guard "$ROOT" 'echo x > "src/a.js'

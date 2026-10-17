@@ -19,8 +19,11 @@
  *   - It splits at ;, &&, ||, |, &, parentheses, and line breaks, and respects
  *     quotes and backslash escapes.
  *   - It skips leading VAR=value assignments and here-document bodies.
- *   - A cd with one literal argument moves the base folder for the simple
- *     commands after it on the same line.
+ *   - A cd with one literal argument moves a tracked base folder for the
+ *     simple commands after it. A relative target is judged against both the
+ *     starting folder and the tracked base, and blocks if either blocks. The
+ *     tracked base returns to its outer value at ), and a cd doesn't carry
+ *     across |, ||, or &.
  *   - A target holding $, a backtick, *, ?, or { is judged by its literal
  *     prefix, so src/*.js is judged as src/.
  *
@@ -157,15 +160,18 @@ function skipGroup(s, i) {
 }
 
 /**
- * Splits a command line into simple commands. Each simple command is a list
- * of tokens:
+ * Splits a command line into simple commands and the separators between them.
+ * Returns a list of items:
+ *   { t: "cmd", tokens }       a simple command
+ *   { t: "sep", op }           a separator such as ;, &&, |, (, ), or a line break
+ * Each simple command is a list of tokens:
  *   { t: "w", v, dyn, tilde }  a word with quotes removed. dyn is the index in
  *                              v of the first $, backtick, *, ?, or {, or -1.
  *   { t: "r", op, fd }         a redirect operator.
  * Throws ParseError on unbalanced quotes.
  */
 function tokenise(s) {
-  const commands = [];
+  const items = [];
   let tokens = [];
   let word = null;
   const heredocs = [];
@@ -185,7 +191,7 @@ function tokenise(s) {
   };
   const endCommand = () => {
     endWord();
-    if (tokens.length) commands.push(tokens);
+    if (tokens.length) items.push({ t: "cmd", tokens });
     tokens = [];
   };
   let i = 0;
@@ -196,6 +202,7 @@ function tokenise(s) {
     if (c === " " || c === "\t" || c === "\r") { endWord(); i++; continue; }
     if (c === "\n") {
       endCommand();
+      items.push({ t: "sep", op: "\n" });
       i = skipHeredocBodies(s, i + 1, heredocs);
       continue;
     }
@@ -220,7 +227,12 @@ function tokenise(s) {
     }
 
     const separator = SEPARATORS.find((op) => s.startsWith(op, i));
-    if (separator) { endCommand(); i += separator.length; continue; }
+    if (separator) {
+      endCommand();
+      items.push({ t: "sep", op: separator });
+      i += separator.length;
+      continue;
+    }
 
     if (!word) word = { t: "w", v: "", dyn: -1, tilde: c === "~", quoted: false };
 
@@ -258,7 +270,7 @@ function tokenise(s) {
     }
   }
   endCommand();
-  return commands;
+  return items;
 }
 
 // ---------------------------------------------------------------------------
@@ -436,9 +448,31 @@ function expandTilde(word, text) {
   return null; // ~user, which the hook doesn't expand
 }
 
+// A cd before one of these runs in a subshell or may not run, so it doesn't
+// move the base for the commands after it (F2).
+const NO_CARRY_AFTER = new Set(["|", "|&", "&", "||"]);
+const NO_CARRY_BEFORE = new Set(["|", "|&"]);
+
+// cdTarget: the base folder after a cd with these args, or null when the hook
+// can't follow it.
+function cdTarget(base, args) {
+  const ops = args.filter((w) => w.v !== "--");
+  if (ops.length === 0) return homedir();
+  if (ops.length !== 1 || ops[0].dyn >= 0 || ops[0].v === "-") return null;
+  const dir = expandTilde(ops[0], ops[0].v);
+  if (dir === null) return null;
+  if (base === null) return isAbsolute(dir) ? dir : null;
+  return resolve(base, dir);
+}
+
 /**
  * Judges a whole command line from cwd.
  * Returns { blocks: [string], warnings: [string] }.
+ *
+ * A relative target is judged against two bases: the hook's cwd and the base
+ * a tracked cd leads to. It blocks if either judgement blocks, so a cd that
+ * never runs can't move a write out of the gate (F2). The tracked base
+ * returns to its outer value at ), and a cd doesn't carry across |, ||, or &.
  */
 function judgeCommand(cwd, command) {
   const blocks = [];
@@ -446,18 +480,40 @@ function judgeCommand(cwd, command) {
   const root = resolveRoot(cwd);
   if (!root) return { blocks, warnings };
 
-  let commands;
+  let items;
   try {
-    commands = tokenise(command);
+    items = tokenise(command);
   } catch (err) {
     if (!(err instanceof ParseError)) throw err;
     warnings.push(`${PREFIX} Warning: shell-write-guard could not parse the command (${err.message}). Command allowed.\n`);
     return { blocks, warnings };
   }
 
-  let base = resolve(cwd);
-  for (const tokens of commands) {
-    const { targets, name, args } = analyse(tokens);
+  // judge: the block reason for literal from base, or null when it passes.
+  const judge = (writer, base, literal) => {
+    const relPath = toRootRelative(root, base, literal);
+    if (relPath === null) return null; // outside the repository root
+    const result = evaluateWrite(root, relPath);
+    if (result.warning) warnings.push(result.warning);
+    if (result.allowed) return null;
+    const reason = result.reason.replace(/^\[Planifest\]\s*/, "").trim();
+    return (
+      `${PREFIX} Shell write blocked: '${writer}' writes '${relPath || "."}'. ${reason} ` +
+      "Make the change through the Write or Edit tool once the design covers the path.\n"
+    );
+  };
+
+  const start = resolve(cwd);
+  let tracked = start;
+  const outer = [];
+  for (let n = 0; n < items.length; n++) {
+    const item = items[n];
+    if (item.t === "sep") {
+      if (item.op === "(") outer.push(tracked);
+      else if (item.op === ")" && outer.length) tracked = outer.pop();
+      continue;
+    }
+    const { targets, name, args } = analyse(item.tokens);
 
     for (const { writer, word } of targets) {
       if (word.v === "") continue;
@@ -466,30 +522,25 @@ function judgeCommand(cwd, command) {
         warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' (no literal prefix). Command allowed.\n`);
         continue;
       }
-      if (base === null && !isAbsolute(literal)) {
-        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' after a cd it can't follow. Command allowed.\n`);
-        continue;
+      const bases = [start];
+      if (!isAbsolute(literal) && tracked !== null && tracked !== start) bases.push(tracked);
+      let blocked = false;
+      for (const base of bases) {
+        const reason = judge(writer, base, literal);
+        if (reason) { blocks.push(reason); blocked = true; }
       }
-      const relPath = toRootRelative(root, base, literal);
-      if (relPath === null) continue; // outside the repository root
-      const result = evaluateWrite(root, relPath);
-      if (result.warning) warnings.push(result.warning);
-      if (!result.allowed) {
-        const reason = result.reason.replace(/^\[Planifest\]\s*/, "").trim();
-        blocks.push(
-          `${PREFIX} Shell write blocked: '${writer}' writes '${relPath || "."}'. ${reason} ` +
-          "Make the change through the Write or Edit tool once the design covers the path.\n",
-        );
+      if (!blocked && tracked === null && !isAbsolute(literal)) {
+        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' after a cd it can't follow. Command allowed.\n`);
       }
     }
 
     if (name === "cd") {
-      const ops = args.filter((w) => w.v !== "--");
-      if (ops.length === 0) base = homedir();
-      else if (ops.length === 1 && ops[0].dyn < 0 && ops[0].v !== "-") {
-        const dir = expandTilde(ops[0], ops[0].v);
-        base = dir === null ? null : base === null ? (isAbsolute(dir) ? dir : null) : resolve(base, dir);
-      } else base = null;
+      const before = items[n - 1];
+      const after = items[n + 1];
+      const carries =
+        !(before?.t === "sep" && NO_CARRY_BEFORE.has(before.op)) &&
+        !(after?.t === "sep" && NO_CARRY_AFTER.has(after.op));
+      if (carries) tracked = cdTarget(tracked, args);
     }
   }
   return { blocks, warnings };
