@@ -181,3 +181,4 @@ P4 end: 2026-10-17T11:25:56Z
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Continuous run. Two parallel reviews: hook threat model and bypass analysis, then setup, skill, secrets, and risk-register cross-check. |
+P5 result: overall risk Medium. 5 Medium (F1, F2, K-1, K-2, K-3), 17 Low. No Critical or High. Secrets, dependencies, and network clean. Medium findings stop the continuous run at the P5 gate for the human.
