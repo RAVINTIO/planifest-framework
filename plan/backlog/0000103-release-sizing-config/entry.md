@@ -5,7 +5,7 @@ status: "open"
 ---
 # Backlog Entry: 0000103 - release sizing and a configurable release budget
 
-**Source feature:** 0000037-self-host-on-planifest-zero
+**Source feature:** `planifest-zero` 0000037-self-host-on-planifest-zero
 **Source phase:** P0
 **Deferral source:** discovered mid-flight
 **Moved:** copied from `planifest-zero` backlog entry 0000109 on 2026-10-17, at the human's request

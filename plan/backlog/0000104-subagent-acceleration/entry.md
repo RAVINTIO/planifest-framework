@@ -5,7 +5,7 @@ status: "open"
 ---
 # Backlog Entry: 0000104 - subagent acceleration
 
-**Source feature:** 0000037-self-host-on-planifest-zero
+**Source feature:** `planifest-zero` 0000037-self-host-on-planifest-zero
 **Source phase:** P1
 **Deferral source:** discovered mid-flight
 **Moved:** copied from `planifest-zero` backlog entry 0000110 on 2026-10-17, at the human's request
