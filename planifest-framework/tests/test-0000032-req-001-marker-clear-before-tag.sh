@@ -35,6 +35,12 @@ for m in .orchestrator-active .orchestrator-ack .run-mode; do
   lacks "$m" "$STEP6" "req-001: P7 Step 6 does not name $m"
 done
 
+P7_ALL=$(sed -n '/^## P7/,/^## P8/p' "$SHIP")
+assert_equals "yes" "$([ -n "$P7_ALL" ] && echo yes || echo no)" "req-001: P7 section found"
+for m in .orchestrator-active .orchestrator-ack .run-mode; do
+  lacks "$m" "$P7_ALL" "req-001: no P7 step names $m"
+done
+
 STEP7=$(sed -n '/^### Step 7: Commit archive/,/^## P8/p' "$SHIP")
 GIT_ADD=$(grep '^git add ' <<< "$STEP7")
 assert_equals "git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md" "$GIT_ADD" \

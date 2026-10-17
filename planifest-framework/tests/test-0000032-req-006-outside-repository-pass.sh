@@ -96,6 +96,16 @@ assert_equals "0" "$CODE" "req-006: non-git fixture passes a write outside cwd"
 run_gate "$NOGIT" "$(native "$NOGIT/src/a.js")"
 assert_equals "2" "$CODE" "req-006: non-git fixture gates cwd/src/a.js with no design.md"
 
+# A folder holding planifest-framework/ and no .git is a root too.
+PFONLY="$WORK/pfonly"
+mkdir -p "$PFONLY/planifest-framework" "$PFONLY/plan/current" "$PFONLY/sub/deeper"
+run_gate "$PFONLY/sub/deeper" "$(native "$PFONLY/src/a.js")"
+assert_equals "2" "$CODE" "req-006: planifest-framework/ marks the root with no .git, so subfolder cwd gates {root}/src/a.js"
+run_gate "$PFONLY/sub/deeper" "$(native "$PFONLY/sub/x.md")"
+assert_equals "2" "$CODE" "req-006: planifest-framework/ root gates {root}/sub/x.md from a subfolder cwd"
+run_gate "$PFONLY/sub/deeper" "$(native "$OUTSIDE/a.js")"
+assert_equals "0" "$CODE" "req-006: planifest-framework/ root passes a write outside it"
+
 # =============================================================================
 echo ""
 echo "=== req-006: the root is the walked-up repository root ==="
