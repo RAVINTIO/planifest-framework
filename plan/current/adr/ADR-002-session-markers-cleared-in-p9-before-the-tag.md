@@ -51,6 +51,9 @@ At P0 the human on the loop chose to keep the markers committed and delete them 
   - K-2: The marker step runs `git status --porcelain plan/_archive/` first. It reports changes outside this feature's archive directory to the human on the loop and stages only `plan/_archive/{feature-id}-{YYYY-MM-DD}/`.
   - K-3: The marker step stages the archive first. It then deletes the markers, stages the deletions, and commits as one uninterrupted sequence. A new Resume Detection step 2b catches a sentinel that is absent on disk but still committed. It finishes the marker commit and continues to the Step 9 tag.
   - K-4: If nothing is staged and no marker is tracked, the marker step skips the commit and continues to the tag.
+- **Refinements after the P5 re-review:**
+  - K-2: The marker step works on `{archive-dir}`, the directory P7 Step 6 created or step 2a resolved, so a `-2` suffix carries through. The commit names `{archive-dir}` and the markers that `HEAD` tracks after `--`. Changes staged earlier stay out of it. The K-4 guard checks only those paths, so the step skips the commit when nothing is staged under them.
+  - N-8: Step 2b applies step 2a's archive rule. A sentinel that a human on the loop deleted by hand before P8 therefore resumes at P8, not at the tag. With no matching archive, step 2b stops and asks the human on the loop.
 
 ## Alternatives Considered
 

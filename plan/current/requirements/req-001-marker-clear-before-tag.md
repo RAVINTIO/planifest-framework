@@ -23,9 +23,9 @@ As the human on the loop, I want the ship skill to delete the session markers in
 - **P7 Step 7 (Commit archive):** Drop the three marker paths from the `git add` line. The line becomes `git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md`.
 - **P9, new marker step:** Add a step under `## P9: Ship`, after the P9 build-log line and before `### Step 9: Create git tag`. Its heading contains the words `Clear session markers`. The step does these things in order:
   1. Run `git status --porcelain plan/_archive/`. Report any change outside this feature's archive directory to the human on the loop, and don't stage it.
-  2. Stage only this feature's archive directory, so the commit also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
+  2. Stage only `{archive-dir}`, so the commit also carries the P8 `build-report.md` and the P8 and P9 build-log blocks. `{archive-dir}` is the directory P7 Step 6 created, with any `-2` style suffix, or the directory that Resume Detection step 2a resolved.
   3. As one uninterrupted sequence, delete `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`, stage the deletions, and commit.
-  4. Commit with the subject `plan(p9): clear session markers for {feature-id}`. If nothing is staged and no marker is tracked, skip the commit.
+  4. Commit with the subject `plan(p9): clear session markers for {feature-id}`. The commit names `{archive-dir}` and the markers that `HEAD` tracks after `--`, so other staged changes stay out of it. If nothing is staged under these paths, skip the commit.
   5. Run `git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode`. If the output isn't empty, stop and name the tracked paths to the human on the loop. Do not tag.
 - **P9 Step 9 (Create git tag):** Runs only after the marker step commits. The tag therefore never carries a marker.
 - **P9 Step 9b (Marker tracking pre-flight check):** Remove it. Its check moves into the new marker step, which runs before the tag. No heading named `Step 9b` remains in the skill, and no remaining step after Step 9 names a marker path.
@@ -52,9 +52,11 @@ As the human on the loop, I want the ship skill to delete the session markers in
 - Within the marker step, the delete instructions come before the `git commit` line, checked by line number.
 - The ship skill has no `Step 9b` heading. No section from `### Step 9` to the end of the file names a marker path.
 - The P9 Step 10 section still offers both options: agent pushes and the human pushes.
-- The marker step runs `git status --porcelain plan/_archive/` and then stages only `plan/_archive/{feature-id}-{YYYY-MM-DD}/`. It never stages the whole of `plan/_archive/` (security finding K-2).
+- The marker step runs `git status --porcelain plan/_archive/` and then stages only `{archive-dir}`. It never stages the whole of `plan/_archive/` (security finding K-2).
+- The marker step defines `{archive-dir}` as the directory P7 Step 6 created, `-2` suffix included, or the one step 2a resolved. It no longer rebuilds the path from the date template (K-2 re-review).
 - The marker step's code block runs the delete, the `git rm --cached` line, and the commit on consecutive lines, and the prose names one uninterrupted sequence (K-3).
-- The commit line reads `git diff --cached --quiet || git commit ...`, and the prose skips the commit when nothing is staged and no marker is tracked (K-4).
+- The commit line reads `git diff --cached --quiet -- "{archive-dir}" <markers> || git commit ... -- "{archive-dir}" $(git ls-tree --name-only HEAD -- <markers>)`. The prose skips the commit when nothing is staged under these paths (K-4).
+- Every marker commit line limits itself to a path list after `--`, and the prose says other staged changes stay out of the commit (K-2 re-review).
 - The updated 0000023 and 0000025 suites and the new suite pass under `run-tests.sh` on the 0000031 CI jobs.
 
 ## Acceptance Criteria
