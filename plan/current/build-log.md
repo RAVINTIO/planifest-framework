@@ -90,3 +90,4 @@ Requirement change (cosmetic, P1 active): req-003 root lookup walks up the folde
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Continuous run. Two ADR streams in parallel: run lifecycle (ADR-001 to ADR-003) and write gates (ADR-004 to ADR-006). Archived 0000015 ADRs stay untouched. P6 records supersession in `docs/decisions-index.md`. |
+P1 review (A-006): human confirmed explicitly: judge the literal prefix. Copy of 0000103 and 0000104 confirmed.
