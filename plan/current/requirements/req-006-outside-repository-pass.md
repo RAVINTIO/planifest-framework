@@ -24,7 +24,8 @@ As an agent, I want `gate-write` to ignore paths outside the repository, so that
   - `resolveRoot(cwd)` returns the repository root.
   - `toRootRelative(root, cwd, target)` returns the target's path relative to the root, or `null` when the target is outside the root.
   - `evaluateWrite(root, relPath)` returns either an allow result or a block result with a reason string.
-- `resolveRoot` takes `CLAUDE_PROJECT_DIR` when it names an existing folder. Otherwise it takes the outermost folder above `cwd` that holds `planifest-framework/`, then the nearest that holds `.git`, then `cwd`. It skips a marked folder inside `plan/` or `docs/` of a higher marked folder. It spawns no process (ADR-004).
+- `resolveRoot` walks up to the nearest folder that holds `planifest-framework/`, else the nearest that holds `.git`. It skips a marked folder inside `plan/` or `docs/` of a higher marked folder. It spawns no process (ADR-004).
+- The walk starts at `CLAUDE_PROJECT_DIR` when the variable names a folder and the walk finds a marker. Otherwise it starts at `cwd`. With no marker on either walk, the root is `cwd`. The variable is never the root itself (security finding N-4).
 - `resolveRoot` returns the real path of the root, with symbolic links resolved. `toRootRelative` resolves `target` against the real path of `cwd`. Both sides of the comparison therefore use real paths, so a symbolic link such as macOS `/tmp` cannot make an in-repository path look outside.
 - If the target doesn't exist yet, `toRootRelative` resolves the real path of its nearest existing ancestor and appends the remaining segments.
 - `toRootRelative` resolves `..` segments before the comparison. It compares whole path segments, so `/repo-other/a.js` is outside a root of `/repo`.
@@ -72,14 +73,18 @@ As an agent, I want `gate-write` to ignore paths outside the repository, so that
 - `gate-write.mjs` imports `path-rules.mjs`. Neither file defines the always-permitted lists twice.
 - After `setup.sh claude-code`, `.claude/hooks/enforcement/path-rules.mjs` exists next to `gate-write.mjs`.
 - With planted `plan/x/.git` and `plan/x/planifest-framework/` and `cwd` set to `plan/x`, a **Write** to the real `src/x.js` with no `design.md` exits 2. A planted `docs/y/z/.git` does the same (security finding F1).
-- The outermost folder holding `planifest-framework/` is the root, ahead of a nearer `.git`. A nested `.git` outside `plan/` and `docs/` is still its own root when no `planifest-framework/` sits above it.
-- With `CLAUDE_PROJECT_DIR` set to a folder, that folder is the root. A `CLAUDE_PROJECT_DIR` that doesn't exist falls back to the walk. Every suite that runs the hooks unsets the variable first.
+- A folder holding `planifest-framework/` is the root, ahead of a nearer `.git`. A nested `.git` outside `plan/` and `docs/` is still its own root when no `planifest-framework/` sits above it.
+- The nearest folder holding `planifest-framework/` is the root. A marker, sentinel, and `design.md` planted above the repository don't move it. A lone `planifest-framework/` above the repository doesn't block covered writes. A nested install judges its own paths against its own `design.md` (security finding N-5).
+- With `CLAUDE_PROJECT_DIR` set to `src/`, the walk climbs to the repository root. A **Write** to `../lib/x.js`, `../plan/current/x.md`, or `../.claude/settings.json` from `src/` exits 2 (security finding N-4).
+- With `CLAUDE_PROJECT_DIR` set to the repository's parent, or to an unrelated folder, and no marker above it, the walk from `cwd` decides. A covered write passes and an uncovered one blocks. A `CLAUDE_PROJECT_DIR` that doesn't exist, or that names a file, falls back to the walk from `cwd`.
+- With `CLAUDE_PROJECT_DIR` set to the project and `cwd` in another repository, a **Write** to the project's `src/x.js` exits 2. Every suite that runs the hooks unsets the variable first.
 - A **Write** to a 20,000-segment path, or a path over 4096 characters, exits 0 with a stderr warning within 2 seconds. A 200-segment path is still judged (security finding F7).
+- The length limits apply to the resolved path. `src/other/` with 300 `./` segments, or with 1,000 `a/../` repetitions, is judged as `src/other/x.js` and exits 2 with no length warning (security finding N-3).
 
 ## Acceptance Criteria
 
 - [ ] `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. Tests cover a `..` path that leaves the root and a sibling folder that shares the root's name prefix.
-- [ ] The root follows the ADR-004 order: `CLAUDE_PROJECT_DIR`, then the outermost `planifest-framework/` folder, then the nearest `.git` folder, then `cwd`. A marker planted under `plan/` or `docs/` never moves it. Real paths decide the comparison, so a subfolder or symbolic-link `cwd` still gates in-repository paths.
+- [ ] The root follows the ADR-004 order: the nearest `planifest-framework/` folder, then the nearest `.git` folder, then `cwd`. The walk starts at `CLAUDE_PROJECT_DIR` when it names a folder and finds a marker, and at `cwd` otherwise. A marker planted under `plan/` or `docs/`, or above the repository, never moves it. Real paths decide the comparison, so a subfolder or symbolic-link `cwd` still gates in-repository paths.
 - [ ] `gate-write.mjs` takes its rules from `path-rules.mjs`, which setup installs beside it, and fails open on malformed input.
 
 ## Dependencies

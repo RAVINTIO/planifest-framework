@@ -91,7 +91,7 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 
 ### Write-gate scope
 
-- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. The root is `CLAUDE_PROJECT_DIR` when it names a folder. Otherwise it is the outermost folder above `cwd` that holds `planifest-framework/`, then the nearest that holds `.git`, or `cwd` when none does. A marker inside `plan/` or `docs/` never counts (ADR-004). Tests cover both cases, and a `..` path that leaves the root.
+- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. The root is the nearest folder that holds `planifest-framework/`, then the nearest that holds `.git`, or `cwd` when none does. The walk starts at `CLAUDE_PROJECT_DIR` when it names a folder and finds a marker, and at `cwd` otherwise. A marker inside `plan/` or `docs/` never counts (ADR-004). Tests cover both cases, and a `..` path that leaves the root.
 - [ ] AC-7: Every enforcement hook that exits 2 writes a plain-text reason to stderr. It keeps any existing stdout output, so the Windsurf adapter and `ratchet-check.mjs`'s JSON still work. Tests assert that stderr is not empty on each block path.
 
 ### Shell-write guard
