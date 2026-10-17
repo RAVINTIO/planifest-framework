@@ -22,12 +22,11 @@ As the human on the loop, I want the ship skill to delete the session markers in
 - **P7 Step 6 (Archive plan/current/):** Remove items 5, 6, and 7, which delete `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`. Step 6 no longer touches any session marker.
 - **P7 Step 7 (Commit archive):** Drop the three marker paths from the `git add` line. The line becomes `git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md`.
 - **P9, new marker step:** Add a step under `## P9: Ship`, after the P9 build-log line and before `### Step 9: Create git tag`. Its heading contains the words `Clear session markers`. The step does these things in order:
-  1. Delete `plan/.orchestrator-active`.
-  2. Delete `plan/.orchestrator-ack` if it exists.
-  3. Delete `plan/.run-mode` if it exists.
-  4. Stage the deletions and the archive directory, so the commit also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
-  5. Commit with the subject `plan(p9): clear session markers for {feature-id}`.
-  6. Run `git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode`. If the output isn't empty, stop and name the tracked paths to the human on the loop. Do not tag.
+  1. Run `git status --porcelain plan/_archive/`. Report any change outside this feature's archive directory to the human on the loop, and don't stage it.
+  2. Stage only this feature's archive directory, so the commit also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
+  3. As one uninterrupted sequence, delete `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`, stage the deletions, and commit.
+  4. Commit with the subject `plan(p9): clear session markers for {feature-id}`. If nothing is staged and no marker is tracked, skip the commit.
+  5. Run `git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode`. If the output isn't empty, stop and name the tracked paths to the human on the loop. Do not tag.
 - **P9 Step 9 (Create git tag):** Runs only after the marker step commits. The tag therefore never carries a marker.
 - **P9 Step 9b (Marker tracking pre-flight check):** Remove it. Its check moves into the new marker step, which runs before the tag. No heading named `Step 9b` remains in the skill, and no remaining step after Step 9 names a marker path.
 - **P9 Step 10 (Push/PR decision):** Push and PR stay optional, as now. They follow the project's overrides and the human's choice. The step's text stays unchanged apart from any step-number references.
