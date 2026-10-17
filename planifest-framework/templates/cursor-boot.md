@@ -17,6 +17,7 @@ This project uses the confirmed design framework. These rules are non-negotiable
 5. **Data is owned by one component.** Never write to data owned by another component.
 6. **No credentials in context.** If a credential appears anywhere, flag it immediately and do not use it.
 7. **Update documentation after any deviation.** If implementation required deviating from the spec, plan, or design decisions, you MUST update the affected artifacts (plan/, docs/, or component.yml) to reflect what was actually built. Documentation must always match reality.
+8. **Code changes go through Write or Edit.** Make every change to code and project files through **Write** or **Edit**, never through Bash. Don't use `>`, `tee`, `sed -i`, `cp`, a script, or an interpreter one-liner to change them. The shell guard is a heuristic. It can't see writes made inside scripts, interpreters, build tools, or git, and some tools don't run it at all.
 
 ## Operational Directives
 
