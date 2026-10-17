@@ -52,4 +52,34 @@ assert_contains "Do not delete any marker" "$STEP2A" "req-002: step 2a deletes n
 lacks "Cleanup complete. Starting fresh." "$(cat "$ORCH")" "req-002: orchestrator drops the start-fresh message"
 lacks "Delete \`plan/.orchestrator-active\`" "$STEP2A" "req-002: step 2a has no sentinel delete instruction"
 
+echo ""
+echo "=== req-002 (K-1): sentinel ID checked before use ==="
+
+ID_RE='^[0-9]{7}-[a-z0-9-]+$'
+assert_contains "\`$ID_RE\`" "$STEP2A" "req-002 K-1: step 2a checks the ID against the feature-ID pattern"
+RE_LINE=$(grep -n -F -- "$ID_RE" <<< "$STEP2A" | head -1 | cut -d: -f1)
+LIST_LINE=$(grep -n -F 'plan/_archive/{feature-id}-*' <<< "$STEP2A" | head -1 | cut -d: -f1)
+assert_equals "yes" "$([ -n "$RE_LINE" ] && [ -n "$LIST_LINE" ] && [ "$RE_LINE" -lt "$LIST_LINE" ] && echo yes || echo no)" \
+  "req-002 K-1: the ID check comes before the archive listing"
+assert_contains "If the ID doesn't match, stop and ask the human on the loop" "$STEP2A" \
+  "req-002 K-1: a mismatched ID stops and asks the human on the loop"
+assert_contains "sits inside \`plan/_archive/\`" "$STEP2A" \
+  "req-002 K-1: step 2a confirms the chosen directory sits inside plan/_archive/"
+assert_contains "Quote the ID in every shell command" "$STEP2A" "req-002 K-1: step 2a quotes the ID in commands"
+assert_contains 'ls -d "plan/_archive/$id"-*/' "$STEP2A" "req-002 K-1: the example listing quotes the ID"
+
+echo ""
+echo "=== req-002 (K-3): interrupted marker commit ==="
+
+STEP2B=$(sed -n '/^2b\. /,/^3\. /p' "$ORCH" | sed '$d')
+assert_equals "yes" "$([ -n "$STEP2B" ] && echo yes || echo no)" "req-002 K-3: step 2b found in Resume Detection"
+assert_contains "git ls-files plan/.orchestrator-active" "$STEP2B" "req-002 K-3: step 2b checks whether the sentinel is still tracked"
+assert_contains "absent on disk" "$STEP2B" "req-002 K-3: step 2b fires when the sentinel is gone from disk"
+assert_contains "git show HEAD:plan/.orchestrator-active" "$STEP2B" "req-002 K-3: step 2b reads the ID from the last commit"
+assert_contains "$ID_RE" "$STEP2B" "req-002 K-3: step 2b checks the ID like step 2a"
+assert_contains "resume at the P9 marker step" "$STEP2B" "req-002 K-3: step 2b resumes at the P9 marker step"
+assert_contains "Step 9 tag" "$STEP2B" "req-002 K-3: step 2b continues to the Step 9 tag"
+assert_contains "Tell the human on the loop" "$STEP2B" "req-002 K-3: step 2b tells the human on the loop"
+lacks "Delete \`plan/.orchestrator-active\`" "$STEP2B" "req-002 K-3: step 2b has no sentinel delete instruction"
+
 print_summary

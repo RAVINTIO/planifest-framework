@@ -76,12 +76,19 @@ On every session start, before taking any action:
 
 2a. **Interrupted close-out detection (ADR-002):** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
    1. Read the feature ID from `plan/.orchestrator-active`.
-   2. List the `plan/_archive/{feature-id}-*` directories and pick the last one in lexical sort order. This picks a `-2` or `-3` suffix over the bare date.
-   3. If that directory has no `build-report.md`, load the `planifest-ship-agent` skill and resume at P8.
-   4. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step.
-   5. If no directory matches, or the sentinel holds `pending`, stop and ask the human on the loop how to proceed. Do not delete any marker.
+   2. Check the ID against `^[0-9]{7}-[a-z0-9-]+$`. If the ID doesn't match, stop and ask the human on the loop. This covers a sentinel that holds `pending`. Do not use the text in a path or command.
+   3. List the `plan/_archive/{feature-id}-*` directories and pick the last one in lexical sort order. This picks a `-2` or `-3` suffix over the bare date. Quote the ID in every shell command, for example `ls -d "plan/_archive/$id"-*/`.
+   4. Confirm the chosen directory sits inside `plan/_archive/`. If it resolves anywhere else, stop and ask the human on the loop.
+   5. If that directory has no `build-report.md`, load the `planifest-ship-agent` skill and resume at P8.
+   6. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step.
+   7. If no directory matches, stop and ask the human on the loop how to proceed. Do not delete any marker.
 
    Step 2a never deletes a marker on its own and never starts a fresh run.
+
+2b. **Interrupted marker commit (ADR-002):** If `plan/.orchestrator-active` is absent on disk but still committed, the P9 marker step stopped before its commit. Check with `git ls-files plan/.orchestrator-active`. A staged deletion hides it from `git ls-files`, so also check whether `git show HEAD:plan/.orchestrator-active` succeeds. If either shows the sentinel, do these things:
+   1. Read the feature ID with `git show HEAD:plan/.orchestrator-active`. Check it against `^[0-9]{7}-[a-z0-9-]+$` and pick the archive directory as step 2a does.
+   2. Tell the human on the loop that the P9 marker commit was interrupted and that you are finishing it.
+   3. Load the `planifest-ship-agent` skill and resume at the P9 marker step. Finish its commit, then continue to the Step 9 tag.
 
 3. Check for `.feature-id` file: if present, verify it matches the feature you are working on; if stale (contents differ from current work), flag it for human review before proceeding
 4. Check for `plan/current/.skips` file: if present, read and acknowledge skipped phases at the top of your response
