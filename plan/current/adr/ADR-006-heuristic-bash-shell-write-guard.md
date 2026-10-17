@@ -38,7 +38,7 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 - `standard-boot.md` and `cursor-boot.md` gain a Hard Limit: code changes go through **Write** or **Edit**, never through Bash. The rule covers the guard's limits and the tools that don't run the guard.
 - `setup.sh` and `setup.ps1` register the hook for Claude Code only. Each removes any earlier `shell-write-guard` group before it adds one, so repeated runs leave exactly one. Bash groups the human on the loop added stay in place.
 - A 0.31.0 migration tells downstream projects to re-run setup.
-- Two fixed corpora in the req-004 suite measure the guard. The false-positive corpus must produce zero blocks. The detection corpus must block every command.
+- Two fixed corpora measure the guard. The detection corpus in the req-008 suite must block every command. The false-positive corpus in the req-009 suite must produce zero blocks.
 
 ## Alternatives Considered
 

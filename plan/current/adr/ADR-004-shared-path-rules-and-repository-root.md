@@ -18,7 +18,7 @@ version: "0.1.0"
 - A target outside `cwd` falls through to its raw path. The hook then gates it, so a write to `/tmp` or another repository blocks when no design exists.
 - If a session starts in a subfolder, or the agent runs `cd`, the hook finds no `design.md`. It then blocks every gated write.
 
-The new shell guard (req-004) must block exactly when `gate-write.mjs` blocks a **Write** to the same path. Two copies of the rules would drift apart. Hooks must also finish in under 200 ms per call (design NFR). They must stay dependency-free and fail open (0000003-ADR-005).
+The new shell guard (req-008 and req-009) must block exactly when `gate-write.mjs` blocks a **Write** to the same path. Two copies of the rules would drift apart. Hooks must also finish in under 200 ms per call (design NFR). They must stay dependency-free and fail open (0000003-ADR-005).
 
 `gate-write.mjs` lowercases and forward-slashes every path before it compares them (0000009-ADR-005). The sentinel check for `plan/current/` (0000005-ADR-003) runs first, inside the same hook. A-003 and A-004 in the execution plan record the root and real-path rules, and the human on the loop confirmed both.
 
@@ -41,7 +41,7 @@ The new shell guard (req-004) must block exactly when `gate-write.mjs` blocks a 
 |-------------|------|------|-------------|
 | Find the root with `git rev-parse --show-toplevel` | Matches git's own view, including worktrees and `GIT_DIR` | Spawns a process on every **Write**, **Edit**, and Bash call. Fails when git isn't installed. | The spawn cost puts the 200 ms limit at risk on slow runners. The walk gives the same answer for every layout Planifest supports. |
 | Keep `cwd` as the root | No change to resolution | `cwd` moves after a `cd` or a subfolder start, so the hook loses `design.md` | This is the fault the feature fixes. |
-| Copy the rules into each hook | Each hook stands alone | Two copies drift, and req-004 needs exact parity | Parity is an acceptance criterion. Drift would let a shell write pass where **Write** blocks. |
+| Copy the rules into each hook | Each hook stands alone | Two copies drift, and req-009 needs exact parity | Parity is an acceptance criterion. Drift would let a shell write pass where **Write** blocks. |
 | Compare normalised paths with no real-path step | No file-system calls | A symbolic link such as macOS `/tmp` makes an in-repository path look outside | That would let an in-repository write bypass the gate. |
 
 ## Affected Components
