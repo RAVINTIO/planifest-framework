@@ -24,7 +24,7 @@ As an agent, I want `gate-write` to ignore paths outside the repository, so that
   - `resolveRoot(cwd)` returns the repository root.
   - `toRootRelative(root, cwd, target)` returns the target's path relative to the root, or `null` when the target is outside the root.
   - `evaluateWrite(root, relPath)` returns either an allow result or a block result with a reason string.
-- `resolveRoot` walks up from `cwd` to the first folder that holds `planifest-framework/` or `.git`. It spawns no process. If no such folder exists, the root is `cwd` (ADR-004).
+- `resolveRoot` takes `CLAUDE_PROJECT_DIR` when it names an existing folder. Otherwise it takes the outermost folder above `cwd` that holds `planifest-framework/`, then the nearest that holds `.git`, then `cwd`. It skips a marked folder inside `plan/` or `docs/` of a higher marked folder. It spawns no process (ADR-004).
 - `resolveRoot` returns the real path of the root, with symbolic links resolved. `toRootRelative` resolves `target` against the real path of `cwd`. Both sides of the comparison therefore use real paths, so a symbolic link such as macOS `/tmp` cannot make an in-repository path look outside.
 - If the target doesn't exist yet, `toRootRelative` resolves the real path of its nearest existing ancestor and appends the remaining segments.
 - `toRootRelative` resolves `..` segments before the comparison. It compares whole path segments, so `/repo-other/a.js` is outside a root of `/repo`.
@@ -79,7 +79,7 @@ As an agent, I want `gate-write` to ignore paths outside the repository, so that
 ## Acceptance Criteria
 
 - [ ] `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. Tests cover a `..` path that leaves the root and a sibling folder that shares the root's name prefix.
-- [ ] The root is the first folder above `cwd` that holds `planifest-framework/` or `.git`, or `cwd` when none exists. Real paths decide the comparison, so a subfolder or symbolic-link `cwd` still gates in-repository paths.
+- [ ] The root follows the ADR-004 order: `CLAUDE_PROJECT_DIR`, then the outermost `planifest-framework/` folder, then the nearest `.git` folder, then `cwd`. A marker planted under `plan/` or `docs/` never moves it. Real paths decide the comparison, so a subfolder or symbolic-link `cwd` still gates in-repository paths.
 - [ ] `gate-write.mjs` takes its rules from `path-rules.mjs`, which setup installs beside it, and fails open on malformed input.
 
 ## Dependencies
