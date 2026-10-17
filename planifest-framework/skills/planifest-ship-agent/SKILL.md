@@ -149,24 +149,32 @@ git commit -m "plan(p7): archive {feature-id}"
 
 The session markers stay in place through P7 and P8, so hooks treat the whole close-out as part of the run. Clear them here, before the tag, so the tag never carries a marker.
 
-1. Delete `plan/.orchestrator-active`.
-2. Delete `plan/.orchestrator-ack` if it exists.
-3. Delete `plan/.run-mode` if it exists.
-4. Stage the deletions and the archive directory. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
-5. Commit and check that no marker stays tracked:
+1. Run `git status --porcelain plan/_archive/`. If it lists a change outside this feature's archive directory, report those paths to the human on the loop. Do not stage them.
+2. Stage only this feature's archive directory. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
 
 ```bash
+git status --porcelain plan/_archive/
+git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"
+```
+
+3. Delete the markers, stage the deletions, and commit as one uninterrupted sequence. Do no other work between the first delete and the commit.
+   - Delete `plan/.orchestrator-active`.
+   - Delete `plan/.orchestrator-ack` if it exists.
+   - Delete `plan/.run-mode` if it exists.
+4. Run the sequence, then check that no marker stays tracked:
+
+```bash
+rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-git add plan/_archive/
-git commit -m "plan(p9): clear session markers for {feature-id}"
+git diff --cached --quiet || git commit -m "plan(p9): clear session markers for {feature-id}"
 git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 ```
 
-The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
+The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed. If nothing is staged and no marker is tracked, skip the commit and continue to Step 9. The `git diff --cached --quiet` guard does this. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
 
 ### Step 9: Create git tag
 
-Run this step only after the P9 marker step commits.
+Run this step only after the P9 marker step commits, or skips an empty commit.
 
 
 Determine the release version (ADR-002, product-level versioning):

@@ -78,6 +78,42 @@ before "$DEL_LINE" "$COMMIT_LINE" "req-001: delete instructions come before the 
 before "$COMMIT_LINE" "$LS_LINE" "req-001: git ls-files check follows the commit"
 
 echo ""
+echo "=== req-001 (K-2): marker step stages only this feature's archive ==="
+
+ARCH_ADD='git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"'
+assert_contains "git status --porcelain plan/_archive/" "$CLEAR" \
+  "req-001 K-2: marker step checks plan/_archive/ with git status --porcelain"
+assert_contains "$ARCH_ADD" "$CLEAR" "req-001 K-2: marker step stages only this feature's archive directory"
+assert_equals "0" "$(grep -c -x -F 'git add plan/_archive/' <<< "$CLEAR")" \
+  "req-001 K-2: marker step no longer stages the whole of plan/_archive/"
+assert_contains "outside this feature's archive directory" "$CLEAR" \
+  "req-001 K-2: marker step names changes outside this feature's directory"
+assert_contains "Do not stage them" "$CLEAR" "req-001 K-2: stray archive changes stay unstaged"
+STATUS_LINE=$(grep -n -F 'git status --porcelain plan/_archive/' <<< "$CLEAR" | head -1 | cut -d: -f1)
+ARCH_LINE=$(grep -n -F "$ARCH_ADD" <<< "$CLEAR" | head -1 | cut -d: -f1)
+before "$STATUS_LINE" "$ARCH_LINE" "req-001 K-2: git status check comes before staging the archive"
+
+echo ""
+echo "=== req-001 (K-3): delete, stage, and commit run as one sequence ==="
+
+assert_contains "one uninterrupted sequence" "$CLEAR" "req-001 K-3: marker step names one uninterrupted sequence"
+RM_LINE=$(grep -n -F 'rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode' <<< "$CLEAR" | head -1 | cut -d: -f1)
+CODE_COMMIT_LINE=$(grep -n -F 'git commit -m "plan(p9)' <<< "$CLEAR" | head -1 | cut -d: -f1)
+before "$ARCH_LINE" "$RM_LINE" "req-001 K-3: archive staging happens before the marker deletions"
+assert_equals "2" "$([ -n "$RM_LINE" ] && [ -n "$CODE_COMMIT_LINE" ] && echo $(( CODE_COMMIT_LINE - RM_LINE )) || echo none)" \
+  "req-001 K-3: only the git rm line sits between the delete and the commit"
+assert_contains "git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode" \
+  "$(sed -n "$(( ${RM_LINE:-1} + 1 ))p" <<< "$CLEAR")" "req-001 K-3: git rm stages the deletions right after the delete"
+
+echo ""
+echo "=== req-001 (K-4): nothing to commit ==="
+
+assert_contains 'git diff --cached --quiet || git commit -m "plan(p9): clear session markers for {feature-id}"' "$CLEAR" \
+  "req-001 K-4: the commit runs only when something is staged"
+assert_contains "If nothing is staged and no marker is tracked, skip the commit" "$CLEAR" \
+  "req-001 K-4: marker step skips the commit when nothing is staged"
+
+echo ""
 echo "=== req-001: Step 9b gone, no marker after Step 9 ==="
 
 lacks "Step 9b" "$(grep '^#' "$SHIP")" "req-001: no Step 9b heading remains"
