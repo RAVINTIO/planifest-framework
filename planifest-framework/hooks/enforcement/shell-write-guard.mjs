@@ -22,11 +22,12 @@
  *     with no closing delimiter line is read as commands.
  *   - It reads ((...)), $((...)), and $[...] as one unit, so their << and >
  *     are never a here-document or a redirect.
- *   - A cd with one literal argument moves a tracked base folder for the
- *     simple commands after it. A relative target is judged against both the
- *     starting folder and the tracked base, and blocks if either blocks. The
- *     tracked base returns to its outer value at ), and a cd doesn't carry
- *     across |, ||, or &.
+ *   - It tracks the set of folders each simple command may run in, and
+ *     judges a relative target against each one. A command joined by && to a
+ *     cd with one literal folder runs only in the folder after the cd (N-1).
+ *     Any other cd may not have run, so the starting folder stays in the set
+ *     (F2). The set returns to its outer value at ), and a cd before or after
+ *     | runs in a subshell. pushd acts as cd.
  *   - A target holding $, a backtick, *, ?, or { is judged by its literal
  *     prefix, so src/*.js is judged as src/.
  *
@@ -485,7 +486,8 @@ function commandTargets(name, args) {
 
 /**
  * Splits one simple command into its write targets and its words.
- * Returns { targets: [{ writer, word }], words }.
+ * Returns { targets: [{ writer, word }], name, args, negated }, where negated
+ * says a ! came before the name.
  */
 function analyse(tokens) {
   const targets = [];
@@ -504,15 +506,16 @@ function analyse(tokens) {
 
   let start = 0;
   while (start < words.length && (RESERVED.has(words[start].v) || ASSIGNMENT_RE.test(words[start].v))) start++;
+  const negated = words.slice(0, start).some((w) => w.v === "!");
   const rest = words.slice(start);
-  if (!rest.length) return { targets, name: "", args: [] };
+  if (!rest.length) return { targets, name: "", args: [], negated };
   const name = basename(rest[0].v);
   const args = rest.slice(1);
   // Git writes are a documented limit, so only its redirects are judged.
   if (name !== "git") {
     for (const word of commandTargets(name, args)) targets.push({ writer: name, word });
   }
-  return { targets, name, args };
+  return { targets, name, args, negated };
 }
 
 // ---------------------------------------------------------------------------
@@ -526,10 +529,23 @@ function expandTilde(word, text) {
   return null; // ~user, which the hook doesn't expand
 }
 
-// A cd before one of these runs in a subshell or may not run, so it doesn't
-// move the base for the commands after it (F2).
-const NO_CARRY_AFTER = new Set(["|", "|&", "&", "||"]);
+// A cd before or after one of these runs in a subshell, so it doesn't move the
+// base for the commands after it (F2).
+const NO_CARRY_AFTER = new Set(["|", "|&", "&"]);
 const NO_CARRY_BEFORE = new Set(["|", "|&"]);
+
+// These separators keep the folder set of the command before them. Any other
+// separator may follow a command whose cd didn't run, so the set widens to
+// every folder the list has reached (N-1).
+const KEEP_BASES = new Set(["&&", "|", "|&"]);
+
+// The commands that change the folder. pushd with one folder acts as cd, and
+// popd returns to some folder the command has already reached.
+const CD_NAMES = new Set(["cd", "pushd", "popd"]);
+
+// Past this many possible folders, a relative target can't be judged, so it
+// blocks. An absolute target is still judged.
+const MAX_BASES = 64;
 
 // cdTarget: the base folder after a cd with these args, or null when the hook
 // can't follow it.
@@ -537,6 +553,7 @@ function cdTarget(base, args) {
   const ops = args.filter((w) => w.v !== "--");
   if (ops.length === 0) return homedir();
   if (ops.length !== 1 || ops[0].dyn >= 0 || ops[0].v === "-") return null;
+  if (/^[+-]\d+$/.test(ops[0].v)) return null; // pushd +N rotates the stack
   const dir = expandTilde(ops[0], ops[0].v);
   if (dir === null) return null;
   if (base === null) return isAbsolute(dir) ? dir : null;
@@ -547,10 +564,16 @@ function cdTarget(base, args) {
  * Judges a whole command line from cwd.
  * Returns { blocks: [string], warnings: [string] }.
  *
- * A relative target is judged against two bases: the hook's cwd and the base
- * a tracked cd leads to. It blocks if either judgement blocks, so a cd that
- * never runs can't move a write out of the gate (F2). The tracked base
- * returns to its outer value at ), and a cd doesn't carry across |, ||, or &.
+ * The hook keeps the set of folders the next command may run in, and judges a
+ * relative target against each one. A command joined by && to a cd with one
+ * literal folder runs only if the cd succeeded, so the set becomes the folders
+ * after the cd alone (N-1). Any other cd may not have run, so it adds its
+ * folders to the set and keeps the old ones (F2). These cases keep the old ones:
+ *   - a cd after ||, after !, or with an argument the hook can't follow
+ *   - a command after ;, a line break, ||, or & (the set widens to every
+ *     folder the list has reached)
+ *   - a command after ), where the set returns to its value before (
+ * A cd before or after |, or before &, runs in a subshell and changes nothing.
  */
 function judgeCommand(cwd, command) {
   const blocks = [];
@@ -595,16 +618,28 @@ function judgeCommand(cwd, command) {
   };
 
   const start = resolve(cwd);
-  let tracked = start;
+  // bases: the folders the next command may run in. null is a folder the hook
+  // can't follow. reached: every folder the current list may have reached.
+  // everSeen: every folder the whole command may have reached, for popd.
+  let bases = new Set([start]);
+  let reached = new Set([start]);
+  const everSeen = new Set([start]);
+  let overflow = false; // too many folders to judge, so relative targets block
   const outer = [];
   for (let n = 0; n < items.length; n++) {
     const item = items[n];
     if (item.t === "sep") {
-      if (item.op === "(") outer.push(tracked);
-      else if (item.op === ")" && outer.length) tracked = outer.pop();
+      if (item.op === "(") {
+        outer.push({ bases, reached });
+        reached = new Set(bases);
+      } else if (item.op === ")" && outer.length) {
+        ({ bases, reached } = outer.pop());
+      } else if (!KEEP_BASES.has(item.op)) {
+        bases = new Set(reached);
+      }
       continue;
     }
-    const { targets, name, args } = analyse(item.tokens);
+    const { targets, name, args, negated } = analyse(item.tokens);
 
     for (const { writer, word } of targets) {
       if (word.v === "") continue;
@@ -613,25 +648,46 @@ function judgeCommand(cwd, command) {
         warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' (no literal prefix). Command allowed.\n`);
         continue;
       }
-      const bases = [start];
-      if (!isAbsolute(literal) && tracked !== null && tracked !== start) bases.push(tracked);
+      if (overflow && !isAbsolute(literal)) {
+        blocks.push(
+          `${PREFIX} Shell write blocked: '${writer}' writes '${word.v}', and the command may run in more than ` +
+          `${MAX_BASES} folders, too many to judge. Use an absolute path, or fewer cd steps that may fail.\n`,
+        );
+        continue;
+      }
+      const from = isAbsolute(literal) ? [start] : [...bases];
+      // A folder too long to judge leaves doubt, so the starting folder is
+      // judged as well (F7).
+      if (!from.includes(start) && from.some((base) => base !== null && unjudgeable(base, literal))) from.push(start);
       let blocked = false;
-      for (const base of bases) {
+      for (const base of from) {
+        if (base === null) continue;
         const reason = judge(writer, base, literal);
         if (reason) { blocks.push(reason); blocked = true; }
       }
-      if (!blocked && tracked === null && !isAbsolute(literal)) {
+      if (!blocked && from.includes(null)) {
         warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' after a cd it can't follow. Command allowed.\n`);
       }
     }
 
-    if (name === "cd") {
+    if (CD_NAMES.has(name) && !overflow) {
       const before = items[n - 1];
       const after = items[n + 1];
       const carries =
         !(before?.t === "sep" && NO_CARRY_BEFORE.has(before.op)) &&
         !(after?.t === "sep" && NO_CARRY_AFTER.has(after.op));
-      if (carries) tracked = cdTarget(tracked, args);
+      if (carries) {
+        const moved = name === "popd" ? [...everSeen] : [...bases].map((base) => cdTarget(base, args));
+        for (const base of moved) { reached.add(base); everSeen.add(base); }
+        // The next command runs only if this cd succeeded.
+        const sure =
+          name !== "popd" && !negated &&
+          after?.t === "sep" && after.op === "&&" &&
+          !(before?.t === "sep" && before.op === "||") &&
+          moved.every((base) => base !== null);
+        bases = sure ? new Set(moved) : new Set([...bases, ...moved]);
+        if (reached.size > MAX_BASES || everSeen.size > MAX_BASES) overflow = true;
+      }
     }
   }
   return { blocks, warnings };

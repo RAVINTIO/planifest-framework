@@ -147,24 +147,85 @@ for cmd in \
   "cd /tmp | true; echo hi > src/x.js" \
   "cd /tmp || true; echo hi > src/x.js" \
   "cd /tmp & echo hi > src/x.js" \
-  "cd /tmp && echo hi > src/x.js" \
   'cd "$DIR" && echo hi > src/x.js' \
   "(cd src && echo x > a.js)"; do
   run_guard "$ROOT" "$cmd"
   assert_equals "2" "$CODE" "req-008: F2 blocks: $cmd"
 done
 
-# A relative target is judged against both the starting folder and the
-# folder after cd. It passes only when both judgements pass.
+# A command joined to a literal cd by && runs only after the cd succeeds, so
+# its relative target is judged against the folder after cd alone (N-1).
 run_guard "$ROOT" "cd /tmp && echo hi > x.txt"
-assert_equals "2" "$CODE" "req-008: F2 cd /tmp && echo hi > x.txt blocks, because {root}/x.txt is gated"
-run_guard "$ROOT" "cd /tmp && echo hi > plan/x.md"
-assert_equals "0" "$CODE" "req-008: F2 cd /tmp && echo hi > plan/x.md passes, because both bases pass"
-assert_equals "" "$ERR" "req-008: F2 a pass on both bases writes no stderr"
+assert_equals "0" "$CODE" "req-008: N-1 cd /tmp && echo hi > x.txt writes /tmp/x.txt and passes"
+assert_equals "" "$ERR" "req-008: N-1 cd /tmp && echo hi > x.txt writes no stderr"
+run_guard "$ROOT" "cd /tmp && echo hi > src/x.js"
+assert_equals "0" "$CODE" "req-008: N-1 cd /tmp && echo hi > src/x.js writes /tmp/src/x.js and passes"
 run_guard "$ROOT" "(cd src; echo x > a.js); echo x > plan/a.md"
 assert_equals "2" "$CODE" "req-008: F2 a cd inside parentheses still applies inside them"
 run_guard "$ROOT" "(cd plan); echo x > docs/a.md"
 assert_equals "0" "$CODE" "req-008: F2 the base returns to the outer value at )"
+
+# =============================================================================
+echo ""
+echo "=== req-008: a cd joined by && moves the base alone (N-1) ==="
+
+# A design that covers src/app/ and build/ only.
+SCOPED="$(make_git_fixture scoped)"
+printf '## Component Paths\n- src/app/\n- build/\n\n## Scope\n- In: test\n' > "$SCOPED/plan/current/design.md"
+mkdir -p "$SCOPED/src/app" "$SCOPED/build"
+
+for cmd in \
+  "cd /tmp && touch x" \
+  "cd build && make > log.txt" \
+  "cd src/app && npm test > test.log" \
+  'cd src/app && sed -i "" s/a/b/ index.js' \
+  "cd ~ && touch .foo" \
+  "cd src && cd app && touch index.js" \
+  "ls && cd build && touch out.o" \
+  "cd src/app && { touch a.js; }" \
+  "cd src/app && (touch a.js)" \
+  "true || false && cd build && touch out.o" \
+  "cd src/other; cd /tmp && touch x"; do
+  run_guard "$SCOPED" "$cmd"
+  assert_equals "0" "$CODE" "req-008: N-1 passes with a design: $cmd"
+  assert_equals "" "$ERR" "req-008: N-1 writes no stderr: $cmd"
+done
+
+# The starting folder is still judged when the hook can't prove the cd ran.
+NL=$'\n'
+for cmd in \
+  "cd src/app && true; echo hi > index.js" \
+  "cd src/app && true${NL}echo hi > index.js" \
+  "cd src/app && true || echo hi > index.js" \
+  "cd src/app || echo hi > index.js" \
+  "true || cd src/app && echo hi > index.js" \
+  "! cd src/app && echo hi > index.js" \
+  "(cd src/app) && echo hi > index.js" \
+  "(cd src/app && true) && echo hi > index.js" \
+  "{ cd src/app; } && echo hi > index.js" \
+  "if cd src/app; then echo hi > index.js; fi" \
+  "cd src/app | true && echo hi > index.js" \
+  "cd src/app & echo hi > index.js" \
+  "cd src/app; cd lib && echo hi > index.js" \
+  "cd src/app && cd ../other && echo hi > index.js" \
+  'cd "$D" && echo hi > src/other/x.js' \
+  "pushd src/other && echo hi > index.js" \
+  "cd src/other || true; echo hi > build/x" \
+  "pushd src/other && pushd /tmp && popd && echo hi > build/x"; do
+  run_guard "$SCOPED" "$cmd"
+  assert_equals "2" "$CODE" "req-008: N-1 blocks with a design: $cmd"
+done
+
+# Seven cd steps that may fail give more than 64 possible folders. A relative
+# target then blocks, and a command with no relative target still passes.
+MANY_CD="cd a; cd b; cd c; cd d; cd e; cd f; cd g"
+run_guard "$SCOPED" "$MANY_CD; touch build/x"
+assert_equals "2" "$CODE" "req-008: N-1 a relative target after too many folders blocks"
+assert_contains "too many to judge" "$ERR" "req-008: N-1 the reason says there are too many folders"
+run_guard "$SCOPED" "$MANY_CD; ls"
+assert_equals "0" "$CODE" "req-008: N-1 too many folders with no writer passes"
+run_guard "$SCOPED" "$MANY_CD; touch /tmp/x"
+assert_equals "0" "$CODE" "req-008: N-1 an absolute target after too many folders is still judged"
 
 # =============================================================================
 echo ""
@@ -196,7 +257,6 @@ assert_equals "0" "$CODE" "req-008: F4 perl -lne without -i passes"
 echo ""
 echo "=== req-008: arithmetic << is not a here-document (F5) ==="
 
-NL=$'\n'
 for cmd in \
   "((x = 1 << 2))${NL}echo hi > src/x.js" \
   "echo \$((1 <<${NL}2))${NL}echo hi > src/x.js" \
