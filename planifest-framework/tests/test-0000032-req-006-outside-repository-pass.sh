@@ -333,6 +333,18 @@ node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Wri
 time_gate "$DEEP"
 assert_equals "2" "$CODE" "req-006: F7 a 200-segment path is still judged"
 
+# A long raw path that normalises to a short one is judged, not waved through (N-3).
+node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Write",tool_input:{file_path:"src/other/"+"./".repeat(300)+"x.js"}}))' \
+  "$(native "$ROOT")" > "$DEEP"
+time_gate "$DEEP"
+assert_equals "2" "$CODE" "req-006: N-3 src/other/ plus 300 './' segments is judged as src/other/x.js"
+assert_equals "no" "$([[ "$ERR" == *"too long"* ]] && echo yes || echo no)" "req-006: N-3 a short resolved path gets no too-long warning"
+node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Write",tool_input:{file_path:"src/other/"+"a/../".repeat(1000)+"x.js"}}))' \
+  "$(native "$ROOT")" > "$DEEP"
+time_gate "$DEEP"
+assert_equals "2" "$CODE" "req-006: N-3 a 5,000-character a/../ repetition is judged as src/other/x.js"
+assert_equals "yes" "$([ "$MS" -lt 2000 ] && echo yes || echo no)" "req-006: N-3 the a/../ repetition returns within 2 seconds"
+
 # =============================================================================
 echo ""
 echo "=== req-006: gate-write fails open on bad input ==="

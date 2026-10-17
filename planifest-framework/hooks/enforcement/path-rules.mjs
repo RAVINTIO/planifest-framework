@@ -71,15 +71,16 @@ const tooLong = (p) =>
   p.length > MAX_PATH_CHARS || p.split(/[\\/]+/).length > MAX_PATH_SEGMENTS;
 
 /**
- * A one-line warning when target, or target resolved against base, is over
- * MAX_PATH_CHARS characters or MAX_PATH_SEGMENTS segments. Returns null for a
- * path the rules can judge. Makes no file-system call.
+ * A one-line warning when target, resolved against base, is over
+ * MAX_PATH_CHARS characters or MAX_PATH_SEGMENTS segments. The limits apply
+ * to the resolved path, so a long raw path that normalises to a short one is
+ * judged (N-3). Returns null for a path the rules can judge. Resolving is
+ * string work only and makes no file-system call.
  */
 export function unjudgeable(base, target) {
   if (typeof target !== "string") return null;
-  let long = tooLong(target);
-  if (!long && typeof base === "string") long = tooLong(resolve(base, target));
-  if (!long) return null;
+  const resolved = typeof base === "string" ? resolve(base, target) : normalize(target);
+  if (!tooLong(resolved)) return null;
   return (
     `[Planifest] Warning: the path '${target.slice(0, 80)}...' is too long to judge ` +
     `(over ${MAX_PATH_CHARS} characters or ${MAX_PATH_SEGMENTS} segments). Write allowed.\n`

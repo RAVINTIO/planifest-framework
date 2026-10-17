@@ -284,6 +284,12 @@ assert_equals "yes" "$([ $((T1 - T0)) -lt 2000 ] && echo yes || echo no)" "req-0
 run_guard "$PLAIN" "cd $(printf 'a/%.0s' $(seq 1 300)) && echo x > y.js"
 assert_equals "2" "$CODE" "req-009: F7 a deep cd base still judges the target against the starting folder"
 
+run_guard "$PLAIN" "echo x > src/other/$(printf './%.0s' $(seq 1 300))x.js"
+assert_equals "2" "$CODE" "req-009: N-3 src/other/ plus 300 './' segments is judged as src/other/x.js"
+assert_equals "no" "$([[ "$ERR" == *"too long"* ]] && echo yes || echo no)" "req-009: N-3 a short resolved path gets no too-long warning"
+run_guard "$PLAIN" "echo x > src/other/$(printf 'a/../%.0s' $(seq 1 1000))x.js"
+assert_equals "2" "$CODE" "req-009: N-3 a 5,000-character a/../ repetition is judged as src/other/x.js"
+
 # =============================================================================
 echo ""
 echo "=== req-009: each call finishes in under 200 ms ==="
