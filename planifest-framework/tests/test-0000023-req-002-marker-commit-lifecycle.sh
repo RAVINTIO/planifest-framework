@@ -5,8 +5,8 @@
 #
 # Covers: session markers (plan/.orchestrator-active, plan/.orchestrator-ack,
 # plan/.run-mode) must be committed at the point they are written (P0), and
-# their deletion at P7 must be staged atomically with the archive commit,
-# plus a P9 pre-flight backstop check.
+# their deletion is committed in the P9 marker step before the tag, with a
+# git ls-files check (moved from P7 by feature 0000032, req-001).
 
 set -uo pipefail
 
@@ -41,21 +41,23 @@ assert_contains "include \`plan/.orchestrator-ack\` in the P0 commit" "$ORCH_CON
   "req-002: .orchestrator-ack commit instruction present"
 
 echo ""
-echo "=== req-002: deletion-side atomic commit (ship-agent P7) ==="
+echo "=== req-002: deletion-side commit (ship-agent P9 marker step) ==="
 
-# String updated by feature 0000025, req-002: `plan/current/` is now staged
-# explicitly (no longer relying on git's rename-detection heuristic to pick
-# up the copy-then-delete when plan/_archive/ is staged).
-assert_contains "git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode" \
-  "$SHIP_CONTENT" "req-002: P7 Step 7 git add stages plan/current/ explicitly plus all three markers atomically"
+# Updated by feature 0000032, req-001: marker deletion moved from P7 into a
+# P9 marker step that commits before the Step 9 tag. P7 Step 7 no longer
+# stages any marker.
+assert_contains "git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md" \
+  "$SHIP_CONTENT" "req-002: P7 Step 7 git add stages plan/current/ explicitly"
+assert_contains 'git commit -m "plan(p9): clear session markers for {feature-id}"' \
+  "$SHIP_CONTENT" "req-002: P9 marker step commits the marker deletions"
 
 echo ""
-echo "=== req-002: P9 pre-flight backstop check ==="
+echo "=== req-002: marker tracking check before the tag ==="
 
 assert_contains "git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode" \
-  "$SHIP_CONTENT" "req-002: P9 pre-flight check runs git ls-files against all three markers"
+  "$SHIP_CONTENT" "req-002: P9 marker step runs git ls-files against all three markers"
 
-assert_contains "Marker tracking pre-flight check" "$SHIP_CONTENT" \
-  "req-002: P9 pre-flight check section exists"
+assert_contains "Clear session markers" "$SHIP_CONTENT" \
+  "req-002: P9 marker step section exists"
 
 print_summary

@@ -18,7 +18,7 @@ hooks:
 Emit the correct phase prefix as you move through each step:
 - `P7:` for all archive work (Steps 1–7)
 - `P8:` for build assessment (Step 8)
-- `P9:` for ship steps (Steps 9–12)
+- `P9:` for ship steps (the P9 marker step and Steps 9–12)
 
 No exceptions. Including single-line acknowledgements.
 
@@ -103,10 +103,7 @@ Generate the test report artifact before archiving.
 2. If path exists, use `{feature-id}-{YYYY-MM-DD}-2/`, `-3/`, etc.
 3. Recursively copy all files from `plan/current/` to the archive path (including `capability-skills/` if present)
 4. Delete `plan/current/` contents: including `.skips` (already processed), `.planifest-session`, `.feature-id`, `capability-skills/`
-5. Delete `plan/.orchestrator-active`: this sentinel must be removed last, after archive is confirmed complete
-6. Delete `plan/.orchestrator-ack` if it exists: removes the strict-mode session ack so the next pipeline starts clean
-7. Delete `plan/.run-mode` if it exists: removes the run-mode preference so the next P0 always asks fresh
-8. Cross-reference check: confirm the check above (which updates `docs/decisions-index.md` ADR links and other living-doc references pointing at `plan/current/...`) has already run before this point.
+5. Cross-reference check: confirm the check above (which updates `docs/decisions-index.md` ADR links and other living-doc references pointing at `plan/current/...`) has already run before this point.
 
 ### Step 6b: Write docs/about.md
 
@@ -121,7 +118,7 @@ Generate the test report artifact before archiving.
 Commit the archive, changelog, and `docs/about.md` to the branch:
 
 ```
-git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 git commit -m "plan(p7): archive {feature-id}"
 ```
 
@@ -147,7 +144,29 @@ git commit -m "plan(p7): archive {feature-id}"
 
 **Build log:** Append a P9 phase block to `plan/_archive/{feature-id}-{YYYY-MM-DD}/build-log.md` before beginning ship steps.
 
+### P9 marker step: Clear session markers
+
+The session markers stay in place through P7 and P8, so hooks treat the whole close-out as part of the run. Clear them here, before the tag, so the tag never carries a marker.
+
+1. Delete `plan/.orchestrator-active`.
+2. Delete `plan/.orchestrator-ack` if it exists.
+3. Delete `plan/.run-mode` if it exists.
+4. Stage the deletions and the archive directory. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
+5. Commit and check that no marker stays tracked:
+
+```bash
+git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+git add plan/_archive/
+git commit -m "plan(p9): clear session markers for {feature-id}"
+git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+```
+
+The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
+
 ### Step 9: Create git tag
+
+Run this step only after the P9 marker step commits.
+
 
 Determine the release version (ADR-002, product-level versioning):
 
@@ -164,16 +183,6 @@ Validate the final value: must match `[0-9]+\.[0-9]+(\.[0-9]+)?` and be ≤20 ch
 ```bash
 git tag v{version} -m "{feature-id}"
 ```
-
-### Step 9b: Marker tracking pre-flight check
-
-Durable backstop for the Step 7 atomic marker fix. Run:
-
-```bash
-git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-```
-
-If the output is empty, the markers were correctly removed and committed in Step 7; proceed to Step 10. If the output is non-empty, one or more markers are still tracked: surface a clear warning to the human before proceeding, naming the tracked path(s) and stating that Step 7's archive commit did not fully stage the marker deletions.
 
 ### Step 10: Push/PR decision
 

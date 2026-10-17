@@ -625,7 +625,7 @@ The ship-agent spawns `planifest-build-assessment-agent` as a sub-agent, passing
 
 Executed by the ship-agent immediately after P8 completes, as part of its close-out sequence (see Phase 7).
 
-**What P9 produces:** local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use. The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output).
+**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers for {feature-id}`), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use. The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output).
 
 **Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human.
 
