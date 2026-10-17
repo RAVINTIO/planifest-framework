@@ -11,7 +11,7 @@
  * Constraints (ADR-004):
  *   - Node built-in modules only, and no process spawn.
  *   - The repository root is CLAUDE_PROJECT_DIR when it names a folder.
- *     Otherwise it is the outermost folder at or above cwd that holds
+ *     Otherwise it is the nearest folder at or above cwd that holds
  *     planifest-framework/, then the nearest folder that holds .git, then cwd.
  *     A marker inside plan/ or docs/ of a higher marked folder never counts,
  *     because those prefixes are always permitted and anyone can plant one.
@@ -114,7 +114,9 @@ function realPathOf(p) {
 /**
  * The repository root for cwd, as a real path (ADR-004, security finding F1).
  *   1. CLAUDE_PROJECT_DIR, when it is set and names a folder.
- *   2. The outermost folder at or above cwd that holds planifest-framework/.
+ *   2. The nearest folder at or above cwd that holds planifest-framework/.
+ *      The nearest, not the outermost, so a marker planted above the
+ *      repository can't move the root (N-5).
  *   3. The nearest folder at or above cwd that holds .git (a .git file counts,
  *      for worktrees).
  *   4. The real path of cwd.
@@ -152,8 +154,8 @@ export function resolveRoot(cwd) {
       });
     const trusted = marked.filter((m) => !planted(m));
 
-    const frameworks = trusted.filter((m) => m.framework);
-    if (frameworks.length) return frameworks[frameworks.length - 1].dir;
+    const framework = trusted.find((m) => m.framework);
+    if (framework) return framework.dir;
     const git = trusted.find((m) => m.git);
     if (git) return git.dir;
     return start;

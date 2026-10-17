@@ -183,6 +183,34 @@ assert_equals "2" "$CODE" "req-009: the guard takes CLAUDE_PROJECT_DIR as the ro
 
 # =============================================================================
 echo ""
+echo "=== req-009: the guard uses the nearest planifest-framework/ (N-5) ==="
+
+ABOVE="$WORK/plant-above"
+mkdir -p "$ABOVE/planifest-framework" "$ABOVE/plan/current" "$ABOVE/repo/planifest-framework" "$ABOVE/repo/plan/current"
+: > "$ABOVE/plan/.orchestrator-active"
+write_design "$ABOVE" "repo/"
+run_guard "$ABOVE/repo" "echo hi > src/x.js"
+assert_equals "2" "$CODE" "req-009: N-5 a planted marker and design above the repository don't move the guard's root"
+assert_equals "$(gate_code "$ABOVE/repo" "src/x.js")" "$CODE" "req-009: N-5 guard and gate-write agree with a planted marker above"
+
+LONE="$WORK/lone-above"
+mkdir -p "$LONE/planifest-framework" "$LONE/repo/planifest-framework" "$LONE/repo/plan/current"
+: > "$LONE/repo/plan/.orchestrator-active"
+write_design "$LONE/repo" "src/"
+run_guard "$LONE/repo" "echo hi > src/x.js"
+assert_equals "0" "$CODE" "req-009: N-5 a lone planifest-framework/ above doesn't lock the guard out"
+assert_equals "$(gate_code "$LONE/repo" "src/x.js")" "$CODE" "req-009: N-5 guard and gate-write agree with a lone marker above"
+
+MONO="$WORK/mono"
+mkdir -p "$MONO/planifest-framework" "$MONO/plan/current" "$MONO/packages/app/planifest-framework" "$MONO/packages/app/plan/current"
+write_design "$MONO" "lib/"
+write_design "$MONO/packages/app" "src/"
+run_guard "$MONO/packages/app" "echo hi > src/x.js"
+assert_equals "0" "$CODE" "req-009: N-5 a nested install judges its own paths with the guard"
+assert_equals "$(gate_code "$MONO/packages/app" "src/x.js")" "$CODE" "req-009: N-5 guard and gate-write agree in a nested install"
+
+# =============================================================================
+echo ""
 echo "=== req-009: both hooks take their rules from path-rules.mjs ==="
 
 GUARD_SRC="$(cat "$GUARD")"

@@ -191,11 +191,11 @@ mkdir -p "$PLANTED_DOCS/docs/y/z/.git"
 run_gate "$PLANTED_DOCS/docs/y/z" "$(native "$PLANTED_DOCS/src/x.js")"
 assert_equals "2" "$CODE" "req-006: a planted docs/y/z/.git doesn't move the root"
 
-# The outermost planifest-framework/ wins over a nearer .git.
+# A planifest-framework/ folder wins over a nearer .git.
 OUTER_PF="$WORK/outer-pf"
 mkdir -p "$OUTER_PF/planifest-framework" "$OUTER_PF/plan/current" "$OUTER_PF/vendor/lib/.git"
 run_gate "$OUTER_PF/vendor/lib" "$(native "$OUTER_PF/src/x.js")"
-assert_equals "2" "$CODE" "req-006: the outermost planifest-framework/ beats a nearer .git"
+assert_equals "2" "$CODE" "req-006: a planifest-framework/ above beats a nearer .git"
 
 # A nested .git outside plan/ and docs/ is still the nearest root when no
 # planifest-framework/ exists above it.
@@ -203,6 +203,44 @@ NESTED="$(make_git_fixture nested)"
 mkdir -p "$NESTED/vendor/lib/.git"
 run_gate "$NESTED/vendor/lib" "$(native "$NESTED/src/x.js")"
 assert_equals "0" "$CODE" "req-006: a nested repository outside plan/ is its own root"
+
+# =============================================================================
+echo ""
+echo "=== req-006: the nearest planifest-framework/ is the root (N-5) ==="
+
+# A folder outside the root is always writable, so an agent can plant a
+# marker, a sentinel, and a design above the repository. The nearest marker
+# must keep the root at the repository.
+ABOVE="$WORK/plant-above"
+mkdir -p "$ABOVE/planifest-framework" "$ABOVE/plan/current" "$ABOVE/repo/planifest-framework" "$ABOVE/repo/plan/current"
+: > "$ABOVE/plan/.orchestrator-active"
+write_design "$ABOVE" "repo/"
+run_gate "$ABOVE/repo" "src/x.js"
+assert_equals "2" "$CODE" "req-006: N-5 a planted marker and design above the repository don't move the root"
+run_gate "$ABOVE/repo" "$(native "$ABOVE/repo/plan/current/x.md")"
+assert_equals "2" "$CODE" "req-006: N-5 a planted sentinel above the repository doesn't count"
+
+# A lone planifest-framework/ above the repository must not lock it out.
+LONE="$WORK/lone-above"
+mkdir -p "$LONE/planifest-framework" "$LONE/repo/planifest-framework" "$LONE/repo/plan/current"
+: > "$LONE/repo/plan/.orchestrator-active"
+write_design "$LONE/repo" "src/"
+run_gate "$LONE/repo" "src/x.js"
+assert_equals "0" "$CODE" "req-006: N-5 a lone planifest-framework/ above doesn't lock the repository out"
+run_gate "$LONE/repo" "plan/current/x.md"
+assert_equals "0" "$CODE" "req-006: N-5 the repository's own sentinel still counts"
+
+# A nested install in a monorepo is the root for paths inside it.
+MONO="$WORK/mono"
+mkdir -p "$MONO/planifest-framework" "$MONO/plan/current" "$MONO/packages/app/planifest-framework" "$MONO/packages/app/plan/current"
+write_design "$MONO" "lib/"
+write_design "$MONO/packages/app" "src/"
+run_gate "$MONO/packages/app" "src/x.js"
+assert_equals "0" "$CODE" "req-006: N-5 a nested install judges its own paths against its own design"
+run_gate "$MONO/packages/app" "lib/x.js"
+assert_equals "2" "$CODE" "req-006: N-5 a nested install gates a path its design doesn't cover"
+run_gate "$MONO" "packages/app/src/x.js"
+assert_equals "2" "$CODE" "req-006: N-5 the outer install still judges from its own folder"
 
 echo ""
 echo "=== req-006: CLAUDE_PROJECT_DIR names the root when set (F1) ==="
