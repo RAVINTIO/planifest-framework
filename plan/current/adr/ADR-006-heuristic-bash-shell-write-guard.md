@@ -32,7 +32,15 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 - It judges each target with `toRootRelative` and `evaluateWrite` from `path-rules.mjs` (ADR-004). It therefore blocks exactly when `gate-write.mjs` would block a **Write** to the same path.
 - A target holding a glob or variable is judged by its literal prefix, so `src/*.js` is judged as `src/`.
 - A target with no literal prefix passes with a one-line warning on stderr. An unbalanced quote does the same.
-- A `cd` with one literal argument moves the base folder for the commands after it on the same line.
+- A `cd` with one literal argument moves a tracked base for the commands after it. A relative target is judged against both the starting folder (the hook's `cwd`) and the tracked base. It blocks if either judgement blocks, so a `cd` that never runs can't move a write out of the gate (security finding F2).
+  - The tracked base returns to its outer value at `)`.
+  - A `cd` doesn't carry across `|`, `||`, or `&`.
+  - `cd /tmp && echo hi > x.txt` therefore blocks when `{root}/x.txt` is gated. It passes only when both bases pass, such as `cd /tmp && echo hi > plan/x.md`. No command in the false-positive corpus changes.
+- Short-option clusters are read one letter at a time, so `cp -vt src/ a`, `perl -lpi -e …`, and `sed -Ei '' …` find their targets (security finding F4).
+- `((…))`, `$((…))`, and `$[…]` are read as one unit, so an arithmetic `<<` never opens a here-document. A here-document body with no closing delimiter line is read as commands (security finding F5).
+- A target over 4096 characters or 256 segments warns and passes before any file-system walk (ADR-004, security finding F7).
+- More than 64 levels of nested quotes, substitutions, or arithmetic make a command unjudgeable. It warns and passes, and a stack overflow does the same (security finding F8).
+- Stderr holds each distinct reason once, at most 20 reasons and 20 warnings, then one line that counts the rest (security finding F11).
 - The hook ignores commands named `git`. It can't see writes made inside scripts, interpreter one-liners, build tools, or package managers. Its header comment lists each limit.
 - On a block, it exits 2 with a plain-text reason on stderr (ADR-005). The reason names the writer, the root-relative target, and the rule, and points the agent to **Write** or **Edit**.
 - `standard-boot.md` and `cursor-boot.md` gain a Hard Limit: code changes go through **Write** or **Edit**, never through Bash. The rule covers the guard's limits and the tools that don't run the guard.
@@ -59,11 +67,14 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 **Positive:**
 - The common ways an agent writes code through Bash now meet the same design gate as **Write** and **Edit**.
 - Parse failures and unknown targets pass with a warning, so the guard never stops a session it can't understand.
+- A `cd` that may not run can't hide a write, because the starting folder is always judged too.
 - The corpora give a fixed, repeatable measure of both false positives and misses.
 
 **Negative:**
 - The guard misses writes through git, scripts, interpreters, variables with no literal prefix, and anything it can't parse. The boot-file rule is text only for those cases.
 - Only Claude Code runs the guard. Other tools rely on the boot-file rule alone.
+- A relative write after a `cd` out of the repository blocks when the same path inside the repository is gated. The agent can use an absolute path instead.
+- A command nested past 64 levels, or a path past the length limits, passes with a warning.
 - Downstream projects gain the hook only after they re-run setup.
 
 **Risks:**

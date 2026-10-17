@@ -73,6 +73,8 @@ As the human on the loop, I want the shell guard to gate exactly the paths that 
 - Neither `shell-write-guard.mjs` nor `gate-write.mjs` defines the always-permitted lists. Both import `path-rules.mjs`.
 - The hook exits 0 with no output on malformed stdin, on JSON with no `command`, and on a non-string `command`.
 - Each hook call completes in under 200 ms, timed in the suite.
+- With planted `plan/x/.git` and `plan/x/planifest-framework/` and `cwd` set to `plan/x`, the guard blocks a write to the real `src/x.js` and agrees with `gate-write.mjs`. The guard takes `CLAUDE_PROJECT_DIR` as the root when it is set (security finding F1).
+- A 20,000-segment target exits 0 with a warning within 2 seconds. After a `cd` into a 300-segment folder, a relative write still blocks on the starting folder (security finding F7).
 
 ## Acceptance Criteria
 

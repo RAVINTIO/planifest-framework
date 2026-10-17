@@ -92,6 +92,12 @@ As the human on the loop, I want the shell guard to catch the common shell write
 - `echo x > $TARGET` and `echo x > "$DIR/a"` each exit 0 and write a warning to stderr.
 - With no `design.md`, `rm src/*.js` and `cp a src/$NAME` each exit 2, because their literal prefix `src/` is a gated path.
 - `git checkout -- src/a.js` exits 0 with no output.
+- With no `design.md`, each of these exits 2 (security finding F2): `false && cd /tmp; echo hi > src/x.js`, `(cd /tmp); echo hi > src/x.js`, `cd /tmp | true; echo hi > src/x.js`, `cd /tmp || true; echo hi > src/x.js`, and `cd /tmp & echo hi > src/x.js`.
+- `cd /tmp && echo hi > x.txt` exits 2, because `{root}/x.txt` is gated. `cd /tmp && echo hi > plan/x.md` exits 0, because both bases pass.
+- Short-option clusters find their targets and exit 2: `cp -vt src/ /tmp/a`, `ln -sft src/ /tmp/a`, `perl -lpi -e … src/x`, `perl -0777 -pi -e … src/x`, `sed -Ei … src/x`, and `sed -Ei '' … src/x` (security finding F4).
+- An arithmetic `<<` in `((…))`, `$((…))`, `$[…]`, or `for ((…))` doesn't hide the next line's write. An unterminated here-document body is judged as commands. `((x > 3))` and `$[2 > 1]` aren't redirects (security finding F5).
+- 20,000 nested `"$(` and 65 nested levels each exit 0 with a one-line warning. 20 nested levels still parse and judge the writer (security finding F8).
+- A target repeated 10,000 times blocks with one reason and under 10 KB of stderr. 10,000 distinct targets print 20 reasons and a summary line that counts the other 9,980 (security finding F11).
 
 ## Acceptance Criteria
 

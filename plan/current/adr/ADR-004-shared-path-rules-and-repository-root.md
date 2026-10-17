@@ -1,6 +1,6 @@
 ---
 title: "ADR 004: Shared path rules and repository root"
-summary: "One module, path-rules.mjs, holds the gated-path rules for gate-write.mjs and the shell guard. The root is the first folder above cwd that holds planifest-framework/ or .git, found with no git spawn. Targets outside the root pass."
+summary: "One module, path-rules.mjs, holds the gated-path rules for gate-write.mjs and the shell guard. The root is CLAUDE_PROJECT_DIR, else the outermost planifest-framework/ folder, else the nearest .git, found with no git spawn. Targets outside the root pass."
 status: "accepted"
 version: "0.1.0"
 ---
@@ -26,7 +26,13 @@ The new shell guard (req-008 and req-009) must block exactly when `gate-write.mj
 
 - A new module, `planifest-framework/hooks/enforcement/path-rules.mjs`, holds every gated-path rule. `gate-write.mjs` and `shell-write-guard.mjs` import it and keep no copy of their own.
 - It lives in `hooks/enforcement/`, so every install that copies `gate-write.mjs` copies it too (0000028-ADR-002).
-- The repository root is the first folder above `cwd`, inclusive, that holds `planifest-framework/` or `.git`. The walk spawns no process. If no such folder exists, the root is `cwd`.
+- The repository root is chosen in this order. The walk spawns no process.
+  1. `CLAUDE_PROJECT_DIR`, when it is set and names a folder. Claude Code sets it to the project folder.
+  2. The outermost folder above `cwd`, inclusive, that holds `planifest-framework/`.
+  3. The nearest folder above `cwd`, inclusive, that holds `.git`. A `.git` file counts, for worktrees.
+  4. `cwd`, when no folder holds either marker.
+- A marked folder that sits inside `plan/` or `docs/` of a higher marked folder is never the root. Those prefixes are always permitted, so anyone can plant a marker there. Without this rule, `touch plan/x/.git` and a `cd plan/x` moved the root and let a write to the real `src/` pass (security finding F1).
+- A target over 4096 characters or 256 segments is unjudgeable. Both hooks warn on stderr and pass it before any file-system walk. Resolving such a path took 15 to 45 seconds, past the hook timeout (security finding F7).
 - Both sides of the comparison use real paths. The root is a real path, and the target resolves against the real path of `cwd`.
 - A missing target resolves through the real path of its nearest existing parent, with the remaining segments appended.
 - The comparison resolves `..` first and matches whole path segments. It keeps the 0000009-ADR-005 normalisation.
@@ -59,13 +65,15 @@ The new shell guard (req-008 and req-009) must block exactly when `gate-write.mj
 - Backlog 0000081 (Fast Path through `gate-write`) can build on one module.
 
 **Negative:**
-- A nested folder holding its own `.git` becomes the root for paths inside it. The hook then gates those paths against the nested folder's `plan/`.
+- A nested folder holding its own `.git` becomes the root for paths inside it, unless a higher folder holds `planifest-framework/` or the nested folder sits inside `plan/` or `docs/`. The hook then gates those paths against the nested folder's `plan/`.
+- A crafted path over the length limits passes with a warning. The operating system rejects most such paths, and the boot-file rule covers the rest.
 - Each hook now makes a few extra file-system calls for the walk and the real-path step.
 - A broken import of `path-rules.mjs` fails before the hook's own `try`, so both hooks stop enforcing at once (0000028-ADR-004).
 
 **Risks:**
 - A downstream install that copies only `gate-write.mjs` by hand would lose the module. Both setup scripts copy every `*.mjs`, which covers the supported path.
 - A git worktree holds a `.git` file, not a folder. The walk must accept either, or a worktree session falls back to `cwd`.
+- A wrong `CLAUDE_PROJECT_DIR` moves the root. Claude Code sets the variable itself, and test suites unset it before they run the hooks.
 
 ## Related ADRs
 

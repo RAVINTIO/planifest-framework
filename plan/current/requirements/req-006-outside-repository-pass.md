@@ -71,6 +71,10 @@ As an agent, I want `gate-write` to ignore paths outside the repository, so that
 - `gate-write.mjs` exits 0 with no stdout on malformed stdin, on JSON with no target path, on a non-string `file_path`, and on a `cwd` that doesn't exist.
 - `gate-write.mjs` imports `path-rules.mjs`. Neither file defines the always-permitted lists twice.
 - After `setup.sh claude-code`, `.claude/hooks/enforcement/path-rules.mjs` exists next to `gate-write.mjs`.
+- With planted `plan/x/.git` and `plan/x/planifest-framework/` and `cwd` set to `plan/x`, a **Write** to the real `src/x.js` with no `design.md` exits 2. A planted `docs/y/z/.git` does the same (security finding F1).
+- The outermost folder holding `planifest-framework/` is the root, ahead of a nearer `.git`. A nested `.git` outside `plan/` and `docs/` is still its own root when no `planifest-framework/` sits above it.
+- With `CLAUDE_PROJECT_DIR` set to a folder, that folder is the root. A `CLAUDE_PROJECT_DIR` that doesn't exist falls back to the walk. Every suite that runs the hooks unsets the variable first.
+- A **Write** to a 20,000-segment path, or a path over 4096 characters, exits 0 with a stderr warning within 2 seconds. A 200-segment path is still judged (security finding F7).
 
 ## Acceptance Criteria
 

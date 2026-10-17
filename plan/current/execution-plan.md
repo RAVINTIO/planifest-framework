@@ -76,10 +76,10 @@ Each is a risk item with likelihood: medium.
 |----|-----------|----------------|
 | A-001 | Claude Code shows a PreToolUse block reason from stderr when a hook exits 2 | AC-7 fixes nothing for Claude Code |
 | A-002 | Claude Code passes the Bash command as `tool_input.command` | The shell guard never sees a command and always passes |
-| A-003 | Hooks look up `plan/` and `design.md` from the repository root, found by walking up from `cwd` to the first folder holding `planifest-framework/` or `.git`, with no `git` spawn | A session started in a subfolder would see no design and block every gated write |
+| A-003 | Hooks look up `plan/` and `design.md` from the repository root, with no `git` spawn. The root is `CLAUDE_PROJECT_DIR` when it names a folder. Otherwise it is the outermost folder above `cwd` holding `planifest-framework/`, then the nearest holding `.git`. A marker inside `plan/` or `docs/` never counts (security finding F1). | A session started in a subfolder would see no design and block every gated write |
 | A-004 | Both sides of the root comparison use real paths. A missing target resolves through its nearest existing parent. | An in-repository write could look outside and bypass the gate |
 | A-005 | The `plan/current/` sentinel check applies to shell writes too, because the guard matches `gate-write` exactly | Shell writes to plan artifacts before P0 would be blocked. That is the intended parity. |
-| A-006 | A write target with a glob or variable is judged by its literal prefix. A target with no literal prefix gets a warning and passes. A `cd` with one literal argument is tracked. | `cp a "$DIR/x"` passes the guard. The boot-file rule covers it. |
+| A-006 | A write target with a glob or variable is judged by its literal prefix. A target with no literal prefix gets a warning and passes. A `cd` with one literal argument is tracked. A relative target is judged against both the starting folder and the tracked base, and blocks if either blocks (security finding F2). | `cp a "$DIR/x"` passes the guard. The boot-file rule covers it. |
 | A-007 | Tools that relay both stdout and stderr show a block reason twice | The reason appears twice in Cursor, Cline, and OpenCode, and nothing breaks |
 | A-008 | Both `standard-boot.md` and `cursor-boot.md` gain the Write-or-Edit rule. Tools without the shell guard need the rule most. | None. The rule is text only. |
 
