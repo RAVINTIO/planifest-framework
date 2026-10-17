@@ -139,9 +139,10 @@ console.log("\n--- Sentinel enforcement: plan/current/ blocked without sentinel 
 console.log("\n--- Windows path regression: norm() in source file ---");
 
 import { readFileSync } from "node:fs";
-const src = readFileSync(GATE_WRITE, "utf8");
-assert_equals(true, src.includes("cwdPrefix") || src.includes("normCwd"), "gate-write.mjs uses norm()-based comparison (REQ-012 fix)");
-assert_equals(false, src.includes("cwdWithSep"), "gate-write.mjs does not contain old cwdWithSep approach");
+// gate-write.mjs takes its rules from path-rules.mjs (0000032 req-006).
+const src = readFileSync(resolve(__dirname, "../hooks/enforcement/path-rules.mjs"), "utf8");
+assert_equals(true, src.includes("rootPrefix"), "path-rules.mjs uses norm()-based comparison (REQ-012 fix)");
+assert_equals(false, src.includes("cwdWithSep"), "path-rules.mjs does not contain old cwdWithSep approach");
 
 // ── Summary ───────────────────────────────────────────────────────────────────
 

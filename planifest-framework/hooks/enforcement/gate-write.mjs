@@ -2,74 +2,23 @@
 /**
  * PreToolUse hook: plan compliance write gate.
  *
- * Enforces three checks before allowing a Write or Edit tool call (ADR-004):
- *   1. Always-permitted paths (plan/, docs/, CLAUDE.md, AGENTS.md) → pass
- *   2. design.md must exist → block with exit 2 if absent
- *   3. Target path must match a component path prefix in design.md → block if not
+ * Judges a Write or Edit target with the shared rules in path-rules.mjs
+ * (req-006, ADR-004). This hook keeps no copy of those rules.
+ *   - A target outside the repository root passes with no output.
+ *   - Inside the root, path-rules.mjs applies the sentinel check for
+ *     plan/current/, the always-permitted paths, the design.md existence
+ *     check, and the component-path check, in that order.
  *
  * Receives: JSON on stdin conforming to the Planifest common envelope (ADR-002)
- * or the raw Claude Code PreToolUse hook input.
+ * or the raw Claude Code PreToolUse hook input. The target is
+ * tool_input.path or tool_input.file_path.
  *
  * Exit codes: 0 = pass, 2 = block (DD-004, ADR-005)
- * Silent on unexpected errors — always exit 0 on non-enforcement failures (ADR-005).
+ * Silent on unexpected errors. Always exit 0 on non-enforcement failures (ADR-005).
  */
 
-import { existsSync, readFileSync } from "node:fs";
-import { basename, join, normalize, resolve } from "node:path";
-
+import { judgeWrite } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
-
-// Always-permitted: planning/doc artefacts and Planifest internal files
-const ALWAYS_PERMITTED_PREFIXES = ["plan/", "plan\\", "docs/", "docs\\"];
-const ALWAYS_PERMITTED_FILES = [
-  "claude.md", "agents.md", ".planifest-session", ".skips", ".feature-id",
-  ".gitignore", ".gitattributes", ".claudeignore", ".cursorignore",
-  ".windsurfignore", ".clineignore", ".cursorindexingignore",
-  "pause.md",
-];
-
-// Headings that introduce the component paths list in design.md (ADR-004)
-const PATHS_SECTION_RE = /^##\s+(Component Paths|Scope)\s*$/im;
-
-function norm(p) {
-  return normalize(p).replace(/\\/g, "/").toLowerCase();
-}
-
-function isAlwaysPermitted(relPath) {
-  const n = norm(relPath);
-  const base = n.split("/").pop() ?? "";
-  if (ALWAYS_PERMITTED_FILES.includes(base)) return true;
-  return ALWAYS_PERMITTED_PREFIXES.some((prefix) => n.startsWith(norm(prefix)));
-}
-
-function extractComponentPaths(content) {
-  const match = PATHS_SECTION_RE.exec(content);
-  if (!match) return null;
-
-  const afterHeading = content.slice(match.index + match[0].length);
-  const lines = afterHeading.split("\n");
-  const paths = [];
-
-  for (const line of lines) {
-    if (/^##\s/.test(line)) break; // stop at next h2
-    // Match: "- path", "* path", "- `path`", "| path |" table rows
-    const m = line.match(/^[\s*\-|]+`?([^\s`|,{}]+)`?/);
-    if (m?.[1] && !m[1].startsWith("{") && m[1].includes("/")) {
-      paths.push(m[1].replace(/\/$/, "")); // strip trailing slash for normalised comparison
-    }
-  }
-
-  return paths.length ? paths : null;
-}
-
-function matchesComponentPath(relPath, componentPaths) {
-  const normTarget = norm(relPath);
-  return componentPaths.some((cp) => {
-    const normCp = norm(cp);
-    // prefix match: target starts with component path (with separator)
-    return normTarget === normCp || normTarget.startsWith(normCp + "/");
-  });
-}
 
 try {
   const raw = await readStdin();
@@ -80,76 +29,14 @@ try {
   const toolInput = input?.tool_input ?? input;
   const rawTarget = toolInput?.path ?? toolInput?.file_path ?? "";
 
-  // No target path = pass (not a file-writing tool call)
-  if (!rawTarget) process.exit(0);
+  // No string target path = pass (not a file-writing tool call)
+  if (!rawTarget || typeof rawTarget !== "string") process.exit(0);
 
-  // Resolve to a path relative to cwd for prefix matching.
-  // Normalise both paths to forward-slash form before comparison to avoid
-  // mixed-separator failures on Windows (ADR-005, REQ-012).
-  const absTarget = resolve(cwd, rawTarget);
-  const normCwd = norm(cwd);
-  const normAbs = norm(absTarget);
-  const cwdPrefix = normCwd.endsWith("/") ? normCwd : normCwd + "/";
-  const relTarget = normAbs.startsWith(cwdPrefix)
-    ? normAbs.slice(cwdPrefix.length)
-    : norm(rawTarget);
+  const result = judgeWrite(cwd, rawTarget);
 
-  // Check 0 — sentinel enforcement for plan/current/** (REQ-007, ADR-003)
-  // feature-brief.md and ALWAYS_PERMITTED_FILES (e.g. pause.md) bypass sentinel so
-  // P0 can begin and pause/resume works at any pipeline phase.
-  const normRel = norm(relTarget);
-  const isPlanCurrent = normRel.startsWith("plan/current/") || normRel === "plan/current";
-  const isFeatureBrief = normRel.endsWith("feature-brief.md");
-  const isAlwaysPermittedBasename = ALWAYS_PERMITTED_FILES.includes(basename(relTarget));
-  if (isPlanCurrent && !isFeatureBrief && !isAlwaysPermittedBasename) {
-    const sentinelPath = join(cwd, "plan", ".orchestrator-active");
-    if (!existsSync(sentinelPath)) {
-      process.stdout.write(
-        "[Planifest] No orchestrator sentinel at plan/.orchestrator-active. " +
-        "Load the planifest-orchestrator skill and complete Phase 0 before " +
-        "writing plan artefacts.\n"
-      );
-      process.exit(2);
-    }
-  }
-
-  // Check 1 — always-permitted paths (ADR-004)
-  if (isAlwaysPermitted(relTarget)) process.exit(0);
-
-  // Check 2 — design.md must exist
-  const designPath = join(cwd, "plan", "current", "design.md");
-  if (!existsSync(designPath)) {
-    process.stdout.write(
-      "[Planifest] No confirmed design at plan/current/design.md. " +
-      "Complete Phase 0 first.\n"
-    );
-    process.exit(2);
-  }
-
-  // Check 3 — path must be in component paths list
-  let designContent;
-  try {
-    designContent = readFileSync(designPath, "utf-8");
-  } catch {
-    process.exit(0); // Can't read design → pass through (ADR-005)
-  }
-
-  const componentPaths = extractComponentPaths(designContent);
-  if (!componentPaths) {
-    // Section missing or unparseable → warn but pass through (ADR-005, R-006)
-    process.stderr.write(
-      "[Planifest] Warning: Could not parse component paths from " +
-      "plan/current/design.md. Ensure a '## Component Paths' section exists. " +
-      "Write allowed.\n"
-    );
-    process.exit(0);
-  }
-
-  if (!matchesComponentPath(relTarget, componentPaths)) {
-    process.stdout.write(
-      `[Planifest] Path '${relTarget}' is not covered by the confirmed design. ` +
-      "Add it to the '## Component Paths' section of plan/current/design.md first.\n"
-    );
+  if (result.warning) process.stderr.write(result.warning);
+  if (!result.allowed) {
+    process.stdout.write(result.reason);
     process.exit(2);
   }
 
