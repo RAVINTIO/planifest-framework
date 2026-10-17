@@ -31,11 +31,11 @@ try {
   const input = JSON.parse(raw);
   const cwd = input?.cwd ?? process.cwd();
 
-  // Check 1 — is this a planifest project?
+  // Check 1: is this a planifest project?
   const frameworkPath = join(cwd, "planifest-framework");
   if (!existsSync(frameworkPath)) process.exit(0);
 
-  // Check 2 — is a run already active?
+  // Check 2: is a run already active?
   const sentinelPath = join(cwd, "plan", ".orchestrator-active");
   if (existsSync(sentinelPath)) process.exit(0);
 
