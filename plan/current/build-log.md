@@ -108,3 +108,4 @@ P2 end: 2026-10-17T10:42:34Z
 | MCP calls | `0` |
 | Parallel task batches | `2` |
 | Notes | Continuous run. Streams split by file ownership, so no two agents edit one file. Batch 1: stream A (req-001 to req-005, ship and orchestrator skills, auto-trigger hook) and stream B (req-006, `path-rules.mjs` and `gate-write.mjs`). Batch 2 after req-006: stream B2 (req-007, stderr reasons) and stream C (req-008 to req-012, shell guard, setup, migration, boot templates). Agents commit with `git commit -- <paths>` so each commit holds only its own files. |
+P3 req-006: committed cfb7544, suite 43/43, run-tests all green. Deviation: retargeted source-text checks in test-0000005, test-0000009, and test-gate-write-windows (and regression copies) from gate-write.mjs to path-rules.mjs. Behaviour checks unchanged. This repo's live .claude/hooks still runs the old gate-write until setup is re-run.
