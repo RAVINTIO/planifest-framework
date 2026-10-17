@@ -74,12 +74,14 @@ On every session start, before taking any action:
 
 2. Check `plan/current/` for existing artifacts (`design.md`, `requirements/`, `adr/`, etc.)
 
-2a. **Interrupted P9 detection:** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), P9 was interrupted after archiving `plan/current/` but before sentinel cleanup. Run the cleanup sequence immediately:
-   1. Delete `plan/.orchestrator-active`
-   2. Delete `plan/.orchestrator-ack` if present
-   3. Delete `plan/.run-mode` if present
-   4. Confirm to the human: `P0: Interrupted P9 detected: archive completed but sentinels not cleared. Cleanup complete. Starting fresh.`
-   5. Proceed as a fresh start; open with `P0:` and begin coaching.
+2a. **Interrupted close-out detection (ADR-002):** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
+   1. Read the feature ID from `plan/.orchestrator-active`.
+   2. List the `plan/_archive/{feature-id}-*` directories and pick the last one in lexical sort order. This picks a `-2` or `-3` suffix over the bare date.
+   3. If that directory has no `build-report.md`, load the `planifest-ship-agent` skill and resume at P8.
+   4. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step.
+   5. If no directory matches, or the sentinel holds `pending`, stop and ask the human on the loop how to proceed. Do not delete any marker.
+
+   Step 2a never deletes a marker on its own and never starts a fresh run.
 
 3. Check for `.feature-id` file: if present, verify it matches the feature you are working on; if stale (contents differ from current work), flag it for human review before proceeding
 4. Check for `plan/current/.skips` file: if present, read and acknowledge skipped phases at the top of your response
