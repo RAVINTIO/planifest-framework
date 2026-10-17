@@ -96,3 +96,15 @@ P2 exchange (requirement split): Q: Cut criteria and split req-004, or merge? / 
 Requirement Change (additive, P2 active): 4 requirements become 12, one per brief AC plus the boot-file rule, each with at most 3 criteria. Detailed checks move to a "Verified by" list under Functional Requirements. Re-run from P1 requirements only. ADRs stand, with requirement references updated.
 P2 notes: 6 ADRs (stack, markers before the tag, blocking context clear, shared path rules, stderr block reasons, heuristic shell guard). consistency-check clean after the split to 12 requirements with 36 criteria. Design critic toggle at default (off).
 P2 end: 2026-10-17T10:42:34Z
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-17T10:43:17Z` |
+| Model tier | primary (stream agents), TDD loop inline per requirement |
+| Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer, planifest-refactor |
+| Agents spawned | `4` |
+| MCP calls | `0` |
+| Parallel task batches | `2` |
+| Notes | Continuous run. Streams split by file ownership, so no two agents edit one file. Batch 1: stream A (req-001 to req-005, ship and orchestrator skills, auto-trigger hook) and stream B (req-006, `path-rules.mjs` and `gate-write.mjs`). Batch 2 after req-006: stream B2 (req-007, stderr reasons) and stream C (req-008 to req-012, shell guard, setup, migration, boot templates). Agents commit with `git commit -- <paths>` so each commit holds only its own files. |
