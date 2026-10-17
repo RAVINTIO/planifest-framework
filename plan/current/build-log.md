@@ -182,3 +182,4 @@ P4 end: 2026-10-17T11:25:56Z
 | Parallel task batches | `1` |
 | Notes | Continuous run. Two parallel reviews: hook threat model and bypass analysis, then setup, skill, secrets, and risk-register cross-check. |
 P5 result: overall risk Medium. 5 Medium (F1, F2, K-1, K-2, K-3), 17 Low. No Critical or High. Secrets, dependencies, and network clean. Medium findings stop the continuous run at the P5 gate for the human.
+P5 gate decision: the human on the loop chose to fix all five Medium findings plus the cheap Low ones (F4, F5, F7, F8, F11, K-4) in this run. The remaining Low findings (F3, F6, F9, F10, F12, S-1 to S-3, K-5, M-1) go to the backlog. Fixes run through TDD in two parallel streams (hooks, skills), then P4 and P5 re-run.
