@@ -168,6 +168,32 @@ assert_equals "0" "$CODE" "req-008: F2 the base returns to the outer value at )"
 
 # =============================================================================
 echo ""
+echo "=== req-008: short-option clusters are read one letter at a time (F4) ==="
+
+for cmd in \
+  "cp -vt src/ /tmp/a" \
+  "cp -vtsrc/ /tmp/a" \
+  "mv -fvt src/ /tmp/a /tmp/b" \
+  "install -Dm 644 /tmp/a src/x" \
+  "ln -sft src/ /tmp/a" \
+  "perl -lpi -e 's/a/b/' src/x" \
+  "perl -l0pi -e 's/a/b/' src/x" \
+  "perl -0777 -pi -e 's/a/b/' src/x" \
+  "perl -nli.bak -e 'print' src/x" \
+  "sed -Ei 's/a/b/' src/x" \
+  "sed -nEi 's/a/b/' src/x" \
+  "sed -Ei '' 's/a/b/' src/x" \
+  "touch -cd 2020-01-01 src/x"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: F4 blocks: $cmd"
+done
+run_guard "$ROOT" "cp -vt /tmp/ src/a.js"
+assert_equals "0" "$CODE" "req-008: F4 cp -vt /tmp/ src/a.js copies out of the repository and passes"
+run_guard "$ROOT" "perl -lne 'print' src/x"
+assert_equals "0" "$CODE" "req-008: F4 perl -lne without -i passes"
+
+# =============================================================================
+echo ""
 echo "=== req-008: parse failures and targets with no literal prefix warn ==="
 
 run_guard "$ROOT" 'echo x > "src/a.js'

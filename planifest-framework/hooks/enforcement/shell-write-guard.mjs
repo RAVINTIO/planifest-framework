@@ -296,11 +296,22 @@ function operands(args, takesValue = () => false) {
     if (w.v === "--") { optionsDone = true; continue; }
     const eq = w.v.indexOf("=");
     if (w.v.startsWith("--") && eq > 0) { values[w.v.slice(0, eq)] = { ...w, v: w.v.slice(eq + 1), dyn: w.dyn - eq - 1 }; continue; }
-    if (takesValue(w.v) && k + 1 < args.length) { values[w.v] = args[++k]; continue; }
-    // A short value option with its value attached, such as -tsrc/.
-    const short = w.v.slice(0, 2);
-    if (!w.v.startsWith("--") && w.v.length > 2 && takesValue(short)) {
-      values[short] = { ...w, v: w.v.slice(2), dyn: w.dyn - 2 };
+    if (w.v.startsWith("--")) {
+      if (takesValue(w.v) && k + 1 < args.length) values[w.v] = args[++k];
+      continue;
+    }
+    // A short-option cluster, read one letter at a time (F4). The first letter
+    // that takes a value takes the rest of the cluster, such as -tsrc/ or
+    // -vtsrc/, or the next word when the cluster ends there, such as -vt src/.
+    for (let p = 1; p < w.v.length; p++) {
+      const name = `-${w.v[p]}`;
+      if (!takesValue(name)) continue;
+      if (p + 1 < w.v.length) {
+        values[name] = { ...w, v: w.v.slice(p + 1), dyn: w.dyn < 0 ? -1 : Math.max(0, w.dyn - p - 1) };
+      } else if (k + 1 < args.length) {
+        values[name] = args[++k];
+      }
+      break;
     }
   }
   return { operands: out, values };
@@ -334,8 +345,8 @@ function sedTargets(args) {
       const flag = flags[f];
       if (flag === "i") {
         inPlace = true;
-        // BSD sed takes the suffix as its own word: sed -i '' or sed -i .bak.
-        if (flags.length === 1 && k + 1 < args.length && (args[k + 1].v === "" || args[k + 1].v.startsWith("."))) k++;
+        // BSD sed takes the suffix as its own word: sed -i '' or sed -Ei .bak.
+        if (f === flags.length - 1 && k + 1 < args.length && (args[k + 1].v === "" || args[k + 1].v.startsWith("."))) k++;
         break;
       }
       if (flag === "e" || flag === "f") {
@@ -368,7 +379,11 @@ function perlTargets(args) {
         if (f === flags.length - 1) k++;
         break;
       }
-      if ("IMmlx0Cd".includes(flag)) break; // these take the rest of the cluster
+      // -l and -0 take optional digits, and the cluster goes on after them (F4).
+      if (flag === "l") { while (/[0-7]/.test(flags[f + 1] ?? "")) f++; continue; }
+      if (flag === "0") { while (/[0-9a-fA-FxX]/.test(flags[f + 1] ?? "")) f++; continue; }
+      if (flag === "d") { if (/[:t]/.test(flags[f + 1] ?? "")) break; continue; }
+      if ("IMmxCF".includes(flag)) break; // these take the rest of the cluster
     }
   }
   if (!inPlace) return [];
