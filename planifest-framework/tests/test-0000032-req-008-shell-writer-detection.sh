@@ -179,7 +179,6 @@ for cmd in \
   "cd build && make > log.txt" \
   "cd src/app && npm test > test.log" \
   'cd src/app && sed -i "" s/a/b/ index.js' \
-  "cd ~ && touch .foo" \
   "cd src && cd app && touch index.js" \
   "ls && cd build && touch out.o" \
   "cd src/app && { touch a.js; }" \
@@ -252,6 +251,22 @@ for cmd in \
   assert_equals "2" "$CODE" "req-008: G-1 blocks with no design: $cmd"
 done
 
+# =============================================================================
+echo ""
+echo "=== req-008: a cd to home or to the previous folder isn't certain (G-2) ==="
+
+for cmd in \
+  "pushd $R && pushd /tmp && pushd && echo hi > src/x.js" \
+  "export HOME=$R/src; cd && echo hi > x.js" \
+  "cd /tmp && cd - && echo hi > src/x.js" \
+  "cd /tmp && cd ~ && echo hi > src/x.js" \
+  "cd /tmp && cd ~/x && echo hi > src/x.js"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: G-2 blocks with no design: $cmd"
+done
+run_guard "$SCOPED" "cd ~ && touch .foo"
+assert_equals "2" "$CODE" "req-008: G-2 cd ~ && touch .foo also judges the starting folder"
+
 # Builds and test runs in a covered folder still pass with the design.
 for cmd in \
   "cd build && make > log.txt" \
@@ -262,8 +277,8 @@ for cmd in \
   "cd src && cd app && touch index.js" \
   "for f in a b; do touch build/\$f.o; done"; do
   run_guard "$SCOPED" "$cmd"
-  assert_equals "0" "$CODE" "req-008: G-1 still passes with a design: $cmd"
-  assert_equals "" "$ERR" "req-008: G-1 writes no stderr: $cmd"
+  assert_equals "0" "$CODE" "req-008: G-1 and G-2 still pass with a design: $cmd"
+  assert_equals "" "$ERR" "req-008: G-1 and G-2 write no stderr: $cmd"
 done
 
 # =============================================================================

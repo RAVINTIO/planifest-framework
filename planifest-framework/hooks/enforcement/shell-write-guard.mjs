@@ -28,7 +28,10 @@
  *     cd with one literal folder runs only in the folder after the cd (N-1).
  *     Any other cd may not have run, so the starting folder stays in the set
  *     (F2). The set returns to its outer value at ), and a cd before or after
- *     | runs in a subshell. pushd acts as cd.
+ *     | runs in a subshell. pushd with one folder acts as cd.
+ *   - A bare cd, cd ~, cd ~/dir, cd -, and a bare pushd never count as
+ *     certain. cd - and a bare pushd add every folder reached, as popd does.
+ *     A cd to home adds the hook's HOME and every folder reached (G-2).
  *   - A function definition, a loop keyword, or an alias of cd, pushd, or
  *     popd means parts of the command may run out of text order. The whole
  *     command is then judged against every folder it reaches, plus the
@@ -625,6 +628,8 @@ function reachAll(start, cds) {
   for (let changed = true; changed && all.size <= MAX_BASES;) {
     changed = false;
     for (const args of cds) {
+      // cd - returns to a folder already in the set (G-2).
+      if (args.length === 1 && args[0].v === "-") continue;
       for (const base of [...all]) {
         const dir = cdTarget(base, args);
         if (all.has(dir)) continue;
@@ -647,6 +652,7 @@ function reachAll(start, cds) {
  * after the cd alone (N-1). Any other cd may not have run, so it adds its
  * folders to the set and keeps the old ones (F2). These cases keep the old ones:
  *   - a cd after ||, after !, or with an argument the hook can't follow
+ *   - a bare cd, cd ~, cd -, or bare pushd (G-2)
  *   - a command after ;, a line break, ||, or & (the set widens to every
  *     folder the list has reached)
  *   - a command after ), where the set returns to its value before (
@@ -762,11 +768,19 @@ function judgeCommand(cwd, command) {
         !(before?.t === "sep" && NO_CARRY_BEFORE.has(before.op)) &&
         !(after?.t === "sep" && NO_CARRY_AFTER.has(after.op));
       if (carries) {
-        const moved = name === "popd" ? [...everSeen] : [...bases].map((base) => cdTarget(base, args));
+        const ops = args.filter((w) => w.v !== "--");
+        // popd, a bare pushd, and cd - return to a folder the command has
+        // reached, but the hook can't tell which one (G-2).
+        const back = name === "popd" || (name === "pushd" && ops.length === 0) || (name === "cd" && ops.length === 1 && ops[0].v === "-");
+        // A bare cd or cd ~ goes to the shell's HOME, which the command may
+        // have changed, so the hook's HOME is only one guess (G-2).
+        const home = name === "cd" && (ops.length === 0 || (ops.length === 1 && ops[0].tilde && /^~(\/|$)/.test(ops[0].v)));
+        const moved = back ? [...everSeen] : [...bases].map((base) => cdTarget(base, args));
+        if (home) moved.push(...everSeen);
         for (const base of moved) { reached.add(base); everSeen.add(base); }
         // The next command runs only if this cd succeeded.
         const sure =
-          name !== "popd" && !negated &&
+          !back && !home && !negated &&
           after?.t === "sep" && after.op === "&&" &&
           !(before?.t === "sep" && before.op === "||") &&
           moved.every((base) => base !== null);
