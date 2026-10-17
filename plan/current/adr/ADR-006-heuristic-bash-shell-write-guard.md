@@ -37,6 +37,8 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
   - Any other `cd` may not have run, so the set keeps its old folders and gains the new ones (security finding F2). This covers a `cd` after `||` or `!`, a `cd` the hook can't follow, and a command after `;`, a line break, `||`, or `&`.
   - The set returns to its outer value at `)`. A `cd` before or after `|`, or before `&`, runs in a subshell and changes nothing.
   - `pushd` with one folder acts as `cd`. `popd` adds every folder the command has reached.
+  - A bare `pushd` and `cd -` act as `popd`. A bare `cd`, `cd ~`, and `cd ~/dir` add the hook's `HOME` and every folder reached, because the command may change the shell's `HOME`. None of these counts as certain (security finding G-2).
+  - The hook tracks folders in text order, not run order. If the command defines a function, uses `while`, `until`, `for`, `do`, or `done`, or aliases `cd`, `pushd`, or `popd`, the `&&` rule is off for the whole command. Each relative target is then judged against every folder the command reaches at any point, plus the starting folder (security finding G-1).
   - Past 64 possible folders, a relative target blocks, because the hook can't judge it. An absolute target is still judged.
   - If a folder in the set makes the path too long to judge, the starting folder is judged as well.
 - Short-option clusters are read one letter at a time, so `cp -vt src/ a`, `perl -lpi -e …`, and `sed -Ei '' …` find their targets (security finding F4).
@@ -79,6 +81,8 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 - Only Claude Code runs the guard. Other tools rely on the boot-file rule alone.
 - A relative write after a `cd` that may not have run blocks when the same path from the starting folder is gated. This covers `if cd dir; then …` and `{ cd dir; } && …`. The agent can join the `cd` with `&&` or use an absolute path instead.
 - A command with more than 64 possible folders blocks any relative write.
+- A command with a function or a loop judges every relative write against every folder it reaches. `for d in a b; do (cd $d && make > log); done` blocks when the starting folder's `log` is gated.
+- `cd ~ && touch .foo` blocks when `.foo` in the starting folder is gated, because the hook can't trust its own `HOME`.
 - A command nested past 64 levels, or a path past the length limits, passes with a warning.
 - Downstream projects gain the hook only after they re-run setup.
 
