@@ -67,12 +67,12 @@ These enforcement hooks exit 2 today, and each one changes:
   - JSON with no `file_path` and no `path`
   - JSON whose `file_path` isn't a string
   - a `cwd` that doesn't exist
-- Each changed hook finishes in under 200 ms per call on the CI runners. The git call in `resolveRoot` counts towards that limit.
+- Each changed hook finishes in under 200 ms per call on the CI runners. `resolveRoot` walks the folder tree and spawns no process, so it stays inside that limit.
 
 ### Tests
 
 - A new Bash suite, `planifest-framework/tests/test-0000032-req-003-write-gate-scope.sh`, runs each hook with JSON on stdin and checks the exit code, stdout, and stderr. `run-tests.sh` finds it by its `test-*.sh` name.
-- The suite builds its fixtures under `mktemp -d`. For git-root cases it runs `git init` inside the fixture, so the result never depends on the host repository.
+- The suite builds its fixtures under `mktemp -d`. It creates a `.git` folder inside the fixture with `git init`, so the walk-up finds the fixture root and never the host repository.
 - The existing suites for `gate-write.mjs`, `ratchet-check.mjs`, and `em-dash-guard.mjs` still pass. That includes `test-gate-write-windows.sh` and `test-0000028-req-006-em-dash-guard.sh`.
 
 ## Acceptance Criteria
