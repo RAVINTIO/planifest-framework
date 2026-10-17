@@ -27,7 +27,7 @@ version: "0.1.0"
 | Resume Detection | The orchestrator skill section that decides where an interrupted run restarts. Step 2a covers a sentinel with no `plan/current/` artifacts. | resume | planifest-framework |
 | Context Hygiene | The orchestrator skill section that asks for `/clear` or a new session so a new run starts with no residual context. | context reset | planifest-framework |
 | Handover note | The P9 note that tells the human on the loop what to do next. From this feature on, each next step in it routes through a track. | handoff note | planifest-framework |
-| Repository root | The git top-level of `cwd`, or `cwd` when git can't resolve it. Paths outside it are never gated. | repo root | planifest-framework |
+| Repository root | The first folder above `cwd` that holds `planifest-framework/` or `.git`, or `cwd` when none does. Paths outside it are never gated. | repo root | planifest-framework |
 | Always-permitted path | A path that `gate-write.mjs` never blocks, such as `plan/`, `docs/`, `CLAUDE.md`, and `AGENTS.md`. The shared path-rules module holds the full list. | permitted path | planifest-framework |
 | Gated path | Any path inside the repository root that isn't an always-permitted path. With no `design.md`, every write to one is blocked. With a design, only writes outside a component path are blocked. | protected path | planifest-framework |
 | Component path | A path prefix listed under `## Component Paths` in `plan/current/design.md`. A gated path under one passes once a design exists. | declared path | planifest-framework |

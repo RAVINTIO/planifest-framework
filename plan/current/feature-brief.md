@@ -43,6 +43,8 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 | Write-gate scope | As an agent, I want `gate-write` to ignore paths outside the repository and to show its block reason, so that I can act on a block without reading the hook's source. | must-have | 1 |
 | Shell-write guard | As the human on the loop, I want writes under `src/` through Bash held to the same design gate as **Write** and **Edit**, so that auto mode cannot bypass the gate. | should-have | 1 |
 
+> At P2 the human on the loop split these four stories into 12 requirements, each with at most 3 criteria, all in one build. See `plan/current/requirements/`.
+
 ## Target Architecture
 
 ### Components
@@ -89,7 +91,7 @@ The full text of both entries is in git history at commit `0935aeb`, under `plan
 
 ### Write-gate scope
 
-- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. The root is the git top-level of `cwd`, or `cwd` when git can't resolve it. Tests cover both cases, and a `..` path that leaves the root.
+- [ ] AC-6: `gate-write.mjs` exits 0 for a target outside the repository root, with or without `design.md`. The root is the first folder above `cwd` that holds `planifest-framework/` or `.git`, or `cwd` when none does (ADR-004). Tests cover both cases, and a `..` path that leaves the root.
 - [ ] AC-7: Every enforcement hook that exits 2 writes a plain-text reason to stderr. It keeps any existing stdout output, so the Windsurf adapter and `ratchet-check.mjs`'s JSON still work. Tests assert that stderr is not empty on each block path.
 
 ### Shell-write guard
