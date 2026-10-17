@@ -194,6 +194,27 @@ assert_equals "0" "$CODE" "req-008: F4 perl -lne without -i passes"
 
 # =============================================================================
 echo ""
+echo "=== req-008: arithmetic << is not a here-document (F5) ==="
+
+NL=$'\n'
+for cmd in \
+  "((x = 1 << 2))${NL}echo hi > src/x.js" \
+  "echo \$((1 <<${NL}2))${NL}echo hi > src/x.js" \
+  "echo \$[1<<2]${NL}echo hi > src/x.js" \
+  "for ((i=0; i<<2; i++)); do :; done${NL}echo hi > src/x.js" \
+  "cat <<EOF${NL}echo hi > src/x.js" \
+  "cat <<EOF${NL}body${NL}EOF${NL}cat <<END${NL}touch src/x.js"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: F5 blocks: ${cmd//$NL/\\n}"
+done
+run_guard "$ROOT" "((x > 3)) && echo ok"
+assert_equals "0" "$CODE" "req-008: F5 > inside (( )) is not a redirect"
+assert_equals "" "$ERR" "req-008: F5 > inside (( )) writes no stderr"
+run_guard "$ROOT" "echo \$[2 > 1] \$((3 > 2))"
+assert_equals "0" "$CODE" "req-008: F5 > inside \$[ ] and \$(( )) is not a redirect"
+
+# =============================================================================
+echo ""
 echo "=== req-008: parse failures and targets with no literal prefix warn ==="
 
 run_guard "$ROOT" 'echo x > "src/a.js'

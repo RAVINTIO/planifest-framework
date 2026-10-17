@@ -18,7 +18,10 @@
  * How it reads a command:
  *   - It splits at ;, &&, ||, |, &, parentheses, and line breaks, and respects
  *     quotes and backslash escapes.
- *   - It skips leading VAR=value assignments and here-document bodies.
+ *   - It skips leading VAR=value assignments and here-document bodies. A body
+ *     with no closing delimiter line is read as commands.
+ *   - It reads ((...)), $((...)), and $[...] as one unit, so their << and >
+ *     are never a here-document or a redirect.
  *   - A cd with one literal argument moves a tracked base folder for the
  *     simple commands after it. A relative target is judged against both the
  *     starting folder and the tracked base, and blocks if either blocks. The
@@ -76,6 +79,7 @@ function skipDouble(s, i) {
     if (c === "\\") j++;
     else if (c === '"') return j;
     else if (c === "`") j = skipBacktick(s, j);
+    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1) - 1;
     else if (c === "$" && (s[j + 1] === "(" || s[j + 1] === "{")) j = skipGroup(s, j + 1) - 1;
   }
   throw new ParseError("unbalanced double quote");
@@ -90,14 +94,44 @@ function skipBacktick(s, i) {
   throw new ParseError("unbalanced backtick");
 }
 
+// isArithmetic: whether s holds $(( or $[ at i (F5).
+function isArithmetic(s, i) {
+  return s[i] === "$" && (s.startsWith("((", i + 1) || s[i + 1] === "[");
+}
+
+// skipArithmetic: index after the arithmetic that opens with the (( or [ at i.
+// Arithmetic is one unit, so its << and > are never a here-document or a
+// redirect (F5).
+function skipArithmetic(s, i) {
+  const open = s[i];
+  const close = open === "(" ? ")" : "]";
+  let depth = 0;
+  for (let j = i; j < s.length; j++) {
+    const c = s[j];
+    if (c === "\\") j++;
+    else if (c === "'") j = skipSingle(s, j);
+    else if (c === '"') j = skipDouble(s, j);
+    else if (c === "`") j = skipBacktick(s, j);
+    else if (c === open) depth++;
+    else if (c === close && --depth === 0) return j + 1;
+  }
+  throw new ParseError("unbalanced arithmetic");
+}
+
 // skipHeredocBodies: the index after the here-document bodies that start at
 // start. Each entry of heredocs is { delim, strip }, and the list empties.
+// A body with no closing delimiter line isn't skipped. Its lines are read as
+// commands, so a missing delimiter can't hide a write (F5).
 function skipHeredocBodies(s, start, heredocs) {
   let i = start;
   while (heredocs.length) {
     const { delim, strip } = heredocs.shift();
+    const bodyStart = i;
     for (;;) {
-      if (i >= s.length) return s.length;
+      if (i >= s.length) {
+        heredocs.length = 0;
+        return bodyStart;
+      }
       let nl = s.indexOf("\n", i);
       if (nl < 0) nl = s.length;
       let line = s.slice(i, nl);
@@ -146,6 +180,8 @@ function skipGroup(s, i) {
     else if (c === "'") j = skipSingle(s, j);
     else if (c === '"') j = skipDouble(s, j);
     else if (c === "`") j = skipBacktick(s, j);
+    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1) - 1;
+    else if (j > i && open === "(" && s.startsWith("((", j)) j = skipArithmetic(s, j) - 1;
     else if (s.startsWith("<<<", j)) j += 2; // a here-string, not a here-document
     else if (c === "<" && s[j + 1] === "<") {
       const strip = s[j + 2] === "-";
@@ -212,6 +248,14 @@ function tokenise(s) {
       continue;
     }
 
+    // An arithmetic command, such as ((x <<= 2)) or for ((...)), is one word.
+    if (!word && s.startsWith("((", i)) {
+      const end = skipArithmetic(s, i);
+      tokens.push({ t: "w", v: s.slice(i, end), dyn: 0, tilde: false, quoted: true });
+      i = end;
+      continue;
+    }
+
     const redirect = REDIRECTS.find((op) => s.startsWith(op, i));
     if (redirect && !(redirect.startsWith("&") && s.startsWith("&&", i))) {
       let fd = "";
@@ -258,6 +302,11 @@ function tokenise(s) {
       const end = skipBacktick(s, i);
       word.v += s.slice(i, end + 1);
       i = end + 1;
+    } else if (isArithmetic(s, i)) {
+      mark();
+      const end = skipArithmetic(s, i + 1);
+      word.v += s.slice(i, end);
+      i = end;
     } else if (c === "$" && (s[i + 1] === "(" || s[i + 1] === "{")) {
       mark();
       const end = skipGroup(s, i + 1);
