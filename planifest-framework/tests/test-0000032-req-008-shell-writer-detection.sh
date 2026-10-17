@@ -215,6 +215,31 @@ assert_equals "0" "$CODE" "req-008: F5 > inside \$[ ] and \$(( )) is not a redir
 
 # =============================================================================
 echo ""
+echo "=== req-008: deep nesting warns and passes (F8) ==="
+
+# nested <depth>: echo "$(echo "$(...x...)")" nested depth times.
+nested() {
+  node -e 'const n=+process.argv[1];process.stdout.write("echo "+"\"$(echo ".repeat(n)+"x"+")\"".repeat(n))' "$1"
+}
+DEEP_PAYLOAD="$WORK/deep-nesting.json"
+node -e 'const n=20000;process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_input:{command:"echo "+"\"$(".repeat(n)+"x"+")\"".repeat(n)}}))' \
+  "$(native "$ROOT")" > "$DEEP_PAYLOAD"
+OUT=$(node "$GUARD" 2>"$WORK/stderr.txt" < "$DEEP_PAYLOAD")
+CODE=$?
+ERR=$(cat "$WORK/stderr.txt")
+assert_equals "0" "$CODE" "req-008: F8 20,000 nested \"\$( exits 0"
+assert_equals "" "$OUT" "req-008: F8 20,000 nested \"\$( prints no stdout"
+assert_contains "Warning" "$ERR" "req-008: F8 20,000 nested \"\$( writes a warning"
+assert_equals "1" "$(printf '%s\n' "$ERR" | grep -c .)" "req-008: F8 the warning is one line"
+
+run_guard "$ROOT" "$(nested 65)"
+assert_equals "0" "$CODE" "req-008: F8 65 nested levels exit 0"
+assert_contains "Warning" "$ERR" "req-008: F8 65 nested levels write a warning"
+run_guard "$ROOT" "$(nested 20); echo x > src/a.js"
+assert_equals "2" "$CODE" "req-008: F8 20 nested levels still parse and judge the writer"
+
+# =============================================================================
+echo ""
 echo "=== req-008: parse failures and targets with no literal prefix warn ==="
 
 run_guard "$ROOT" 'echo x > "src/a.js'

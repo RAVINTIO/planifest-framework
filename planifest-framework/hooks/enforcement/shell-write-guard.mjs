@@ -37,8 +37,9 @@
  *     as node -e or python -c, a build tool, or a package manager.
  *   - A target with no literal prefix, such as $TARGET, passes with a one-line
  *     warning on stderr.
- *   - A command it can't parse, such as one with an unbalanced quote, passes
- *     with a one-line warning on stderr.
+ *   - A command it can't parse, such as one with an unbalanced quote or more
+ *     than 64 levels of nested quotes and substitutions, passes with a
+ *     one-line warning on stderr.
  *   - It doesn't look inside $(...) or backtick substitutions.
  *
  * Receives: the Claude Code PreToolUse JSON on stdin. The command is
@@ -65,6 +66,15 @@ class ParseError extends Error {}
 const SEPARATORS = ["&&", "||", "|&", ";;", ";", "&", "|", "(", ")"];
 const REDIRECTS = ["&>>", "&>", "<<<", "<<-", "<<", "<>", "<&", ">>", ">|", ">&", ">", "<"];
 
+// Quotes, substitutions, and arithmetic nest by recursion. Past this depth the
+// command is unjudgeable, so it passes with a warning rather than overflowing
+// the stack (F8).
+const MAX_NESTING = 64;
+
+function checkDepth(nest) {
+  if (nest > MAX_NESTING) throw new ParseError(`nesting deeper than ${MAX_NESTING} levels`);
+}
+
 // skipSingle: index of the closing single quote for the one at i.
 function skipSingle(s, i) {
   const end = s.indexOf("'", i + 1);
@@ -73,14 +83,15 @@ function skipSingle(s, i) {
 }
 
 // skipDouble: index of the closing double quote for the one at i.
-function skipDouble(s, i) {
+function skipDouble(s, i, nest = 0) {
+  checkDepth(nest);
   for (let j = i + 1; j < s.length; j++) {
     const c = s[j];
     if (c === "\\") j++;
     else if (c === '"') return j;
     else if (c === "`") j = skipBacktick(s, j);
-    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1) - 1;
-    else if (c === "$" && (s[j + 1] === "(" || s[j + 1] === "{")) j = skipGroup(s, j + 1) - 1;
+    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1, nest + 1) - 1;
+    else if (c === "$" && (s[j + 1] === "(" || s[j + 1] === "{")) j = skipGroup(s, j + 1, nest + 1) - 1;
   }
   throw new ParseError("unbalanced double quote");
 }
@@ -102,7 +113,8 @@ function isArithmetic(s, i) {
 // skipArithmetic: index after the arithmetic that opens with the (( or [ at i.
 // Arithmetic is one unit, so its << and > are never a here-document or a
 // redirect (F5).
-function skipArithmetic(s, i) {
+function skipArithmetic(s, i, nest = 0) {
+  checkDepth(nest);
   const open = s[i];
   const close = open === "(" ? ")" : "]";
   let depth = 0;
@@ -110,7 +122,7 @@ function skipArithmetic(s, i) {
     const c = s[j];
     if (c === "\\") j++;
     else if (c === "'") j = skipSingle(s, j);
-    else if (c === '"') j = skipDouble(s, j);
+    else if (c === '"') j = skipDouble(s, j, nest + 1);
     else if (c === "`") j = skipBacktick(s, j);
     else if (c === open) depth++;
     else if (c === close && --depth === 0) return j + 1;
@@ -169,7 +181,8 @@ function readDelimiter(s, k) {
 // skipGroup: index after the bracket that closes the ( or { at i. It skips
 // here-document bodies inside the group, so an apostrophe in a commit message
 // body isn't read as an open quote.
-function skipGroup(s, i) {
+function skipGroup(s, i, nest = 0) {
+  checkDepth(nest);
   const open = s[i];
   const close = open === "(" ? ")" : "}";
   const heredocs = [];
@@ -178,10 +191,10 @@ function skipGroup(s, i) {
     const c = s[j];
     if (c === "\\") j++;
     else if (c === "'") j = skipSingle(s, j);
-    else if (c === '"') j = skipDouble(s, j);
+    else if (c === '"') j = skipDouble(s, j, nest + 1);
     else if (c === "`") j = skipBacktick(s, j);
-    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1) - 1;
-    else if (j > i && open === "(" && s.startsWith("((", j)) j = skipArithmetic(s, j) - 1;
+    else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1, nest + 1) - 1;
+    else if (j > i && open === "(" && s.startsWith("((", j)) j = skipArithmetic(s, j, nest + 1) - 1;
     else if (s.startsWith("<<<", j)) j += 2; // a here-string, not a here-document
     else if (c === "<" && s[j + 1] === "<") {
       const strip = s[j + 2] === "-";
@@ -548,8 +561,9 @@ function judgeCommand(cwd, command) {
   try {
     items = tokenise(command);
   } catch (err) {
-    if (!(err instanceof ParseError)) throw err;
-    warnings.push(`${PREFIX} Warning: shell-write-guard could not parse the command (${err.message}). Command allowed.\n`);
+    if (!(err instanceof ParseError) && !(err instanceof RangeError)) throw err;
+    const why = err instanceof RangeError ? "nesting too deep" : err.message;
+    warnings.push(`${PREFIX} Warning: shell-write-guard could not parse the command (${why}). Command allowed.\n`);
     return { blocks, warnings };
   }
 
