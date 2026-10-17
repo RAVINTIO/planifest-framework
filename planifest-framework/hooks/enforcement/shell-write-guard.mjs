@@ -21,7 +21,8 @@
  *   - It skips leading VAR=value assignments and here-document bodies. A body
  *     with no closing delimiter line is read as commands.
  *   - It reads ((...)), $((...)), and $[...] as one unit, so their << and >
- *     are never a here-document or a redirect.
+ *     are never a here-document or a redirect. A (( that an adjacent )) at
+ *     the same depth doesn't close is two subshells, as in Bash.
  *   - It tracks the set of folders each simple command may run in, and
  *     judges a relative target against each one. A command joined by && to a
  *     cd with one literal folder runs only in the folder after the cd (N-1).
@@ -132,6 +133,28 @@ function skipArithmetic(s, i, nest = 0) {
   throw new ParseError("unbalanced arithmetic");
 }
 
+// arithmeticEnd: the index after the (( at i when an adjacent )) at the same
+// depth closes it, or -1. Bash reads any other (( as two subshells, so
+// ((echo x > f); true) is a subshell write, not arithmetic (N-2).
+function arithmeticEnd(s, i) {
+  let depth = 0;
+  try {
+    for (let j = i; j < s.length; j++) {
+      const c = s[j];
+      if (c === "\\") j++;
+      else if (c === "'") j = skipSingle(s, j);
+      else if (c === '"') j = skipDouble(s, j, 1);
+      else if (c === "`") j = skipBacktick(s, j);
+      else if (c === "(") {
+        if (++depth > MAX_NESTING) return -1;
+      } else if (c === ")" && --depth === 1) return s[j + 1] === ")" ? j + 2 : -1;
+    }
+  } catch (err) {
+    if (!(err instanceof ParseError)) throw err;
+  }
+  return -1;
+}
+
 // skipHeredocBodies: the index after the here-document bodies that start at
 // start. Each entry of heredocs is { delim, strip }, and the list empties.
 // A body with no closing delimiter line isn't skipped. Its lines are read as
@@ -196,7 +219,7 @@ function skipGroup(s, i, nest = 0) {
     else if (c === '"') j = skipDouble(s, j, nest + 1);
     else if (c === "`") j = skipBacktick(s, j);
     else if (isArithmetic(s, j)) j = skipArithmetic(s, j + 1, nest + 1) - 1;
-    else if (j > i && open === "(" && s.startsWith("((", j)) j = skipArithmetic(s, j, nest + 1) - 1;
+    else if (j > i && open === "(" && s.startsWith("((", j) && arithmeticEnd(s, j) > 0) j = skipArithmetic(s, j, nest + 1) - 1;
     else if (s.startsWith("<<<", j)) j += 2; // a here-string, not a here-document
     else if (c === "<" && s[j + 1] === "<") {
       const strip = s[j + 2] === "-";
@@ -264,11 +287,14 @@ function tokenise(s) {
     }
 
     // An arithmetic command, such as ((x <<= 2)) or for ((...)), is one word.
+    // A (( with no adjacent )) is two subshells, read as two ( separators.
     if (!word && s.startsWith("((", i)) {
-      const end = skipArithmetic(s, i);
-      tokens.push({ t: "w", v: s.slice(i, end), dyn: 0, tilde: false, quoted: true });
-      i = end;
-      continue;
+      const end = arithmeticEnd(s, i);
+      if (end > 0) {
+        tokens.push({ t: "w", v: s.slice(i, end), dyn: 0, tilde: false, quoted: true });
+        i = end;
+        continue;
+      }
     }
 
     const redirect = REDIRECTS.find((op) => s.startsWith(op, i));

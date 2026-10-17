@@ -267,6 +267,20 @@ for cmd in \
   run_guard "$ROOT" "$cmd"
   assert_equals "2" "$CODE" "req-008: F5 blocks: ${cmd//$NL/\\n}"
 done
+# (( that an adjacent )) doesn't close is two subshells, not arithmetic (N-2).
+for cmd in \
+  "((echo hi > src/other/x); true)" \
+  "((echo hi > src/other/x) )" \
+  "((true) && echo hi > src/other/x)" \
+  "( (echo hi > src/other/x) )" \
+  "(((echo hi > src/other/x) ) )" \
+  "((echo \"a)\" > src/other/x) )"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: N-2 blocks: $cmd"
+done
+run_guard "$ROOT" "((x = (1 + 2) * 3)) && echo ok"
+assert_equals "0" "$CODE" "req-008: N-2 inner parentheses in (( )) stay arithmetic"
+assert_equals "" "$ERR" "req-008: N-2 inner parentheses in (( )) write no stderr"
 run_guard "$ROOT" "((x > 3)) && echo ok"
 assert_equals "0" "$CODE" "req-008: F5 > inside (( )) is not a redirect"
 assert_equals "" "$ERR" "req-008: F5 > inside (( )) writes no stderr"
