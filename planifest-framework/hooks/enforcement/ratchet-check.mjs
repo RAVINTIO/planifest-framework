@@ -37,6 +37,9 @@
  * see ADR-001 Affected Components). The reason field is capped at 500 chars
  * in the audit log, truncated with a trailing marker if longer.
  *
+ * On a block, stdout carries the deny JSON and stderr carries the reason as
+ * plain text for Claude Code (0000032 ADR-005).
+ *
  * Exit codes: 0 = pass, 2 = block. Unexpected errors exit 0 — hooks never block
  * a session unexpectedly (matching gate-write.mjs contract).
  */
@@ -247,6 +250,8 @@ async function main() {
       permissionDecisionReason: reason,
     },
   }));
+  // Claude Code reads a block reason from stderr, so repeat it as plain text (ADR-005).
+  process.stderr.write(reason + "\n");
   process.exit(2);
 }
 

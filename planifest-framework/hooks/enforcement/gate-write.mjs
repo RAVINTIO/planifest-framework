@@ -14,6 +14,8 @@
  * tool_input.path or tool_input.file_path.
  *
  * Exit codes: 0 = pass, 2 = block (DD-004, ADR-005)
+ * On a block, the reason goes to stdout for the stdout adapters and the same
+ * text goes to stderr for Claude Code (0000032 ADR-005).
  * Silent on unexpected errors. Always exit 0 on non-enforcement failures (ADR-005).
  */
 
@@ -36,7 +38,9 @@ try {
 
   if (result.warning) process.stderr.write(result.warning);
   if (!result.allowed) {
+    // Stdout stays as it was for the stdout adapters. Claude Code reads stderr (ADR-005).
     process.stdout.write(result.reason);
+    process.stderr.write(result.reason);
     process.exit(2);
   }
 

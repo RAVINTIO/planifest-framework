@@ -31,6 +31,9 @@
  * planifest-framework/standards/formatting-standards.md for the full
  * rationale.
  *
+ * On a block, the reason goes to stdout for the stdout adapters and the same
+ * text goes to stderr for Claude Code (0000032 ADR-005).
+ *
  * Exit codes: 0 = pass, 2 = block (matching gate-write.mjs and ratchet-check.mjs).
  * Silent on unexpected errors — always exit 0 on non-enforcement failures (ADR-005).
  */
@@ -113,12 +116,14 @@ try {
   const listed = hits.slice(0, MAX_LISTED).join(", ");
   const more = hits.length > MAX_LISTED ? ` (+${hits.length - MAX_LISTED} more)` : "";
 
-  process.stdout.write(
+  const reason =
     `[Planifest] Em dash (U+2014) found in '${relTarget}' at line(s): ${listed}${more}. ` +
     "Replace with a comma, colon, semicolon, full stop, or parentheses depending " +
     "on the sentence. If the character is genuinely required (a literal quotation, " +
-    `for example), add ${SENTINEL} anywhere in the content to bypass.\n`
-  );
+    `for example), add ${SENTINEL} anywhere in the content to bypass.\n`;
+  // Stdout stays as it was for the stdout adapters. Claude Code reads stderr (ADR-005).
+  process.stdout.write(reason);
+  process.stderr.write(reason);
   process.exit(2);
 } catch {
   // Never block the session on unexpected errors (ADR-005).
