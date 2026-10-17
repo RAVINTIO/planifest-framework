@@ -78,11 +78,26 @@ Not applicable. The feature has no IaC.
 | R-007 | Accepted, but F1 widens it |
 | A-001 to A-003 | Open. They can't be tested offline. |
 
+## Re-review rounds
+
+The human on the loop chose three fix rounds at the P5 gate. Two re-reviews and a final scripted check followed.
+
+| Round | Fixed | New findings from the re-review |
+|---|---|---|
+| 1 | F1, F2, F4, F5, F7, F8, F11, K-1 to K-4 | N-1, N-2, N-4, N-5 (Medium), K-2 partial, N-3, N-6 to N-8 (Low) |
+| 2 | N-1 to N-5, N-8, rest of K-2 | G-1 (Medium), G-2, G-3 (Low). A safety classifier stopped this review partway. |
+| 3 | G-1, G-2 | None. Scripted exit-code checks covered the items round 2 didn't reach. |
+
+The final check ran 103 exit-code cases across `gate-write` and the shell guard. One expectation was wrong, and every other case matched. Each hook's own work takes about 20 ms per call over Node start-up.
+
+Residual risk:
+- With `CLAUDE_PROJECT_DIR` unset, an agent can `cd` into another marked repository and write back by absolute path (ADR-004).
+- The shell guard stays a heuristic with the limits in ADR-006. The boot rule sends code changes through **Write** or **Edit**.
+
+Backlog: F3, F6, F9, F10, F12, S-1 to S-3, K-5, and M-1 (0000105 to 0000113). N-6, N-7, and the older `cd` gaps (0000114 to 0000116). G-3 (0000117).
+
 ## Summary
 
-Overall risk rating: Medium
+Overall risk rating: Low (Medium before the fix rounds)
 
-Top actions before production:
-1. Fix F1 so a planted marker can't move the root.
-2. Fix F2 so an unexecuted `cd` can't move the shell guard's base.
-3. Fix K-1, K-2, and K-3 in the skill text.
+Top actions before production: none open. Every Medium finding is fixed and verified. The Low findings are in the backlog.
