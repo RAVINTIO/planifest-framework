@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000031-ci-test-and-powershell-coverage
+Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -157,10 +157,10 @@ ADR files: [plan/_archive/0000023-framework-pipeline-fixes-2026-08-02/adr/](../p
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | Interrupted P9 Detection Signal | accepted | Combined signal: `.orchestrator-active` present AND `plan/current/` empty uniquely identifies an interrupted P9 |
-| ADR-002 | New Session Recommendation Not Block | accepted | Post-P9 advisory message recommends a new session but does not enforce it; human retains control |
+| ADR-001 | Interrupted P9 Detection Signal | superseded by 0000032 ADR-002 | Combined signal: `.orchestrator-active` present AND `plan/current/` empty uniquely identifies an interrupted P9. **Superseded:** 0000032-ADR-002 keeps the signal but reads it as an unfinished P8 or P9. Resume Detection step 2a resumes from archive evidence and never starts fresh. |
+| ADR-002 | New Session Recommendation Not Block | superseded by 0000032 ADR-003 | Post-P9 advisory message recommends a new session but does not enforce it; human retains control. **Superseded:** 0000032-ADR-003 makes ship Step 12 a blocking context clear. The orchestrator refuses new work in the same session. |
 | ADR-003 | Stale Run-Mode Warn-and-Clear at P0 | accepted | Stale `plan/.run-mode` at fresh P0 start is auto-cleared with a visible warning; no blocking |
-| ADR-004 | Run-Mode Deletion Owned by P9 | accepted | P9 (ship-agent Step 6) deletes `plan/.run-mode`; P0 handles the recovery case only |
+| ADR-004 | Run-Mode Deletion Owned by P9 | amended by 0000032 ADR-002 | P9 (ship-agent Step 6) deletes `plan/.run-mode`; P0 handles the recovery case only. **Amended:** 0000032-ADR-002 keeps P9 as the owner but moves the deletion out of Step 6. A P9 marker step now deletes all three session markers after P8 and before the Step 9 tag. |
 
 ### Feature 0000016: pipeline-governance-and-loop-engineering
 
@@ -289,6 +289,19 @@ ADR files: [plan/_archive/0000031-ci-test-and-powershell-coverage-2026-10-16/adr
 | ADR-001 | CI platform matrix | accepted | The suite runs on `ubuntu-latest` and `macos-latest` with `fail-fast: false`, and `test_setup.ps1` runs under PowerShell 7 on `windows-latest`. Windows PowerShell 5.1 and Git Bash on Windows are not tested. |
 | ADR-002 | New CI jobs stay repository-only | accepted | The suite and Windows jobs go in this repository's workflow only, never in the consumer copy at `planifest-framework/hooks/planifest.yml`. Extends 0000019-ADR-001. |
 | ADR-003 | CI job security posture | accepted | New jobs keep the `pull_request` trigger and set `permissions: contents: read`, no secrets, and `timeout-minutes: 10` |
+
+### Feature 0000032: governance-continuity-and-write-gate-scope
+
+ADR files: [plan/_archive/0000032-governance-continuity-and-write-gate-scope-2026-10-17/adr/](../plan/_archive/0000032-governance-continuity-and-write-gate-scope-2026-10-17/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack and enforcement approach | accepted | Hooks stay dependency-free Node ES modules that read stdin through `read-stdin.mjs` and fail open. Setup stays in Bash and PowerShell, and tests stay in Bash suites. |
+| ADR-002 | Session markers cleared in P9 before the tag | accepted | The three session markers stay committed. A P9 step deletes and commits them with the archive after P8 and before the Step 9 tag. Resume Detection steps 2a and 2b resume an interrupted close-out from archive evidence. Supersedes 0000015-ADR-001 and amends 0000015-ADR-004. |
+| ADR-003 | Blocking context clear after P9 | accepted | Ship Step 12 asks for `/clear` or a new session and refuses new work in the same session. The auto-trigger hook says no run is active and requires triage. Handover notes route every next step through a track. Supersedes 0000015-ADR-002. |
+| ADR-004 | Shared path rules and repository root | accepted | `path-rules.mjs` holds the gated-path rules for `gate-write.mjs` and the shell guard. The root is the nearest `planifest-framework/` folder, else the nearest `.git`, found by a walk from `CLAUDE_PROJECT_DIR` or `cwd`. Targets outside the root pass. |
+| ADR-005 | Block reasons on stderr | accepted | Every enforcement hook that exits 2 writes a plain-text reason to stderr, where Claude Code reads it. Existing stdout stays byte for byte for the adapters. |
+| ADR-006 | Heuristic Bash shell-write guard | accepted | `shell-write-guard.mjs` runs on Claude Code's Bash PreToolUse event. It finds common shell writers, judges their targets with `path-rules.mjs`, and fails open on anything it can't parse. A boot-file Hard Limit covers its gaps. |
 
 ---
 
