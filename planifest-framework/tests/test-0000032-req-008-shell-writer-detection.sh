@@ -240,6 +240,44 @@ assert_equals "2" "$CODE" "req-008: F8 20 nested levels still parse and judge th
 
 # =============================================================================
 echo ""
+echo "=== req-008: stderr stays small on repeated targets (F11) ==="
+
+# guard_payload_file <file> <js expression for the command>: writes a payload.
+guard_payload_file() {
+  node -e 'const command=eval(process.argv[2]);process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_input:{command}}))' \
+    "$(native "$ROOT")" "$2" > "$1"
+}
+# run_guard_file <file>: runs the guard on a payload file and sets CODE, OUT, ERR.
+run_guard_file() {
+  OUT=$(node "$GUARD" 2>"$WORK/stderr.txt" < "$1")
+  CODE=$?
+  ERR=$(cat "$WORK/stderr.txt")
+}
+BIG="$WORK/big.json"
+
+guard_payload_file "$BIG" '"echo x > src/a.js; ".repeat(10000)'
+run_guard_file "$BIG"
+assert_equals "2" "$CODE" "req-008: F11 a target repeated 10,000 times still blocks"
+assert_equals "yes" "$([ "$(wc -c < "$WORK/stderr.txt")" -lt 10240 ] && echo yes || echo no)" \
+  "req-008: F11 a target repeated 10,000 times writes under 10 KB of stderr"
+assert_equals "1" "$(grep -c "Shell write blocked" "$WORK/stderr.txt")" "req-008: F11 a repeated reason appears once"
+
+guard_payload_file "$BIG" 'Array.from({length:10000},(_,n)=>"echo x > src/f"+n+".js").join("; ")'
+run_guard_file "$BIG"
+assert_equals "2" "$CODE" "req-008: F11 10,000 different targets block"
+assert_equals "yes" "$([ "$(wc -c < "$WORK/stderr.txt")" -lt 10240 ] && echo yes || echo no)" \
+  "req-008: F11 10,000 different targets write under 10 KB of stderr"
+assert_equals "20" "$(grep -c "Shell write blocked" "$WORK/stderr.txt")" "req-008: F11 stderr holds at most 20 reasons"
+assert_contains "9980 more" "$ERR" "req-008: F11 a summary line counts the remaining reasons"
+
+guard_payload_file "$BIG" '"echo x > $T; ".repeat(10000)'
+run_guard_file "$BIG"
+assert_equals "0" "$CODE" "req-008: F11 10,000 targets with no literal prefix pass"
+assert_equals "yes" "$([ "$(wc -c < "$WORK/stderr.txt")" -lt 10240 ] && echo yes || echo no)" \
+  "req-008: F11 repeated warnings write under 10 KB of stderr"
+
+# =============================================================================
+echo ""
 echo "=== req-008: parse failures and targets with no literal prefix warn ==="
 
 run_guard "$ROOT" 'echo x > "src/a.js'

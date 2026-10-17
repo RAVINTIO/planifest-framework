@@ -46,7 +46,8 @@
  * tool_input.command and the working folder is cwd.
  *
  * Exit codes: 0 = pass, 2 = block. A block reason goes to stderr only, and
- * stdout stays empty (ADR-005). Unexpected errors exit 0 (0000003-ADR-005).
+ * stdout stays empty (ADR-005). Stderr holds each distinct reason once, at
+ * most 20 reasons and 20 warnings, and one line counts any left out. Unexpected errors exit 0 (0000003-ADR-005).
  * Node built-in modules only, and no process spawn.
  */
 
@@ -568,7 +569,14 @@ function judgeCommand(cwd, command) {
   }
 
   // judge: the block reason for literal from base, or null when it passes.
+  // A repeated target reuses its first judgement.
+  const seen = new Map();
   const judge = (writer, base, literal) => {
+    const key = `${writer}\0${base}\0${literal}`;
+    if (!seen.has(key)) seen.set(key, judgeOnce(writer, base, literal));
+    return seen.get(key);
+  };
+  const judgeOnce = (writer, base, literal) => {
     const tooLong = unjudgeable(base, literal);
     if (tooLong) {
       warnings.push(tooLong.replace("Write allowed.", "Command allowed."));
@@ -629,6 +637,20 @@ function judgeCommand(cwd, command) {
   return { blocks, warnings };
 }
 
+// At most this many distinct reasons, and the same number of warnings, reach
+// stderr. One summary line counts the rest (F11).
+const MAX_REASONS = 20;
+
+// capped: the distinct lines, at most MAX_REASONS of them, and a summary line
+// when more were left out.
+function capped(lines, noun) {
+  const distinct = [...new Set(lines)];
+  let out = distinct.slice(0, MAX_REASONS).join("");
+  const rest = distinct.length - MAX_REASONS;
+  if (rest > 0) out += `${PREFIX} ${rest} more ${noun} not shown.\n`;
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -640,9 +662,9 @@ try {
   const cwd = typeof input?.cwd === "string" && input.cwd ? input.cwd : process.cwd();
 
   const { blocks, warnings } = judgeCommand(cwd, command);
-  for (const w of warnings) process.stderr.write(w);
+  process.stderr.write(capped(warnings, "warnings"));
   if (blocks.length) {
-    for (const b of blocks) process.stderr.write(b);
+    process.stderr.write(capped(blocks, "blocked writes"));
     process.exit(2);
   }
   process.exit(0);
