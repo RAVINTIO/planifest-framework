@@ -91,3 +91,6 @@ Requirement change (cosmetic, P1 active): req-003 root lookup walks up the folde
 | Parallel task batches | `1` |
 | Notes | Continuous run. Two ADR streams in parallel: run lifecycle (ADR-001 to ADR-003) and write gates (ADR-004 to ADR-006). Archived 0000015 ADRs stay untouched. P6 records supersession in `docs/decisions-index.md`. |
 P1 review (A-006): human confirmed explicitly: judge the literal prefix. Copy of 0000103 and 0000104 confirmed.
+P2 consistency-check: 4 findings, every requirement over 3 acceptance criteria (12, 13, 16, 21).
+P2 exchange (requirement split): Q: Cut criteria and split req-004, or merge? / A: Fewer criteria by splitting into more stories, all still in one build.
+Requirement Change (additive, P2 active): 4 requirements become 12, one per brief AC plus the boot-file rule, each with at most 3 criteria. Detailed checks move to a "Verified by" list under Functional Requirements. Re-run from P1 requirements only. ADRs stand, with requirement references updated.
