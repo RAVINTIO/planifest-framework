@@ -149,12 +149,14 @@ git commit -m "plan(p7): archive {feature-id}"
 
 The session markers stay in place through P7 and P8, so hooks treat the whole close-out as part of the run. Clear them here, before the tag, so the tag never carries a marker.
 
+In this step, `{archive-dir}` is the directory P7 Step 6 created, with any `-2` or `-3` suffix it added. On a resume, it is the directory that Resume Detection step 2a resolved. Never rebuild it from the date.
+
 1. Run `git status --porcelain plan/_archive/`. If it lists a change outside this feature's archive directory, report those paths to the human on the loop. Do not stage them.
-2. Stage only this feature's archive directory. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
+2. Stage only `{archive-dir}`. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
 
 ```bash
 git status --porcelain plan/_archive/
-git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"
+git add -- "{archive-dir}"
 ```
 
 3. Delete the markers, stage the deletions, and commit as one uninterrupted sequence. Do no other work between the first delete and the commit.
@@ -166,11 +168,13 @@ git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"
 ```bash
 rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-git diff --cached --quiet || git commit -m "plan(p9): clear session markers for {feature-id}"
+git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers for {feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
 git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 ```
 
-The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed. If nothing is staged and no marker is tracked, skip the commit and continue to Step 9. The `git diff --cached --quiet` guard does this. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
+The commit names its paths after `--`, so it commits only `{archive-dir}` and the markers. Other staged changes stay staged and stay out of this commit. The `git ls-tree` call lists only the markers that `HEAD` tracks. A marker path that git doesn't know would make `git commit` fail, so the list leaves it out. The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed.
+
+If nothing is staged under these paths, skip the commit and continue to Step 9. The `git diff --cached --quiet -- ...` guard does this. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
 
 ### Step 9: Create git tag
 

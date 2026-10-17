@@ -80,7 +80,7 @@ before "$COMMIT_LINE" "$LS_LINE" "req-001: git ls-files check follows the commit
 echo ""
 echo "=== req-001 (K-2): marker step stages only this feature's archive ==="
 
-ARCH_ADD='git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"'
+ARCH_ADD='git add -- "{archive-dir}"'
 assert_contains "git status --porcelain plan/_archive/" "$CLEAR" \
   "req-001 K-2: marker step checks plan/_archive/ with git status --porcelain"
 assert_contains "$ARCH_ADD" "$CLEAR" "req-001 K-2: marker step stages only this feature's archive directory"
@@ -108,10 +108,28 @@ assert_contains "git rm --cached --ignore-unmatch -q plan/.orchestrator-active p
 echo ""
 echo "=== req-001 (K-4): nothing to commit ==="
 
-assert_contains 'git diff --cached --quiet || git commit -m "plan(p9): clear session markers for {feature-id}"' "$CLEAR" \
-  "req-001 K-4: the commit runs only when something is staged"
-assert_contains "If nothing is staged and no marker is tracked, skip the commit" "$CLEAR" \
-  "req-001 K-4: marker step skips the commit when nothing is staged"
+MARKERS='plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode'
+assert_contains "git diff --cached --quiet -- \"{archive-dir}\" $MARKERS || git commit -m \"plan(p9): clear session markers for {feature-id}\"" "$CLEAR" \
+  "req-001 K-4: the commit runs only when something is staged under the marker step's own paths"
+assert_contains "If nothing is staged under these paths, skip the commit" "$CLEAR" \
+  "req-001 K-4: marker step skips the commit when nothing is staged under its paths"
+
+echo ""
+echo "=== req-001 (K-2 re-review): path-limited commit on the real archive directory ==="
+
+assert_contains "the directory P7 Step 6 created" "$CLEAR" \
+  "req-001 K-2: {archive-dir} is the directory P7 Step 6 created"
+assert_contains "\`-2\`" "$CLEAR" "req-001 K-2: {archive-dir} keeps a -2 style suffix"
+assert_contains "the directory that Resume Detection step 2a resolved" "$CLEAR" \
+  "req-001 K-2: on resume, {archive-dir} is the directory step 2a resolved"
+lacks 'git add "plan/_archive/{feature-id}-{YYYY-MM-DD}/"' "$CLEAR" \
+  "req-001 K-2: marker step no longer rebuilds the archive path from the date template"
+assert_contains "-- \"{archive-dir}\" \$(git ls-tree --name-only HEAD -- $MARKERS)" "$CLEAR" \
+  "req-001 K-2: the commit names the archive directory and only the markers tracked in HEAD"
+assert_equals "0" "$(grep -E 'git commit -m "plan\(p9\)' <<< "$CLEAR" | grep -c -v -F ' -- ')" \
+  "req-001 K-2: every marker commit line limits itself to a path list"
+assert_contains "Other staged changes stay staged and stay out of this commit" "$CLEAR" \
+  "req-001 K-2: prose says earlier staged changes stay out of the marker commit"
 
 echo ""
 echo "=== req-001: Step 9b gone, no marker after Step 9 ==="
