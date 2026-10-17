@@ -195,3 +195,17 @@ P5 fix round 3 result: G-1 (c1af5c0), G-2 (58e8819), guard docs (c6cdfbf). G-3 f
 P5 direct verification (scripted exit-code checks, no open-ended search): gate-write 47 of 48 (the miss was a wrong expectation: with no marker above cwd, ADR-004 makes cwd the root, same as 0.30.0). Shell guard 55 of 55, covering N-2, F1 plant, all five F2 forms, G-1, G-2, N-3, N-4 and N-5 parity, ten everyday commands passing with a design, and fail-open. Hook work about 20 ms per call over Node start-up.
 P5 result (final): overall risk Low. All Medium findings closed. Remaining Low findings are in backlog 0000105 to 0000117. Residual risk recorded in ADR-004 (CLAUDE_PROJECT_DIR unset plus cd into another marked repo) and ADR-006 (heuristic limits).
 P5 end: 2026-10-17
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-17T22:22:07Z` |
+| Model tier | primary |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | `2` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Continuous run. Two parallel agents: living docs and component docs, then recommendations, iteration log, and changelog. |
+P6 Gate A: docs/ exists.
+P6 Gate B: docs update assessment (continuous run, auto-accepted). This run changed the run lifecycle, added a shared path-rules module and a Bash shell-write guard, and superseded 0000015 ADR-001 and ADR-002. Auto-accepted: updating `docs/architecture-overview.md`, `docs/decisions-index.md`, `docs/component-registry.md`, and `docs/dependency-graph.md`, plus `src/setup-hook-integration/docs/` if the setup registration changes it.
