@@ -44,7 +44,8 @@ As the human on the loop, I see shell writes held to the same design gate as **W
 
 ### Parse failures and limits (AC-8)
 
-- The hook can't parse a command when its quotes don't balance, or when a writer's target holds `$`, a backtick, `*`, `?`, or `{`. In either case it writes a one-line warning to stderr and exits 0.
+- The hook can't parse a command when its quotes don't balance. It then writes a one-line warning to stderr and exits 0.
+- When a writer's target holds `$`, a backtick, `*`, `?`, or `{`, the hook judges the literal prefix before the first such character. For `src/*.js` it judges `src/`. If the target has no literal prefix, it writes a one-line warning to stderr and exits 0.
 - A command that parses and holds no writer exits 0 with no output, even if it holds `$(...)` or backticks elsewhere.
 - The hook ignores commands whose name is `git`. Writes made by `git checkout`, `git restore`, `git apply`, and similar are a documented limit.
 - The hook can't see writes made inside a script, an interpreter one-liner such as `node -e` or `python -c`, a build tool, or a package manager. These are a documented limit.
@@ -87,7 +88,7 @@ As the human on the loop, I see shell writes held to the same design gate as **W
 
 ### Boot-file rule
 
-- `planifest-framework/templates/standard-boot.md` gains a Hard Limit: code changes go through **Write** or **Edit**, never through Bash. The rule says the shell guard is a heuristic and can't see writes made inside scripts.
+- `planifest-framework/templates/standard-boot.md` and `planifest-framework/templates/cursor-boot.md` each gain a Hard Limit: code changes go through **Write** or **Edit**, never through Bash. The rule says the shell guard is a heuristic and can't see writes made inside scripts.
 - The "Hook Enforcement" section of the same template gains a `shell-write-guard` bullet (PreToolUse: Bash, Claude Code only).
 - In that section, the `gate-write` bullet states that paths outside the repository are never gated. The closing paragraph states that block reasons go to stderr.
 - Setup regenerates every boot file from the template (0000029-ADR-001), so this repository's `CLAUDE.md` gains the rule when setup runs.
@@ -158,7 +159,8 @@ As the human on the loop, I see shell writes held to the same design gate as **W
 - [ ] Every command in the false-positive corpus exits 0 with an empty stderr, with no `design.md`.
 - [ ] A writer aimed at a path outside the fixture, such as `echo x > /tmp/elsewhere.txt`, exits 0.
 - [ ] `echo x > "src/a.js` (unbalanced quote) exits 0 and writes a warning to stderr.
-- [ ] `echo x > $TARGET` and `echo x > src/*.js` each exit 0 and write a warning to stderr.
+- [ ] `echo x > $TARGET` and `echo x > "$DIR/a"` each exit 0 and write a warning to stderr.
+- [ ] With no `design.md`, `rm src/*.js` and `cp a src/$NAME` each exit 2, because their literal prefix `src/` is a gated path.
 - [ ] `git checkout -- src/a.js` exits 0 with no output.
 - [ ] For each of `src/a.js`, `README.md`, `plan/current/x.md` without a sentinel, and `docs/a.md`, the hook's exit code matches `gate-write.mjs`'s exit code for a **Write** to the same path.
 - [ ] Neither `shell-write-guard.mjs` nor `gate-write.mjs` defines the always-permitted lists. Both import `path-rules.mjs`.
@@ -170,10 +172,11 @@ As the human on the loop, I see shell writes held to the same design gate as **W
 - [ ] After `setup.sh claude-code`, `.claude/hooks/enforcement/shell-write-guard.mjs` exists.
 - [ ] `planifest-framework/migrations/migrate-0.31.0-rerun-setup-for-shell-write-guard.md` exists outside `_done/`. It names version `0.31.0`, `shell-write-guard`, and re-running setup.
 - [ ] `templates/standard-boot.md` holds the Hard Limit that code changes go through **Write** or **Edit**, and a `shell-write-guard` bullet.
+- [ ] `templates/cursor-boot.md` holds the same Hard Limit.
 - [ ] After `setup.sh claude-code`, the generated `CLAUDE.md` holds the same Hard Limit.
 
 ## Dependencies
 
-- Req-003: `path-rules.mjs`, the git top-level root rule, and the stderr block-reason rule.
+- Req-003: `path-rules.mjs`, the repository root rule, and the stderr block-reason rule.
 - The 0000031 CI jobs run `test_setup.ps1` on Windows and the new suite on Linux.
 - The ship step bumps `planifest-framework/component.yml` to `0.31.0`, which the migration checks for.

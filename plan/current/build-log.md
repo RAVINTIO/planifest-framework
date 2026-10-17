@@ -75,3 +75,6 @@ P1 end: 2026-10-16T23:29:56Z
 P1 review (A-003): Q: Find the repository root by walking up from cwd to the first folder holding planifest-framework/ or .git, not git rev-parse? / A: Yes.
 P1 review (A-004): Q: Compare real paths, resolving a missing target through its nearest existing parent? / A: Yes.
 P1 review (A-005): Q: Apply the plan/current/ sentinel check to shell writes too? / A: Accept.
+Backlog copied at human request: planifest-zero 0000109 and 0000110 as 0000103 (release sizing) and 0000104 (subagent acceleration).
+P1 review (A-006, A-007, A-008): human returned to continuous mode, so the orchestrator applied its recommendations. A-006: judge the literal prefix before a glob or variable, warn and pass with no prefix. A-007: accept duplicate block reasons in tools that relay both streams. A-008: add the Write-or-Edit rule to cursor-boot.md too.
+Requirement change (cosmetic, P1 active): req-003 root lookup walks up the folder tree in place of git rev-parse. req-004 judges literal prefixes and edits both boot templates. Execution plan assumptions updated. No phase re-run needed.

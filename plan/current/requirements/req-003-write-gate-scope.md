@@ -24,7 +24,7 @@ As an agent, I see `gate-write` ignore paths outside the repository and show its
   - `resolveRoot(cwd)` returns the repository root.
   - `toRootRelative(root, cwd, target)` returns the target's path relative to the root, or `null` when the target is outside the root.
   - `evaluateWrite(root, relPath)` returns either an allow result or a block result with a reason string.
-- `resolveRoot` runs `git rev-parse --show-toplevel` with `cwd` as its working directory. If git is missing, fails, or prints nothing, the root is `cwd`.
+- `resolveRoot` walks up from `cwd` to the first folder that holds `planifest-framework/` or `.git`. It spawns no process. If no such folder exists, the root is `cwd`.
 - `resolveRoot` returns the real path of the root, with symbolic links resolved. `toRootRelative` resolves `target` against the real path of `cwd`. Both sides of the comparison therefore use real paths, so a symbolic link such as macOS `/tmp` cannot make an in-repository path look outside.
 - If the target doesn't exist yet, `toRootRelative` resolves the real path of its nearest existing ancestor and appends the remaining segments.
 - `toRootRelative` resolves `..` segments before the comparison. It compares whole path segments, so `/repo-other/a.js` is outside a root of `/repo`.
@@ -80,7 +80,7 @@ These enforcement hooks exit 2 today, and each one changes:
 - [ ] In a git fixture with no `design.md`, a **Write** to an absolute path outside the fixture exits 0 with empty stdout and stderr.
 - [ ] In the same fixture with a `design.md` whose component paths don't cover the target, a **Write** outside the fixture exits 0.
 - [ ] In a fixture that isn't a git repository, the root falls back to `cwd`. A **Write** outside `cwd` exits 0, and a **Write** to `cwd/src/a.js` with no `design.md` exits 2.
-- [ ] In a git fixture, with `cwd` set to a subfolder, a **Write** to `{root}/src/a.js` with no `design.md` exits 2. This shows that the root is the git top-level, not `cwd`.
+- [ ] In a git fixture, with `cwd` set to a subfolder, a **Write** to `{root}/src/a.js` with no `design.md` exits 2. This shows that the root is the walked-up repository root, not `cwd`.
 - [ ] With `cwd` at the git root, a `..` path that leaves the root, such as `../outside/a.js` or `src/../../outside/a.js`, exits 0.
 - [ ] A `..` path that stays inside the root, such as `docs/../src/a.js`, is gated like `src/a.js`.
 - [ ] A sibling folder whose name starts with the root's name, such as `{root}-other/a.js`, exits 0.
@@ -96,5 +96,5 @@ These enforcement hooks exit 2 today, and each one changes:
 
 ## Dependencies
 
-- None upstream in this feature. Req-004 depends on `path-rules.mjs` and on the git top-level root from this requirement.
+- None upstream in this feature. Req-004 depends on `path-rules.mjs` and on the repository root rule from this requirement.
 - The 0000031 CI jobs run the new suite on Linux and Windows.

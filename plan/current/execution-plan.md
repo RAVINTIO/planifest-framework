@@ -68,13 +68,13 @@ Each is a risk item with likelihood: medium.
 |----|-----------|----------------|
 | A-001 | Claude Code shows a PreToolUse block reason from stderr when a hook exits 2 | AC-7 fixes nothing for Claude Code |
 | A-002 | Claude Code passes the Bash command as `tool_input.command` | The shell guard never sees a command and always passes |
-| A-003 | Hooks look up `plan/` and `design.md` from the git top-level, not `cwd` | A session started in a subfolder would see no design and block every gated write |
-| A-004 | Both sides of the root comparison use real paths, so symbolic links such as `/tmp` on macOS resolve the same way | An in-repository write could look outside and bypass the gate |
+| A-003 | Hooks look up `plan/` and `design.md` from the repository root, found by walking up from `cwd` to the first folder holding `planifest-framework/` or `.git`, with no `git` spawn | A session started in a subfolder would see no design and block every gated write |
+| A-004 | Both sides of the root comparison use real paths. A missing target resolves through its nearest existing parent. | An in-repository write could look outside and bypass the gate |
 | A-005 | The `plan/current/` sentinel check applies to shell writes too, because the guard matches `gate-write` exactly | Shell writes to plan artifacts before P0 would be blocked. That is the intended parity. |
-| A-006 | A write target with a glob, variable, or `$(...)` gets a warning and passes. A `cd` with one literal argument is tracked. | `rm src/*.js` passes the guard. The boot-file rule covers it. |
+| A-006 | A write target with a glob or variable is judged by its literal prefix. A target with no literal prefix gets a warning and passes. A `cd` with one literal argument is tracked. | `cp a "$DIR/x"` passes the guard. The boot-file rule covers it. |
 | A-007 | Tools that relay both stdout and stderr show a block reason twice | The reason appears twice in Cursor, Cline, and OpenCode, and nothing breaks |
-| A-008 | Only `standard-boot.md` gains the Write-or-Edit rule, because only Claude Code registers the guard | Cursor boot text stays unchanged, which matches the out-of-scope tools |
+| A-008 | Both `standard-boot.md` and `cursor-boot.md` gain the Write-or-Edit rule. Tools without the shell guard need the rule most. | None. The rule is text only. |
 
 ## Open Questions
 
-None. The orchestrator recorded A-003 to A-008 as documented defaults during the continuous run. The human on the loop sees them in the P1 summary.
+None. The human on the loop reviewed A-003 to A-008 after P1. A-003 to A-005 were confirmed one at a time. A-006 to A-008 took the orchestrator's recommendation when the human returned to continuous mode.
