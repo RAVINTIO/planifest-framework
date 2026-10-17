@@ -15,5 +15,6 @@ When a developer runs `setup.sh <tool>`, this component:
 
 7. **Accepts the three retired integration flags** (see 0000030-ADR-003). Each prints a one-line notice and changes nothing, so a refresh from an old marker still succeeds.
 8. **Cleans up the retired integrations** (0000030). Every run, for every tool, removes stale settings entries, hook folders, and state files before it wires anything. See 0000030-ADR-004 and 0000030-ADR-005.
+9. **Registers the shell-write guard** (0000032). For Claude Code, setup wires `shell-write-guard.mjs` on a `Bash` PreToolUse matcher. A re-run replaces the earlier entry, so the install holds exactly one. See 0000032-ADR-006.
 
 It is designed to be re-run safely (idempotent) and is the single entry point for all tool-specific configuration.

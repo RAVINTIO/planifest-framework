@@ -17,6 +17,7 @@ responsibilities:
   # BEGIN retired-integrations (0000030)
   - "Own the removal of plan/.telemetry-failures and plan/.telemetry-receipts (0000030-ADR-005)"
   # END retired-integrations (0000030)
+  - "Register shell-write-guard.mjs on a Bash PreToolUse matcher for Claude Code, idempotently, in setup.sh and setup.ps1 (0000032-ADR-006)"
   - "Relocate cline.sh/cline.ps1's boot file into .clinerules/00-planifest-boot.md so it no longer collides with the .clinerules/skills directory (0000027-req-002)"
 
 exceptions:
@@ -50,7 +51,7 @@ contract:
       description: "Directory containing installed enforcement hook scripts"
     - name: ".claude/settings.json (hooks section)"
       type: "filesystem"
-      description: "PreToolUse hook entries added to the Claude Code settings file"
+      description: "PreToolUse hook entries added to the Claude Code settings file, including one Bash entry for shell-write-guard.mjs (0000032)"
   consumedBy: []
   consumes: []
   breakingChangePolicy: "requires-human-approval"
@@ -128,6 +129,8 @@ metadata:
   # Updated by 0000030 (docs-agent) P6: recorded the retired flags, the
   # always-on clean-up, the P5 hardening (F1 to F5), and the new quirks and
   # tech debt.
+  # Updated by 0000032 (docs-agent) P6: recorded the idempotent Bash
+  # PreToolUse registration of shell-write-guard.mjs in both setup scripts.
   createdBy: "agent"
   lastModifiedBy: "agent"
   skill: "planifest-codegen-agent"
