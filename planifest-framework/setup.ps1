@@ -327,7 +327,7 @@ function Copy-PlanifestWorkflow {
 }
 
 function Merge-EnforcementHookSettings {
-    # Merge gate-write (PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence,
+    # Merge gate-write and shell-write-guard (PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence,
     # and check-design (UserPromptSubmit) into settings.json. Always installed,
     # whatever flags are passed. Idempotent.
     param(
@@ -341,6 +341,11 @@ function Merge-EnforcementHookSettings {
     $preToolEntry = @{
         matcher = 'Write|Edit'
         hooks   = @(@{ type = 'command'; command = "node $HooksDir/gate-write.mjs" })
+    }
+    # req-010 (ADR-006): the Bash shell-write guard, registered for Claude Code only.
+    $shellGuardEntry = @{
+        matcher = 'Bash'
+        hooks   = @(@{ type = 'command'; command = "node $HooksDir/shell-write-guard.mjs" })
     }
     $autoTriggerEntry = @{
         matcher = '.*'
@@ -369,7 +374,11 @@ function Merge-EnforcementHookSettings {
         $filtered = @($existing.hooks.PreToolUse | Where-Object {
             -not ($_.hooks | Where-Object { $_.command -match 'gate-write' })
         })
-        $existing.hooks.PreToolUse = $filtered + $preToolEntry
+        # Remove only the Planifest Bash group, so a Bash group the human on the loop added stays
+        $filtered = @($filtered | Where-Object {
+            -not ($_.matcher -eq 'Bash' -and ($_.hooks | Where-Object { $_.command -match 'shell-write-guard' }))
+        })
+        $existing.hooks.PreToolUse = $filtered + $preToolEntry + $shellGuardEntry
 
         # Merge UserPromptSubmit — remove stale entries, append fresh ones in order
         if (-not $existing.hooks.UserPromptSubmit) {
@@ -390,7 +399,7 @@ function Merge-EnforcementHookSettings {
     else {
         $settings = [PSCustomObject]@{
             hooks = [PSCustomObject]@{
-                PreToolUse       = @($preToolEntry)
+                PreToolUse       = @($preToolEntry, $shellGuardEntry)
                 UserPromptSubmit = @($autoTriggerEntry, $presenceEntry, $userPromptEntry)
             }
         }

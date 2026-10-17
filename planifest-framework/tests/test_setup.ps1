@@ -185,6 +185,41 @@ try {
     }
     Write-Host "  PASS: external skill dirs removed on plain re-run"
 
+    # req-010 (feature 0000032): setup registers shell-write-guard.mjs for the
+    # Bash tool exactly once, and a Bash group the human on the loop added survives.
+    Write-Host "--- Testing: req-010 shell-write-guard registration ---"
+    $regDir = Join-Path $testDir 'req-010'
+    New-Item -ItemType Directory -Path (Join-Path $regDir '.claude') -Force | Out-Null
+    Copy-Item -Path $frameworkSrc -Destination (Join-Path $regDir 'planifest-framework') -Recurse -Force
+    $humanSettings = '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"echo human-bash-hook"}]}]}}'
+    Set-Content -LiteralPath (Join-Path $regDir '.claude\settings.json') -Value $humanSettings -NoNewline -Encoding UTF8
+
+    Push-Location $regDir
+    try {
+        & .\planifest-framework\setup.ps1 claude-code | Out-Null
+        & .\planifest-framework\setup.ps1 claude-code | Out-Null
+    }
+    finally {
+        Pop-Location
+    }
+
+    $regSettings = Get-Content -Raw -LiteralPath (Join-Path $regDir '.claude\settings.json') | ConvertFrom-Json
+    $bashGroups = @($regSettings.hooks.PreToolUse | Where-Object { $_.matcher -eq 'Bash' })
+    $guardGroups = @($bashGroups | Where-Object { $_.hooks | Where-Object { $_.command -match 'shell-write-guard\.mjs' } })
+    $humanGroups = @($bashGroups | Where-Object { $_.hooks | Where-Object { $_.command -match 'human-bash-hook' } })
+    if ($guardGroups.Count -ne 1) {
+        throw "FAIL: req-010: expected one shell-write-guard Bash group after two runs, found $($guardGroups.Count)"
+    }
+    Write-Host "  PASS: req-010: two setup.ps1 runs leave one shell-write-guard Bash group"
+    if ($humanGroups.Count -ne 1) {
+        throw "FAIL: req-010: expected the human Bash group to survive both runs, found $($humanGroups.Count)"
+    }
+    Write-Host "  PASS: req-010: the human Bash group survives both runs"
+    if (-not (Test-Path (Join-Path $regDir '.claude\hooks\enforcement\shell-write-guard.mjs'))) {
+        throw "FAIL: req-010: .claude\hooks\enforcement\shell-write-guard.mjs not installed"
+    }
+    Write-Host "  PASS: req-010: shell-write-guard.mjs is installed"
+
     Write-Host "SUCCESS: All setup.ps1 tests passed."
 }
 finally {

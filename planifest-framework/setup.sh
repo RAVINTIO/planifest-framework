@@ -467,15 +467,17 @@ install_enforcement_hooks() {
   local gate_cmd="node \"$hooks_dir_rel/gate-write.mjs\""
   local ratchet_cmd="node \"$hooks_dir_rel/ratchet-check.mjs\""
   local em_dash_cmd="node \"$hooks_dir_rel/em-dash-guard.mjs\""
+  local shell_guard_cmd="node \"$hooks_dir_rel/shell-write-guard.mjs\""
   local trigger_cmd="node \"$hooks_dir_rel/auto-trigger-orchestrator.mjs\""
   local presence_cmd="node \"$hooks_dir_rel/check-orchestrator-presence.mjs\""
   local design_cmd="node \"$hooks_dir_rel/check-design.mjs\""
 
   if command -v node >/dev/null 2>&1; then
-    PLANIFEST_GATE="$gate_cmd" PLANIFEST_RATCHET="$ratchet_cmd" PLANIFEST_EM_DASH="$em_dash_cmd" PLANIFEST_TRIGGER="$trigger_cmd" PLANIFEST_PRESENCE="$presence_cmd" PLANIFEST_DESIGN="$design_cmd" PLANIFEST_SETTINGS="$settings" PLANIFEST_SETTINGS_REL="$settings_rel" node -e "$SETTINGS_JS_HELPERS"'
+    PLANIFEST_GATE="$gate_cmd" PLANIFEST_RATCHET="$ratchet_cmd" PLANIFEST_EM_DASH="$em_dash_cmd" PLANIFEST_SHELL_GUARD="$shell_guard_cmd" PLANIFEST_TRIGGER="$trigger_cmd" PLANIFEST_PRESENCE="$presence_cmd" PLANIFEST_DESIGN="$design_cmd" PLANIFEST_SETTINGS="$settings" PLANIFEST_SETTINGS_REL="$settings_rel" node -e "$SETTINGS_JS_HELPERS"'
       const gate     = process.env.PLANIFEST_GATE;
       const ratchet  = process.env.PLANIFEST_RATCHET;
       const emDash   = process.env.PLANIFEST_EM_DASH;
+      const shellGuard = process.env.PLANIFEST_SHELL_GUARD;
       const trigger  = process.env.PLANIFEST_TRIGGER;
       const presence = process.env.PLANIFEST_PRESENCE;
       const design   = process.env.PLANIFEST_DESIGN;
@@ -499,6 +501,12 @@ install_enforcement_hooks() {
         {matcher:"Write", hooks:[{type:"command",command:emDash}]},
         {matcher:"Edit",  hooks:[{type:"command",command:emDash}]}
       );
+      // PreToolUse: shell-write-guard for Bash (req-010, ADR-006). Only the
+      // Planifest group goes, so a Bash group the human on the loop added stays.
+      s.hooks.PreToolUse = s.hooks.PreToolUse
+        .filter(h => h.matcher !== "Bash" ||
+                     !(h.hooks||[]).some(e => (e.command||"").includes("shell-write-guard")));
+      s.hooks.PreToolUse.push({matcher:"Bash", hooks:[{type:"command",command:shellGuard}]});
       // UserPromptSubmit: auto-trigger first, then presence check, then check-design
       // (REQ-002, REQ-008, idempotent)
       s.hooks.UserPromptSubmit = (s.hooks.UserPromptSubmit || [])
@@ -516,7 +524,7 @@ install_enforcement_hooks() {
     '
   else
     echo "  ! Warning: node not found — skipping settings.json enforcement hook wiring"
-    echo "  ! Manually add gate-write, ratchet-check, em-dash-guard (Write/Edit PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence and check-design (UserPromptSubmit) to $settings_rel"
+    echo "  ! Manually add gate-write, ratchet-check, em-dash-guard (Write/Edit PreToolUse), shell-write-guard (Bash PreToolUse), auto-trigger-orchestrator, check-orchestrator-presence and check-design (UserPromptSubmit) to $settings_rel"
   fi
 }
 
