@@ -37,7 +37,7 @@ As the human on the loop, I want the shell guard to catch the common shell write
   | `rm`, `touch`, `mkdir` | every argument that isn't an option |
 
 - A redirect to a file-descriptor duplicate, such as `>&2` or `2>&1`, isn't a write target. A redirect to `/dev/null` is outside the repository and passes.
-- A `cd` with one literal argument changes the base folder for the simple commands after it in the same command line. Write targets resolve against that base.
+- A `cd` with one literal argument changes the base folder for the simple commands after it in the same command line. Write targets resolve against that base. A command joined to the `cd` by `&&` resolves against the new base alone. After any `cd` that may not have run, targets also resolve against the starting folder (ADR-006).
 - The hook resolves each target through `toRootRelative` and decides it through `evaluateWrite`, both from `path-rules.mjs` (req-006). Req-009 holds that decision to parity with `gate-write.mjs`.
 - If any target gets a block result, the hook exits 2. It writes a plain-text reason to stderr that names the writer, the root-relative target, and the reason from `evaluateWrite`. It writes nothing to stdout (ADR-005).
 - The block reason tells the agent to make the change through **Write** or **Edit** once the design covers the path.
@@ -93,9 +93,13 @@ As the human on the loop, I want the shell guard to catch the common shell write
 - With no `design.md`, `rm src/*.js` and `cp a src/$NAME` each exit 2, because their literal prefix `src/` is a gated path.
 - `git checkout -- src/a.js` exits 0 with no output.
 - With no `design.md`, each of these exits 2 (security finding F2): `false && cd /tmp; echo hi > src/x.js`, `(cd /tmp); echo hi > src/x.js`, `cd /tmp | true; echo hi > src/x.js`, `cd /tmp || true; echo hi > src/x.js`, and `cd /tmp & echo hi > src/x.js`.
-- `cd /tmp && echo hi > x.txt` exits 2, because `{root}/x.txt` is gated. `cd /tmp && echo hi > plan/x.md` exits 0, because both bases pass.
+- `cd /tmp && echo hi > x.txt` and `cd /tmp && echo hi > src/x.js` each exit 0, because they write under `/tmp` (security finding N-1).
+- With a design that covers `src/app/` and `build/`, each of these exits 0 with no stderr (security finding N-1): `cd /tmp && touch x`, `cd build && make > log.txt`, `cd src/app && npm test > test.log`, `cd src/app && sed -i "" s/a/b/ index.js`, and `cd ~ && touch .foo`.
+- With the same design, a write after a `cd` the hook can't prove ran still exits 2. Examples are `cd src/app && true; echo hi > index.js`, `true || cd src/app && echo hi > index.js`, `! cd src/app && echo hi > index.js`, `(cd src/app) && echo hi > index.js`, and `cd src/other || true; echo hi > build/x`.
+- With the same design, a relative write after seven `cd` steps that may fail exits 2 with a reason that names too many folders. The same steps followed by `ls` exit 0.
 - Short-option clusters find their targets and exit 2: `cp -vt src/ /tmp/a`, `ln -sft src/ /tmp/a`, `perl -lpi -e … src/x`, `perl -0777 -pi -e … src/x`, `sed -Ei … src/x`, and `sed -Ei '' … src/x` (security finding F4).
 - An arithmetic `<<` in `((…))`, `$((…))`, `$[…]`, or `for ((…))` doesn't hide the next line's write. An unterminated here-document body is judged as commands. `((x > 3))` and `$[2 > 1]` aren't redirects (security finding F5).
+- With no `design.md`, `((echo hi > src/other/x); true)`, `((echo hi > src/other/x) )`, and `((true) && echo hi > src/other/x)` each exit 2, because Bash reads them as subshells. `((x = (1 + 2) * 3))` stays arithmetic (security finding N-2).
 - 20,000 nested `"$(` and 65 nested levels each exit 0 with a one-line warning. 20 nested levels still parse and judge the writer (security finding F8).
 - A target repeated 10,000 times blocks with one reason and under 10 KB of stderr. 10,000 distinct targets print 20 reasons and a summary line that counts the other 9,980 (security finding F11).
 

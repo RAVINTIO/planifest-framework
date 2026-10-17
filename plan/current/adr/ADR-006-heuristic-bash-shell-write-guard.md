@@ -32,12 +32,15 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 - It judges each target with `toRootRelative` and `evaluateWrite` from `path-rules.mjs` (ADR-004). It therefore blocks exactly when `gate-write.mjs` would block a **Write** to the same path.
 - A target holding a glob or variable is judged by its literal prefix, so `src/*.js` is judged as `src/`.
 - A target with no literal prefix passes with a one-line warning on stderr. An unbalanced quote does the same.
-- A `cd` with one literal argument moves a tracked base for the commands after it. A relative target is judged against both the starting folder (the hook's `cwd`) and the tracked base. It blocks if either judgement blocks, so a `cd` that never runs can't move a write out of the gate (security finding F2).
-  - The tracked base returns to its outer value at `)`.
-  - A `cd` doesn't carry across `|`, `||`, or `&`.
-  - `cd /tmp && echo hi > x.txt` therefore blocks when `{root}/x.txt` is gated. It passes only when both bases pass, such as `cd /tmp && echo hi > plan/x.md`. No command in the false-positive corpus changes.
+- The hook tracks the set of folders each simple command may run in. It judges a relative target against each folder in the set and blocks if any judgement blocks.
+  - A command joined by `&&` to a `cd` with one literal folder runs only if the `cd` succeeded. Its set is the folder after the `cd` alone (security finding N-1). `cd /tmp && touch x` and `cd src/app && npm test > test.log` therefore pass when the design covers what they write.
+  - Any other `cd` may not have run, so the set keeps its old folders and gains the new ones (security finding F2). This covers a `cd` after `||` or `!`, a `cd` the hook can't follow, and a command after `;`, a line break, `||`, or `&`.
+  - The set returns to its outer value at `)`. A `cd` before or after `|`, or before `&`, runs in a subshell and changes nothing.
+  - `pushd` with one folder acts as `cd`. `popd` adds every folder the command has reached.
+  - Past 64 possible folders, a relative target blocks, because the hook can't judge it. An absolute target is still judged.
+  - If a folder in the set makes the path too long to judge, the starting folder is judged as well.
 - Short-option clusters are read one letter at a time, so `cp -vt src/ a`, `perl -lpi -e …`, and `sed -Ei '' …` find their targets (security finding F4).
-- `((…))`, `$((…))`, and `$[…]` are read as one unit, so an arithmetic `<<` never opens a here-document. A here-document body with no closing delimiter line is read as commands (security finding F5).
+- `((…))`, `$((…))`, and `$[…]` are read as one unit, so an arithmetic `<<` never opens a here-document. A here-document body with no closing delimiter line is read as commands (security finding F5). A `((` is arithmetic only when an adjacent `))` at the same depth closes it. Bash reads any other `((` as two subshells, and so does the hook (security finding N-2).
 - A target over 4096 characters or 256 segments warns and passes before any file-system walk (ADR-004, security finding F7).
 - More than 64 levels of nested quotes, substitutions, or arithmetic make a command unjudgeable. It warns and passes, and a stack overflow does the same (security finding F8).
 - Stderr holds each distinct reason once, at most 20 reasons and 20 warnings, then one line that counts the rest (security finding F11).
@@ -67,13 +70,15 @@ A-002 records that Claude Code passes the command as `tool_input.command`. A-006
 **Positive:**
 - The common ways an agent writes code through Bash now meet the same design gate as **Write** and **Edit**.
 - Parse failures and unknown targets pass with a warning, so the guard never stops a session it can't understand.
-- A `cd` that may not run can't hide a write, because the starting folder is always judged too.
+- A `cd` that may not run can't hide a write, because the starting folder stays in the set.
+- A command after `cd dir &&` is judged where it runs, so builds and test runs in a covered folder pass.
 - The corpora give a fixed, repeatable measure of both false positives and misses.
 
 **Negative:**
 - The guard misses writes through git, scripts, interpreters, variables with no literal prefix, and anything it can't parse. The boot-file rule is text only for those cases.
 - Only Claude Code runs the guard. Other tools rely on the boot-file rule alone.
-- A relative write after a `cd` out of the repository blocks when the same path inside the repository is gated. The agent can use an absolute path instead.
+- A relative write after a `cd` that may not have run blocks when the same path from the starting folder is gated. This covers `if cd dir; then …` and `{ cd dir; } && …`. The agent can join the `cd` with `&&` or use an absolute path instead.
+- A command with more than 64 possible folders blocks any relative write.
 - A command nested past 64 levels, or a path past the length limits, passes with a warning.
 - Downstream projects gain the hook only after they re-run setup.
 
