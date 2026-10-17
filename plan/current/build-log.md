@@ -78,3 +78,15 @@ P1 review (A-005): Q: Apply the plan/current/ sentinel check to shell writes too
 Backlog copied at human request: planifest-zero 0000109 and 0000110 as 0000103 (release sizing) and 0000104 (subagent acceleration).
 P1 review (A-006, A-007, A-008): human returned to continuous mode, so the orchestrator applied its recommendations. A-006: judge the literal prefix before a glob or variable, warn and pass with no prefix. A-007: accept duplicate block reasons in tools that relay both streams. A-008: add the Write-or-Edit rule to cursor-boot.md too.
 Requirement change (cosmetic, P1 active): req-003 root lookup walks up the folder tree in place of git rev-parse. req-004 judges literal prefixes and edits both boot templates. Execution plan assumptions updated. No phase re-run needed.
+
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-17T09:46:15Z` |
+| Model tier | primary |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | `2` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Continuous run. Two ADR streams in parallel: run lifecycle (ADR-001 to ADR-003) and write gates (ADR-004 to ADR-006). Archived 0000015 ADRs stay untouched. P6 records supersession in `docs/decisions-index.md`. |
