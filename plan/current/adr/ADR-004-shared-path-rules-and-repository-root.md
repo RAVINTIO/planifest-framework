@@ -1,7 +1,7 @@
 ---
 title: "ADR 004: Shared path rules and repository root"
 summary: "One module, path-rules.mjs, holds the gated-path rules for gate-write.mjs and the shell guard. The root is the first folder above cwd that holds planifest-framework/ or .git, found with no git spawn. Targets outside the root pass."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-004 - Shared path rules and repository root

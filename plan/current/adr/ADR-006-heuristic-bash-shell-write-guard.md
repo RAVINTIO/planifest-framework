@@ -1,7 +1,7 @@
 ---
 title: "ADR 006: Heuristic Bash shell-write guard"
 summary: "A Bash PreToolUse hook, shell-write-guard.mjs, finds common shell writers, judges their targets with the shared path rules, and fails open on anything it can't parse. A boot-file Hard Limit covers the documented gaps. It's registered for Claude Code only."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-006 - Heuristic Bash shell-write guard

@@ -1,7 +1,7 @@
 ---
 title: "ADR 005: Block reasons on stderr"
 summary: "Every enforcement hook that exits 2 writes a plain-text reason to stderr, because Claude Code reads a PreToolUse block reason from there. Existing stdout stays byte for byte, so the stdout adapters keep working."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-005 - Block reasons on stderr
