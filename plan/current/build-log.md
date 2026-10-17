@@ -127,3 +127,45 @@ P3 end: 2026-10-17T11:19:18Z
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Continuous run. Batch 1 in parallel: semantic coverage subagent, syntax checks, CI status on PR #58. |
+P4 cycle 1: Check: semantic coverage. Gaps: req-006 AC2 never tested a root found by planifest-framework/ alone (every fixture ran git init). req-001 AC1 checked P7 Steps 6, 7, and "What P7 produces" only. Fix: req-006 adds a planifest-framework/-only fixture (3 checks). req-001 asserts no marker name anywhere from ## P7 to ## P8 (4 checks). Result: req-001 35/35, req-006 46/46.
+P4 style: removed one em dash P3 added to an auto-trigger comment.
+P4 result: library audit not applicable (no dependency manifests). Lint, typecheck, and build not applicable to Node hooks, Bash, and PowerShell. node --check and bash -n pass on every changed hook and script. Local run-tests.sh: 59 feature and 14 regression suites passed. CI run 39028270645 (head 08b6a1a, includes every code change): Test suite ubuntu 2m28s, macOS 4m41s, Setup under PowerShell 7 (Windows) 1m9s, all green. test_setup.ps1 req-010 checks ran on Windows only.
+
+| REQ | AC | Covered by | Result |
+|-----|----|-----------|--------|
+| REQ-001 | P7 never names a marker | req-001 suite, whole P7 range | pass |
+| REQ-001 | P9 marker step before the tag, no Step 9b, push and PR optional | req-001 suite | pass |
+| REQ-001 | Suite and the 0000023 and 0000025 suites pass | run-tests.sh, CI | pass |
+| REQ-002 | Feature ID from the sentinel, latest archive | req-002 suite | pass |
+| REQ-002 | P8 or P9 marker step from build-report.md, stop with no match | req-002 suite | pass |
+| REQ-002 | Start-fresh message removed, suite passes | req-002 suite | pass |
+| REQ-003 | No-run message names the three tracks and the orchestrator | req-003 suite | pass |
+| REQ-003 | Silent with sentinel or no framework, fails open, under 200 ms | req-003 suite | pass |
+| REQ-003 | Suite and test-0000009 pass | run-tests.sh, CI | pass |
+| REQ-004 | Handover rule routes next steps through a track | req-004 suite | pass |
+| REQ-004 | Note never says a code change needs no P0 | req-004 suite | pass |
+| REQ-004 | Suite passes | run-tests.sh, CI | pass |
+| REQ-005 | Step 12 asks for /clear or a new session and refuses new work | req-005 suite | pass |
+| REQ-005 | Context Hygiene and Phase 9 match | req-005 suite | pass |
+| REQ-005 | All suites pass | run-tests.sh, CI | pass |
+| REQ-006 | Outside targets pass, with and without design.md | req-006 suite | pass |
+| REQ-006 | Walk-up root by planifest-framework/ or .git, real paths | req-006 suite | pass |
+| REQ-006 | Rules from path-rules.mjs, installed, fails open | req-006 suite | pass |
+| REQ-007 | Every block path writes stderr | req-007 suite | pass |
+| REQ-007 | Stdout unchanged, Windsurf relay works | req-007 suite | pass |
+| REQ-007 | Under 200 ms | req-007 suite | pass |
+| REQ-008 | Detection corpus blocks | req-008 suite | pass |
+| REQ-008 | Literal-prefix judging, warn on parse failure | req-008 suite | pass |
+| REQ-008 | Git passes, limits documented | req-008 suite | pass |
+| REQ-009 | Exit codes match gate-write | req-009 suite | pass |
+| REQ-009 | False-positive corpus passes | req-009 suite | pass |
+| REQ-009 | Fails open, under 200 ms | req-009 suite | pass |
+| REQ-010 | setup.sh twice leaves one guard group | test_setup.sh | pass |
+| REQ-010 | setup.ps1 twice leaves one guard group | test_setup.ps1, CI Windows job | pass |
+| REQ-010 | Human Bash group survives | test_setup.sh, test_setup.ps1 | pass |
+| REQ-011 | 0.31.0 migration names the version, guard, and re-run | req-011 suite | pass |
+| REQ-011 | Background names both gains | req-011 suite | pass |
+| REQ-012 | standard-boot.md rule and guard bullet | req-012 suite | pass |
+| REQ-012 | cursor-boot.md rule | req-012 suite | pass |
+| REQ-012 | Generated CLAUDE.md rule | req-012 suite | pass |
+P4 end: 2026-10-17T11:25:56Z
