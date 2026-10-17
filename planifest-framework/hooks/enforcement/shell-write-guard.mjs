@@ -29,6 +29,10 @@
  *     Any other cd may not have run, so the starting folder stays in the set
  *     (F2). The set returns to its outer value at ), and a cd before or after
  *     | runs in a subshell. pushd acts as cd.
+ *   - A function definition, a loop keyword, or an alias of cd, pushd, or
+ *     popd means parts of the command may run out of text order. The whole
+ *     command is then judged against every folder it reaches, plus the
+ *     starting folder, and the && rule is off (G-1).
  *   - A target holding $, a backtick, *, ?, or { is judged by its literal
  *     prefix, so src/*.js is judged as src/.
  *
@@ -586,6 +590,53 @@ function cdTarget(base, args) {
   return resolve(base, dir);
 }
 
+// These words in command position start or end a loop, whose body may run
+// again after a later cd (G-1).
+const LOOP_WORDS = new Set(["while", "until", "for", "select", "do", "done"]);
+const ALIAS_CD_RE = /^(cd|pushd|popd)=/;
+
+// runsOutOfOrder: whether some part of the command may run in a different
+// order from its text. A function body runs where it's called, a loop body
+// runs again after a later cd, and a redefined cd may not change the folder.
+// Each of these turns off the && rule for the whole command (G-1).
+function runsOutOfOrder(items, analysed) {
+  for (let n = 0; n < items.length; n++) {
+    const item = items[n];
+    if (item.t !== "cmd") continue;
+    // name() or name () defines a function, so a ( follows the command.
+    if (items[n + 1]?.t === "sep" && items[n + 1].op === "(") return true;
+    const words = item.tokens.filter((tok) => tok.t === "w");
+    let k = 0;
+    for (; k < words.length; k++) {
+      const v = words[k].v;
+      if (LOOP_WORDS.has(v) || v === "function") return true;
+      if (!RESERVED.has(v) && !ASSIGNMENT_RE.test(v)) break;
+    }
+    if (analysed[n].name === "alias" && analysed[n].args.some((w) => ALIAS_CD_RE.test(w.v))) return true;
+  }
+  return false;
+}
+
+// reachAll: every folder the cds in the command may reach in any order, from
+// start. A cd is applied to every folder found so far until no new folder
+// appears or the set passes MAX_BASES (G-1).
+function reachAll(start, cds) {
+  const all = new Set([start]);
+  for (let changed = true; changed && all.size <= MAX_BASES;) {
+    changed = false;
+    for (const args of cds) {
+      for (const base of [...all]) {
+        const dir = cdTarget(base, args);
+        if (all.has(dir)) continue;
+        all.add(dir);
+        changed = true;
+        if (all.size > MAX_BASES) return all;
+      }
+    }
+  }
+  return all;
+}
+
 /**
  * Judges a whole command line from cwd.
  * Returns { blocks: [string], warnings: [string] }.
@@ -644,16 +695,24 @@ function judgeCommand(cwd, command) {
   };
 
   const start = resolve(cwd);
+  const analysed = items.map((item) => (item.t === "cmd" ? analyse(item.tokens) : null));
+  // A command that may run out of text order is judged against every folder
+  // it reaches at any point, plus the starting folder (G-1).
+  const anyOrder = runsOutOfOrder(items, analysed);
+  const all = anyOrder
+    ? reachAll(start, analysed.filter((a) => a && (a.name === "cd" || a.name === "pushd")).map((a) => a.args))
+    : null;
   // bases: the folders the next command may run in. null is a folder the hook
   // can't follow. reached: every folder the current list may have reached.
   // everSeen: every folder the whole command may have reached, for popd.
-  let bases = new Set([start]);
+  let bases = new Set(all ?? [start]);
   let reached = new Set([start]);
   const everSeen = new Set([start]);
-  let overflow = false; // too many folders to judge, so relative targets block
+  let overflow = all !== null && all.size > MAX_BASES; // too many folders to judge, so relative targets block
   const outer = [];
   for (let n = 0; n < items.length; n++) {
     const item = items[n];
+    if (anyOrder && item.t === "sep") continue;
     if (item.t === "sep") {
       if (item.op === "(") {
         outer.push({ bases, reached });
@@ -665,7 +724,7 @@ function judgeCommand(cwd, command) {
       }
       continue;
     }
-    const { targets, name, args, negated } = analyse(item.tokens);
+    const { targets, name, args, negated } = analysed[n];
 
     for (const { writer, word } of targets) {
       if (word.v === "") continue;
@@ -696,7 +755,7 @@ function judgeCommand(cwd, command) {
       }
     }
 
-    if (CD_NAMES.has(name) && !overflow) {
+    if (CD_NAMES.has(name) && !overflow && !anyOrder) {
       const before = items[n - 1];
       const after = items[n + 1];
       const carries =

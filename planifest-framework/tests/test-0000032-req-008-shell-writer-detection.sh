@@ -229,6 +229,45 @@ assert_equals "0" "$CODE" "req-008: N-1 an absolute target after too many folder
 
 # =============================================================================
 echo ""
+echo "=== req-008: functions, loops, and a redefined cd turn off the && rule (G-1) ==="
+
+# The hook tracks folders in text order. A function body runs where it's
+# called, and a loop runs again after a later cd, so these commands are judged
+# against every folder they reach plus the starting folder.
+R="$(native "$ROOT")"
+for cmd in \
+  "cd /tmp && f() { echo hi > src/x.js; }; cd $R; f" \
+  "cd /tmp && f () { echo hi > src/x.js; }; cd $R; f" \
+  "cd /tmp && function f { echo hi > src/x.js; }; cd $R; f" \
+  "cd /tmp && while echo hi > src/x.js && test \$PWD = /tmp; do cd $R; done" \
+  "cd /tmp && until echo hi > src/x.js; do cd $R; done" \
+  "cd /tmp && for ((i=0; i<2; i++)); do echo hi > src/x.js; cd $R; done" \
+  "cd /tmp && for d in a b; do echo hi > src/x.js; cd $R; done" \
+  "cd() { :; }; cd /tmp && echo hi > src/x.js" \
+  "function cd { :; }; cd /tmp && echo hi > src/x.js" \
+  "pushd() { :; }; pushd /tmp && echo hi > src/x.js" \
+  "alias cd=true; cd /tmp && echo hi > src/x.js" \
+  "for f in a b; do touch build/\$f.o; done"; do
+  run_guard "$ROOT" "$cmd"
+  assert_equals "2" "$CODE" "req-008: G-1 blocks with no design: $cmd"
+done
+
+# Builds and test runs in a covered folder still pass with the design.
+for cmd in \
+  "cd build && make > log.txt" \
+  "cd build && cmake .. && make > log.txt" \
+  "cd src/app && npm ci && npm test > out.log" \
+  "mkdir -p build && cd build && touch x" \
+  "pushd build && make; popd" \
+  "cd src && cd app && touch index.js" \
+  "for f in a b; do touch build/\$f.o; done"; do
+  run_guard "$SCOPED" "$cmd"
+  assert_equals "0" "$CODE" "req-008: G-1 still passes with a design: $cmd"
+  assert_equals "" "$ERR" "req-008: G-1 writes no stderr: $cmd"
+done
+
+# =============================================================================
+echo ""
 echo "=== req-008: short-option clusters are read one letter at a time (F4) ==="
 
 for cmd in \
