@@ -1,7 +1,7 @@
 ---
 title: "Feature Brief - human-on-the-loop run mode"
 summary: "An autonomous run mode with the human on the loop, a P0 that asks only real forks, configurable release sizing, parallel streams, and a close-out that needs nobody."
-status: "draft"
+status: "approved"
 version: "0.1.0"
 ---
 # Feature Brief - human-on-the-loop run mode

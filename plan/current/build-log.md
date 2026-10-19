@@ -49,3 +49,6 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Scope Lock clarification (cross-session): amend 0000012-ADR-005 so `autonomous` is recognised; keep every loop cap, with up to 3 approaches per gate before an exception; reversal budget stays at 2; stream state under `plan/current/streams/`. [source: agent-draft-accepted]
 - P0 exchange (Scope Lock): Q: accept, edit, or reject each of the four drafts and gap answers? / A: accept all.
 - Scope Lock complete. All four scenario paths captured.
+- P0 exchange (design and run mode): Q: confirm the design as drafted, and pick continuous or interactive? / A: design as drafted, continuous.
+- P0 questions asked: 4 (migration handling, scope bundle, Scope Lock batch, design and run mode). The PR #58 merge wait was a pre-flight step.
+- Gate accepted: P0 (2026-10-19T01:33:20Z)
