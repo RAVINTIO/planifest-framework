@@ -52,3 +52,15 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - P0 exchange (design and run mode): Q: confirm the design as drafted, and pick continuous or interactive? / A: design as drafted, continuous.
 - P0 questions asked: 4 (migration handling, scope bundle, Scope Lock batch, design and run mode). The PR #58 merge wait was a pre-flight step.
 - Gate accepted: P0 (2026-10-19T01:33:20Z)
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T01:33:46Z` |
+| Model tier | primary (orchestrator), cheaper (requirement drafting subagents) |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Requirement IDs fixed by the orchestrator before dispatch, so parallel streams can't collide. |
