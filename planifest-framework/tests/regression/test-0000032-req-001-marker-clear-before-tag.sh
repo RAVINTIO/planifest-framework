@@ -142,7 +142,8 @@ done
 
 STEP10=$(sed -n '/^### Step 10: Push\/PR decision/,/^### Step 11/p' "$SHIP")
 assert_contains "[1] Agent pushes" "$STEP10" "req-001: Step 10 still offers the agent push option"
-assert_contains "[2] I'll do it" "$STEP10" "req-001: Step 10 still offers the human push option"
+# Updated by feature 0000033, req-007: option [2] names the human as the actor.
+assert_contains "[2] Human pushes" "$STEP10" "req-001: Step 10 still offers the human push option"
 
 echo ""
 echo "=== req-001: orchestrator phase summaries ==="
