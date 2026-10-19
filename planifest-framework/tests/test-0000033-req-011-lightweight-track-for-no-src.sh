@@ -54,4 +54,13 @@ has "**Fast Path** - if ALL Fast Path criteria are met" "$ROW" "req-011: track t
 has 'no `src/` target' "$FPCE" "req-011: Fast Path Criteria and Execution names no src/ target"
 has "planifest-framework/workflows/fast-path.md" "$FPCE" "req-011: Fast Path Criteria and Execution still links the workflow"
 
+echo ""
+echo "=== req-011: Fast Path never admits enforcement paths (P5 G12) ==="
+
+for path in 'planifest-framework/hooks/' 'planifest-framework/scripts/' 'setup.sh' 'setup.ps1' 'enforcement hook'; do
+  has "$path" "$PREREQ" "req-011: prerequisite excludes $path (P5 G12)"
+  has "$path" "$ROW" "req-011: track table row excludes $path (P5 G12)"
+done
+has "Change or Feature Pipeline" "$PREREQ" "req-011: excluded paths take the Change or Feature Pipeline (P5 G12)"
+
 print_summary

@@ -100,4 +100,27 @@ P9_STOP=$(grep -A2 'P9 always stops' "$REF")
 assert_contains "\`autonomous\`" "$P9_STOP" "req-005: pipeline-reference names autonomous next to the P9 stop rule"
 assert_contains "still merges" "$P9_STOP" "req-005: pipeline-reference says the human on the loop still merges"
 
+echo ""
+echo "=== req-005: P5 fixes for branch check, push lines, and the final report file ==="
+
+OPT1=$(sed -n '/^\*\*Option \[1\] (Agent pushes):\*\*/,/^\*\*Option \[2\]/p' "$SHIP")
+BRANCH_LINE=$(grep -n 'git branch --show-current' <<< "$STEP10" | head -1 | cut -d: -f1)
+PUSH_LINE=$(grep -n -F 'git push -u origin HEAD' <<< "$STEP10" | head -1 | cut -d: -f1)
+before "$BRANCH_LINE" "$PUSH_LINE" "req-005: Step 10 checks the branch before the push (P5 G3)"
+assert_contains "\`feat/\`" "$STEP10" "req-005: Step 10 requires a feat/ branch in autonomous (P5 G3)"
+assert_contains "default branch" "$STEP10" "req-005: Step 10 refuses to push from the default branch (P5 G3)"
+assert_contains "exception item" "$(grep -F 'git branch --show-current' -A3 <<< "$STEP10")" \
+  "req-005: a refused branch push becomes an exception item (P5 G3)"
+assert_contains "git push -u origin HEAD" "$OPT1" "req-005: Option [1] pushes with git push -u origin HEAD (P5 G9)"
+assert_contains "git push origin v{version}" "$OPT1" "req-005: Option [1] pushes only the release tag (P5 G9)"
+lacks "--tags" "$(cat "$SHIP")" "req-005: the ship skill never runs git push --tags (P5 G9)"
+assert_equals "0" "$(grep -c -E 'git push .*(--force|-f( |$))' "$SHIP")" "req-005: no ship skill push uses --force or --force-with-lease (P5 G9)"
+assert_contains "No step in any mode uses \`--force\` or \`--force-with-lease\`" "$STEP10" \
+  "req-005: Step 10 states the no-force rule (P5 G9)"
+assert_contains "{archive-dir}/final-report.md" "$STEP11" "req-005: Step 11 writes the final report to a file (P5 G7)"
+assert_contains 'git commit -m "plan(p9): add final report for {feature-id}" -- "{archive-dir}/final-report.md"' "$STEP11" \
+  "req-005: Step 11 commits the final report by explicit path (P5 G7)"
+assert_contains "after-PR push rule" "$STEP11" "req-005: Step 11 pushes the report under the after-PR rule (P5 G7)"
+assert_contains "points to" "$STEP11" "req-005: the chat message points to the report file (P5 G7)"
+
 print_summary

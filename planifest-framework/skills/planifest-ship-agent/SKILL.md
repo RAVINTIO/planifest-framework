@@ -162,13 +162,23 @@ git commit -m "plan(p7): archive {feature-id}"
 Run this after `P8: Complete` (0000033 ADR-011):
 
 ```bash
-git status --porcelain -- plan/ docs/ ':(glob)src/**/docs/**'
+git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'
 ```
 
-Leave out lines under `{archive-dir}`, because the P9 marker step commits them. Treat every other line as a leftover. Read the run mode from the `Run mode` row in the Header table of `{archive-dir}/build-log.md`.
+The `--untracked-files=all` flag lists each untracked file, not just its directory. Leave out lines under `{archive-dir}`, because the P9 marker step commits them. Treat every other line as a leftover. Read the run mode from the `Run mode` row in the Header table of `{archive-dir}/build-log.md`.
+
+**P8 credential guard (0000033 P5):** In `autonomous`, check every leftover before you stage it. Refuse these files:
+
+- any file named `.env*`, `*.pem`, `*.key`, `id_rsa*`, or `*.p12`
+- any file whose content matches a credential pattern:
+  ```bash
+  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-' -- {path} ...
+  ```
+
+Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content (Hard Limit 3). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
-- **`autonomous`:** Stage each leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
+- **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
   ```bash
   git add -- {path} ...
   git commit -m "plan(p8): commit close-out leftovers" -m "{feature-id}" -- {path} ...
@@ -245,6 +255,8 @@ Also check `planifest-overrides/instructions/` for any file whose contents conta
 
 In `autonomous`, with no `local-git-only` override, skip the prompt and take Option [1]. With the override, take Option [2] and put the PR title and description in the final report.
 
+**Branch check (0000033 P5):** In `autonomous`, run `git branch --show-current` before any push. If it prints the default branch, or a name that doesn't start with `feat/`, don't push. Take Option [2] and record the refusal as an exception item in the final report.
+
 **Draft PR while an exception waits (0000033 D-003):** In `autonomous`, if the build log holds any `Exception waiting` line, Option [1] raises the PR with `gh pr create --draft`. The PR description lists every waiting exception. With no waiting exception, raise the PR ready for review.
 
 **After the PR:** In `autonomous`, push each commit the run makes after the PR is raised straight away, unless the `local-git-only` override applies. No step in any mode merges the PR.
@@ -263,8 +275,8 @@ Who pushes the branch and raises the PR?
 
 **Option [1] (Agent pushes):**
 ```bash
-git push
-git push --tags
+git push -u origin HEAD
+git push origin v{version}
 gh pr create \
   --title "{feature-id}: {one-line feature summary}" \
   --body "$(cat <<'EOF'
@@ -273,6 +285,8 @@ EOF
 )"
 ```
 Capture the PR URL. Update the changelog (`## PR` field) with the URL.
+
+Push only the branch and the `v{version}` tag. No step in any mode uses `--force` or `--force-with-lease`.
 
 **Option [2] (Human pushes):**
 
@@ -303,13 +317,13 @@ Also output the suggested PR title: `{feature-id}: {one-line feature summary}`
 Run the P8 command again after Step 10 (0000033 ADR-011):
 
 ```bash
-git status --porcelain -- plan/ docs/ ':(glob)src/**/docs/**'
+git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'
 ```
 
 Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any Step 9 `product.yml` change. Read the run mode from the `Run mode` row in the Header table of `{archive-dir}/build-log.md`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P9 build-log block.
-- **`autonomous`:** Stage each leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
+- **`autonomous`:** Apply the P8 credential guard first. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
   ```bash
   git add -- {path} ...
   git commit -m "plan(p9): commit close-out leftovers" -m "{feature-id}" -- {path} ...
@@ -318,12 +332,19 @@ Leave out nothing. Treat every line as a leftover. This catches the Step 10 chan
 
 ### Step 11: Confirm to human
 
-In `autonomous`, write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Step 12 still runs after the report. In `interactive` and `continuous`, send this message:
+In `autonomous`, write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Write the report to `{archive-dir}/final-report.md`, then commit it by explicit path:
+
+```bash
+git add -- "{archive-dir}/final-report.md"
+git commit -m "plan(p9): add final report for {feature-id}" -- "{archive-dir}/final-report.md"
+```
+
+Push that commit under the after-PR push rule. The report then survives the Step 12 context clear. The chat message points to the file. Step 12 still runs after the report. In `interactive` and `continuous`, send this message:
 
 ```
 P9: Ship complete.
 
-Git tag: v{version} ({if Option [1] was chosen: "already pushed" | "push with: git push origin --tags"})
+Git tag: v{version} ({if Option [1] was chosen: "already pushed" | "push with: git push origin v{version}"})
 PR: {URL if agent raised it | "See PR description above"}
 Archive: {archive-dir}/
 Changelog: plan/changelog/{feature-id}-{YYYY-MM-DD}.md

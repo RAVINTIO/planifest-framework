@@ -13,6 +13,13 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
   - an existing feature with code at `src/{component-id}/`
   - a change with no `src/` target, such as a change to documentation, governance, tooling, or framework text
 - The request meets **ALL** Fast Path criteria (verified by the orchestrator)
+- The change touches none of these enforcement paths:
+  - `planifest-framework/hooks/`
+  - `planifest-framework/scripts/`
+  - `setup.sh` or `setup.ps1`
+  - any enforcement hook
+
+  A change to any of them takes the Change or Feature Pipeline, even with no `src/` target.
 
 ## Fast Path Criteria
 

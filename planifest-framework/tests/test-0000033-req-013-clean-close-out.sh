@@ -15,7 +15,7 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 SHIP="$SCRIPT_DIR/../skills/planifest-ship-agent/SKILL.md"
 ORCH="$SCRIPT_DIR/../skills/planifest-orchestrator/SKILL.md"
-CMD="git status --porcelain -- plan/ docs/ ':(glob)src/**/docs/**'"
+CMD="git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'"
 
 # lacks <needle> <haystack> <label>: passes when the haystack omits the needle.
 lacks() {
@@ -122,5 +122,35 @@ OUT=$(cd "$R" && eval "$CMD")
 assert_contains "docs/a.md" "$OUT" "req-013: the scoped command reports docs/a.md"
 assert_contains "src/x/docs/b.md" "$OUT" "req-013: the scoped command reports src/x/docs/b.md"
 lacks "src/x/app.js" "$OUT" "req-013: the scoped command skips src/x/app.js"
+
+echo ""
+echo "=== req-013: credential guard before the autonomous leftover commit (P5 G5) ==="
+
+for pat in '`.env*`' '`*.pem`' '`*.key`' '`id_rsa*`' '`*.p12`'; do
+  assert_contains "$pat" "$C8" "req-013: P8 credential guard refuses $pat (P5 G5)"
+done
+GREP_CMD="grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-'"
+assert_contains "$GREP_CMD" "$C8" "req-013: P8 credential guard scans content for credential patterns (P5 G5)"
+assert_contains "exception item" "$C8" "req-013: a refused file becomes an exception item (P5 G5)"
+assert_contains "stay uncommitted" "$C8" "req-013: refused files stay uncommitted (P5 G5)"
+GUARD8=$(grep -n -F "$GREP_CMD" <<< "$C8" | head -1 | cut -d: -f1)
+ADD8=$(grep -n -F 'git add -- {path}' <<< "$C8" | head -1 | cut -d: -f1)
+before "$GUARD8" "$ADD8" "req-013: P8 credential guard runs before git add (P5 G5)"
+assert_contains "P8 credential guard" "$C9" "req-013: P9 check applies the P8 credential guard (P5 G5)"
+GUARD9=$(grep -n -F 'P8 credential guard' <<< "$C9" | head -1 | cut -d: -f1)
+ADD9=$(grep -n -F 'git add -- {path}' <<< "$C9" | head -1 | cut -d: -f1)
+before "$GUARD9" "$ADD9" "req-013: P9 credential guard runs before git add (P5 G5)"
+assert_contains "plan/\`, \`docs/\`, and \`src/**/docs/\`" "$C8" "req-013: the guard keeps the scope to plan/, docs/, and src/**/docs/ (P5 G5)"
+
+echo ""
+echo "=== req-013: untracked files and credential content in a fixture repo (P5 G5) ==="
+
+mkdir -p "$R/docs/new"
+echo three > "$R/docs/new/c.md"
+echo "key AKIA$(printf 'A%.0s' $(seq 1 16))" > "$R/docs/new/leak.md"
+OUT2=$(cd "$R" && eval "$CMD")
+assert_contains "docs/new/c.md" "$OUT2" "req-013: the scoped command lists each untracked file, not its directory (P5 G5)"
+HITS=$(cd "$R" && eval "$GREP_CMD -- docs/new/c.md docs/new/leak.md")
+assert_equals "docs/new/leak.md" "$HITS" "req-013: the content scan flags only the file with a credential pattern (P5 G5)"
 
 print_summary
