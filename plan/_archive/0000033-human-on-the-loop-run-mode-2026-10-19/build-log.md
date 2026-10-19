@@ -210,3 +210,31 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Step 7: archive committed.
 - End: `2026-10-19T03:40:00Z`
 - Gate passed: P7
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T05:31:24Z` |
+| Model tier | cheaper (build-assessment subagent) |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | none |
+- Build assessment: `build-report.md` written by one cheaper-tier subagent. It flags the P3 `sed -i` edit against Hard Limit 8 and some missing build-log rows.
+- Clean-tree check: clean. The only lines sit under the archive directory, and the P9 marker step commits them.
+- End: `2026-10-19T05:33:58Z`
+- Gate passed: P8
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T05:33:58Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Run mode from `run-mode.mjs`: continuous. |
