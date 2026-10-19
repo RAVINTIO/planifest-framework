@@ -187,3 +187,19 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Cross-model review: toggle off, not run. Deviation review: `autonomous` only, not run.
 - End: `2026-10-19T03:21:30Z`
 - Gate passed: P6 (zero drift, all expected artifacts present)
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T03:22:03Z` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Run mode from `run-mode.mjs`: continuous. P7 to P9 use the 0.32.0 ship agent installed at P6. |
+- Cross-reference check: no living-doc link points at `plan/current/`. The 15 new decisions-index rows already link to `plan/_archive/0000033-human-on-the-loop-run-mode-2026-10-19/adr/`. Other `plan/current/` mentions describe runtime paths, not links.
+- Step 1: changelog written to `plan/changelog/0000033-human-on-the-loop-run-mode-2026-10-19.md`.
+- Step 2: no `.skips` file.
+- Step 3: `.feature-id` written.
