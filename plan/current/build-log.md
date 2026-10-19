@@ -150,3 +150,6 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | Two fresh-context reviewers in parallel: the two new scripts, and the governance surface of the skill text. |
+- Script review: REJECT. Two High (symbolic-link archive dir moves files into `src/`, symbolic-link `plan/current` deletes files in `src/`), two Medium, four Low. Reviewer reproduced findings 1 to 5 in scratch repos.
+- Governance review: REJECT, overall High. Three High (explicit `off` removes checkers, override precedence unstated, push from the default branch), four Medium, five Low.
+- Decisions (continuous run, orchestrator): fix every finding. Script fixes S1 to S8 go to one agent. Governance fixes G1 to G12 go to two agents with disjoint files. G12 narrows req-011: Fast Path never admits `hooks/`, `scripts/`, or setup changes. G11 adds a seventh exception item for a credential sighting. All fixes strengthen the rules.
