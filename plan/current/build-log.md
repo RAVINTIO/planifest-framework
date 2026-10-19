@@ -38,3 +38,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Backlog pickup: the human chose 11 entries in one run: 0000076, 0000078, 0000103, 0000104, 0000075, 0000073, 0000086, 0000082, 0000101, 0000059, and 0000062. Every other entry: leave.
 - P0 exchange (scope): Q: Core four workflow entries, all 11, or two waves? / A: All 11 in one run. "Be brave."
 - Adoption mode: standard-iterative, derived from `plan/_archive/` and `docs/about.md`. Recorded in the design draft for one confirmation, per the human's direction to keep P0 questions to real forks.
+- Version: `0.31.0` to `0.32.0` (Feature Pipeline, minor bump). Recorded in the design draft for one confirmation.
+- Scope Lock: dispatched four `planifest-scope-lock-agent` instances in parallel, one per scenario path, on `claude-sonnet-5-5`.
