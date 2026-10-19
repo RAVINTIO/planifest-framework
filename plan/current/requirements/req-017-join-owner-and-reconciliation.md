@@ -29,8 +29,8 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
 - **Shared files:** before P3 dispatch, the orchestrator compares the files each stream plans to change. If two streams plan to change the same file, the orchestrator orders those edits, so one stream at a time edits that file.
 - **Reconciliation step:** after every join, and before the gate check, the orchestrator runs the reconciliation script below.
 - **Findings:** a finding blocks the gate. The orchestrator assigns the fix to one stream or takes it itself, then runs the script again.
-  - In `autonomous`, the fix runs as a loop under `planifest-loop-runner`, with the gate-loop cap that req-003 sets.
-  - In `interactive` and `continuous`, the orchestrator lists the finding in the gate summary. This adds no new STOP point.
+  - The fix runs as a loop under `planifest-loop-runner` with a cap of 3 in every run mode.
+  - At the cap, `autonomous` follows req-004's change-of-approach rule. In `interactive` and `continuous`, the orchestrator lists the open finding in the gate summary. This adds no new STOP point.
 
 ### Reconciliation script (new, `planifest-framework/scripts/stream-reconcile.mjs`)
 
@@ -40,7 +40,8 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
   1. The row names a consumer.
   2. The consumer is a different stream or unit than the producer. A stream can't consume its own artifact.
   3. If the consumer is a stream or unit, its `## Consumes` section lists the artifact ID. If the consumer is a requirement, the file `{planCurrentDir}/requirements/{req-id}-*.md` exists and names the artifact ID.
-  4. The artifact ID appears in at least one changed file of the consumer, other than the file that defines it. For a stream, the changed files come from `## Files changed`.
+  4. The artifact ID appears in at least one changed file of the consumer, other than the file that defines it.
+- **A consumer's changed files:** these are the files changed by the consumer stream's commits. The script lists them with `git log --name-only --format= --grep "Stream: {stream-id}" {start-commit}..HEAD`, using the stream's recorded `start-commit` (req-015). For a requirement consumer, the script uses the stream whose `requirements` list holds that requirement. For a join record outside streams, it uses the record's `## Files changed` section.
 - Exit codes: `0` when clean, `1` when there are findings, listed on stdout. An absent `streams/` directory exits `0` with no output.
 
 ### Why a script, and how it fits 0000006-ADR-003
@@ -48,7 +49,7 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
 - 0000006-ADR-003 says parallelism is enforced through skill text, not hooks. That still holds. The orchestrator decides what to dispatch and when, in skill text.
 - The reconciliation is a verifier, not dispatch enforcement. It reads files after a join and decides nothing about dispatch. Skill text calls it, and no hook runs it.
 - A script is justified because the seam it checks has slipped past model review three times (backlog 0000082). A deterministic file check gives the same answer on every run. `scripts/consistency-check.mjs` sets the precedent for a verifier script that skill text calls.
-- P2 records this choice in an ADR.
+- P2 writes an ADR for `stream-reconcile.mjs` that records this choice.
 
 ### The 0000082 test
 
@@ -68,7 +69,7 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
 ### Tests
 
 - Add `planifest-framework/tests/test-0000033-req-017-join-owner-and-reconciliation.sh`. `run-tests.sh` picks it up. It runs the script against fixture directories that the test builds in a temp directory:
-  - a clean pair of streams, which exits `0`
+  - a temp git repo with a clean pair of streams, each commit carrying its `Stream:` trailer, which exits `0`
   - a declared artifact with no consumer, which exits `1`
   - a stream that names itself as consumer, which exits `1`
   - a reproduction of 0000006: four declared faces and a consumer stream whose changed files never name them, which exits `1` with four findings
@@ -95,7 +96,8 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
 ## Dependencies
 
 - req-015 creates `plan/current/streams/`, the stream state template, and its `## Declares` and `## Consumes` sections.
-- req-003 sets the gate-loop cap for an `autonomous` fix loop.
+- req-004 sets the behaviour at a cap in `autonomous`.
 - req-016 defines the batches whose joins this requirement owns.
-- 0000006-ADR-003 still holds. A P2 ADR records why the reconciliation is a script.
+- 0000006-ADR-003 still holds.
+- A P2 ADR for `stream-reconcile.mjs` records why the reconciliation is a script.
 - Backlog 0000082 is the source problem. Backlog 0000105's font-usage gate fixed one instance, and this requirement generalises the check.

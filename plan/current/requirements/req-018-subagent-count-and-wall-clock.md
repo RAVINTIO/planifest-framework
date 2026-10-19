@@ -21,7 +21,7 @@ As the human on the loop, I read the subagent count and wall-clock time for each
 
 - **Header table:** add a `Parallel streams` row. Its value is `on` or `off`, with the source from req-015, for example `on (run-mode default)`.
 - **P0 block and the copyable phase block:** keep `Start` and `Agents spawned`. Add three rows after `Start`:
-  - `End`: the timestamp when the phase gate passes.
+  - `End`: the timestamp when the phase gate passes. req-006's per-phase progress line reuses this value and writes no second timestamp.
   - `Wall-clock`: whole minutes from `Start` to `End`.
   - `Streams`: the number of streams active in the phase, or `n/a`.
 - `Agents spawned` keeps its label. Its meaning becomes the number of subagents dispatched in the phase, across all streams.
@@ -78,5 +78,5 @@ As the human on the loop, I read the subagent count and wall-clock time for each
 
 - req-015 supplies the `Parallel streams` value and the stream state files' `## Phase history`.
 - req-016 supplies the always-parallel unit lists that the P8 audit checks against.
-- req-006 also adds per-phase build-log lines and a touchpoint count to the same template and P8 skill. The two changes must land in one consistent template.
+- req-006 also adds per-phase progress lines and a touchpoint count to the same template and P8 skill. Its progress lines reuse this requirement's `End` value. The two changes must land in one consistent template.
 - req-005 changes the P9 final report, which may quote these timings.

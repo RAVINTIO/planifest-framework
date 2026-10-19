@@ -19,15 +19,15 @@ As the human on the loop, I see independent requirements move through P1 to P4 a
 
 ### Loop toggles template (`planifest-framework/templates/loop-toggles.template.yml`)
 
-- Add a `parallel_streams` entry. It ships as a commented-out line, `# parallel_streams: on`, with a comment that states the default. A human who copies the template to enable another loop therefore keeps the run-mode default.
-- The header comment gains one line: "Exception: `parallel_streams` has a run-mode default. See the loop-runner Toggle Protocol."
-- No uncommented line in the template reads `: on`. The existing "Absent file = all loops off" sentence stays, with the exception line under it.
+- Add a `parallel_streams` entry. It ships as a commented-out line, `# parallel_streams: on`, with a comment that states the default. A human who copies the template to enable another loop never sets an explicit `off` by accident.
+- The default comes from the header rule that req-003 adds: when the run mode is `autonomous`, an absent key reads as `on`. This requirement adds `parallel_streams` to that rule's key list and adds no rule of its own.
+- No uncommented line in the template reads `: on`.
 
 ### Loop-runner skill (`planifest-framework/skills/planifest-loop-runner/SKILL.md`)
 
-- **`## Toggle Protocol (ADR-003)`:** Add a bullet for `parallel_streams`. It resolves in this order:
-  1. If the key holds `on` or `off`, use that value in every run mode.
-  2. If the file is absent, or the key is absent, use the run-mode default. The default is `on` when `plan/.run-mode` reads `autonomous` (req-001), and `off` otherwise.
+- **`## Toggle Protocol (ADR-003)`:** req-003 adds the autonomous header rule. This requirement adds `parallel_streams` to its key list and one bullet on how the key resolves:
+  1. An explicit `on` or `off` wins in every run mode.
+  2. An absent file or absent key reads as `on` when `plan/.run-mode` reads `autonomous` (req-001), per req-003's rule. In other modes it reads as `off`, as today.
   3. Any other value, `report-only` included, reads as `off` with a one-line warning. This matches the existing invalid-value rule.
 - The bullet states that `parallel_streams` is a dispatch setting, not a loop. It arms no loop-state file and no stop rule.
 
@@ -35,16 +35,16 @@ As the human on the loop, I see independent requirements move through P1 to P4 a
 
 Add a `## Parallel Streams` section after `## Parallelism Rules`. It holds the stream mechanics, so the orchestrator skill only links to it (design risk on orchestrator size). The section says:
 
-- **When streams run:** the orchestrator resolves `parallel_streams` at the start of P1 and records the value and its source in the P1 build-log block. Sources are `toggle file` or `run-mode default`.
+- **When streams run:** the orchestrator resolves `parallel_streams` at the start of P1 and records the value and its source in the P1 build-log block. Sources are `toggle file` or `autonomous default`.
 - **Forming streams:** if the toggle resolves `on`, the orchestrator groups the in-scope user stories into streams. Two stories go in separate streams only if they pass the dependency test in `## Parallelism Rules`. If fewer than two streams result, the run proceeds as a single stream with no state files.
 - **Stream scope:** each stream carries its requirements through P1, P2, P3, and P4. P5 onward runs once over the joined set.
 - **Identifier blocks:** before dispatch, the orchestrator pre-assigns each stream a distinct block of requirement IDs, ADR IDs, and backlog IDs. No two streams allocate from the same block. This extends the existing backlog-ID rule in `## Agent Dispatch Template`.
-- **Commits:** stream subagents don't commit. They share one working tree, so concurrent commits would race on the git index. The orchestrator commits each stream's artifacts when the stream reports back, before the join. This keeps the Hard Limit 7 cadence.
+- **Commits:** stream subagents don't commit. They share one working tree, so concurrent commits would race on the git index. The orchestrator commits each stream's artifacts when the stream reports back, before the join. Each such commit carries a `Stream: {stream-id}` trailer, so req-017 can find a stream's commits. This keeps the Hard Limit 7 cadence.
 - **State files:** each stream has one state file at `plan/current/streams/stream-{nn}-{slug}.md`, created from the new template below. The orchestrator writes and commits it when the stream starts, at every phase change, and at every join.
 
 ### Stream state template (new, `planifest-framework/templates/stream-state.template.md`)
 
-- Front matter fields: `stream-id`, `kind` (`stream`), `status` (`active`, `at-join`, `blocked`, or `done`), `phase` (`P1` to `P4`), `requirements` (the requirement IDs), `stories` (the user story IDs), `id-blocks`, and `updated`.
+- Front matter fields: `stream-id`, `kind` (`stream`), `start-commit` (the `HEAD` commit when the stream starts), `status` (`active`, `at-join`, `blocked`, or `done`), `phase` (`P1` to `P4`), `requirements` (the requirement IDs), `stories` (the user story IDs), `id-blocks`, and `updated`.
 - Sections: `## Phase history` (a table of phase, start, end, subagents, and result), `## Files changed`, `## Declares`, `## Consumes`, and `## Next step`. req-017 defines what `## Declares` and `## Consumes` hold.
 - Add `stream-state.template.md` to the orchestrator's `bundle_templates` front-matter list, since the orchestrator writes every stream file.
 
@@ -61,17 +61,17 @@ Add a `## Parallel Streams` section after `## Parallelism Rules`. It holds the s
 ### Tests
 
 - Add `planifest-framework/tests/test-0000033-req-015-parallel-streams-toggle-and-state.sh`. `run-tests.sh` picks it up.
-- `planifest-framework/tests/test-0000016-pipeline-governance.sh` asserts that no toggle defaults to `on` (req-011). Its assertion stays unchanged and must still pass, because the new line ships commented out.
+- `planifest-framework/tests/test-0000016-pipeline-governance.sh` asserts the template text: no toggle defaults to `on` (req-011), and `report-only` is documented. Its assertions stay unchanged and must still pass, because the new line ships commented out. req-003 owns any change to the header text this suite reads.
 
 ### Verified by
 
 - The toggles template contains `parallel_streams` only on a line that starts with `#`.
 - The toggles template has no line that matches `^[a-z_]*: on$`.
-- The loop-runner `## Toggle Protocol` section names `parallel_streams`, `autonomous`, and the run-mode default.
-- In that section, the explicit-value rule comes before the absent-file rule, checked by line number.
+- The loop-runner `## Toggle Protocol` section names `parallel_streams` in req-003's autonomous key list.
+- In the `parallel_streams` bullet, the explicit-value rule comes before the absent-key rule, checked by line number.
 - `agent-dispatch-standards.md` has a `## Parallel Streams` heading after `## Parallelism Rules`, checked by line number.
 - That section names `plan/current/streams/`, the P1 to P4 stream scope, the ID blocks, and the rule that stream subagents don't commit.
-- `templates/stream-state.template.md` exists and names `status`, `phase`, `requirements`, `## Declares`, `## Consumes`, and `## Next step`.
+- `templates/stream-state.template.md` exists and names `start-commit`, `status`, `phase`, `requirements`, `## Declares`, `## Consumes`, and `## Next step`.
 - The orchestrator `## Resume Detection` section has a step 6b that names `plan/current/streams/`, `status: active`, and `at-join`.
 - Step 6b sits after step 6a and before step 7, checked by line number.
 - The orchestrator `## Agent Dispatch Standards` section links to `## Parallel Streams`.
@@ -84,8 +84,9 @@ Add a `## Parallel Streams` section after `## Parallelism Rules`. It holds the s
 
 ## Dependencies
 
-- req-001 defines the `autonomous` value of `plan/.run-mode`. This requirement reads it for the default.
+- req-001 defines the `autonomous` value of `plan/.run-mode`.
+- req-003 owns the autonomous header rule in the toggles template and the Toggle Protocol. This requirement only adds `parallel_streams` to it.
 - req-017 defines the join, the `## Declares` and `## Consumes` sections, and the reconciliation check.
 - req-016 defines the always-parallel units that run inside each stream.
 - req-012 (archive script) must copy `plan/current/streams/` to the archive, as P7 Step 6 copies `plan/current/` today.
-- 0000016 ADR-003 (toggle protocol). This requirement adds a run-mode default for one key and leaves the protocol unchanged for every loop.
+- 0000016 ADR-003 (toggle protocol). Outside `autonomous`, an absent key still reads as `off`.
