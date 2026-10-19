@@ -252,3 +252,4 @@ P8 end: 2026-10-19. build-report.md written by one cheaper-tier sub-agent.
 | Parallel task batches | `0` |
 | Telemetry | confirmed-disabled |
 | Notes | Marker step, A-003 reconfirmation, tag, then push to the existing draft PR #58. |
+P9 A-003 reconfirmation: the human on the loop confirmed the P5 wording of A-003 on 2026-10-19.
