@@ -52,9 +52,7 @@ Check whether `docs/` exists at the repository root.
 
 Read the feature brief and design to understand the scope of this pipeline run. Assess whether the living docs (`docs/architecture-overview.md`, `docs/component-registry.md`, `docs/dependency-graph.md`, `docs/decisions-index.md`, `docs/api-index.md`) require updating based on what was built.
 
-Check `continuous_run` / `plan/.run-mode` before deciding how to present the assessment, by reading the mode with `node planifest-framework/scripts/run-mode.mjs`. Never read either record directly:
-
-Read the mode with `node planifest-framework/scripts/run-mode.mjs`, never from the file directly. The script prints `autonomous` only when git history anchors it.
+Check `continuous_run` / `plan/.run-mode` before deciding how to present the assessment, by reading the mode with `node planifest-framework/scripts/run-mode.mjs`. Never read either record directly. The script prints `autonomous` only when git history anchors it.
 
 **When `continuous_run` is active:** log the assessment and recommendation as a statement, not a question, and proceed automatically; do not stop for confirmation:
 
