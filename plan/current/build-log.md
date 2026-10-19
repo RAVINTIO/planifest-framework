@@ -79,7 +79,13 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Start | `2026-10-19T01:51:22Z` |
 | Model tier | primary (orchestrator and ADR drafting) |
 | Skills loaded | planifest-adr-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `3` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | ADR numbers fixed by the orchestrator before dispatch. |
+- Artifacts: ADR-001 to ADR-015. Six prior ADRs are amended (0000012-ADR-004, 0000012-ADR-005, 0000004-ADR-003, 0000014-ADR-008, 0000016-ADR-003, 0000016-ADR-005) and one is superseded (0000003-ADR-006). P6 records each in `docs/decisions-index.md`.
+- Gap found by the ADR-006 drafter: req-005 lacked D-003 (draft PR while an exception waits). Fixed in req-005.
+- `consistency-check.mjs`: clean.
+- Design critic: toggle off, not run. The P1 cross-stream review already checked the decisions these ADRs record.
+- End: `2026-10-19T01:55:48Z`
+- Gate passed: P2 (continuous run, no stop)
