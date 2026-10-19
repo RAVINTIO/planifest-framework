@@ -27,8 +27,8 @@
 | User and repo git config, alternates, grafts, and shallow files can forge the run-mode anchor | Already filed as backlog 0000121. Harden `run-mode.mjs` against these paths. | Next change to `run-mode.mjs` |
 | Quality gates for agent workflow evaluation (0000097) | Already filed as backlog 0000097. Build on the touchpoint count from req-006. | After the first `autonomous` runs give real counts |
 | Orchestrator skill decomposition | Already filed as backlog 0000020. See REC-002. | Next run |
-| `design_critic` on by default (REC-004) | Not yet filed. Needs a new backlog entry. | Before the next run |
-| File-ownership batching in `agent-dispatch-standards` (REC-005) | Not yet filed. Needs a new backlog entry. | Before the next parallel run |
+| `design_critic` on by default (REC-004) | Filed as backlog 0000122. | Before the next run |
+| File-ownership batching in `agent-dispatch-standards` (REC-005) | Filed as backlog 0000123. | Before the next parallel run |
 
 ## Tech Debt
 
@@ -37,4 +37,4 @@
 | TD-001 | planifest-framework | The join check in `stream-reconcile.mjs` accepts a file another stream changed. Already filed as backlog 0000120. | A join can pass with a false consumer claim. | Limit each join to its own changed files. |
 | TD-002 | planifest-framework | `scripts/run-mode.mjs` trusts user and repo git config paths. Already filed as backlog 0000121. | A deliberate multi-step tamper can forge `autonomous`. | Set the config paths explicitly in each git call. |
 | TD-003 | planifest-framework | The orchestrator skill holds 10,314 words. Already filed as backlog 0000020. | Each feature adds text and makes the skill harder for a fresh session to follow. | Move phase detail into standards files. |
-| TD-004 | planifest-framework | Installed `.claude/skills/` copies in this repository predate the 0.32.0 source skills. Not filed. See REC-003. | Local sessions run old rules and skip new checks. | Re-run setup with the current flags. |
+| TD-004 | planifest-framework | Installed `.claude/skills/` copies in this repository predated the 0.32.0 source skills. Resolved at P6: setup re-ran, so P7 to P9 use the new skills. See REC-003. | P0 to P6 of this run used the old installed copies. | Done. No backlog entry needed. |
