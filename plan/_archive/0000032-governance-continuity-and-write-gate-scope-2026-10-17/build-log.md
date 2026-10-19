@@ -225,3 +225,30 @@ P6 end: 2026-10-17T22:29:41Z
 | Notes | Continuous run. Followed planifest-framework/skills/planifest-ship-agent/SKILL.md, because the installed .claude/ copy is 0.30.0 and deletes the markers at P7. |
 P7 resumed 2026-10-19 in a new session (aad05653). Cross-reference check: no living doc links to this feature's `plan/current/` artifacts. No `.skips` file. Regression confirmation: the human on the loop promoted all ten tagged tests (a84f0d9). Regression pack 24 of 24 pass. Test report written to `plan/changelog/0000032-governance-continuity-and-write-gate-scope-test-report-2026-10-17.md`.
 P7 end: 2026-10-19
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19` |
+| Model tier | cheaper |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Continuous run. One sub-agent reads this log and writes build-report.md. |
+P8 end: 2026-10-19. build-report.md written by one cheaper-tier sub-agent.
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent (0.31.0 source copy) |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Telemetry | confirmed-disabled |
+| Notes | Marker step, A-003 reconfirmation, tag, then push to the existing draft PR #58. |
