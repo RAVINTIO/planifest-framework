@@ -127,19 +127,19 @@ One wave. The human chose all 11 entries in one run. The four streams in the tab
 
 **Happy path:**
 
-> {{happy-path}}
+> You choose `autonomous` at P0 and confirm the design, the scope answers, and the run mode in one turn. After that, the run goes from confirmed design to a raised PR with no gate waiting for you. A fresh-context checker stands in at each gate and retries a failed check with a changed approach. Independent requirements move in parallel streams, and the build log records every decision. Success is one final report and a clean working tree. You review and merge.
 
 **First-run path:**
 
-> {{first-run-path}}
+> A product upgrades with no release-budget setting, no `autonomous` value in `plan/.run-mode`, and its own overrides. Nothing changes until you choose. `interactive` and `continuous` behave as before. If no release setting exists, P0 keeps the three-story rule. P0 offers `autonomous` and records it only after you accept it. An override wins over the `autonomous` text, and an override never counts as choosing `autonomous`.
 
 **Error / sad path:**
 
-> {{error-sad-path}}
+> The most likely failure is a gate the run can't clear. The run doesn't stop and doesn't ask. It records each attempt and tries a different approach, up to 3 approaches per gate. The fourth becomes an exception-list item. A gross deviation is one the reversal protocol would class as *altering*. An exhausted budget is also an exception-list item. Exception-list items wait in the final report, and the run finishes all other work first.
 
 **Cross-session continuity:**
 
-> {{cross-session-continuity}}
+> If a session stops mid-run, the next session carries on from where it stopped. `plan/.run-mode` keeps the mode, and 0000012-ADR-005 changes so `autonomous` is a recognised value. Loop state files keep attempt counts and budgets, so a restart doesn't reset them. Each parallel stream keeps a state file under `plan/current/streams/`. A stop during the P7 archive repeats only the unfinished steps.
 
 ## Acceptance Criteria
 
