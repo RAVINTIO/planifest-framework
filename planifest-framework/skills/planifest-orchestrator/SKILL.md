@@ -1,7 +1,7 @@
 ﻿---
 name: planifest-orchestrator
 description: Guides a human from an initial idea to a complete set of requirements, then executes the confirmed design pipeline to build it. Use this for new features or full pipeline runs.
-bundle_templates: [feature-brief.template.md, execution-plan.template.md, requirement.template.md, component.template.yml, component-guide.md, adr.template.md, domain-glossary.template.md, risk-register.template.md, scope.template.md, data-contract.template.md, iteration-log.template.md, design.template.md]
+bundle_templates: [feature-brief.template.md, execution-plan.template.md, requirement.template.md, component.template.yml, component-guide.md, adr.template.md, domain-glossary.template.md, risk-register.template.md, scope.template.md, data-contract.template.md, iteration-log.template.md, design.template.md, stream-state.template.md]
 bundle_standards: [stack-summary.md, monorepo-standards.md, api-design-standards.md, observability-standards.md, formatting-standards.md, library-standards/_version-policy.md, build-target-standards.md]
 hooks:
   phase: orchestrator
@@ -97,6 +97,11 @@ On every session start, before taking any action:
 5. Check for `plan/current/pause.md` file: if present, open with `Px: Resuming: {active_task from pause.md}`, restore in-progress state from the file, delete `plan/current/pause.md`, and continue from where the session paused
 6. Read `plan/.run-mode` if present: restore run mode (`continuous`, `interactive`, or `autonomous`) without re-asking the human. Restoring `autonomous` sets `continuous_run: true` and `autonomous_run: true`. Any other value defaults to `interactive`. If the file is absent or unreadable, default to `interactive`.
 6a. Check `plan/current/discovery.md`: if present and complete for the confirmed adoption mode, trust it as-is and do not re-run the discovery pass. If missing or incomplete mid-run, regenerate it fresh (never patch a partial file).
+6b. **Stream resume (0000033 ADR-013):** read every file under `plan/current/streams/` whose `kind` is `stream`.
+   1. If any stream has `status: active`, resume each active stream at its recorded `phase` and `## Next step`. Dispatch all of them in one batch.
+   2. If every stream has `status: at-join`, run the join for that phase (see `## Joins and Reconciliation` in `standards/agent-dispatch-standards.md`).
+   3. If a stream has `status: blocked`, handle it as an escalation for the current run mode.
+   4. If stream files exist, the run stays in streams even when the toggle now resolves `off`. A toggle change takes effect at the next feature.
 7. If artifacts are found: open with `Px: Resuming…` (no P0 briefing, no re-coaching)
 8. If no artifacts: open with `P0:` and begin coaching
 
@@ -559,6 +564,7 @@ If any item cannot be checked, coach the human on that specific gap before proce
 - **Commit (P1–P6):** stage and commit all new artifacts produced this phase before presenting the gate summary to the human.
 - **STOP (P1–P6):** wait for human confirmation before proceeding to the next phase unless `continuous_run: true` was set at P0, or the phase states its own exception below.
 - **Run modes:** see `planifest-framework/standards/autonomous-run-standards.md` for the run-mode table and what `autonomous` still stops for.
+- **Joins:** after every join, run `node planifest-framework/scripts/stream-reconcile.mjs` before the gate check. A finding blocks the gate. See `## Joins and Reconciliation` in `standards/agent-dispatch-standards.md`.
 - **Questions in `autonomous`:** the one-question rule and recommend-then-confirm give way to the standards file's exception list and decision rule.
 
 ## Phase Invocation Table (P1-P6)
@@ -575,6 +581,8 @@ Each phase skill documents its own Input and What It Produces (see its `## Input
 | P6 Documentation | docs-agent | Every living artifact produced and consistent (`docs/` is living state; `plan/` is change-in-progress: never mix the two) | STOP, present docs artifacts produced and any drift found. Exception: proceed without confirmation if zero drift and all expected artifacts present. |
 
 In `autonomous`, each gate runs as a loop with a fresh-context checker per `standards/autonomous-run-standards.md` (Gates as loops) and never stops.
+
+If streams are active, each P1 to P4 gate runs once over the joined streams, not once per stream. See `## Parallel Streams` in `standards/agent-dispatch-standards.md`.
 
 **Before P3 specifically:** check the declared stack against installed capability skills (see Capability Skills above) and recommend loading any relevant ones; the human confirms which to load. Then apply the Subagent Decomposition Directive for every requirement: the codegen-agent (and other phase agents) MUST decompose hard or multi-step work into subagents rather than attempting it inline: consult `## Skill Map` in `plan/current/design.md` for the best-fit skill per requirement (falling back to the available skill library via the Model Tier Decision Table if the map is absent or the requirement is new), select model tier per that table, then dispatch per the Agent Dispatch Template.
 
@@ -669,6 +677,8 @@ Executed by the ship-agent immediately after P8 completes, as part of its close-
 ## Agent Dispatch Standards
 
 **Consult `planifest-framework/standards/agent-dispatch-standards.md` before spawning every subagent.** It holds the Model Tier Decision Table (task type → tier → rationale, tier-to-model mapping per tool), the Parallelism Rules (default-parallel posture, MUST/Cannot-parallelise tables), and the Agent Dispatch Template (concrete parallel dispatch skeleton, self-contained prompt rule). Resolve the tier to a concrete model name for the active tool and pass it explicitly; record the tier in the build log for P8.
+
+Stream mechanics live in `## Parallel Streams` in the same file. Join ownership and the reconciliation step live in `## Joins and Reconciliation`.
 
 ---
 

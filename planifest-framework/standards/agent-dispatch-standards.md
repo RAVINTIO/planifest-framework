@@ -72,6 +72,46 @@ Canonical home for model tier selection and parallelism/dispatch mechanics, shar
 
 **Record in build log:** After each phase, record the parallel task batch count. If it is 0 for a phase where parallelism was possible, the P8 efficiency observation will flag it.
 
+### Always-parallel work units
+
+1. Parallel dispatch is the default in every phase and every run mode.
+2. Each phase skill lists its always-parallel units under its `## Parallelism Directive`, in a list headed `**Always parallel:**`.
+3. The phase dispatches every listed unit that applies to the run in one batch. A batch is one message that holds one call per unit. Subagent work uses an `Agent` call, and a search or check uses a tool call.
+4. If a listed unit runs alone or in a later batch, the phase records the dependency reason in the build-log `Notes` field.
+
+The list sets a floor, not a ceiling. A phase may batch more units when they pass the dependency test above. The lists change how a phase dispatches, not what it produces. Gates, STOP rules, and artifacts stay the same in every run mode.
+
+---
+
+## Parallel Streams
+
+A stream is one group of independent requirements that moves through P1 to P4 as its own subagent track (0000033 ADR-013). The `parallel_streams` toggle turns streams on. See the loop runner's Toggle Protocol for how it resolves.
+
+- **When streams run:** the orchestrator resolves `parallel_streams` at the start of P1. It records the value and its source in the P1 build-log block. The source is `toggle file` or `autonomous default`.
+- **Forming streams:** if the toggle resolves `on`, the orchestrator groups the in-scope user stories into streams. Two stories go in separate streams only if they pass the dependency test in `## Parallelism Rules`. If fewer than two streams result, the run proceeds as a single stream with no state files.
+- **Stream scope:** each stream carries its requirements through P1, P2, P3, and P4. Each P1 to P4 gate runs once over the joined streams. P5 onward runs once over the joined set.
+- **Identifier blocks:** before dispatch, the orchestrator gives each stream a distinct block of requirement IDs, ADR IDs, and backlog IDs. No two streams allocate from the same block. This extends the backlog-ID rule in `## Agent Dispatch Template`.
+- **Commits:** Stream subagents don't commit. They share one working tree, so concurrent commits would race on the git index. The orchestrator commits each stream's artifacts when the stream reports back, before the join. Each such commit carries a `Stream: {stream-id}` trailer, so the reconciliation script can find it. This keeps the Hard Limit 7 cadence.
+- **State files:** each stream has one state file at `plan/current/streams/stream-{nn}-{slug}.md`, from `templates/stream-state.template.md`. The orchestrator writes and commits it when the stream starts, at every phase change, and at every join. Resume Detection step 6b reads these files.
+
+---
+
+## Joins and Reconciliation
+
+A join is a point where streams or batches meet again (0000033 ADR-014). Each one creates a seam where an artifact can go unused.
+
+- **Join owner:** the orchestrator owns every join. A join happens when a parallel batch returns, and when the streams meet at a P1 to P4 gate. The owner is the agent that placed the dispatch, never a dispatched subagent.
+- **Declarations:** every dispatch prompt asks the subagent to report two lists with its result.
+  - `Declares`: each artifact it produced for another unit to use. Each row gives an artifact ID, the file that defines it, and the intended consumer, a stream ID or a requirement ID. Ask for distinctive IDs, so a short ID can't match by chance.
+  - `Consumes`: each artifact from another unit that it used, by artifact ID.
+- **Where declarations live:** for a stream, the orchestrator writes them to the `## Declares` and `## Consumes` sections of the stream's state file. For a batch outside streams, the orchestrator writes one join record at `plan/current/streams/join-{phase}-{nn}.md`, with `kind: join`. It uses the same two sections and adds a `## Files changed` list.
+- **Shared files:** before P3 dispatch, the orchestrator compares the files each stream plans to change. If two streams plan to change the same file, the orchestrator orders those edits, so one stream at a time edits that file.
+- **Reconciliation step:** after every join, and before the gate check, the orchestrator runs `node planifest-framework/scripts/stream-reconcile.mjs`. The script reports each declared artifact that has no consumer, names its own producer as consumer, or has no use in the consumer's changed files. It exits `0` when clean and `1` with findings.
+- **Findings:** a finding blocks the gate. The orchestrator assigns the fix to one stream or takes it itself, then runs the script again.
+  - The fix runs as a loop under `planifest-loop-runner` with a cap of 3 in every run mode.
+  - At the cap, `autonomous` changes approach per `## Changing approach` in `standards/autonomous-run-standards.md`. In `interactive` and `continuous`, the orchestrator lists the open finding in the gate summary. This adds no new STOP point.
+- **Fit with 0000006-ADR-003:** dispatch stays in skill text. The script is a verifier called from skill text, not dispatch control. It reads files after a join and decides nothing about dispatch. No hook runs it.
+
 ---
 
 ## Agent Dispatch Template
@@ -82,10 +122,10 @@ Agent spawning is level-2 parallelism (the Agent tool for independent sub-tasks 
 
 ```
 Agent({ description: "Implement REQ-001: {one-liner}", subagent_type: "general-purpose", model: "claude-haiku-4-5",
-  prompt: "Requirement: plan/current/requirements/req-001-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-1}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed." })
+  prompt: "Requirement: plan/current/requirements/req-001-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-1}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed. Also report Declares (artifact ID, defining file, consumer, for each artifact made for another unit) and Consumes (each artifact ID from another unit that you used)." })
 
 Agent({ description: "Implement REQ-002: {one-liner}", subagent_type: "general-purpose", model: "claude-haiku-4-5",
-  prompt: "Requirement: plan/current/requirements/req-002-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-2}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed." })
+  prompt: "Requirement: plan/current/requirements/req-002-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-2}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed. Also report Declares (artifact ID, defining file, consumer, for each artifact made for another unit) and Consumes (each artifact ID from another unit that you used)." })
 ```
 
 **Self-contained prompt rule:** include the requirement file path, relevant ADR paths, stack declaration or relevant constraint, the backlog ID to use if filing an out-of-scope discovery, and what "done" looks like. Do NOT rely on shared conversation history: the spawned agent has no memory of this session.

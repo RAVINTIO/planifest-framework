@@ -38,6 +38,12 @@ Before arming any loop, read `planifest-overrides/loop-toggles.yml` (see `templa
 
 An explicit value in `planifest-overrides/loop-toggles.yml` always wins, including `off` and `report-only`. Outside `autonomous`, an absent key still reads as **off**, so behaviour doesn't change. `p0_completeness` keeps its default in every mode.
 
+**`parallel_streams` resolution (0000033 ADR-013):** this key is a dispatch setting, not a loop. It arms no loop-state file and no stop rule. It resolves in this order:
+
+1. An explicit `on` or `off` wins in every run mode.
+2. An absent file or absent key reads as `on` when `plan/.run-mode` reads `autonomous`, per the rule above. In other modes it reads as `off`.
+3. Any other value, `report-only` included, reads as `off` with a one-line warning.
+
 The framework never creates `planifest-overrides/loop-toggles.yml`; enabling a loop is always a deliberate human act.
 
 ## Loop State (per instance)
