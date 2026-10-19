@@ -35,6 +35,7 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 - **Hard Limit 4:** The rule stays for `interactive` and `continuous`. In `autonomous`, the human on the loop's P0 choice gives that awareness, and the final report confirms the tag and the PR.
 - **P7 Step 4 (Regression confirmation):** In `autonomous`, the agent decides each candidate as a recorded decision. It passes `agent` as the promoted-by argument to `promote-to-regression.sh`. The final report lists each candidate and its decision.
 - **Step 10 (Push/PR decision):** The `local-git-only` check runs first, as now, and an override still wins. In `autonomous` with no such override, skip the prompt and take Option [1]. With the override, take Option [2] and put its PR title and description in the final report.
+- **Draft PR while an exception waits (D-003, ADR-006):** In `autonomous`, if any exception-list item waits, Option [1] raises the PR with `gh pr create --draft`. The PR description lists every waiting exception. With no waiting exception, the PR is raised ready for review.
 - **After the PR:** In `autonomous`, any commit the run makes after the PR is raised is pushed straight away, unless the `local-git-only` override applies.
 - **Step 11 (Confirm to human):** In `autonomous`, the agent writes the final report in place of the Step 11 message. Step 12 still runs after the report.
 - **Merging:** No step, in any mode, runs `gh pr merge` or merges the PR in another way.
@@ -62,6 +63,7 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 - Step 10 checks `local-git-only` before the `autonomous` rule, by line number.
 - Step 10 still holds both `Option [1] (Agent pushes)` and `Option [2] (Human pushes)` headings.
 - The after-PR push rule names the `local-git-only` exception.
+- Step 10 names `gh pr create --draft` for an `autonomous` run with a waiting exception, and says the PR description lists each one.
 - The ship skill's Step 11 names the final report for `autonomous`, and Step 12 still follows it.
 - The ship skill doesn't contain `gh pr merge`.
 - The orchestrator's Phase 7 gate line still contains "always a confirmation stop" and also names `autonomous`.
@@ -69,7 +71,7 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 
 ## Acceptance Criteria
 
-- [ ] (AC-1) In `autonomous`, P7 to P9 ask nothing. The ship agent raises the PR unless a `local-git-only` override applies, and no mode merges the PR.
+- [ ] (AC-1) In `autonomous`, P7 to P9 ask nothing. The ship agent raises the PR unless a `local-git-only` override applies, as a draft when an exception waits. No mode merges the PR.
 - [ ] (AC-2) An `autonomous` run ends with one final report that holds the six parts, including the clean-tree result and every exception waiting.
 - [ ] (AC-7) P7 to P9 stay as they are in `interactive` and `continuous`, and the new suite and the 0000025 req-001 and 0000032 req-001 suites pass.
 
