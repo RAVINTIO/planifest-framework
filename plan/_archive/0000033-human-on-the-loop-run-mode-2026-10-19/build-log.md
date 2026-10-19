@@ -238,3 +238,9 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Run mode from `run-mode.mjs`: continuous. |
+- Marker step: committed in `80d00b8`. No marker stays tracked.
+- Step 9: tag `v0.32.0` from `product-version.mjs`. The gate-write hook blocked the `product.yml` informational update, because the design is archived. `product.yml` still reads 0.30.0.
+- Step 10: the human on the loop chose option 1. Pushed the branch and `v0.32.0`. PR: https://github.com/planifest/planifest-framework/pull/59
+- Step 10b: changelog PR field updated. Clean-tree check listed the changelog and this log, committed as leftovers.
+- End: `2026-10-19T05:56:45Z`
+- Gate passed: P9

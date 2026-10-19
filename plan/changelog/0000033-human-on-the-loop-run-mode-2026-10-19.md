@@ -2,7 +2,7 @@
 
 **Feature:** Human-on-the-loop run mode
 **Pipeline run:** P0 to P9 completed in `continuous` mode. No phases skipped.
-**PR:** pending, updated after the PR is raised in Step 10
+**PR:** https://github.com/planifest/planifest-framework/pull/59
 
 ## What Was Built
 
