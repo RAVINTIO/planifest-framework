@@ -61,6 +61,11 @@ responsibilities:
   - "Wire every hooks/enforcement/ entry into settings.json through a node interpreter prefix rather than a bare .mjs path, so the enforcement layer cannot fail open at exit 126 on a non-executable file mode (0000028-P5 SEC-001)"
   - "Always overwrite the boot file (CLAUDE.md/AGENTS.md) from the current template on every setup.sh/setup.ps1 run, since durable local customization lives in planifest-overrides/instructions/ and is re-applied every run (0000029-req-001)"
   - "Keep templates/standard-boot.md free of any reference to a specific third-party MCP plugin by name; a boot template must not instruct the agent to prefer a plugin that may not be installed, trusted, or reviewed (0000029-req-002)"
+  - "Run an autonomous mode (plan/.run-mode value autonomous) that stops only on a declared exception list, runs every gate as a loop with a fresh-context checker, and ends P9 with one final report. Standing rules live in standards/autonomous-run-standards.md and templates/exception-list.template.yml (0000033)"
+  - "Limit P0 to real forks via standards/p0-question-policy.md, sample existing records in discovery, and size releases in points via standards/release-sizing.md and templates/release-budget.template.yml (0000033)"
+  - "Admit a change with no src/ target to Fast Path, and rerun the P4 check set after P6 with an optional templates/doc-checks.template.yml (0000033)"
+  - "Run independent requirements as parallel streams (templates/stream-state.template.md, parallel_streams toggle) with the orchestrator owning joins, checked by scripts/stream-reconcile.mjs (0000033)"
+  - "Archive plan/current/ at P7 with scripts/archive-current.mjs (no glob delete) and print the effective run mode with scripts/run-mode.mjs (0000033)"
 
 exceptions:
   - "Does not write to planifest-overrides/ — that directory is user-owned"
@@ -132,6 +137,9 @@ scope:
     - "node interpreter prefix on every enforcement hook command string written into settings.json by setup.sh (0000028-P5 SEC-001)"
     - "write_boot_file/Write-BootFile always-overwrite behaviour, replacing the prior skip-if-exists guard (0000029-req-001)"
     - "templates/standard-boot.md free of any named third-party MCP plugin reference (0000029-req-002)"
+    - "scripts/archive-current.mjs, scripts/stream-reconcile.mjs, and scripts/run-mode.mjs (0000033)"
+    - "standards/autonomous-run-standards.md, standards/p0-question-policy.md, standards/release-sizing.md, and the autonomous-run additions to standards/agent-dispatch-standards.md (0000033)"
+    - "templates/exception-list.template.yml, release-budget.template.yml, doc-checks.template.yml, and stream-state.template.md (0000033)"
   outOfScope:
     - "Application-level code generation (handled by planifest-codegen-agent)"
     - "CI pipeline configuration for consumer projects"
@@ -167,7 +175,7 @@ pipeline:
 
 metadata:
   createdAt: "2026-05-02"
-  updatedAt: "2026-08-08"
+  updatedAt: "2026-10-19"
   # Updated by 0000021 (spec-agent) P1: seeded requirements-derived
   # responsibilities/scope/risk entries for the regression-pack and
   # audit-findings-report/guardrailed-trim process ahead of P3 codegen.
@@ -211,6 +219,10 @@ metadata:
   # at exit 126.
   # Updated by 0000030 (codegen-agent) P3: removed the retired hook and MCP
   # integration text from responsibilities, scope, risk and quirks.
+  # Updated by 0000033 (docs-agent) P6: version 0.32.0. Added the autonomous
+  # run mode, exception list, gates as loops, P0 real-forks policy, release
+  # budget, Fast Path for no-src changes, parallel streams, and the
+  # archive-current, stream-reconcile, and run-mode scripts.
   createdBy: "agent"
   lastModifiedBy: "agent"
   skill: "planifest-codegen-agent"
