@@ -63,4 +63,11 @@ for path in 'planifest-framework/hooks/' 'planifest-framework/scripts/' 'setup.s
 done
 has "Change or Feature Pipeline" "$PREREQ" "req-011: excluded paths take the Change or Feature Pipeline (P5 G12)"
 
+echo ""
+echo "=== req-011: Fast Path never admits the autonomous-run standards (P5 C2-8) ==="
+
+has "planifest-framework/standards/autonomous-run-standards.md" "$PREREQ" "req-011: prerequisite excludes autonomous-run-standards.md (P5 C2-8)"
+has "planifest-framework/standards/autonomous-run-standards.md" "$ROW" "req-011: track table row excludes autonomous-run-standards.md (P5 C2-8)"
+has "exception list and standing rules" "$PREREQ" "req-011: prerequisite says why the standards file is excluded (P5 C2-8)"
+
 print_summary

@@ -16,6 +16,7 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
 - The change touches none of these enforcement paths:
   - `planifest-framework/hooks/`
   - `planifest-framework/scripts/`
+  - `planifest-framework/standards/autonomous-run-standards.md`, because it holds the exception list and standing rules
   - `setup.sh` or `setup.ps1`
   - any enforcement hook
 

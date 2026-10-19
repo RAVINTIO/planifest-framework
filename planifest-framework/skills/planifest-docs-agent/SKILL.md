@@ -54,6 +54,8 @@ Read the feature brief and design to understand the scope of this pipeline run. 
 
 Check `continuous_run` / `plan/.run-mode` before deciding how to present the assessment:
 
+Read the mode with `node planifest-framework/scripts/run-mode.mjs`, never from the file directly. The script prints `autonomous` only when git history anchors it.
+
 **When `continuous_run` is active:** log the assessment and recommendation as a statement, not a question, and proceed automatically; do not stop for confirmation:
 
 ```

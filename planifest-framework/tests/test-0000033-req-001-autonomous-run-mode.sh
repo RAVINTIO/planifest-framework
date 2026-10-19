@@ -67,7 +67,7 @@ assert_contains "Any other value defaults to \`interactive\`" "$RECORD" \
 echo ""
 echo "=== req-001: Resume Detection step 6 ==="
 
-STEP6=$(grep -E '^6\. Read `plan/.run-mode`' "$ORCH")
+STEP6=$(grep -E '^6\. Read the run mode with' "$ORCH")
 assert_contains "\`continuous\`" "$STEP6" "req-001: step 6 names continuous"
 assert_contains "\`interactive\`" "$STEP6" "req-001: step 6 names interactive"
 assert_contains "\`autonomous\`" "$STEP6" "req-001: step 6 names autonomous"
@@ -106,10 +106,10 @@ assert_contains "declined a \`feat/\` branch" "$RM_TEXT" "req-001: run-mode text
 assert_contains "\`feat/\` branch" "$RUN_MODES" "req-001: Run modes names the feat/ branch rule (P5 G3)"
 
 echo ""
-echo "=== req-001: resume accepts autonomous only when three sources agree (P5 G6) ==="
+echo "=== req-001: resume accepts autonomous only from an anchored commit (P5 G6, P5 C2-2) ==="
 
-STEP6=$(grep -E '^6\. Read `plan/.run-mode`' "$ORCH")
-assert_contains "all agree" "$STEP6" "req-001: step 6 requires the sources to agree (P5 G6)"
+STEP6=$(grep -E '^6\. Read the run mode with' "$ORCH")
+assert_contains "only when one commit added" "$STEP6" "req-001: step 6 accepts autonomous only from an anchored commit (P5 G6, P5 C2-2)"
 assert_contains "\`Run mode\` row" "$STEP6" "req-001: step 6 names the build-log Run mode row (P5 G6)"
 assert_contains "\`Run mode confirmed:\`" "$STEP6" "req-001: step 6 names the P0 confirmation line (P5 G6)"
 assert_contains "log the mismatch" "$STEP6" "req-001: step 6 logs a mismatch (P5 G6)"

@@ -86,8 +86,8 @@ If `planifest-overrides/` does not exist or the language subdir is a stub (conta
 - If a fundamental architectural blocker makes the pre-set specification flawed, you have two choices:
   1. **Documented Deviation:** Proceed with an alternative path. Flag the deviation and its justification in the final component manifest and `src/{component-id}/docs/quirks.md`.
   2. **Escalation (Stop-and-Ask):** Pause the build immediately if continuing would be wasteful or deviate too far from the original intent. Request a human review of the Plan and the encountered blocker before proceeding.
-- In `autonomous`, option 2 becomes a defect report to `planifest-reversal-assessor`. If the assessor classes it *altering*, it becomes an exception-list item. Otherwise take option 1 and record an *additive* deviation per `planifest-framework/standards/autonomous-run-standards.md`.
-- In `autonomous`, write a `Deviation` build-log line for every deviation and never classify it yourself. The reversal assessor reviews each one before P7.
+- In `autonomous`, option 2 becomes a defect report to `planifest-reversal-assessor`. If the assessor classes it *altering*, it becomes an exception-list item. Otherwise take option 1 and record the deviation per `planifest-framework/standards/autonomous-run-standards.md`.
+- In `autonomous`, write a `Deviation (P{N}, unclassified)` build-log line for every deviation and never classify it yourself. The reversal assessor reviews each one before P7 and sets `additive` or `altering`.
 
 **Domain language:**
 - Use the domain glossary terms throughout - in code, comments, file names, variable names.

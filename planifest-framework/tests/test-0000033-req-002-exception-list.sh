@@ -43,7 +43,7 @@ assert_contains "*altering*" "$EXC" "req-002: gross deviation is the altering cl
 assert_contains "\`planifest-reversal-assessor\`" "$EXC" "req-002: the reversal assessor classifies"
 assert_contains "never classifies its own deviation" "$EXC" "req-002: the deviating agent never classifies its own deviation"
 assert_contains "Decision (P{N}): {what was decided} / reason: {one line}" "$EXC" "req-002: Decision line format"
-assert_contains "Deviation (P{N}, {additive | altering}): {what changed from the confirmed artifact}" "$EXC" "req-002: Deviation line format"
+assert_contains "Deviation (P{N}, unclassified): {what changed from the confirmed artifact}" "$EXC" "req-002: Deviation line format (P5 C2-7)"
 assert_contains "Exception waiting (P{N}, {item}): {what the human on the loop must do}" "$EXC" "req-002: Exception waiting line format"
 assert_contains "Merging a PR stays human-only" "$EXC" "req-002: merging stays human-only"
 assert_contains "every mode" "$EXC" "req-002: standing rules hold in every mode"
@@ -82,7 +82,7 @@ assert_contains "exception-list item" "$ROW5" "req-002: assessor row 5 names the
 DEV=$(sed -n '/^\*\*Deviation & Escalation Protocol:\*\*/,/^\*\*Domain language:\*\*/p' "$CODEGEN")
 assert_contains "In \`autonomous\`, option 2 becomes a defect report to \`planifest-reversal-assessor\`" "$DEV" \
   "req-002: codegen Stop-and-Ask becomes a defect report in autonomous"
-assert_contains "*additive* deviation" "$DEV" "req-002: codegen otherwise records an additive deviation"
+assert_contains "record the deviation per" "$DEV" "req-002: codegen otherwise records the deviation for the assessor to class (P5 C2-7)"
 
 echo ""
 echo "=== req-002: phase skills defer to the standards file ==="
@@ -139,5 +139,25 @@ assert_contains "stops using it" "$ITEM7" "req-002: the run stops using the cred
 assert_contains "final report" "$ITEM7" "req-002: the credential goes in the final report (P5 G11)"
 lacks "six" "$EXC" "req-002: the section no longer says six items (P5 G11)"
 lacks "six" "$TPL_TEXT" "req-002: the template no longer says six items (P5 G11)"
+
+echo ""
+echo "=== req-002: standing rules cover the autonomous guards (P5 C2-4) ==="
+
+STAND=$(sed -n '/^\*\*Standing rules in every mode:\*\*/,/^\*\*Product extension:\*\*/p' "$STD")
+assert_contains "branch check before any \`autonomous\` push" "$STAND" "req-002: standing rules hold the branch check before a push (P5 C2-4)"
+assert_contains "force push" "$STAND" "req-002: standing rules ban a force push (P5 C2-4)"
+assert_contains "leftover credential guard" "$STAND" "req-002: standing rules hold the leftover credential guard (P5 C2-4)"
+assert_contains "\`{archive-dir}/final-report.md\`" "$STAND" "req-002: standing rules hold the saved final report (P5 C2-4)"
+assert_contains "Only the orchestrator writes" "$STAND" "req-002: standing rules hold the run-mode writer rule (P5 C2-4)"
+assert_contains "can't switch these off" "$STAND" "req-002: overrides can't switch the standing rules off (P5 C2-4)"
+
+echo ""
+echo "=== req-002: the maker writes an unclassified deviation (P5 C2-7) ==="
+
+assert_contains "Deviation (P{N}, unclassified): {what changed from the confirmed artifact}" "$EXC" "req-002: the maker writes Deviation (P{N}, unclassified) (P5 C2-7)"
+assert_contains "sets \`additive\` or \`altering\`" "$(grep 'before P7' <<< "$EXC")" "req-002: the assessor sets the class in its pre-P7 review (P5 C2-7)"
+lacks "the agent records it as *additive*" "$EXC" "req-002: the deviating agent no longer records additive (P5 C2-7)"
+assert_contains "\`Deviation (P{N}, unclassified)\`" "$DEV" "req-002: codegen writes an unclassified Deviation line (P5 C2-7)"
+lacks "record an *additive* deviation" "$DEV" "req-002: codegen no longer records an additive deviation itself (P5 C2-7)"
 
 print_summary

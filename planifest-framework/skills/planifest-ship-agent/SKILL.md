@@ -33,7 +33,7 @@ No exceptions. Including single-line acknowledgements.
 
 ## Run mode
 
-Read the run mode from the `Run mode` row in the build-log Header table. Before Step 6, read `plan/current/build-log.md`. After Step 6, read `{archive-dir}/build-log.md`. A resume after the P9 marker step reads the same row. Never read `plan/.run-mode` for the mode, because the P9 marker step deletes it.
+Read the run mode with `node planifest-framework/scripts/run-mode.mjs`. Never read a run-mode record directly. Before Step 6, run it with no argument, so it reads `plan/current/build-log.md`. After Step 6, pass the archived build log: `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. A resume after the P9 marker step runs the same call. The script prints `autonomous` only when git history anchors it (`standards/autonomous-run-standards.md` `## Run modes`). Never write `plan/.run-mode`, the build-log `Run mode` row, or a `Run mode confirmed:` line. Only the orchestrator writes them.
 
 In `autonomous`, P7 to P9 ask the human on the loop nothing (0000033 ADR-006). The final report in Step 11 is the only output that addresses them. See `planifest-framework/standards/autonomous-run-standards.md`.
 
@@ -165,17 +165,22 @@ Run this after `P8: Complete` (0000033 ADR-011):
 git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'
 ```
 
-The `--untracked-files=all` flag lists each untracked file, not just its directory. Leave out lines under `{archive-dir}`, because the P9 marker step commits them. Treat every other line as a leftover. Read the run mode from the `Run mode` row in the Header table of `{archive-dir}/build-log.md`.
+The `--untracked-files=all` flag lists each untracked file, not just its directory. Leave out lines under `{archive-dir}`, because the P9 marker step commits them. Treat every other line as a leftover. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
 **P8 credential guard (0000033 P5):** In `autonomous`, check every leftover before you stage it. Refuse these files:
 
-- any file named `.env*`, `*.pem`, `*.key`, `id_rsa*`, or `*.p12`
+- any file named `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `.npmrc`, `credentials.json`, `*.keystore`, or `.netrc`
 - any file whose content matches a credential pattern:
   ```bash
-  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-' -- {path} ...
+  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{35}' -- {path} ...
   ```
+- any file that `gitleaks` flags, if `gitleaks` is on PATH. Run it over each candidate file:
+  ```bash
+  if command -v gitleaks >/dev/null; then gitleaks detect --no-git --source {path} --no-banner --redact; fi
+  ```
+  A non-zero exit refuses that file.
 
-Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content (Hard Limit 3). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
+Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
 - **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
@@ -320,7 +325,7 @@ Run the P8 command again after Step 10 (0000033 ADR-011):
 git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'
 ```
 
-Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any Step 9 `product.yml` change. Read the run mode from the `Run mode` row in the Header table of `{archive-dir}/build-log.md`.
+Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any Step 9 `product.yml` change. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P9 build-log block.
 - **`autonomous`:** Apply the P8 credential guard first. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.

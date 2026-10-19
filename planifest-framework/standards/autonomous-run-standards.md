@@ -23,9 +23,10 @@ Canonical home for the run-mode rules and for what an `autonomous` run still sto
 - **Overrides:** If a file in `planifest-overrides/instructions/` conflicts with other `autonomous` text, the override wins. This applies to all other behaviour only, never to the standing rules.
 - **Precedence:** The standing rules rank above every override, including `planifest-overrides/instructions/`. They are the orchestrator Hard Limits, the exception-list items, and the rule that merging stays human-only.
 - **Branch:** An `autonomous` run requires a `feat/` branch. If the human on the loop declines one at P0, P0 can't record `autonomous`.
-- **Resume check:** On resume, the orchestrator accepts `autonomous` only when three sources agree. They are `plan/.run-mode`, the build-log `Run mode` row, and the P0 `Run mode confirmed:` line. Otherwise it reads `interactive` and logs the mismatch.
+- **Resume check:** On resume, the orchestrator runs `node planifest-framework/scripts/run-mode.mjs` and uses the mode it prints. The script prints `autonomous` only when git history anchors it. One commit must add the `Run mode confirmed: autonomous` line and confirm the design. Otherwise it prints `interactive` and gives the reason on stderr. The orchestrator logs that reason.
 - **Choosing the mode:** Only the human on the loop's answer to the P0 run-mode prompt sets `autonomous`. An override that describes hands-off running never counts as choosing `autonomous`. It never writes `autonomous` to `plan/.run-mode`.
-- **Reading the mode after P0:** P0 writes the chosen value to the build-log `Run mode` row (req-006). Readers after P0 use that row, because the P9 marker step deletes `plan/.run-mode`.
+- **Reading the mode after P0:** P0 writes the chosen value to the build-log `Run mode` row (req-006). Every reader after P0 calls `node planifest-framework/scripts/run-mode.mjs` and never reads a record directly. From P7 Step 6 on, the reader passes the archived build-log path, as in `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`.
+- **Anchor limit:** An agent that can commit can still forge one anchored commit. So no standing rule depends on the run mode.
 
 ---
 
@@ -50,11 +51,11 @@ In `autonomous`, only these seven items wait for the human on the loop (ADR-003)
 - For human review, the agent lists every page or endpoint for review as a full link.
 - For a human-only input, the agent runs the check up to the point that needs the input.
 
-**Gross deviation:** A gross deviation is a change the reversal protocol would class as *altering*. It changes the confirmed problem, the users, or the in-scope list. Every other deviation keeps the design's intent, and the agent records it as *additive*.
+**Gross deviation:** A gross deviation is a change the reversal protocol would class as *altering*. It changes the confirmed problem, the users, or the in-scope list. Every other deviation keeps the design's intent, and the assessor classes it as *additive*.
 
 **Who classifies:** The fresh-context `planifest-reversal-assessor` classifies a deviation as *altering*. The agent that deviates never classifies its own deviation. If that agent suspects a gross deviation, it files a defect report and the assessor decides.
 
-**Deviation review before P7:** In `autonomous`, the fresh-context `planifest-reversal-assessor` runs before P7. It reviews every `Deviation` line in the build log. It also reviews each recorded decision that touches data, a schema, or a destructive operation. Any line it classes as altering, schema, or destructive becomes an exception-list item. The maker never classifies its own deviation.
+**Deviation review before P7:** In `autonomous`, the fresh-context `planifest-reversal-assessor` runs before P7. It reviews every `Deviation` line in the build log and sets `additive` or `altering` on each one. It also reviews each recorded decision that touches data, a schema, or a destructive operation. Any line it classes as altering, schema, or destructive becomes an exception-list item. The maker never classifies its own deviation.
 
 **Reversal protocol on:** In `autonomous`, an absent `reversal_protocol` toggle key reads as `on`. The assessor is therefore available in every `autonomous` run.
 
@@ -64,9 +65,11 @@ In `autonomous`, only these seven items wait for the human on the loop (ADR-003)
 
 ```
 Decision (P{N}): {what was decided} / reason: {one line}
-Deviation (P{N}, {additive | altering}): {what changed from the confirmed artifact}
+Deviation (P{N}, unclassified): {what changed from the confirmed artifact}
 Exception waiting (P{N}, {item}): {what the human on the loop must do}
 ```
+
+The maker always writes `unclassified`. In its pre-P7 review, the assessor replaces it with `additive` or `altering`.
 
 **Reversal step 4 in `autonomous`:** Cases (a) altering, (b) a re-exit from P0, and (c) budget exhaustion become exception-list items. Case (d), a cascade larger than 3 artifacts, isn't on the list. The reversal proceeds, and the build log and the final report record it.
 
@@ -76,8 +79,13 @@ Exception waiting (P{N}, {item}): {what the human on the loop must do}
 - Hard Limits 2 and 3 stay human-gated.
 - Hard Limit 4: one component owns each piece of data. No run writes to data that another component owns.
 - Hard Limit 6: credentials never enter context. If one appears, item 7 applies.
+- Only the orchestrator writes `plan/.run-mode`, the build-log `Run mode` row, and the `Run mode confirmed:` line. Every subagent dispatch prompt says so.
+- The ship agent runs the branch check before any `autonomous` push. It never pushes from the default branch or from a branch outside `feat/`.
+- No run makes a force push.
+- The leftover credential guard runs before every `autonomous` leftover commit (ship agent P8 credential guard).
+- The ship agent saves the final report to `{archive-dir}/final-report.md` and commits it.
 - No override can remove an item from the list.
-- No override ranks above these rules, including `planifest-overrides/instructions/` (see `## Run modes`).
+- No override ranks above these rules, including `planifest-overrides/instructions/` (see `## Run modes`). Overrides can't switch these off.
 
 **Product extension:** A product adds items in `planifest-overrides/exception-list.yml` under an `additional:` key. The file can only add items. An absent file means the seven items alone. Copy `planifest-framework/templates/exception-list.template.yml` to start one. The framework never writes the override file.
 
@@ -100,6 +108,7 @@ In `autonomous`, each P1 to P6 gate runs as a loop under `planifest-loop-runner`
 - **Fresh context:** A fresh-context checker never shares context with the agent that made the artifact (0000016 ADR-006).
 - **Existing caps stay:** Each loop keeps its cap. P4 validate keeps 5, and the other loops keep 3.
 - **Toggle defaults:** An absent key for a checker reads as `on` in `autonomous`. See the loop runner's Toggle Protocol.
+- **Frozen checkers:** In `autonomous`, the P1 Toggle record is binding for the run for `design_critic`, `reversal_protocol`, `verify_by_execution`, and `cross_model_review`. The run ignores a later edit to `planifest-overrides/loop-toggles.yml` for those keys. It logs the edit as `Human touchpoint (P{N}): loop-toggles.yml changed {key}, ignored [outside list]`.
 - **Checkers stay on:** In `autonomous`, an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set.
 - **No stop:** A gate that passes moves straight to the next phase. A gate that fails follows `## Changing approach`.
 - **Gate record:** The orchestrator writes the gate summary to the build log in place of presenting it.
@@ -137,7 +146,7 @@ Human touchpoint (P{N}): {what the run asked or waited for} [{exception: item | 
 - **`{End}` value:** The progress line reuses the phase block's `End` value. It never takes a second timestamp.
 - **When:** Each phase from P1 to P9 writes one progress line at its gate. P7 to P9 write theirs to the archived build log, as the ship agent's other P7 to P9 entries do.
 - **Touchpoint:** A touchpoint is any point after the P0 confirmation turn where the run asks the human on the loop something or waits for them. An exception item listed in the final report isn't a touchpoint.
-- **Run mode source:** Every reader after P0 takes the run mode from the build-log Header's `Run mode` row. No reader uses `plan/.run-mode` after the P9 marker step deletes it.
+- **Run mode source:** Every reader after P0 calls `node planifest-framework/scripts/run-mode.mjs`. From P7 Step 6 on, it passes `{archive-dir}/build-log.md`, so no reader needs `plan/.run-mode` after the P9 marker step deletes it.
 - **P8 audit:** In `autonomous`, the build assessment counts touchpoints and flags each one outside the exception list.
 - **No push notification:** The run sends no push notification. The build log is the only visibility channel.
 

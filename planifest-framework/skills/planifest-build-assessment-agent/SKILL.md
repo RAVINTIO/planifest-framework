@@ -129,10 +129,10 @@ Write the build report to `plan/_archive/{feature-id}-{date}/build-report.md`.
 - Missing entries reduce accountability. Flag any phase with incomplete or absent log entries.
 - Check `End`, `Wall-clock`, and `Streams` among the per-phase fields. A log from before 0000033 lacks them, so mark them "not captured".
 - Each phase from P1 to P9 has a progress line, in every run mode. A missing progress line is a finding.
-- The Header has a `Run mode` row. Every run-mode check in this audit reads that row.
+- The Header has a `Run mode` row. Every run-mode check in this audit runs `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads that row and checks its git anchor.
 
 **Human touchpoint audit** (`autonomous` only)
-- Apply this audit only when the Header's `Run mode` row reads `autonomous`. In `interactive` and `continuous`, the report has no touchpoint audit.
+- Apply this audit only when `run-mode.mjs` prints `autonomous`. In `interactive` and `continuous`, the report has no touchpoint audit.
 - Count every `Human touchpoint` line, and count the ones outside the exception list.
 - Flag each touchpoint outside the exception list as a finding.
 

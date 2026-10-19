@@ -127,4 +127,17 @@ for s in "file value" "autonomous default" "absent default"; do
   assert_contains "\`$s\`" "$REC" "req-003: toggle record names the $s source (P5 G8)"
 done
 
+echo ""
+echo "=== req-003: the P1 Toggle record freezes checker keys in autonomous (P5 C2-3) ==="
+
+for txt in "$TP" "$GATES"; do
+  FROZEN=$(grep 'Frozen checkers' <<< "$txt")
+  assert_contains "binding for the run" "$FROZEN" "req-003: the P1 Toggle record is binding for the run (P5 C2-3)"
+  for k in design_critic reversal_protocol verify_by_execution cross_model_review; do
+    assert_contains "\`$k\`" "$FROZEN" "req-003: frozen-checker rule names $k (P5 C2-3)"
+  done
+  assert_contains "later edit to \`planifest-overrides/loop-toggles.yml\`" "$FROZEN" "req-003: a later toggles edit is ignored for those keys (P5 C2-3)"
+  assert_contains "Human touchpoint" "$FROZEN" "req-003: the ignored edit is logged as a touchpoint-style line (P5 C2-3)"
+done
+
 print_summary
