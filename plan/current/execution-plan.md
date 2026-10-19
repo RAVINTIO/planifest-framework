@@ -112,6 +112,7 @@ The drafting streams found gaps that the design doesn't settle. In continuous mo
 | D-013 | Who classifies a deviation as *altering* | The fresh-context reversal assessor, never the deviating agent. |
 | D-014 | Scope of the approach counter | Per loop instance: the phase gate at P1, P2, P4, P5, and P6, and each requirement's TDD loop at P3. |
 | D-015 | Security fixes at P5 | Fix S1 to S8 and G1 to G12. G11 adds a seventh exception item. G12 narrows req-011. |
+| D-016 | Run-mode trust | A git-anchored script decides autonomous. Only the orchestrator writes run-mode records. Hard limits never depend on the mode. |
 
 ## Assumptions
 

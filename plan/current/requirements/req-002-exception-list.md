@@ -89,6 +89,7 @@ As the human on the loop, I get asked only for items on a declared exception lis
 - G4: Before P7 in `autonomous`, the fresh-context reversal assessor reviews every `Deviation` line in the build log. It also reviews each recorded decision that touches data, a schema, or a destructive operation. Anything it classes as altering, schema, or destructive becomes an exception item. The changes are in `autonomous-run-standards.md` and `planifest-codegen-agent/SKILL.md`.
 - G10: Rubric item 3 of the reversal assessor now matches the autonomous rule. An additive cascade over 3 proceeds and is recorded. An altering reversal waits. The change is in `planifest-reversal-assessor/SKILL.md`.
 - G11: Hard Limits 4 (data owned by one component) and 6 (no credentials in context) join the standing rules. A credential sighting is a seventh exception item. The run stops using the credential, finishes other work, and raises it in the final report. The change is in `autonomous-run-standards.md` and `exception-list.template.yml`.
+- The standing rules also list the branch check, the force-push ban, the credential guard, the saved final report, and the run-mode rule. Deviation lines read `unclassified` until the reversal assessor classifies them.
 
 ## Acceptance Criteria
 

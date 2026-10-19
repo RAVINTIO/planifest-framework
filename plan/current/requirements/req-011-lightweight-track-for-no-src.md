@@ -55,6 +55,7 @@ As the human on the loop, I route a change with no `src/` component through a li
 ### Security additions (P5)
 
 - G12: Fast Path still admits a change with no `src/` target. It never admits a change to `planifest-framework/hooks/`, `planifest-framework/scripts/`, `setup.sh`, `setup.ps1`, or any enforcement hook. Those take the Change or Feature Pipeline. The changes are in `workflows/fast-path.md` and the Three-Track Decision Tree row of `planifest-orchestrator/SKILL.md`.
+- Fast Path also excludes `planifest-framework/standards/autonomous-run-standards.md`.
 
 ## Acceptance Criteria
 

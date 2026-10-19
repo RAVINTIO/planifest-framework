@@ -75,6 +75,7 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 
 - G3: P0 requires a `feat/` branch before it records `autonomous`. If the human declines one, P0 can't record the mode. The change is in `planifest-orchestrator/SKILL.md`.
 - G6: On resume, the orchestrator accepts `autonomous` only when `plan/.run-mode`, the build-log `Run mode` row, and the P0 confirmation line all agree. Otherwise it reads `interactive` and logs the mismatch. The change is in `planifest-orchestrator/SKILL.md`.
+- Run-mode trust: the new `planifest-framework/scripts/run-mode.mjs` prints `autonomous` only when one commit added the `Run mode confirmed: autonomous` line together with the design confirmation and the line is unchanged since. Every later reader calls it. Only the orchestrator writes run-mode records, and subagent dispatch prompts say so. Its suite is `tests/test-0000033-req-001-run-mode-script.sh`. Stated limit: an agent that can commit can still forge one anchored commit, so merging, schema, destructive, and credential rules never depend on the run mode.
 
 ## Acceptance Criteria
 
