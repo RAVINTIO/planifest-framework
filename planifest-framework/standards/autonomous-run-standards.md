@@ -130,3 +130,18 @@ Human touchpoint (P{N}): {what the run asked or waited for} [{exception: item | 
 - **Run mode source:** Every reader after P0 takes the run mode from the build-log Header's `Run mode` row. No reader uses `plan/.run-mode` after the P9 marker step deletes it.
 - **P8 audit:** In `autonomous`, the build assessment counts touchpoints and flags each one outside the exception list.
 - **No push notification:** The run sends no push notification. The build log is the only visibility channel.
+
+---
+
+## Final report
+
+In `autonomous`, the ship agent writes one final report in place of the P9 Step 11 message (ADR-006). The report is the only output of P7 to P9 that addresses the human on the loop. It has these parts, in order:
+
+1. **What shipped:** a short summary from the feature brief and the changelog.
+2. **Decisions and deviations:** every `Decision` and `Deviation` line from the build log, including each P7 regression-candidate decision.
+3. **Version:** the version from the Step 9 tag.
+4. **PR:** the PR URL and its CI result, from `gh pr checks`. If CI hasn't finished, the result reads `pending`. If a `local-git-only` override applies, this part holds the PR title and description instead.
+5. **Clean tree:** the clean-tree result of the scoped `git status --porcelain` check at the end of P9 (req-013). It names each file left over or committed, or reads `clean`.
+6. **Exceptions waiting:** every `Exception waiting` line from the build log. If there are none, the part reads `none`.
+
+The report ends with this line: "Next: the human on the loop reviews and merges the PR." No mode merges the PR. Step 12 runs after the report.

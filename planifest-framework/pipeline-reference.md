@@ -10,7 +10,7 @@ Every agent response begins with a phase prefix. You always know where you are.
 
 | Prefix | Phase | What the agent is doing |
 |--------|-------|-------------------------|
-| `P0:` | Assess & Coach | Reviewing the brief; asking gap questions; confirming continuous run or per-phase review |
+| `P0:` | Assess & Coach | Reviewing the brief; asking gap questions; confirming per-phase review, continuous run, or autonomous run |
 | `P1:` | Spec | Writing requirements, scope, glossary, risk register |
 | `P2:` | ADRs | Documenting architecture decisions |
 | `P3:` | Codegen | Generating implementation |
@@ -38,18 +38,21 @@ If you see `Px: Resuming…` at the start of a session, the orchestrator detecte
 At the end of each phase, the orchestrator **stops and presents a summary** before proceeding. Before the pipeline begins (end of P0), you are asked:
 
 ```
-Do you want to review and confirm after each phase completes, or authorise a
-continuous run for this session?
+How should the agent run this session?
 
-  [1] Check after each phase
-  [2] Continuous run — proceed without phase confirmations
+  [1] Interactive: the agent stops for you at every phase gate
+  [2] Continuous: the agent runs P1 to P6 without stopping for you
+  [3] Autonomous: the agent runs from the confirmed design to a raised PR, and stops for you only on exception-list items
 ```
+
+In an autonomous run, only exception-list items wait for you. See [autonomous-run-standards.md](standards/autonomous-run-standards.md).
 
 Per-phase exceptions — the orchestrator may skip the stop if **both** conditions are true:
 - You chose continuous run, AND
 - There is genuinely nothing to check (e.g. P5 with zero security findings, P4 with all checks passing first attempt)
 
 **P9 always stops.** Raising a PR is an external action — it is never auto-confirmed, even in continuous run mode.
+In an `autonomous` run, the agent raises the PR and ends with the final report, and the human on the loop still merges.
 
 ---
 

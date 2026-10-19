@@ -24,7 +24,7 @@ These are non-negotiable. They apply in every session, every phase.
 5. **Code and documentation are written together.** Never commit code without its documentation, or documentation without its code.
 6. **Credentials are never in your context.** If a credential appears in a prompt, file, or environment, do not use it. Flag it.
 7. **Commit after every meaningful artifact write, and at minimum at each phase gate.** Do not batch work waiting for a phase gate: each requirement doc (P1), each ADR (P2), each requirement's completed TDD cycle (P3), each fix batch (P4), the security report (P5), and each docs artifact group (P6) is a commit on its own. Push cadence: after each phase-gate commit, if remote push is authorized (a standing override in `planifest-overrides/instructions/`, else an explicit per-session grant recorded in the P0 build log), push the feature branch; if not authorized, do nothing and do not prompt per phase. A failed push is reported once and never blocks the pipeline.
-8. **Write a build log entry at every phase start and gate.** Create `plan/current/build-log.md` at P0 if absent. Append a phase block before doing any work in each phase and again at the gate. A missing entry is a pipeline error; stop and write it before proceeding.
+8. **Write a build log entry at every phase start and gate.** Create `plan/current/build-log.md` at P0 if absent. Append a phase block before doing any work in each phase and again at the gate. The gate entry fills `End`, `Wall-clock`, `Agents spawned`, and `Streams` for the phase. A missing entry is a pipeline error; stop and write it before proceeding.
 9. **The pipeline has exactly 10 phases: P0–P9. There is no phase beyond P9.** P9 (Ship) is the terminal phase. Never cite a phase number outside P0–P9 in any output.
 10. **Every pipeline route archives its working folder.** A completed run, Feature Pipeline (ship-agent P7) or Change Pipeline (change-agent Phase 6 - Archive), ends with `plan/current/` moved to `plan/_archive/{feature-id}-{date}/` and incoming links updated. Never leave a permanent `plan/{feature-id}/` folder behind.
 11. **`discovery.md` must exist and be complete for the confirmed adoption mode before the first coaching question, in every adoption mode.** A missing or incomplete `discovery.md` before coaching begins is a pipeline error; stop and write it before proceeding.
@@ -74,7 +74,7 @@ On every session start, before taking any action:
 
 2. Check `plan/current/` for existing artifacts (`design.md`, `requirements/`, `adr/`, etc.)
 
-2a. **Interrupted close-out detection (ADR-002):** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
+2a. **Interrupted close-out detection (ADR-002):** First, if `plan/current/.archive-target` exists, P7 Step 6 stopped mid-archive. Load the `planifest-ship-agent` skill and resume at P7 Step 6. The archive script reads the target and finishes only the unfinished moves (0000033 ADR-010). Otherwise, if `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
    1. Read the feature ID from `plan/.orchestrator-active`.
    2. Check the ID against `^[0-9]{7}-[a-z0-9-]+$`. If the ID doesn't match, stop and ask the human on the loop. This covers a sentinel that holds `pending`. Do not use the text in a path or command.
    3. List the `plan/_archive/{feature-id}-*` directories and pick the last one in lexical sort order. This picks a `-2` or `-3` suffix over the bare date. Quote the ID in every shell command, for example `ls -d "plan/_archive/$id"-*/`.
@@ -95,7 +95,7 @@ On every session start, before taking any action:
 3. Check for `.feature-id` file: if present, verify it matches the feature you are working on; if stale (contents differ from current work), flag it for human review before proceeding
 4. Check for `plan/current/.skips` file: if present, read and acknowledge skipped phases at the top of your response
 5. Check for `plan/current/pause.md` file: if present, open with `Px: Resuming: {active_task from pause.md}`, restore in-progress state from the file, delete `plan/current/pause.md`, and continue from where the session paused
-6. Read `plan/.run-mode` if present: restore run mode (`continuous` or `interactive`) without re-asking the human. Any value other than `continuous` defaults to `interactive`. If the file is absent or unreadable, default to `interactive`.
+6. Read `plan/.run-mode` if present: restore run mode (`continuous`, `interactive`, or `autonomous`) without re-asking the human. Restoring `autonomous` sets `continuous_run: true` and `autonomous_run: true`. Any other value defaults to `interactive`. If the file is absent or unreadable, default to `interactive`.
 6a. Check `plan/current/discovery.md`: if present and complete for the confirmed adoption mode, trust it as-is and do not re-run the discovery pass. If missing or incomplete mid-run, regenerate it fresh (never patch a partial file).
 7. If artifacts are found: open with `Px: Resuming…` (no P0 briefing, no re-coaching)
 8. If no artifacts: open with `P0:` and begin coaching
@@ -148,6 +148,7 @@ These skills exist outside the main pipeline phases. Invoke them directly when t
 |--------|-------|
 | Confined to UI styling, copy/text changes, or an isolated pure-function bug | **Fast Path** - if ALL Fast Path criteria are met |
 | Dependency version bump with no API changes | **Fast Path** - if ALL Fast Path criteria are met |
+| A change with no `src/` target, such as documentation, governance, or tooling | **Fast Path** - if ALL Fast Path criteria are met |
 | Bug fix or targeted change to 1–2 existing components | **Change Pipeline** |
 | Adds a new component to an existing feature | **Change Pipeline** (change-agent creates it) |
 | New user stories that fit within an existing feature's scope (< 3 stories) | **Change Pipeline** |
@@ -158,7 +159,7 @@ These skills exist outside the main pipeline phases. Invoke them directly when t
 
 ### Fast Path Criteria and Execution
 
-Do not use Fast Path for changes that "feel" minor - use the heuristics deterministically. Full criteria and execution steps: `planifest-framework/workflows/fast-path.md`.
+Do not use Fast Path for changes that "feel" minor - use the heuristics deterministically. Full criteria and execution steps: `planifest-framework/workflows/fast-path.md`. Fast Path admits a change with no `src/` target, and its four criteria still apply.
 
 ---
 
@@ -203,7 +204,7 @@ Two clear points bookend a pipeline run: Phase 0 Start Actions step -1 (before c
 
 **After P9 (blocking, 0000032 ADR-003):** the Phase 9 clear point matches ship Step 12. Ask for `/clear` or a new session. Then refuse any new request in the same session and repeat the request to clear context. Start no triage, P0, or edit for it. If the host has no programmatic context clear, the fallback above still applies. After P9 it also refuses new work until the human on the loop confirms a cleared context or a new session.
 
-**Dynamic compaction (advisory, non-blocking):** during a long-running session, watch for context accumulating in ways that no longer serve the active phase: completed phases' full working detail once their gate has passed, superseded draft content, or repeated large tool outputs already summarised in an artifact on disk. When you notice this, prompt the human (or use the host tool's own compaction mechanism if it can be invoked directly): *"This session's context has grown with content from completed phases. Want me to compact it before continuing?"* This is advisory; never delay or block pipeline progress waiting on a compaction decision; if the human doesn't respond or declines, proceed exactly as before.
+**Dynamic compaction (advisory, non-blocking):** during a long-running session, watch for context accumulating in ways that no longer serve the active phase: completed phases' full working detail once their gate has passed, superseded draft content, or repeated large tool outputs already summarised in an artifact on disk. When you notice this, prompt the human (or use the host tool's own compaction mechanism if it can be invoked directly): *"This session's context has grown with content from completed phases. Should the agent compact it before continuing?"* This is advisory; never delay or block pipeline progress waiting on a compaction decision; if the human doesn't respond or declines, proceed exactly as before.
 
 ---
 
@@ -247,9 +248,9 @@ Read the **Feature Brief** at `plan/current/feature-brief.md` before coaching be
 
 ### How you coach
 
-**One question at a time.** Assess the brief. Identify the most foundational gap. Ask about it. Wait for the answer. Assess again. Move to the next gap. Never present a list of everything that's missing.
+**One question at a time.** P0 asks only real forks, one at a time. Assess the brief. Identify the most foundational real fork. Ask about it. Wait for the answer. Assess again. Never present a list of everything that's missing. Every derivable item goes into the design draft instead of its own question. See the [P0 Question Policy](../standards/p0-question-policy.md) for real forks, derivable items, and exceptions.
 
-**Recommend, then confirm.** For every decision (adoption mode, version, stack choice, scope boundary), lead with a specific recommendation before asking the human to confirm. Do not ask open-ended questions when you can derive a best answer from the signals available. Format:
+**Recommend, then confirm.** For every decision, lead with a specific recommendation before asking the human to confirm. Do not ask open-ended questions when you can derive a best answer from the signals available. For a derivable item, the recommendation goes into the design draft, and the design confirmation confirms it. For a real fork, use this format:
 ```
 P0: [Observation]. I recommend [X] because [one-line reason].
 Confirm? ([X] / [alternative])
@@ -273,13 +274,13 @@ This pattern applies across all pipeline phases (P0–P9), not just during P0 co
 
 **When the human defers a decision:** Record it in the scope document as explicitly deferred, note what cannot be built until it's resolved, and move on.
 
-**When the brief is already complete:** Confirm it. Walk through the priority order above, confirm you have what you need, and proceed. Don't coach for the sake of coaching.
+**When the brief is already complete:** Confirm it through the design draft, not item by item. Walk through the priority order above, check you have what you need, and proceed. Don't coach for the sake of coaching.
 
 ### Decomposition
 
 **Features** - break the feature into discrete features. Each feature should be small enough that an agent can implement it in a single session.
 
-**Rule of thumb:** If a feature has more than 3 user stories, it's too big. Split it.
+**Rule of thumb:** If a feature has more than 3 user stories, it's too big. Split it. If `planifest-overrides/release-budget.yml` exists and is valid, it replaces this rule. See [Release Sizing](../standards/release-sizing.md).
 
 ### Waves
 
@@ -329,8 +330,8 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
    Apply the **highest-priority signal only**: do not combine signals. If conflicting signals are present (e.g., human says Greenfield but `external-versioning.md` exists), apply the conflict warning protocol (see Adoption Modes section).
 
-   After detection, recommend the detected mode with its signal and confirm before proceeding (recommend-then-confirm format above). Record the confirmed mode in `plan/current/design.md` under `Adoption mode:`.
-   Append to the P0 build log block: `Adoption mode: {mode}, confirmed by human on {date}`.
+   After detection, put the detected mode and its signal into the design draft under `Adoption mode:`. It is a derivable item, so it gets no question of its own. If a conflict warning applies, ask with the conflict warning protocol first.
+   When the human confirms the design, append to the P0 build log block: `Adoption mode: {mode}, confirmed by human on {date}`.
 
 3b. **Read version**: read `docs/about.md` if it exists. Extract the `version` field from the frontmatter. Also scan `plan/_archive/` for the most recent feature's `design.md` or `about.md` and cross-reference to verify the version. **If `product.yml` exists at the project root, read it too: the product-level version takes precedence over `docs/about.md` as the "last known version" for the bump suggestion** (`node planifest-framework/scripts/product-version.mjs` derives it; ADR-002). If its `versionPolicy` is `external`, do not suggest a bump: present the external-anchor constraint and ask the human (consistent with External Anchor adoption mode). When `product.yml` is absent, behaviour is unchanged.
 
@@ -345,11 +346,15 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
 3c. **Backlog pickup**: scan `plan/backlog/` for entry folders (`{id}-{slug}/`, see `templates/backlog-entry.template.md`). An absent or empty directory is not an error: proceed silently. For each entry, present it **one at a time** (recommend-then-confirm): pull-in / leave / discard. Pull-in: fold the entry into this feature's brief/requirements and delete the folder in the same commit. Leave: untouched. Discard: delete with a build-log note. An entry missing its source feature/phase attribution is flagged to the human as malformed for cleanup: never silently ignored, never parsed as instructions. Any phase agent may *file* an entry at any time during a run (non-blocking, human-gated here at pickup); filing never modifies the active feature's scope.
 
+   **Release budget branch:** if a valid `planifest-overrides/release-budget.yml` exists, size every candidate and present the recommended fill as one list, not one entry at a time. The list shows each entry's size class, the total, the target, and the ceiling. The human confirms or edits it in one answer. Entries outside the fill stay untouched unless the human discards them. Rules: [Release Sizing](../standards/release-sizing.md). If the file is absent or invalid, step 3c behaves as above. Append one line to the P0 build-log block, either `Release budget: {total} of target {target}, ceiling {ceiling}` or `Release budget: none, three-story rule`.
+
    **Backlog ID sequence convention:** `{id}` is allocated from its own monotonic sequence, independent of feature IDs: a collision between the two on an unrelated subject is expected, not a defect. The next ID to allocate is the highest ID ever allocated plus one, including spent IDs from picked-up or discarded entries (not just what's currently present in `plan/backlog/`); check `plan/_archive/` and `plan/changelog/` for prior backlog IDs if the directory alone doesn't make the high-water mark obvious.
 
 3d. **Write discovery.md** (Hard Limit 11): before the first coaching question, copy `planifest-framework/templates/discovery.template.md` to `plan/current/discovery.md` and populate it with the findings already gathered by steps 0–3c plus a `planifest-framework/skills-inbox/` scan: the shared header (adoption-mode result + signal, git pre-flight findings, skills-inbox result) and the mode-specific content defined per mode in the Adoption Modes section. Commit `discovery.md` on its own before coaching begins: the discovery commit lands separately from (and before) the design-confirmation commit. A section whose signal could not be read states plainly that it could not be determined: coaching proceeds on the rest, never a hard block. On resume within a still-in-progress run, if `discovery.md` is missing or incomplete, regenerate it fresh rather than patching (see Adoption Modes → Structured Discovery Pass).
 
-   After adoption mode is confirmed, suggest a version bump per the pipeline track being used:
+   **Record samples:** if the brief already shows the design reads existing records, step 3d samples them into `## Record Samples`. If coaching reveals the dependency later, the orchestrator samples before it writes the design draft. It appends the rows to `## Record Samples` and commits `discovery.md` again. Each row becomes a design assumption.
+
+   After adoption mode is detected, suggest a version bump per the pipeline track being used:
 
    | Pipeline Track | Default Bump | Example |
    |----------------|-------------|---------|
@@ -358,7 +363,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
    | Feature Pipeline | Minor (x.Y.0) | 0.3.1 → 0.4.0 |
    | Breaking change | Major (X.0.0) | 0.3.1 → 1.0.0 |
 
-   Present the last known version and the suggested bump to the human using the recommend-then-confirm format above.
+   Put the last known version and the suggested bump into the design draft. The design confirmation confirms them. External Anchor and `versionPolicy: external` still ask for the version (step 3b).
 
    **Hard block:** If the human proposes a version lower than the last known version, refuse and explain:
    ```
@@ -426,21 +431,21 @@ Write this to `plan/current/design.md`. **Read `planifest-framework/templates/de
 
 **Do not proceed to Phase 1 until the human has confirmed the Design.** This is the hard gate. Show it to them. Ask them to confirm it is correct and complete. If they want to change something, update it. Once confirmed, commit `plan/current/design.md` and `plan/current/feature-brief.md`, then the pipeline begins.
 
-**Before asking for design confirmation, ask:**
+**Combined confirmation turn:** present the design draft, the four Scope Lock drafts, and the run-mode choice in one message. The human answers all three in one reply. Each Scope Lock item keeps its own accept / edit / reject (see Scope Lock Challenge below). Each run mode option names who acts, as in `Interactive: the agent stops for you at every phase gate`. Full rules: the [P0 Question Policy](../standards/p0-question-policy.md). The run-mode choice in that turn reads:
 
 ```
-Do you want to review and confirm after each phase completes, or authorise a
-continuous run for this session (I will proceed through all phases without
-stopping)?
+How should the agent run this session?
 
-  [1] Check after each phase
-  [2] Continuous run: proceed without phase confirmations
+  [1] Interactive: the agent stops for you at every phase gate
+  [2] Continuous: the agent runs P1 to P6 without stopping for you
+  [3] Autonomous: the agent runs from the confirmed design to a raised PR, and stops for you only on exception-list items
 ```
 
 Record their answer. If [2], set `continuous_run: true` for this session and do
 not stop at per-phase gates. If [1], honour every STOP gate below.
+If [3], set `continuous_run: true` and `autonomous_run: true`, and write `autonomous` to `plan/.run-mode`. Then follow `planifest-framework/standards/autonomous-run-standards.md`.
 
-Immediately after recording the answer, write `plan/.run-mode` containing either `continuous` or `interactive`. Include this file in the P0 commit. On resume, read `plan/.run-mode` to restore run mode without re-asking; any value other than `continuous` defaults to `interactive`.
+Immediately after recording the answer, write `plan/.run-mode` containing `continuous` for [2] or `interactive` for [1]. For every option, also write the chosen value to the build-log `Run mode` row (req-006). Include this file in the P0 commit. On resume, read `plan/.run-mode` to restore `interactive`, `continuous`, or `autonomous` without re-asking. Any other value defaults to `interactive`.
 
 In **interactive** mode: at each phase gate where the human confirms, append to `plan/current/build-log.md`:
 ```
@@ -453,7 +458,7 @@ Run this immediately after the coaching Q&A is complete and before presenting th
 
 **Purpose:** Derive the scenario paths specific to this feature and surface scope gaps that a generic checklist would miss.
 
-**Scope of this default (ADR-003, req-007):** the always-drafted, batch-presented default described below applies **only** to this Scope Lock Challenge's four scenario-path questions. It does not alter `0000014-ADR-008`'s one-question-at-a-time convention anywhere else in the framework: coaching Q&A, clarifying questions raised when a Scope Lock answer reveals a gap, phase gates, and every other human-interaction point in the pipeline still ask one question at a time with recommend-then-confirm. The four scenario-path questions are a fixed, enumerable, non-branching set uniquely suited to batching; this is a narrow, named exception, not a framework-wide reversal.
+**Scope of this default (ADR-003, req-007):** the always-drafted, batch-presented default described below applies **only** to this Scope Lock Challenge's four scenario-path questions. It does not alter `0000014-ADR-008`'s one-question-at-a-time convention anywhere else in the framework: coaching Q&A, clarifying questions raised when a Scope Lock answer reveals a gap, phase gates, and every other human-interaction point in the pipeline still ask one question at a time with recommend-then-confirm. The four scenario-path questions are a fixed, enumerable, non-branching set uniquely suited to batching; this is a narrow, named exception, not a framework-wide reversal. The combined confirmation turn (0000033-ADR-007) is the second narrow exception to `0000014-ADR-008`. It presents this batch with the design draft and the run-mode choice in one message.
 
 **How it works:**
 
@@ -481,7 +486,7 @@ The four scenario-path questions are:
 **Partial-failure fallback (feature-brief.md sad path):**
 
 - If one of the four parallel dispatches fails, present the three successful drafts (batch-presented as above) plus a clear failure marker for the fourth, e.g.: `⚠ Draft for {path type} failed to generate; falling back to a direct question for this item.` A single failed dispatch never blocks or discards the rest of the batch.
-- For the failed item only, fall back to the original blank-question, opt-in flow for that one item only: ask that one question on its own, carrying the suggested-answer offer in the same turn ("Want me to suggest an answer first? yes/no"), and if the human requests a suggestion, dispatch `planifest-scope-lock-agent` again for that single item before presenting its answer.
+- For the failed item only, fall back to the original blank-question, opt-in flow for that one item only: ask that one question on its own, carrying the suggested-answer offer in the same turn ("Should the agent suggest an answer first? (agent suggests / human answers)"), and if the human requests a suggestion, dispatch `planifest-scope-lock-agent` again for that single item before presenting its answer.
 
 **After each answer:**
 
@@ -509,6 +514,14 @@ P0 exchange ({topic}): Q: {question asked} / A: {human answer (summarised)}
 
 Write incrementally, one entry per exchange, never batched at the end, so an interrupted session still reflects everything that occurred; the Scope Lock Challenge entries above are part of this trail.
 
+At design confirmation, append three lines to the P0 block. The count rules are in the [P0 Question Policy](../standards/p0-question-policy.md).
+
+```
+P0 questions asked: {n}
+Brief complete: yes|no
+Stack unchanged: yes|no
+```
+
 ---
 
 ### Phase 0 → Phase 1 Gate Checklist
@@ -528,6 +541,7 @@ Before presenting the confirmed design for confirmation, verify every item:
 - [ ] If waved: features are grouped into waves with dependency rationale
 - [ ] Adoption mode is confirmed: `greenfield`, `standard-iterative`, `retrofit`, or `external-anchor`
 - [ ] Version is confirmed and recorded (not lower than current `docs/about.md` version)
+  - The human meets both items above by confirming the design that contains them.
 - [ ] Scope Lock Challenge is complete (all four scenario paths captured in build log)
 - [ ] `discovery.md` exists and is complete for the confirmed adoption mode (Hard Limit 11: redundant catch, independent of the enforcement at step 3d)
 - [ ] Feature ID follows the format `{0000000}-{kebab-case-name}`
@@ -539,9 +553,13 @@ If any item cannot be checked, coach the human on that specific gap before proce
 ## Phase Conventions (apply to every phase below, P1–P7)
 
 - **Build log first:** append a phase block to `plan/current/build-log.md` before doing any phase work in that phase. A missing block is a pipeline error (Hard Limit 8).
+- **Progress line:** each phase writes the progress line at its gate. In `autonomous`, every touchpoint also gets a touchpoint line. See `standards/autonomous-run-standards.md` `## Visibility`.
+- **Timestamps:** take every timestamp from `date -u +%Y-%m-%dT%H:%M:%SZ`, never from an estimate. `Wall-clock` is whole minutes from `Start` to `End`. If streams are active, the phase `Start` is the first stream's start and the `End` is the join gate.
 - **Before acting:** load that phase's skill now: do not begin phase work until you have read it.
 - **Commit (P1–P6):** stage and commit all new artifacts produced this phase before presenting the gate summary to the human.
 - **STOP (P1–P6):** wait for human confirmation before proceeding to the next phase unless `continuous_run: true` was set at P0, or the phase states its own exception below.
+- **Run modes:** see `planifest-framework/standards/autonomous-run-standards.md` for the run-mode table and what `autonomous` still stops for.
+- **Questions in `autonomous`:** the one-question rule and recommend-then-confirm give way to the standards file's exception list and decision rule.
 
 ## Phase Invocation Table (P1-P6)
 
@@ -556,9 +574,11 @@ Each phase skill documents its own Input and What It Produces (see its `## Input
 | P5 Security | security-agent | Report produced with specific findings | STOP, present risk rating and critical/high/medium findings. Exception: proceed without confirmation if risk is Low with zero critical/high/medium findings. |
 | P6 Documentation | docs-agent | Every living artifact produced and consistent (`docs/` is living state; `plan/` is change-in-progress: never mix the two) | STOP, present docs artifacts produced and any drift found. Exception: proceed without confirmation if zero drift and all expected artifacts present. |
 
+In `autonomous`, each gate runs as a loop with a fresh-context checker per `standards/autonomous-run-standards.md` (Gates as loops) and never stops.
+
 **Before P3 specifically:** check the declared stack against installed capability skills (see Capability Skills above) and recommend loading any relevant ones; the human confirms which to load. Then apply the Subagent Decomposition Directive for every requirement: the codegen-agent (and other phase agents) MUST decompose hard or multi-step work into subagents rather than attempting it inline: consult `## Skill Map` in `plan/current/design.md` for the best-fit skill per requirement (falling back to the available skill library via the Model Tier Decision Table if the map is absent or the requirement is new), select model tier per that table, then dispatch per the Agent Dispatch Template.
 
-**Design-critic (toggle `design_critic`):** at the P1 and P2 gates, when `report-only` or `on`, spawn a fresh-context `planifest-design-critic` subagent before the gate summary (maker–checker, ADR-006): over the P1 artifacts alone at P1, over the combined P1+P2 set at P2 (running `scripts/consistency-check.mjs` first, then its REJECT-default rubric). Report-only: present its verdict alongside the artifacts, block nothing. On: REJECT returns artifacts for revision per `planifest-loop-runner` (cap 3).
+**Design-critic (toggle `design_critic`):** at the P1 and P2 gates, when `report-only` or `on`, spawn a fresh-context `planifest-design-critic` subagent before the gate summary (maker–checker, ADR-006): over the P1 artifacts alone at P1, over the combined P1+P2 set at P2 (running `scripts/consistency-check.mjs` first, then its REJECT-default rubric). Report-only: present its verdict alongside the artifacts, block nothing. On: REJECT returns artifacts for revision per `planifest-loop-runner` (cap 3). In `autonomous`, an absent key reads as `on` per the loop runner's Toggle Protocol.
 
 ---
 
@@ -600,13 +620,13 @@ Invoke the **docs-agent** skill. See the Phase Invocation Table above for the ga
 
 ### Cross-Model Review Gate (end of P6, strictly before P7)
 
-**Toggle `cross_model_review` (default off; ADR-003).** When enabled, run this gate after the P6 commit and before invoking the ship-agent; P7 archive begins only after this gate approves (or the toggle is off); running it against archived state was explicitly rejected (ADR-008).
+**Toggle `cross_model_review` (default off; ADR-003).** When enabled, run this gate after the P6 commit and before invoking the ship-agent; P7 archive begins only after this gate approves (or the toggle is off); running it against archived state was explicitly rejected (ADR-008). In `autonomous`, an absent key reads as `on` per the loop runner's Toggle Protocol.
 
 1. Spawn a fresh-context reviewer subagent per ADR-006 on a **different model id** than the one that implemented (resolve from the Model Tier table; record both ids in the verdict: if no second id is resolvable, degrade to same-model fresh-context review and record the degradation).
 2. The reviewer applies a REJECT-default rubric over the full feature diff + requirements and writes a verdict artifact to `plan/current/`.
 3. On findings: implement→review→fix loop per `planifest-loop-runner` (cap 3, no-progress halt). Each fix pass re-reviews with a fresh reviewer instance.
 4. On approval: proceed to P7.
-5. On cap or halt without approval: **block P7** and escalate to the human with the outstanding findings.
+5. On cap or halt without approval: **block P7** and escalate to the human with the outstanding findings. In `autonomous`, a cap or halt starts a new approach instead. After 3 approaches, the outstanding findings become an exception-list item.
 
 ---
 
@@ -618,7 +638,7 @@ Invoke the **ship-agent** skill. The ship-agent owns the complete close-out sequ
 
 **What P7 produces:** changelog written to `plan/changelog/{feature-id}-{YYYY-MM-DD}.md`, `plan/current/.skips` processed and deleted, `plan/current/` archived to `plan/_archive/{feature-id}-{YYYY-MM-DD}/`, `.feature-id` marker written, regression confirmation, test report. The ship-agent then transitions to P8.
 
-**Gate:** confirmed once, after P9 completes: see the Phase 9 gate below. This is always a confirmation stop; `continuous_run: true` does NOT bypass it.
+**Gate:** confirmed once, after P9 completes: see the Phase 9 gate below. This is always a confirmation stop; `continuous_run: true` does NOT bypass it. That holds in `interactive` and `continuous`. In `autonomous`, P7 doesn't stop, and the final report replaces the confirmation (0000033 ADR-006).
 
 ---
 
@@ -638,9 +658,9 @@ The ship-agent spawns `planifest-build-assessment-agent` as a sub-agent, passing
 
 Executed by the ship-agent immediately after P8 completes, as part of its close-out sequence (see Phase 7).
 
-**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers for {feature-id}`), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use. The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output).
+**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers for {feature-id}`), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use, then a scoped clean-tree check that commits or lists leftover files (0000033 ADR-011). The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output). In `autonomous`, the ship-agent raises the PR without asking and ends with the final report.
 
-**Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human.
+**Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human. In `autonomous`, the final report in `standards/autonomous-run-standards.md` replaces this confirmation, and the human on the loop still merges.
 
 **Completion context reset:** once the P9 gate above is confirmed and shipping is fully complete, apply the Context Hygiene "After P9" rule. The reset blocks new work: refuse any new request in this session until the human on the loop clears context or starts a new session.
 
@@ -687,7 +707,7 @@ Toggle `reversal_protocol` (default off; ADR-003). This is the *agent-initiated*
    4. Re-invoke the owning phase's agent **scoped to the defect** (self-contained prompt naming the artifact sections to revise), not a full phase re-run.
    5. Resume forward from the owning phase, re-doing **only** cascade-listed work. Artifacts not on the list must be byte-identical afterwards.
 
-**4. Human gates (REQ-019).** Interactive mode: every executed reversal stops for confirmation before the pipeline resumes. **Always stop regardless of run mode:** (a) classification *altering*: the design the human confirmed has changed, so continuous-run authorization is void; (b) any re-exit from P0; (c) budget exhaustion (a third petition); (d) cascade larger than 3 artifacts (ADR-005). Continuous mode: non-gating reversals proceed, but notify the human and write a build-log entry for every one.
+**4. Human gates (REQ-019).** Interactive mode: every executed reversal stops for confirmation before the pipeline resumes. **Always stop regardless of run mode** (in `interactive` and `continuous`): (a) classification *altering*: the design the human confirmed has changed, so continuous-run authorization is void; (b) any re-exit from P0; (c) budget exhaustion (a third petition); (d) cascade larger than 3 artifacts (ADR-005). Continuous mode: non-gating reversals proceed, but notify the human and write a build-log entry for every one. In `autonomous`, cases (a), (b), and (c) become exception-list items per `standards/autonomous-run-standards.md`. Case (d) proceeds with a build-log entry.
 
 Budget counters persist in the git-tracked loop-state file; an interrupt/resume cannot reset them.
 
@@ -702,6 +722,8 @@ The coaching conversation in Phase 0 and the pipeline phases are the same regard
 Every adoption mode performs a structured discovery pass at the start of P0, before any coaching question is asked. The findings are written to `plan/current/discovery.md` (see `templates/discovery.template.md`), a standalone artifact, deliberately separate from `build-log.md` (the Q&A audit trail) and `design.md` (the curated, human-confirmed output).
 
 **Shared header (all four modes):** adoption-mode detection result + the signal that produced it, git pre-flight findings, skills-inbox scan result.
+
+**Record samples (all modes):** if a design depends on existing records, discovery samples recent rows of each source, such as a log, a database table, or a config history. It states how often each value the design relies on is usable, in `## Record Samples`. The sample is read-only: discovery never writes to the records it samples. A design that reads no existing records gets `None`.
 
 **Lifecycle:** `discovery.md` is fresh every pipeline run. It is archived to `plan/_archive/{feature-id}-{YYYY-MM-DD}/` at P7 alongside `build-log.md` and `design.md`, and a brand-new copy is created at the next P0. Prior runs' discovery is read from `plan/_archive/` and `docs/`, never from a leftover `discovery.md`.
 

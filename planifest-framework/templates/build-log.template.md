@@ -15,6 +15,8 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Tool | `{{tool-name}}` |
 | Primary model | `{{primary-model-name}}` |
 | Cheaper model | `{{cheaper-model-name}}` |
+| Run mode | `interactive` / `continuous` / `autonomous` (P0 writes it at the pick and updates it if the mode changes. Every later reader uses this row.) |
+| Parallel streams | `on` / `off` (`{{source}}`, for example `on (run-mode default)`) |
 
 ---
 
@@ -25,11 +27,17 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Field | Value |
 |-------|-------|
 | Start | `{{timestamp}}` |
+| End | `{{timestamp when the phase gate passes}}` |
+| Wall-clock | `{{whole minutes from Start to End}}` |
+| Streams | `{{count of active streams or "n/a"}}` |
 | Model tier | primary / cheaper |
 | Skills loaded | planifest-orchestrator |
 | Agents spawned | `{{count}}` |
 | MCP calls | `{{count}}` |
 | Parallel task batches | `{{count}}` |
+| P0 questions asked | `{{count}}` |
+| Brief complete | `{{yes or no}}` |
+| Stack unchanged | `{{yes or no}}` |
 | Notes | `{{free text or "none"}}` |
 
 ---
@@ -41,12 +49,21 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Field | Value |
 |-------|-------|
 | Start | `{{timestamp}}` |
+| End | `{{timestamp when the phase gate passes}}` |
+| Wall-clock | `{{whole minutes from Start to End}}` |
+| Streams | `{{count of active streams or "n/a"}}` |
 | Model tier | primary / cheaper |
 | Skills loaded | `{{skill names}}` |
-| Agents spawned | `{{count}}` |
+| Agents spawned | `{{count of subagents dispatched in the phase, across all streams}}` |
 | MCP calls | `{{count}}` |
 | Parallel task batches | `{{count}}` |
 | Notes | `{{free text or "none"}}` |
+
+Progress line, every run mode, one per phase at its gate:
+Progress: P{N} {done | blocked} at {End}: {one-line summary}
+
+Touchpoint line, `autonomous` only, one per touchpoint after the P0 confirmation turn:
+Human touchpoint (P{N}): {what the run asked or waited for} [{exception: item | outside list}]
 
 -->
 
@@ -60,6 +77,8 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Total agents spawned | `{{count}}` |
 | Total MCP calls | `{{count}}` |
 | Phases using parallelism | `{{count}}` |
+| Phases using streams | `{{count}}` |
+| Total wall-clock | `{{whole minutes from the P0 Start to the P7 End}}` |
 | Primary tier agent calls | `{{count}}` |
 | Cheaper tier agent calls | `{{count}}` |
 | Self-corrections | `{{count}}` |

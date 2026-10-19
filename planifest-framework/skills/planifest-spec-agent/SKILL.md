@@ -41,7 +41,7 @@ Write each spec artifact to `plan/` as you complete it. Write the component mani
 
 ## Rules
 
-**One question at a time.**
+**One question at a time.** In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 
 **Retrofit mode:** if `adoption_mode: retrofit`, follow the structured scan in `planifest-framework/workflows/retrofit.md`; the execution plan must describe the system as it exists and what is changing, not just the change in isolation.
 
