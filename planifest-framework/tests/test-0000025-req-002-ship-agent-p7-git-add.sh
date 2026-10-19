@@ -50,7 +50,9 @@ echo ""
 echo "=== req-002: Step 6 archive mechanics untouched ==="
 
 STEP6=$(sed -n '/^### Step 6: Archive plan\/current\//,/^### Step 6b/p' "$SHIP_SKILL")
-assert_contains "Copy-then-delete" "$STEP6" \
-  "req-002: Step 6 still documents copy-then-delete archive mechanics"
+# Updated by feature 0000033, req-012: Step 6 now runs archive-current.mjs
+# in place of copy-then-delete.
+assert_contains "archive-current.mjs" "$STEP6" \
+  "req-002: Step 6 documents the archive-current.mjs archive mechanics"
 
 print_summary
