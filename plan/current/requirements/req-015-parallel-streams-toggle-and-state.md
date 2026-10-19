@@ -19,7 +19,7 @@ As the human on the loop, I see independent requirements move through P1 to P4 a
 
 ### Loop toggles template (`planifest-framework/templates/loop-toggles.template.yml`)
 
-- Add a `parallel_streams` entry. It ships as a commented-out line, `# parallel_streams: on`, with a comment that states the default. A human who copies the template to enable another loop never sets an explicit `off` by accident.
+- Add a `parallel_streams` entry. It ships as a commented-out line, `# parallel_streams: off`, with a comment that states the `autonomous` default of `on`. This matches the four checker keys (P3 deviation). A human who copies the template to enable another loop never sets an explicit `off` by accident.
 - The default comes from the header rule that req-003 adds: when the run mode is `autonomous`, an absent key reads as `on`. This requirement adds `parallel_streams` to that rule's key list and adds no rule of its own.
 - No uncommented line in the template reads `: on`.
 
