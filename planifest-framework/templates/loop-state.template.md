@@ -16,8 +16,9 @@ status: "active | done | escalated"
 | Owning phase | `{{P0–P6}}` |
 | Toggle level | `{{report-only \| on}}` |
 | Iteration | `{{n}}` of cap `{{3 (default); P4 validate keeps 5}}` |
+| Approach | `{{n}} of 3 (autonomous only)` |
 | Reversal budget remaining | `{{2 − grants this feature}}` (shared across all loops; feature-wide) |
-| Last decision | `{{continue \| done \| escalate}}` |
+| Last decision | `{{continue \| done \| escalate \| change-approach}}` |
 | Last updated | `{{ISO-8601 UTC}}` |
 
 ---
@@ -27,9 +28,10 @@ status: "active | done | escalated"
 Append-only: one record per iteration. Never rewrite a prior record.
 
 ### Iteration {{n}} ({{ISO-8601 UTC}})
+- **Approach:** {{n}} (autonomous only)
 - **Action:** {{what the loop did this iteration}}
 - **Observation:** {{what was found/measured, findings, check results, evidence}}
-- **Decision:** {{continue | done | escalate}}: {{one-line reason}}
+- **Decision:** {{continue | done | escalate | change-approach}}: {{one-line reason}}
 
 ---
 
@@ -40,4 +42,5 @@ Populated only when `status: escalated`.
 - **Stop rule hit:** {{iteration cap | no-progress (same finding 2 consecutive iterations) | budget exhausted}}
 - **Outstanding gap/finding:** {{exact statement}}
 - **What was attempted:** {{summary across iterations}}
+- **Approaches tried:** {{autonomous only: each approach, and how it differed from the ones before}}
 - **Recommended next step:** {{for the human}}

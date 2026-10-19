@@ -67,10 +67,11 @@ Top actions before production:
 
 ## Rules
 
-- **One question at a time.**
+- **One question at a time.** In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 - **Rate overall risk conservatively.** If in doubt, rate higher.
 - **Cross-reference the Risk Register.** The spec-agent already identified risks. Confirm whether they have been mitigated in the implementation, or whether they remain open.
 - **Critical and high findings are flagged for human attention** at the PR gate. Be sure these are genuine.
+- **In `autonomous`, re-review each fix.** Each fixed finding gets a fresh-context re-review before the P5 gate passes. A subagent with no memory of the fix performs it (`standards/autonomous-run-standards.md`).
 
 ## Parallelism Directive
 

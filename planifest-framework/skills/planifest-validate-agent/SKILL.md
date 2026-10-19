@@ -48,13 +48,13 @@ Run the project's CI checks in this strict order:
 4. **Test** - unit tests, integration tests, contract tests (MUST pass and report the tracked req-IDs)
 5. **Build** - confirm the project compiles and builds cleanly
 
-6. **Verify by execution** (toggle `verify_by_execution`, default off; ADR-003): after all CI checks pass, load the `planifest-verify-by-execution` skill and verify acceptance criteria by running the software (browser click-through, real API calls, CLI invocation, log/file inspection). Reading test output alone never counts. A behavioural `failed` outcome is a validation failure and enters the self-correct cycle below (in `report-only` mode it is reported but does not gate). Results go to `plan/current/verification-report.md`.
+6. **Verify by execution** (toggle `verify_by_execution`, default off; ADR-003): after all CI checks pass, load the `planifest-verify-by-execution` skill and verify acceptance criteria by running the software (browser click-through, real API calls, CLI invocation, log/file inspection). Reading test output alone never counts. A behavioural `failed` outcome is a validation failure and enters the self-correct cycle below (in `report-only` mode it is reported but does not gate). Results go to `plan/current/verification-report.md`. In `autonomous`, the toggle reads as `on` when absent, and this step runs after CI passes as the P4 checker (`standards/autonomous-run-standards.md`).
 
 If all checks pass (including semantic traceability) -> report success, proceed to the next phase.
 
 If any check fails -> self-correct: read the error, identify the root cause (not just the symptom), fix it, re-run the failing check, and address any new failures the fix introduces.
 
-Maximum **5 self-correct cycles**. The mechanics of this loop (state file, run-log records, stop rules, escalation format) follow `planifest-loop-runner`: load it when entering self-correction. Your cap stays **5** (loop-runner's default of 3 does not apply to P4) and your halt/escalate behaviour is unchanged. Track each cycle:
+Maximum **5 self-correct cycles**. The mechanics of this loop (state file, run-log records, stop rules, escalation format) follow `planifest-loop-runner`: load it when entering self-correction. Your cap stays **5** (loop-runner's default of 3 does not apply to P4). In `interactive` and `continuous`, your halt/escalate behaviour is unchanged. In `autonomous`, the fifth failed cycle starts a new approach per `standards/autonomous-run-standards.md` (Changing approach). After 3 approaches, the `VALIDATION BLOCKED` text below becomes an exception-list item. Track each cycle:
 
 ```
 Cycle N:
@@ -65,7 +65,7 @@ Cycle N:
   Result: pass | new-failure | same-failure
 ```
 
-If the issue persists after 5 attempts, **halt and escalate to the human** with this format:
+In `interactive` and `continuous`, if the issue persists after 5 attempts, **halt and escalate to the human** with this format:
 
 ```
 VALIDATION BLOCKED - human intervention required
@@ -87,7 +87,7 @@ Do NOT proceed to the next pipeline phase if any check is failing. The pipeline 
 
 ## Rules
 
-- **One question at a time.**
+- **One question at a time.** In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 - **Fix the actual bug.** Do not suppress linting rules, skip failing tests, or weaken type checks to make errors go away.
 - **Do not widen scope.** Fix the failure. Do not refactor adjacent code, improve test coverage beyond what failed, or restructure the project. Do not refactor code to meet standards during validation either: if you notice a standards violation that isn't causing a test/lint/build failure, record it in recommendations for the docs-agent.
 - **If a test failure reveals a requirements ambiguity**, record it in `src/{component-id}/docs/quirks.md` and note it for the human. Fix the test to match your best interpretation of the requirements, but flag the ambiguity.

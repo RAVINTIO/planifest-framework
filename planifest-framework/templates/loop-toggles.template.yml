@@ -8,6 +8,13 @@
 # (with a one-line warning). Zero-config pipeline behaviour is identical to a
 # pipeline without loop support.
 #
+# autonomous run mode (0000033 ADR-004): an absent key reads as on for
+# design_critic, verify_by_execution, cross_model_review, reversal_protocol,
+# and parallel_streams. An explicit value below always wins. Outside
+# autonomous, an absent key still reads as off. Those keys ship commented out,
+# so copying this file never sets an explicit off by accident. Uncomment a
+# line only to set its value on purpose.
+#
 # Levels:
 #   off         : loop machinery does not activate at all
 #   report-only : loop runs and files findings/verdicts, but blocks nothing and
@@ -15,7 +22,8 @@
 #   on          : loop verdicts gate progression per their skill's rules
 
 p0_completeness: off      # P0 exits only when the gap checklist passes (cap: 2 rounds/gap)
-design_critic: off        # fresh-context critique of P1/P2 artifacts before the human gate (cap 3)
-reversal_protocol: off    # defect report → assessor → governed scoped correction (budget 2/feature)
-verify_by_execution: off  # P4 verifies acceptance criteria by running the software
-cross_model_review: off   # different-model REJECT-default review at end of P6, pre-archive (cap 3)
+# design_critic: off        # default off, or on in autonomous. Fresh-context critique of P1/P2 artifacts before the gate (cap 3)
+# reversal_protocol: off    # default off, or on in autonomous. Defect report → assessor → governed scoped correction (budget 2/feature)
+# verify_by_execution: off  # default off, or on in autonomous. P4 verifies acceptance criteria by running the software
+# cross_model_review: off   # default off, or on in autonomous. Different-model REJECT-default review at end of P6, pre-archive (cap 3)
+# parallel_streams: off     # default off, or on in autonomous. Independent requirements run P1 to P4 as parallel streams (0000033)
