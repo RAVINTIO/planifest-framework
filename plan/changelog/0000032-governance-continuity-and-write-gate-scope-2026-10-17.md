@@ -2,7 +2,7 @@
 
 **Feature:** Governance continuity and write-gate scope
 **Pipeline run:** P0 to P9 in continuous mode. No phases skipped.
-**PR:** https://github.com/planifest/planifest-framework/pull/58 (draft, shared with 0000031 on the same branch)
+**PR:** https://github.com/planifest/planifest-framework/pull/58 (draft, shared with 0000031 on the same branch, body updated at P9 on 2026-10-19)
 
 ## What Was Built
 
