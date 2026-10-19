@@ -203,3 +203,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Step 1: changelog written to `plan/changelog/0000033-human-on-the-loop-run-mode-2026-10-19.md`.
 - Step 2: no `.skips` file.
 - Step 3: `.feature-id` written.
+- Step 4: 19 candidates tagged. The human on the loop confirmed seven: req-001 run-mode script, req-002, req-003, req-005, req-012, req-013, and req-017. All seven pass from `tests/regression/`. The pack now holds 31 suites.
+- Step 5: test report written to `plan/changelog/0000033-human-on-the-loop-run-mode-test-report-2026-10-19.md`. Full run: 78 feature and 31 regression suites pass.
