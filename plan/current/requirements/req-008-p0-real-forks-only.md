@@ -49,18 +49,21 @@ The orchestrator skill is already 9,276 words, so the detail lives here and the 
 - **`### How you coach`, "When the brief is already complete":** The orchestrator confirms the brief through the design draft, not item by item.
 - **`### Phase 0 Start Actions`, step 3a (Detect adoption mode):** Replace "recommend the detected mode with its signal and confirm before proceeding". The detected mode and its signal go into the design draft under `Adoption mode:`. If a conflict warning applies, the orchestrator asks with the conflict warning protocol first. The `Adoption mode: {mode}, confirmed by human on {date}` build-log line is written when the design is confirmed.
 - **`### Phase 0 Start Actions`, version bump text after step 3d:** Replace "Present the last known version and the suggested bump to the human". The last known version and the suggested bump go into the design draft. The **Hard block** paragraph and its message stay word for word.
-- **`### What you produce at the end of Phase 0`:** Replace the separate "Before asking for design confirmation, ask:" run-mode prompt with the combined confirmation turn. The run-mode options are the ones req-001 defines. The hard gate sentence "Do not proceed to Phase 1 until the human has confirmed the Design" stays.
+- **`### What you produce at the end of Phase 0`:** Replace the separate "Before asking for design confirmation, ask:" run-mode prompt with the combined confirmation turn. The run-mode options are the ones req-001 defines. Each option names who acts, for example "Interactive: the agent stops for you at every phase gate". The hard gate sentence "Do not proceed to Phase 1 until the human has confirmed the Design" stays.
 - **`### Scope Lock Challenge`, "Scope of this default":** Name the combined confirmation turn as the second narrow exception to `0000014-ADR-008`. The phrases "does not alter" and `0000014-ADR-008` stay.
-- **`### P0 Audit Trail`:** At design confirmation, append `P0 questions asked: {n}` to the P0 build-log block.
+- **`### P0 Audit Trail`:** At design confirmation, append three lines to the P0 build-log block:
+  - `P0 questions asked: {n}`
+  - `Brief complete: yes|no`
+  - `Stack unchanged: yes|no`
 - **`### Phase 0 → Phase 1 Gate Checklist`:** The adoption mode and version items are met when the human confirms the design that contains them.
 
 ### Build log template (`planifest-framework/templates/build-log.template.md`)
 
-- Add a `P0 questions asked` row to the `### P0: Assess & Coach` table.
+- Add `P0 questions asked`, `Brief complete`, and `Stack unchanged` rows to the `### P0: Assess & Coach` table.
 
 ### Build assessment skill (`planifest-framework/skills/planifest-build-assessment-agent/SKILL.md`)
 
-- **`## Critical Audit`:** Add a P0 question audit. It reports the `P0 questions asked` count and flags a count above 3. The NFR target is at most 3 coaching questions when the brief is complete and the stack is unchanged.
+- **`## Critical Audit`:** Add a P0 question audit. It reports the `P0 questions asked` count. It flags a count above 3 only when `Brief complete` and `Stack unchanged` both read `yes`. This matches the NFR target of at most 3 coaching questions in that case.
 
 ### Tests
 
@@ -79,18 +82,19 @@ The orchestrator skill is already 9,276 words, so the detail lives here and the 
 - The orchestrator no longer contains "Present the last known version and the suggested bump to the human".
 - `### What you produce at the end of Phase 0` names the design, the Scope Lock batch, and the run mode in one turn. It still contains "Do not proceed to Phase 1 until the human has confirmed the Design".
 - The Scope Lock section still contains "separate, explicit accept / edit / reject" and "No blanket or implied confirmation".
-- The orchestrator and the build-log template both contain `P0 questions asked`.
-- The build assessment skill's `## Critical Audit` names `P0 questions asked` and a threshold of 3.
+- The orchestrator and the build-log template both contain `P0 questions asked`, `Brief complete`, and `Stack unchanged`.
+- The build assessment skill's `## Critical Audit` section names `P0 questions asked`, a threshold of 3, `Brief complete`, and `Stack unchanged`.
+- The combined confirmation turn's text names who acts in each run-mode option.
 
 ## Acceptance Criteria
 
 - [ ] P0 asks only real forks. Adoption mode, version, stack, NFRs, risks, the component split, and the feature ID reach the human once, in the design draft. The conflict warning protocol and the version hard block still apply.
 - [ ] The design, the Scope Lock batch, and the run mode confirm in one turn. Each Scope Lock item keeps its own accept / edit / reject, and `0000014-ADR-008` still governs the remaining real forks.
-- [ ] The P0 build-log block records `P0 questions asked: {n}`, and the P8 report flags a count above 3. The new suite and the three existing suites pass under `run-tests.sh`.
+- [ ] The P0 build-log block records `P0 questions asked: {n}`, `Brief complete`, and `Stack unchanged`. P8 flags a count above 3 only when both read `yes`. The new suite and the three existing suites pass under `run-tests.sh`.
 
 ## Dependencies
 
-- req-001 (autonomous-run-mode) defines the run-mode options that the combined confirmation turn presents. Both requirements edit `### What you produce at the end of Phase 0`, so the edits must merge.
-- req-006 (on-the-loop-visibility) also adds a count to the P8 report. The two audits should sit together in `## Critical Audit`.
+- req-001 (autonomous-run-mode) defines the run-mode options that the combined confirmation turn presents. Each option names who acts (F16). Both requirements edit `### What you produce at the end of Phase 0`, so the edits must merge.
+- req-006 (on-the-loop-visibility) adds the touchpoint audit to the P8 report. Both that audit and this question-count audit go under `## Critical Audit` (F9).
 - req-010 (release-budget) changes backlog pickup at step 3c. Step 3c stays a real fork in this requirement.
 - 0000025-ADR-003 (Scope Lock batching) is the first exception to `0000014-ADR-008`. This requirement adds a second, so P2 needs an ADR for it.
