@@ -628,6 +628,17 @@ Invoke the **docs-agent** skill. See the Phase Invocation Table above for the ga
 
 ---
 
+### Deviation Review (end of P6, before the cross-model gate)
+
+In `autonomous`, run this step after the P6 commit. It runs before the cross-model gate, or before P7 when that gate is off. Outside `autonomous`, skip it. The human on the loop saw each deviation at its phase gate.
+
+1. Collect every `Deviation (P{N}, unclassified)` line from `plan/current/build-log.md`. Also collect every recorded decision touching data, schema, or a destructive operation.
+2. Spawn the fresh-context `planifest-reversal-assessor` per its `## Deviation review` procedure. Its prompt holds the collected lines, `plan/current/design.md`, and the artifacts each line names. It never holds the maker's conversation.
+3. Read the assessor's verdicts from `plan/current/deviation-review.md`.
+4. The orchestrator rewrites each build-log line with the assessor's class, as in `Deviation (P{N}, additive): {what changed}`. Only the orchestrator edits these lines.
+5. Each altering, schema, or destructive item becomes an exception-list item. Log each one as `Exception waiting (P6, {item}): {what the human on the loop must do}`.
+6. If no line needs review, log `Deviation review (P6): nothing to review` and carry on.
+
 ### Cross-Model Review Gate (end of P6, strictly before P7)
 
 **Toggle `cross_model_review` (default off; ADR-003).** When enabled, run this gate after the P6 commit and before invoking the ship-agent; P7 archive begins only after this gate approves (or the toggle is off); running it against archived state was explicitly rejected (ADR-008). In `autonomous`, an absent key reads as `on` per the loop runner's Toggle Protocol.

@@ -129,7 +129,7 @@ echo "=== req-013: credential guard before the autonomous leftover commit (P5 G5
 for pat in '`.env*`' '`*.pem`' '`*.key`' '`id_rsa*`' '`*.p12`'; do
   assert_contains "$pat" "$C8" "req-013: P8 credential guard refuses $pat (P5 G5)"
 done
-GREP_CMD="grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{35}'"
+GREP_CMD="grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}'"
 assert_contains "$GREP_CMD" "$C8" "req-013: P8 credential guard scans content for credential patterns (P5 G5)"
 assert_contains "exception item" "$C8" "req-013: a refused file becomes an exception item (P5 G5)"
 assert_contains "stay uncommitted" "$C8" "req-013: refused files stay uncommitted (P5 G5)"
@@ -165,7 +165,7 @@ echo "=== req-013: extended credential guard (P5 C2-6) ==="
 for pat in '`.npmrc`' '`credentials.json`' '`*.keystore`' '`.netrc`'; do
   assert_contains "$pat" "$C8" "req-013: P8 credential guard refuses $pat (P5 C2-6)"
 done
-GREP_CMD2="grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{35}'"
+GREP_CMD2="grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}'"
 assert_contains "$GREP_CMD2" "$C8" "req-013: content scan adds GitHub PAT, sk-, and Google API key patterns (P5 C2-6)"
 assert_contains "gitleaks detect --no-git --source" "$C8" "req-013: the guard runs gitleaks when it is on PATH (P5 C2-6)"
 echo "token github_pat_$(printf 'a%.0s' $(seq 1 22))" > "$R/docs/new/pat.md"
@@ -173,5 +173,13 @@ echo "key sk-$(printf 'b%.0s' $(seq 1 24))" > "$R/docs/new/sk.md"
 echo "key AIza$(printf 'c%.0s' $(seq 1 35))" > "$R/docs/new/gcp.md"
 HITS2=$(cd "$R" && eval "$GREP_CMD2 -- docs/new/c.md docs/new/pat.md docs/new/sk.md docs/new/gcp.md" | tr '\n' ' ')
 assert_equals "docs/new/pat.md docs/new/sk.md docs/new/gcp.md " "$HITS2" "req-013: the extended scan flags each new pattern and skips clean files (P5 C2-6)"
+
+echo ""
+echo "=== req-013: the sk- pattern covers underscores and hyphens (P5 C3-10) ==="
+
+assert_contains "sk-[A-Za-z0-9_-]{20,}" "$C8" "req-013: the sk- pattern allows _ and - (P5 C3-10)"
+echo "key sk-proj-$(printf 'd%.0s' $(seq 1 10))_$(printf 'e%.0s' $(seq 1 10))" > "$R/docs/new/skproj.md"
+HITS3=$(cd "$R" && eval "$GREP_CMD2 -- docs/new/c.md docs/new/skproj.md")
+assert_equals "docs/new/skproj.md" "$HITS3" "req-013: the scan flags an sk-proj- key with _ and - (P5 C3-10)"
 
 print_summary

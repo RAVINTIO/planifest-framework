@@ -25,13 +25,24 @@
  *      script prints `interactive` and writes one reason line to stderr.
  *   4. A symlinked plan/, plan/current/, build-log path component, or
  *      plan/.run-mode prints `interactive`.
+ *   5. Merges: if any merge commit differs from one of its parents in the
+ *      build log, the script prints `interactive`. A merge that leaves the
+ *      build log alone is fine. Merges never carry the anchor.
+ *   6. History follows the build log across a rename. If the given path has
+ *      no history yet, such as between P7 Step 6 and the P7 commit, the
+ *      script reads the history of plan/current/build-log.md instead.
  *
- * Threat handled: an errant subagent that rewrites a run-mode record, such
- * as plan/.run-mode or the build-log row, to switch on `autonomous`.
+ * Threat: an errant or confused subagent that rewrites a run-mode record,
+ * such as plan/.run-mode or the build-log row, to switch on `autonomous`.
  *
- * Limit: an agent that can commit can still forge one anchored commit. So
- * merging, schema changes, destructive operations, and the credential rule
- * never depend on the run mode. They stay human-gated in every mode.
+ * What the script checks: the anchor in rule 3, read from git objects only.
+ * Every git call ignores textconv drivers, external diff tools, replace refs,
+ * the system git config, and every inherited GIT_* variable.
+ *
+ * Limits: An agent with shell access can still forge history, so this script
+ * is an integrity check, not a security boundary. Merging, schema changes,
+ * destructive operations, and credentials never depend on the run mode. They
+ * stay human-gated in every mode.
  *
  * Every git call runs with an argument array, no shell, and
  * GIT_LITERAL_PATHSPECS=1. Reads stop at 1 MB per file. Printed reasons
@@ -49,7 +60,15 @@ const RUN_MODE_FILE = "plan/.run-mode";
 const LINE_PREFIX = "Run mode confirmed: autonomous";
 const CONFIRM_RE = /^\+Human confirmed this design before proceeding:\s*yes\b/i;
 const MAX_BYTES = 1024 * 1024;
-const GIT_ENV = { ...process.env, GIT_LITERAL_PATHSPECS: "1" };
+// A clean copy of the environment with every inherited GIT_* variable removed.
+const GIT_ENV = Object.fromEntries(
+  Object.entries(process.env).filter(([k]) => !k.toUpperCase().startsWith("GIT_")),
+);
+Object.assign(GIT_ENV, {
+  GIT_LITERAL_PATHSPECS: "1", GIT_NO_REPLACE_OBJECTS: "1", GIT_CONFIG_NOSYSTEM: "1",
+});
+// Flags for every git log or show call: diffs come from raw blobs only.
+const DIFF_FLAGS = ["--no-textconv", "--no-ext-diff", "--no-color"];
 
 function clean(v) {
   return String(v).replace(/[^\x20-\x7e]/g, "?").slice(0, 200);
@@ -85,7 +104,7 @@ function readSmall(abs) {
 }
 
 function git(root, args) {
-  const r = spawnSync("git", args, {
+  const r = spawnSync("git", ["--no-replace-objects", ...args], {
     cwd: root, encoding: "utf8", env: GIT_ENV, maxBuffer: 64 * MAX_BYTES,
   });
   if (r.error || r.status !== 0) return null;
@@ -114,10 +133,18 @@ function rowValue(text) {
 function checkAnchor(root, logRel, logText) {
   const lines = logText.split("\n").filter((l) => l.startsWith(LINE_PREFIX));
   if (lines.length !== 1) return `expected one "${LINE_PREFIX}" line in the build log, found ${lines.length}`;
-  const out = git(root, [
-    "log", "--follow", "-M", "-p", "--unified=0", "--no-color", "--no-ext-diff",
-    "--format=commit %H", "--", logRel,
+  // Rule 5: refuse when a merge brought any change to the build log.
+  for (const p of new Set([logRel, DEFAULT_LOG])) {
+    const merges = git(root, ["log", "--merges", "--full-history", "--format=%H", "--", p]);
+    if (merges === null) return "git log failed listing merges";
+    if (merges.trim()) return `a merge commit changed ${p}, so the anchor is ambiguous`;
+  }
+  // Rule 6: follow renames, and fall back to the plan/current path.
+  const logPatch = (p) => git(root, [
+    "log", "--follow", "-M", "-p", "--unified=0", ...DIFF_FLAGS, "--format=commit %H", "--", p,
   ]);
+  let out = logPatch(logRel);
+  if (out !== null && !out.trim() && logRel !== DEFAULT_LOG) out = logPatch(DEFAULT_LOG);
   if (out === null) return "git log failed for the build log";
   const adders = [];
   let sha = null;
@@ -131,7 +158,7 @@ function checkAnchor(root, logRel, logText) {
   const [{ sha: anchor, line }] = adders;
   if (line !== lines[0]) return "the confirmation line differs from the anchored commit";
   const design = git(root, [
-    "show", "--format=", "-p", "--unified=0", "--no-color", "--no-ext-diff", anchor, "--", DESIGN,
+    "show", "--format=", "-p", "--unified=0", ...DIFF_FLAGS, anchor, "--", DESIGN,
   ]);
   if (design === null) return "git show failed for the anchor commit";
   if (!design.split("\n").some((l) => CONFIRM_RE.test(l))) {

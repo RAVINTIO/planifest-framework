@@ -40,7 +40,9 @@ An explicit value in `planifest-overrides/loop-toggles.yml` wins over the defaul
 
 **Checker keys in `autonomous`:** an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set. See `standards/autonomous-run-standards.md` (Gates as loops).
 
-**Toggle record:** at P1 start, the orchestrator writes every resolved toggle and its source to the P1 build-log block. The source is `file value`, `autonomous default`, or `absent default`.
+**Toggle record:** at P1 start, the orchestrator writes every resolved toggle and its source to the P1 build-log block. The source is `file value`, `autonomous default`, or `absent default`. Only the orchestrator writes the Toggle record.
+
+**P1 checker re-check:** at P1 start, the orchestrator applies the P0 checker block again before it writes the Toggle record. P0 has passed, so the run can't stop at the run-mode prompt. If a checker key holds an explicit `off` or `report-only` in `autonomous`, the run drops to `continuous`. The orchestrator writes `continuous` to `plan/.run-mode` and the build-log `Run mode` row. It logs `Run mode dropped (P1): {key} is {value}, autonomous needs it on`.
 
 **Frozen checkers:** in `autonomous`, the P1 Toggle record is binding for the run for `design_critic`, `reversal_protocol`, `verify_by_execution`, and `cross_model_review`. The loop runner ignores a later edit to `planifest-overrides/loop-toggles.yml` for those keys. It logs the edit as `Human touchpoint (P{N}): loop-toggles.yml changed {key}, ignored [outside list]`.
 

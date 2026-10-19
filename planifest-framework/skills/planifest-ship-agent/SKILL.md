@@ -172,7 +172,7 @@ The `--untracked-files=all` flag lists each untracked file, not just its directo
 - any file named `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `.npmrc`, `credentials.json`, `*.keystore`, or `.netrc`
 - any file whose content matches a credential pattern:
   ```bash
-  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{35}' -- {path} ...
+  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}' -- {path} ...
   ```
 - any file that `gitleaks` flags, if `gitleaks` is on PATH. Run it over each candidate file:
   ```bash

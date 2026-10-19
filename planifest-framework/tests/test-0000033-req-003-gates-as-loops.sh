@@ -140,4 +140,14 @@ for txt in "$TP" "$GATES"; do
   assert_contains "Human touchpoint" "$FROZEN" "req-003: the ignored edit is logged as a touchpoint-style line (P5 C2-3)"
 done
 
+echo ""
+echo "=== req-003: P1 re-applies the P0 checker block (P5 C3-7) ==="
+
+RECHECK=$(grep 'P1 checker re-check' <<< "$TP")
+assert_contains "at P1 start" "$RECHECK" "req-003: the checker block runs again at P1 start (P5 C3-7)"
+assert_contains "\`off\` or \`report-only\`" "$RECHECK" "req-003: P1 re-check names off and report-only (P5 C3-7)"
+assert_contains "drops to \`continuous\`" "$RECHECK" "req-003: a blocked checker drops the run to continuous at P1 (P5 C3-7)"
+assert_contains "Run mode dropped (P1)" "$RECHECK" "req-003: the drop is logged with its reason (P5 C3-7)"
+assert_contains "Only the orchestrator writes the Toggle record" "$(grep '^\*\*Toggle record' <<< "$TP")" "req-003: only the orchestrator writes the Toggle record (P5 C3-7)"
+
 print_summary

@@ -160,4 +160,26 @@ lacks "the agent records it as *additive*" "$EXC" "req-002: the deviating agent 
 assert_contains "\`Deviation (P{N}, unclassified)\`" "$DEV" "req-002: codegen writes an unclassified Deviation line (P5 C2-7)"
 lacks "record an *additive* deviation" "$DEV" "req-002: codegen no longer records an additive deviation itself (P5 C2-7)"
 
+echo ""
+echo "=== req-002: the pre-P7 deviation review has an executor (P5 C3-8) ==="
+
+DR_ORCH=$(awk '/^### Deviation Review/ { on = 1; print; next } on && /^##/ { exit } on { print }' "$ORCH")
+assert_equals "yes" "$([ -n "$DR_ORCH" ] && echo yes || echo no)" "req-002: orchestrator has a Deviation Review step (P5 C3-8)"
+DR_LINE=$(grep -n '^### Deviation Review' "$ORCH" | head -1 | cut -d: -f1)
+CM_LINE=$(grep -n '^### Cross-Model Review Gate' "$ORCH" | head -1 | cut -d: -f1)
+P6_LINE=$(grep -n '^## Phase 6' "$ORCH" | head -1 | cut -d: -f1)
+assert_equals "yes" "$([ -n "$DR_LINE" ] && [ "$DR_LINE" -gt "$P6_LINE" ] && [ "$DR_LINE" -lt "$CM_LINE" ] && echo yes || echo no)" "req-002: the review runs at the end of P6, before the cross-model gate (P5 C3-8)"
+assert_contains "fresh-context \`planifest-reversal-assessor\`" "$DR_ORCH" "req-002: the orchestrator spawns the fresh-context assessor (P5 C3-8)"
+assert_contains "\`Deviation (P{N}, unclassified)\`" "$DR_ORCH" "req-002: the review covers every unclassified Deviation line (P5 C3-8)"
+assert_contains "data, schema, or a destructive operation" "$DR_ORCH" "req-002: the review covers data, schema, and destructive decisions (P5 C3-8)"
+assert_contains "\`plan/current/deviation-review.md\`" "$DR_ORCH" "req-002: the orchestrator reads the assessor's verdicts file (P5 C3-8)"
+assert_contains "rewrites each" "$DR_ORCH" "req-002: the orchestrator rewrites each build-log line with the class (P5 C3-8)"
+assert_contains "exception-list item" "$DR_ORCH" "req-002: altering, schema, or destructive items become exception items (P5 C3-8)"
+DR_AS=$(section "## Deviation review" "$ASSESSOR")
+assert_equals "yes" "$([ -n "$DR_AS" ] && echo yes || echo no)" "req-002: the assessor skill has a Deviation review procedure (P5 C3-8)"
+assert_contains "\`additive\` or \`altering\`" "$DR_AS" "req-002: the assessor classifies each line additive or altering (P5 C3-8)"
+assert_contains "\`plan/current/deviation-review.md\`" "$DR_AS" "req-002: the assessor writes its verdicts to deviation-review.md (P5 C3-8)"
+assert_contains "exception-list item" "$DR_AS" "req-002: altering, schema, or destructive verdicts become exception items (P5 C3-8)"
+assert_contains "never edit the build log" "$DR_AS" "req-002: the assessor leaves the build-log rewrite to the orchestrator (P5 C3-8)"
+
 print_summary

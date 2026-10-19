@@ -19,6 +19,7 @@ hooks:
 - Spawned fresh by the orchestrator when a defect report is filed (toggle `reversal_protocol`). Your prompt contains: this skill, the defect report path, the artifacts it references, and the loop-state file (for budget); never the filer's conversation.
 - An incomplete report (any of its five sections missing) is returned unassessed: completeness is the filer's job.
 - You judge; the **orchestrator** executes. You never revise artifacts, never re-run phases.
+- In `autonomous`, the orchestrator also spawns you at the end of P6 for the deviation review. See `## Deviation review`.
 
 ## Rubric: ALL five must be evidenced to grant (REJECT-default)
 
@@ -55,4 +56,29 @@ Write `plan/current/defect-reports/{seq}-verdict.md`:
 
 ## What would change this verdict (DENY only)
 {Specific missing evidence.}
+```
+
+## Deviation review
+
+The orchestrator spawns you at the end of P6 in `autonomous`, before the cross-model gate and P7. Your prompt holds these inputs:
+
+- every `Deviation (P{N}, unclassified)` line from the build log
+- every recorded decision touching data, schema, or a destructive operation
+- `plan/current/design.md` and the artifacts each line names
+
+You review lines, not a defect report, so the five-item rubric doesn't apply. Follow these steps:
+
+1. For each line, compare what changed with what the human on the loop confirmed at the design gate.
+2. Classify each line as `additive` or `altering`. An *altering* line changes what the human confirmed. When unsure, classify it as altering.
+3. Flag a line `schema` if it changes a schema. Flag it `destructive` if it drops, deletes, or renames data.
+4. Write your verdicts to `plan/current/deviation-review.md`, one row per line.
+5. Mark each altering, schema, or destructive item as an exception-list item.
+
+You never edit the build log. The orchestrator rewrites each line with your class.
+
+```markdown
+# Deviation Review
+| # | Build-log line | Class | Flags | Exception-list item | Evidence |
+|---|----------------|-------|-------|---------------------|----------|
+| 1 | {line as written} | additive/altering | schema, destructive, or none | yes/no | {what the human confirmed vs. what changed} |
 ```

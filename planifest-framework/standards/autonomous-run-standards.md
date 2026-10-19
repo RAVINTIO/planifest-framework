@@ -26,7 +26,7 @@ Canonical home for the run-mode rules and for what an `autonomous` run still sto
 - **Resume check:** On resume, the orchestrator runs `node planifest-framework/scripts/run-mode.mjs` and uses the mode it prints. The script prints `autonomous` only when git history anchors it. One commit must add the `Run mode confirmed: autonomous` line and confirm the design. Otherwise it prints `interactive` and gives the reason on stderr. The orchestrator logs that reason.
 - **Choosing the mode:** Only the human on the loop's answer to the P0 run-mode prompt sets `autonomous`. An override that describes hands-off running never counts as choosing `autonomous`. It never writes `autonomous` to `plan/.run-mode`.
 - **Reading the mode after P0:** P0 writes the chosen value to the build-log `Run mode` row (req-006). Every reader after P0 calls `node planifest-framework/scripts/run-mode.mjs` and never reads a record directly. From P7 Step 6 on, the reader passes the archived build-log path, as in `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`.
-- **Anchor limit:** An agent that can commit can still forge one anchored commit. So no standing rule depends on the run mode.
+- **Anchor limit:** An agent with shell access can still forge history, so this script is an integrity check, not a security boundary. Merging, schema changes, destructive operations, and credentials never depend on the run mode.
 
 ---
 

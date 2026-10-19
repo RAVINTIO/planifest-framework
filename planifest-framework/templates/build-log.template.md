@@ -15,7 +15,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Tool | `{{tool-name}}` |
 | Primary model | `{{primary-model-name}}` |
 | Cheaper model | `{{cheaper-model-name}}` |
-| Run mode | `interactive` / `continuous` / `autonomous` (P0 writes it at the pick and updates it if the mode changes. Every later reader uses this row.) |
+| Run mode | `interactive` / `continuous` / `autonomous` (P0 writes it at the pick and updates it if the mode changes. Later readers call `node planifest-framework/scripts/run-mode.mjs` to read the mode.) |
 | Parallel streams | `on` / `off` (`{{source}}`, for example `on (run-mode default)`) |
 
 ---
