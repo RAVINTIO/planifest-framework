@@ -85,6 +85,11 @@ As the human on the loop, I see a failed gate retried by a fresh-context checker
 - The loop-toggles template has no uncommented line for the four checker keys, and each commented line names `autonomous`.
 - Every row of the Phase Invocation Table matches its text before this feature.
 
+### Security additions (P5)
+
+- G1: In `autonomous`, an explicit `off` or `report-only` for any of the four checker keys blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set. The changes are in `planifest-loop-runner/SKILL.md`, `autonomous-run-standards.md`, and `planifest-orchestrator/SKILL.md`.
+- G8: At P1 start, the build log records every resolved toggle and its source. The source is a file value, the `autonomous` default, or an absent default. The change is in `planifest-loop-runner/SKILL.md` and `loop-toggles.template.yml`.
+
 ## Acceptance Criteria
 
 - [ ] (AC-1) In `autonomous`, every P1 to P6 gate runs as a loop with a named checker, and no gate stops for the human on the loop.

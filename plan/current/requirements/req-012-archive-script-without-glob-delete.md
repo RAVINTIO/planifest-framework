@@ -78,6 +78,17 @@ The script follows the house style of `product-version.mjs`: a header comment wi
 - The ship skill's Step 6 section names `archive-current.mjs` and `{archive-dir}`. It no longer contains `Copy-then-delete` or `Recursively copy`.
 - The orchestrator's step 2a names `.archive-target` and a resume at P7 Step 6.
 
+### Security additions (P5)
+
+These changes are in `planifest-framework/scripts/archive-current.mjs`.
+
+- S1: The script refuses a symlinked `plan/_archive` or a symlinked target directory and exits 2.
+- S2: The script refuses a symlinked or out-of-root `plan/` or `plan/current/` and exits 2.
+- S3: The script refuses a symlinked `.archive-target` and exits 2. It writes `.archive-target` with an exclusive create.
+- S4: The script never prints the raw `.archive-target` value.
+- S7: The script sets `GIT_LITERAL_PATHSPECS=1` for its git calls.
+- S8: Names the script prints pass through a control-character filter.
+
 ## Acceptance Criteria
 
 - [ ] (feature AC 5) `archive-current.mjs` archives `plan/current/` with one `git mv` or rename per item. It deletes only the four explicit-path sentinels and never uses a glob.

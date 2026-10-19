@@ -71,6 +71,11 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 - `getting-started.md` and `pipeline-reference.md` both name the autonomous option.
 - The new suite and the two existing suites pass under `run-tests.sh`.
 
+### Security additions (P5)
+
+- G3: P0 requires a `feat/` branch before it records `autonomous`. If the human declines one, P0 can't record the mode. The change is in `planifest-orchestrator/SKILL.md`.
+- G6: On resume, the orchestrator accepts `autonomous` only when `plan/.run-mode`, the build-log `Run mode` row, and the P0 confirmation line all agree. Otherwise it reads `interactive` and logs the mismatch. The change is in `planifest-orchestrator/SKILL.md`.
+
 ## Acceptance Criteria
 
 - [ ] (AC-1) The P0 run-mode prompt offers `autonomous`, and only the human on the loop's choice of it writes `autonomous` to `plan/.run-mode`.

@@ -77,6 +77,10 @@ The check doesn't run `git add -A`, `git add .`, or any glob stage. Untracked ch
 - In a fixture repo, the scoped command reports `docs/a.md` and `src/x/docs/b.md`, and doesn't report `src/x/app.js`.
 - Step 11 reports the clean-tree result.
 
+### Security additions (P5)
+
+- G5: The P8 and P9 clean-tree checks use `git status --porcelain --untracked-files=all` over the same scoped paths. In `autonomous`, before it commits leftovers, the ship agent refuses any `.env*`, `*.pem`, `*.key`, `id_rsa*`, or `*.p12` file. It also refuses any file whose content matches a credential pattern. Refused files stay uncommitted and become an exception item. The scope guard of `plan/`, `docs/`, and `src/**/docs/` stays. The change is in `planifest-ship-agent/SKILL.md`.
+
 ## Acceptance Criteria
 
 - [ ] (feature AC 5) The P9 marker-step commit always carries `build-report.md`, and the P7 to P9 order stays as 0000032 set it.

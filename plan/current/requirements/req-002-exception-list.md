@@ -83,6 +83,13 @@ As the human on the loop, I get asked only for items on a declared exception lis
 - The reversal assessor's row 5 names `autonomous` and the exception list.
 - Each of the seven phase skills names `autonomous-run-standards.md`.
 
+### Security additions (P5)
+
+- G2: The standing rules rank above every override, including `planifest-overrides/instructions/`. "Overrides win" applies to all other behaviour. The change is in `autonomous-run-standards.md`.
+- G4: Before P7 in `autonomous`, the fresh-context reversal assessor reviews every `Deviation` line in the build log. It also reviews each recorded decision that touches data, a schema, or a destructive operation. Anything it classes as altering, schema, or destructive becomes an exception item. The changes are in `autonomous-run-standards.md` and `planifest-codegen-agent/SKILL.md`.
+- G10: Rubric item 3 of the reversal assessor now matches the autonomous rule. An additive cascade over 3 proceeds and is recorded. An altering reversal waits. The change is in `planifest-reversal-assessor/SKILL.md`.
+- G11: Hard Limits 4 (data owned by one component) and 6 (no credentials in context) join the standing rules. A credential sighting is a seventh exception item. The run stops using the credential, finishes other work, and raises it in the final report. The change is in `autonomous-run-standards.md` and `exception-list.template.yml`.
+
 ## Acceptance Criteria
 
 - [ ] (AC-2) The standards file lists the six exception items, the gross-deviation rule, and the decision line formats, and a product can add items through `planifest-overrides/exception-list.yml`.

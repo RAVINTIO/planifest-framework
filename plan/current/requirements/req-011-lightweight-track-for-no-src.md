@@ -52,6 +52,10 @@ As the human on the loop, I route a change with no `src/` component through a li
 - The orchestrator's `### Three-Track Decision Tree` table has a row naming `no \`src/\` target` with **Fast Path** as its track.
 - The orchestrator's `### Fast Path Criteria and Execution` section names `no \`src/\` target` and still links to `planifest-framework/workflows/fast-path.md`.
 
+### Security additions (P5)
+
+- G12: Fast Path still admits a change with no `src/` target. It never admits a change to `planifest-framework/hooks/`, `planifest-framework/scripts/`, `setup.sh`, `setup.ps1`, or any enforcement hook. Those take the Change or Feature Pipeline. The changes are in `workflows/fast-path.md` and the Three-Track Decision Tree row of `planifest-orchestrator/SKILL.md`.
+
 ## Acceptance Criteria
 
 - [ ] Fast Path's prerequisite admits a change with no `src/` target. A change with code under `src/` still meets it as before.

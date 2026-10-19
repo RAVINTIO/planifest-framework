@@ -69,6 +69,12 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 - The orchestrator's Phase 7 gate line still contains "always a confirmation stop" and also names `autonomous`.
 - `pipeline-reference.md` names `autonomous` next to the P9 stop rule.
 
+### Security additions (P5)
+
+- G3: In `autonomous`, Step 10 refuses to push from the default branch or any branch not named `feat/...`. The refusal becomes an exception item in the final report. The change is in `planifest-ship-agent/SKILL.md`.
+- G7: The ship agent writes the final report to `{archive-dir}/final-report.md`, commits it, and pushes it under the after-PR push rule. The report survives the Step 12 context clear. The chat message points to the file. The change is in `planifest-ship-agent/SKILL.md`.
+- G9: Option [1] pushes with `git push -u origin HEAD` and then `git push origin v{version}`. It no longer uses `git push --tags`. No step in any mode uses `--force` or `--force-with-lease`. The change is in `planifest-ship-agent/SKILL.md`.
+
 ## Acceptance Criteria
 
 - [ ] (AC-1) In `autonomous`, P7 to P9 ask nothing. The ship agent raises the PR unless a `local-git-only` override applies, as a draft when an exception waits. No mode merges the PR.

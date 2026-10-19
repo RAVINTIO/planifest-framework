@@ -87,6 +87,15 @@ Add a `## Joins and Reconciliation` section after `## Parallel Streams` (req-015
 - The orchestrator `## Phase Conventions` section names `stream-reconcile.mjs`.
 - Both skeleton prompts in `## Agent Dispatch Template` name `Declares` and `Consumes`.
 
+### Security additions (P5)
+
+The script changes are in `planifest-framework/scripts/stream-reconcile.mjs`. The documentation change is in `agent-dispatch-standards.md`.
+
+- S5: Reconcile reads only regular files inside the repo, up to 1 MB each.
+- S6: A join record carries `start-commit`. Only listed files that git shows changed in that range count.
+- S7: The script sets `GIT_LITERAL_PATHSPECS=1` for its git calls.
+- S8: Names the script prints pass through a control-character filter.
+
 ## Acceptance Criteria
 
 - [ ] The orchestrator owns every join between streams or batches, and it runs a reconciliation step after each join and before the gate check.
