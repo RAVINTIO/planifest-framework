@@ -97,9 +97,9 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Start | `2026-10-19T01:59:49Z` |
 | Model tier | primary (orchestrator and work-package agents) |
 | Skills loaded | planifest-codegen-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `7` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `2` |
 | Notes | Baseline before P3: 59 feature and 24 regression suites pass. |
 - Dispatch plan: requirements grouped into six work packages by the files they change. Wave 1 runs five packages in parallel. Wave 2 runs req-015 to req-017, because they edit every phase skill that wave 1 also edits.
 - Deviation: each work-package agent runs the red, green, and refactor steps itself, rather than spawning three subagents per requirement. The tests are Bash text assertions, so a nested spawn per step costs more than it gains. Each agent still confirms RED before GREEN.
@@ -109,3 +109,10 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - req-007 sweep result: only the ship skill and the orchestrator held prompts that needed a change. The other phase skills and `workflows/` needed none.
 - Concurrency: WP4 rewrote the orchestrator once with `sed -i` during the wave. Every wave 1 suite passed afterwards, so no concurrent edit was lost.
 - Full suite after wave 1: 73 of 74 feature suites passed. The 0000030 residue check flagged the retired integration word inside the new req-018 suite. Fixed by splitting the word. Both suites pass.
+- Wave 2: WP6a req-015 and req-017, WP6b req-016. All GREEN. Deviation: the `parallel_streams` template line reads `# parallel_streams: off` with an `autonomous` default of `on` in its comment, matching the four checker keys. req-015 updated to match.
+- `planifest-framework/component.yml`: 0.31.0 to 0.32.0, feature set to 0000033.
+- Full suite after P3: 77 feature and 24 regression suites pass.
+- NFR-005: the orchestrator skill grew from 9,276 to 10,314 words (11 percent). Most new detail sits in four new standards files.
+- Changes against `main`: 54 framework files, 3,005 insertions, 86 deletions. No added line holds an em dash.
+- End: `2026-10-19T02:25:20Z`
+- Gate passed: P3 (continuous run, no stop)
