@@ -19,26 +19,47 @@
  *   4. The artifact ID appears in at least one changed file of the consumer,
  *      other than its defining file. A stream's changed files come from
  *      `git log --name-only --format= --grep "Stream: {stream-id}"
- *      {start-commit}..HEAD`. A join record's come from its "## Files
- *      changed" section. A requirement consumer uses the unit whose
- *      `requirements` list holds it. Files under streams/ never count.
+ *      {start-commit}..HEAD`. A join record's are the paths in its "## Files
+ *      changed" section that git also shows changed in
+ *      `git log --name-only --format= {start-commit}..HEAD`, so a join record
+ *      needs a valid start-commit too. A requirement consumer uses the unit
+ *      whose `requirements` list holds it. Files under streams/ never count.
+ *
+ * Check 4 reads a changed file only when its realpath sits inside the repo
+ * root, lstat shows a regular file (no symlink, FIFO, or device), and it is
+ * 1 MB or smaller. If no readable file uses the artifact, the finding names
+ * each skipped file and why. Every git call sets GIT_LITERAL_PATHSPECS=1,
+ * and every output line has its control characters replaced.
  *
  * Exit codes: 0 = clean, 1 = findings (one line per artifact on stdout).
  * An absent streams/ directory exits 0 with no output.
  */
 
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { basename, isAbsolute, join, relative, resolve } from "node:path";
+import { closeSync, existsSync, lstatSync, openSync, readSync, readdirSync, realpathSync } from "node:fs";
+import { basename, isAbsolute, join, relative, resolve, sep } from "node:path";
 
 const dir = resolve(process.argv[2] ?? join(process.cwd(), "plan", "current"));
 const streamsDir = join(dir, "streams");
 
 if (!existsSync(streamsDir)) process.exit(0);
 
-function read(p) {
-  try { return readFileSync(p, "utf-8"); } catch { return null; }
+const MAX_READ = 1024 * 1024;
+const GIT_ENV = { ...process.env, GIT_LITERAL_PATHSPECS: "1" };
+
+// Reads a regular file of at most MAX_READ bytes. Returns { text } or { skip }.
+function readSafe(p) {
+  let st;
+  try { st = lstatSync(p); } catch { return { text: null }; }
+  if (!st.isFile()) return { skip: "not a regular file" };
+  if (st.size > MAX_READ) return { skip: "over 1 MB" };
+  const buf = Buffer.alloc(st.size);
+  const fd = openSync(p, "r");
+  try { readSync(fd, buf, 0, st.size, 0); } finally { closeSync(fd); }
+  return { text: buf.toString("utf-8") };
 }
+
+const read = (p) => readSafe(p).text ?? null;
 
 function section(text, heading) {
   // Returns the body of "## {heading}" up to the next "## " heading.
@@ -66,7 +87,9 @@ function frontMatter(text) {
   return fm;
 }
 
-const clean = (s) => s.trim().replace(/^`|`$/g, "").trim();
+const strip = (s) => s.trim().replace(/^`|`$/g, "").trim();
+// Replaces control and non-ASCII characters before a value reaches output.
+const clean = (s) => String(s).replace(/[^\x20-\x7e]/g, "?");
 const isPlaceholder = (s) => s.includes("{{");
 
 function tableRows(body) {
@@ -74,7 +97,7 @@ function tableRows(body) {
   const rows = body.split(/\r?\n/).filter((l) => l.trim().startsWith("|"));
   return rows
     .slice(rows.length > 1 && /^\|[\s:|-]+\|?$/.test(rows[1].trim()) ? 2 : 0)
-    .map((l) => l.trim().replace(/^\||\|$/g, "").split("|").map(clean))
+    .map((l) => l.trim().replace(/^\||\|$/g, "").split("|").map(strip))
     .filter((cells) => !cells.some(isPlaceholder));
 }
 
@@ -83,18 +106,19 @@ function listItems(body) {
   const bullets = body.split(/\r?\n/)
     .map((l) => /^\s*[-*]\s+(.+)$/.exec(l))
     .filter(Boolean)
-    .map((m) => clean(m[1]));
+    .map((m) => strip(m[1]));
   const cells = tableRows(body).map((c) => c[0]);
   return [...bullets, ...cells].filter((s) => s && !isPlaceholder(s));
 }
 
 function gitRoot() {
   try {
-    return execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: dir, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+    return execFileSync("git", ["rev-parse", "--show-toplevel"], { cwd: dir, encoding: "utf-8", env: GIT_ENV, stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch { return null; }
 }
 
 const root = gitRoot() ?? process.cwd();
+const realRoot = realpathSync(root);
 const toRepoPath = (p) => relative(root, isAbsolute(p) ? p : join(root, p)).split("\\").join("/");
 const streamsRel = toRepoPath(streamsDir);
 
@@ -120,20 +144,30 @@ const byId = new Map(units.map((u) => [u.id, u]));
 
 // ---- changed files per unit -------------------------------------------------
 const changedCache = new Map();
+function gitChanged(unit, grepArgs) {
+  const out = execFileSync("git", ["log", "--name-only", "--format=", ...grepArgs,
+    `${unit.startCommit}..HEAD`],
+    { cwd: root, encoding: "utf-8", env: GIT_ENV, stdio: ["ignore", "pipe", "ignore"] });
+  return [...new Set(out.split(/\r?\n/).map((s) => s.trim()).filter(Boolean))];
+}
+
 function changedFiles(unit) {
   if (changedCache.has(unit.id)) return changedCache.get(unit.id);
   let files = { list: [], error: null };
-  if (unit.kind === "join") {
-    files.list = unit.filesChanged.map(toRepoPath);
-  } else if (!/^[0-9a-f]{7,40}$/i.test(unit.startCommit)) {
-    files.error = `stream ${unit.id} has no valid start-commit`;
+  if (!/^[0-9a-f]{7,40}$/i.test(unit.startCommit)) {
+    files.error = `${unit.kind} ${unit.id} has no valid start-commit`;
+  } else if (unit.kind === "join") {
+    // A join's listed files count only where git shows them changed.
+    try {
+      const inGit = new Set(gitChanged(unit, []));
+      files.list = unit.filesChanged.map(toRepoPath).filter((p) => inGit.has(p));
+    } catch {
+      files.error = `git log failed for join ${unit.id}`;
+    }
   } else {
     const escaped = unit.id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     try {
-      const out = execFileSync("git", ["log", "--name-only", "--format=", "-E",
-        "--grep", `^Stream: ${escaped}$`, `${unit.startCommit}..HEAD`],
-        { cwd: root, encoding: "utf-8", stdio: ["ignore", "pipe", "ignore"] });
-      files.list = [...new Set(out.split(/\r?\n/).map((s) => s.trim()).filter(Boolean))];
+      files.list = gitChanged(unit, ["-E", "--grep", `^Stream: ${escaped}$`]);
     } catch {
       files.error = `git log failed for stream ${unit.id}`;
     }
@@ -148,6 +182,14 @@ function requirementFile(reqId) {
   if (!existsSync(reqDir)) return null;
   const hit = readdirSync(reqDir).find((n) => n === `${reqId}.md` || n.startsWith(`${reqId}-`));
   return hit ? join(reqDir, hit) : null;
+}
+
+// Reads a repo-relative changed file only when its realpath sits inside the repo.
+function readChanged(p) {
+  let real;
+  try { real = realpathSync(join(root, p)); } catch { return { text: null }; }
+  if (real !== realRoot && !real.startsWith(realRoot + sep)) return { skip: "outside the repo" };
+  return readSafe(join(root, p));
 }
 
 // ---- checks -----------------------------------------------------------------
@@ -185,11 +227,16 @@ for (const producer of units) {
     if (owner) {
       const { list, error } = changedFiles(owner);
       const defining = definedIn ? toRepoPath(definedIn) : null;
+      const skipped = [];
       const used = list
         .filter((p) => p !== defining)
-        .some((p) => (read(join(root, p)) ?? "").includes(artifact));
+        .some((p) => {
+          const r = readChanged(p);
+          if (r.skip) skipped.push(`skipped ${p}: ${r.skip}`);
+          return (r.text ?? "").includes(artifact);
+        });
       if (error) reasons.push(error);
-      else if (!used) reasons.push(`no changed file of ${owner.id} uses it`);
+      else if (!used) reasons.push(`no changed file of ${owner.id} uses it`, ...skipped);
     }
 
     if (reasons.length) findings.push(`${producer.file}: ${artifact}: ${reasons.join(", ")}`);
@@ -197,7 +244,7 @@ for (const producer of units) {
 }
 
 if (findings.length) {
-  for (const f of findings) console.log(f);
+  for (const f of findings) console.log(clean(f));
   process.exit(1);
 }
 process.exit(0);

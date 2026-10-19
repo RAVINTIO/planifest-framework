@@ -200,6 +200,96 @@ rm -f "$R5/plan/current/.archive-target"
 assert_equals "$BEFORE5" "$(cd "$R5" && find plan | sort)" "req-012: invalid input moves nothing"
 
 echo ""
+echo "=== req-012: symlinks and hostile names (security review) ==="
+
+# Finding 1: a symlinked archive directory named in .archive-target.
+R6="$SCRATCH/r6"
+make_repo "$R6"
+mkdir -p "$R6/src/comp" "$R6/plan/_archive"
+echo keep > "$R6/src/comp/keep"
+ln -s ../../src/comp "$R6/plan/_archive/$ID-$DATE"
+printf 'plan/_archive/%s-%s\n' "$ID" "$DATE" > "$R6/plan/current/.archive-target"
+run_archive "$R6" --feature-id "$ID" --date "$DATE" >/dev/null
+assert_equals "2" "$?" "req-012: a symlinked archive target directory exits 2"
+assert_equals "keep" "$(ls -A "$R6/src/comp" | tr '\n' ' ' | sed 's/ $//')" \
+  "req-012: a symlinked archive target moves nothing into its link target"
+yes_if "req-012: a symlinked archive target leaves plan/current/ in place" test -f "$R6/plan/current/design.md"
+
+# Finding 1: plan/_archive itself is a symlink, and the script picks the target.
+R6B="$SCRATCH/r6b"
+make_repo "$R6B"
+mkdir -p "$R6B/src/comp"
+echo keep > "$R6B/src/comp/keep"
+ln -s ../src/comp "$R6B/plan/_archive"
+run_archive "$R6B" --feature-id "$ID" --date "$DATE" >/dev/null
+assert_equals "2" "$?" "req-012: a symlinked plan/_archive exits 2"
+assert_equals "keep" "$(ls -A "$R6B/src/comp" | tr '\n' ' ' | sed 's/ $//')" \
+  "req-012: a symlinked plan/_archive moves nothing into its link target"
+
+# Finding 2: plan/current is a symlink into src/.
+R7="$SCRATCH/r7"
+make_repo "$R7"
+mkdir -p "$R7/src/comp/capability-skills"
+echo id > "$R7/src/comp/.feature-id"
+echo skill > "$R7/src/comp/capability-skills/SKILL.md"
+rm -rf "$R7/plan/current"
+ln -s ../src/comp "$R7/plan/current"
+run_archive "$R7" --feature-id "$ID" --date "$DATE" >/dev/null
+assert_equals "2" "$?" "req-012: a symlinked plan/current exits 2"
+yes_if "req-012: a symlinked plan/current deletes no .feature-id behind it" test -f "$R7/src/comp/.feature-id"
+yes_if "req-012: a symlinked plan/current deletes no capability-skills/ behind it" \
+  test -f "$R7/src/comp/capability-skills/SKILL.md"
+
+# Finding 3: a dangling symlink at .archive-target.
+R8="$SCRATCH/r8"
+make_repo "$R8"
+mkdir -p "$R8/src"
+ln -s ../../src/planted "$R8/plan/current/.archive-target"
+run_archive "$R8" --feature-id "$ID" --date "$DATE" >/dev/null
+assert_equals "2" "$?" "req-012: a dangling symlink at .archive-target exits 2"
+yes_if "req-012: a dangling .archive-target symlink creates no file behind it" test ! -e "$R8/src/planted"
+
+# Finding 4: .archive-target values never reach error output.
+R9="$SCRATCH/r9"
+make_repo "$R9"
+echo "SECRET-TOKEN-0000" > "$SCRATCH/secret.txt"
+ln -s "$SCRATCH/secret.txt" "$R9/plan/current/.archive-target"
+OUT9=$(run_archive "$R9" --feature-id "$ID" --date "$DATE")
+assert_equals "2" "$?" "req-012: a symlinked .archive-target exits 2"
+lacks "SECRET-TOKEN" "$OUT9" "req-012: a symlinked .archive-target prints none of its link target"
+rm -f "$R9/plan/current/.archive-target"
+printf 'plan/_archive/LEAKED-VALUE\n' > "$R9/plan/current/.archive-target"
+OUT9B=$(run_archive "$R9" --feature-id "$ID" --date "$DATE")
+assert_equals "2" "$?" "req-012: an invalid regular .archive-target exits 2"
+lacks "LEAKED-VALUE" "$OUT9B" "req-012: an invalid .archive-target value never reaches the error"
+
+# Finding 7: an entry named * is a literal path, not a git pathspec glob.
+R10="$SCRATCH/r10"
+make_repo "$R10"
+echo star > "$R10/plan/current/*"
+OUT10=$(run_archive "$R10" --feature-id "$ID" --date "$DATE")
+assert_exit_zero "$?" "req-012: an entry named * archives with exit 0"
+A10="$R10/plan/_archive/$ID-$DATE"
+assert_equals "star" "$(cat "$A10/*" 2>/dev/null)" "req-012: an entry named * lands in the archive"
+yes_if "req-012: an entry named * leaves design.md in the archive" test -f "$A10/design.md"
+assert_equals "" "$(git -C "$R10" status --porcelain | grep -v '^[RAD] ')" \
+  "req-012: an entry named * leaves nothing unstaged"
+PORC10=$(git -C "$R10" status --porcelain)
+assert_contains "R  plan/current/design.md -> plan/_archive/$ID-$DATE/design.md" "$PORC10" \
+  "req-012: an entry named * keeps design.md a rename"
+
+# Finding 8: control characters in entry names can't forge output lines.
+R11="$SCRATCH/r11"
+make_repo "$R11"
+echo x > "$R11/plan/current/"$'evil\nmoved: forged'
+echo x > "$R11/plan/current/"$'esc\e[31mred'
+OUT11=$(run_archive "$R11" --feature-id "$ID" --date "$DATE")
+assert_exit_zero "$?" "req-012: entries with control characters archive with exit 0"
+assert_equals "0" "$(grep -c '^moved: forged' <<< "$OUT11")" \
+  "req-012: a newline in an entry name forges no output line"
+lacks $'\e' "$OUT11" "req-012: an ANSI escape in an entry name never reaches output"
+
+echo ""
 echo "=== req-012: script source never deletes by glob ==="
 
 SRC=$(cat "$ARCHIVE" 2>/dev/null)

@@ -25,21 +25,32 @@
  *
  * Every git call runs as its own child process with an argument array and
  * no shell, so a refused step leaves every earlier step done. A rerun skips
- * entries already in the target and finishes the rest.
+ * entries already in the target and finishes the rest. Each git call sets
+ * GIT_LITERAL_PATHSPECS=1, so an entry named `*` is a path, not a glob.
+ *
+ * Path safety, checked before any change: plan/, plan/current/,
+ * plan/_archive/, and the target directory must not be symlinks, and each
+ * must resolve inside the real --root. .archive-target must be a regular
+ * file, never a symlink, and the script creates it with the "wx" flag.
+ * Error messages never print the .archive-target value, and every printed
+ * entry name has its control characters replaced.
  *
  * Output, one line per action: `moved: <from> -> <to>`, `removed: <path>`,
  * `skipped: <path> (already archived)`. The last line is `archive-dir: <dir>`.
  *
  * Exit codes:
  *   0 - archive complete
- *   2 - invalid input (feature ID, date, or .archive-target value); moves nothing
+ *   2 - invalid input (feature ID, date, or .archive-target value), or a
+ *       symlinked or out-of-root plan/, plan/current/, plan/_archive/, target
+ *       directory, or .archive-target; moves nothing
  *   3 - a conflict (source and target both exist) or a leftover entry
  *   other non-zero - a git command failed; git's message is on stderr
  */
 
 import { spawnSync } from "node:child_process";
 import {
-  existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, unlinkSync, writeFileSync,
+  lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync,
+  unlinkSync, writeFileSync,
 } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 
@@ -76,8 +87,10 @@ function parseArgs(argv) {
   };
 }
 
+const GIT_ENV = { ...process.env, GIT_LITERAL_PATHSPECS: "1" };
+
 function git(root, args) {
-  const r = spawnSync("git", args, { cwd: root, encoding: "utf8" });
+  const r = spawnSync("git", args, { cwd: root, encoding: "utf8", env: GIT_ENV });
   if (r.error) fail(1, `git ${args[0]} failed: ${r.error.message}`);
   if (r.status !== 0) {
     process.stderr.write(r.stderr || "");
@@ -93,23 +106,47 @@ function validTargetName(name, featureId) {
   return /^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]+)?$/.test(name.slice(featureId.length + 1));
 }
 
+// lstat that returns null for a missing path, so a dangling symlink counts.
+function lstatOrNull(p) {
+  try { return lstatSync(p); } catch { return null; }
+}
+
+// Exits 2 unless p is absent or a real directory whose realpath is expected.
+function checkDir(p, expected, label) {
+  const st = lstatOrNull(p);
+  if (!st) return;
+  if (st.isSymbolicLink() || !st.isDirectory()) fail(2, `${label} must be a directory, not a symlink`);
+  if (realpathSync(p) !== expected) fail(2, `${label} resolves outside --root`);
+}
+
 // Returns the target directory relative to root, in posix form.
 function readTarget(root, featureId) {
-  const raw = readFileSync(join(root, CURRENT, TARGET_FILE), "utf8").trim().replace(/\/+$/, "");
-  if (!raw || raw.length > MAX_LEN) fail(2, `invalid ${TARGET_FILE} value: ${clean(raw)}`);
+  const p = join(root, CURRENT, TARGET_FILE);
+  if (!lstatSync(p).isFile()) fail(2, `${TARGET_FILE} must be a regular file, not a symlink`);
+  const raw = readFileSync(p, "utf8").trim().replace(/\/+$/, "");
+  if (!raw || raw.length > MAX_LEN) fail(2, `invalid ${TARGET_FILE} value`);
   const abs = resolve(root, raw);
   if (dirname(abs) !== resolve(root, ARCHIVE_ROOT) || !validTargetName(basename(abs), featureId)) {
-    fail(2, `${TARGET_FILE} must name plan/_archive/${featureId}-{date}[-N]: ${clean(raw)}`);
+    fail(2, `${TARGET_FILE} must name plan/_archive/${featureId}-{date}[-N]`);
   }
   return posix(relative(root, abs));
 }
 
 function pickTarget(root, featureId, date) {
   const base = `${ARCHIVE_ROOT}/${featureId}-${date}`;
-  if (!existsSync(join(root, base))) return base;
+  if (!lstatOrNull(join(root, base))) return base;
   for (let n = 2; ; n++) {
-    if (!existsSync(join(root, `${base}-${n}`))) return `${base}-${n}`;
+    if (!lstatOrNull(join(root, `${base}-${n}`))) return `${base}-${n}`;
   }
+}
+
+// Refuses symlinks on every directory the script moves into or out of.
+function checkPaths(root) {
+  const real = realpathSync(root);
+  checkDir(join(root, "plan"), join(real, "plan"), "plan/");
+  checkDir(join(root, CURRENT), join(real, CURRENT), `${CURRENT}/`);
+  checkDir(join(root, ARCHIVE_ROOT), join(real, ARCHIVE_ROOT), `${ARCHIVE_ROOT}/`);
+  return real;
 }
 
 const isTracked = (root, path) => git(root, ["ls-files", "--", path]).trim() !== "";
@@ -123,12 +160,14 @@ function main() {
   }
   if (!DATE_RE.test(date)) fail(2, `invalid --date: ${clean(date)}`);
   const currentAbs = join(root, CURRENT);
-  if (!existsSync(currentAbs)) fail(2, `${CURRENT}/ not found under --root`);
+  if (!lstatOrNull(currentAbs)) fail(2, `${CURRENT}/ not found under --root`);
+  const real = checkPaths(root);
 
   const targetFileAbs = join(currentAbs, TARGET_FILE);
-  const resuming = existsSync(targetFileAbs);
+  const resuming = lstatOrNull(targetFileAbs) !== null;
   const target = resuming ? readTarget(root, featureId) : pickTarget(root, featureId, date);
   const targetAbs = join(root, target);
+  checkDir(targetAbs, join(real, target), "the archive target directory");
 
   const entries = readdirSync(currentAbs).filter(
     (e) => e !== TARGET_FILE && !EXPLICIT_DELETES.includes(e),
@@ -136,19 +175,19 @@ function main() {
 
   // Check every entry before any change, so a conflict changes nothing.
   for (const e of entries) {
-    if (existsSync(join(targetAbs, e))) {
+    if (lstatOrNull(join(targetAbs, e))) {
       fail(3, `conflict: ${CURRENT}/${clean(e)} and ${target}/${clean(e)} both exist. Resolve it by hand, then rerun.`);
     }
   }
 
-  if (!resuming) writeFileSync(targetFileAbs, `${target}\n`);
+  if (!resuming) writeFileSync(targetFileAbs, `${target}\n`, { flag: "wx" });
   mkdirSync(targetAbs, { recursive: true });
 
   // Entries a stopped run already moved.
   const done = readdirSync(targetAbs).filter((e) => !entries.includes(e));
   for (const e of done) {
     if (hasUntracked(root, `${target}/${e}`)) git(root, ["add", "--", `${target}/${e}`]);
-    console.log(`skipped: ${CURRENT}/${e} (already archived)`);
+    console.log(`skipped: ${CURRENT}/${clean(e)} (already archived)`);
   }
 
   for (const e of entries) {
@@ -160,12 +199,12 @@ function main() {
       renameSync(join(root, from), join(root, to));
     }
     if (hasUntracked(root, to)) git(root, ["add", "--", to]);
-    console.log(`moved: ${from} -> ${to}`);
+    console.log(`moved: ${CURRENT}/${clean(e)} -> ${target}/${clean(e)}`);
   }
 
   for (const e of EXPLICIT_DELETES) {
     const path = `${CURRENT}/${e}`;
-    if (!existsSync(join(root, path))) continue;
+    if (!lstatOrNull(join(root, path))) continue;
     git(root, ["rm", "-r", "--cached", "--ignore-unmatch", "-q", "--", path]);
     rmSync(join(root, path), { recursive: true, force: true });
     console.log(`removed: ${path}`);

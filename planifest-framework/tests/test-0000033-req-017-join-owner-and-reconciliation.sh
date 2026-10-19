@@ -172,6 +172,106 @@ for f in didone grotesk slab script; do
   assert_contains "masthead-face-$f" "$OUT" "req-017: the 0000006 fixture reports masthead-face-$f"
 done
 
+# join <repo> <join-id> <start> <declares-rows> <consumes-lines> <files-lines>
+join_record() {
+  mkdir -p "$1/plan/current/streams"
+  cat > "$1/plan/current/streams/$2.md" <<EOF
+---
+join-id: $2
+kind: join
+start-commit: $3
+---
+# Join: $2
+
+## Declares
+
+| Artifact ID | Defined in | Consumer |
+|-------------|------------|----------|
+$4
+
+## Consumes
+
+$5
+
+## Files changed
+
+$6
+EOF
+}
+
+echo "=== req-017: changed files outside the repo or not regular (security review) ==="
+R="$SCRATCH/outside-link"
+START=$(make_repo "$R")
+echo "face-outside-link" > "$SCRATCH/outside.txt"
+stream_commit "$R" stream-01-faces src/faces.css ".face-outside-link { }"
+ln -s "$SCRATCH/outside.txt" "$R/src/link.css"
+git -C "$R" add -A && git -C "$R" commit -q -m "feat: link" -m "Stream: stream-02-rules"
+state "$R" stream-01-faces "$START" "req-001" "| face-outside-link | src/faces.css | stream-02-rules |" ""
+state "$R" stream-02-rules "$START" "req-002" "" "- face-outside-link"
+OUT=$(run "$R"); EX=$?
+assert_equals "1" "$EX" "req-017: a changed file that links outside the repo doesn't count as a use"
+assert_contains "skipped src/link.css" "$OUT" "req-017: the finding names the skipped symlink"
+
+R="$SCRATCH/oversize"
+START=$(make_repo "$R")
+stream_commit "$R" stream-01-faces src/faces.css ".face-oversize { }"
+mkdir -p "$R/src"
+{ head -c 1100000 /dev/zero | tr '\0' 'a'; echo " face-oversize"; } > "$R/src/big.css"
+git -C "$R" add -A && git -C "$R" commit -q -m "feat: big" -m "Stream: stream-02-rules"
+state "$R" stream-01-faces "$START" "req-001" "| face-oversize | src/faces.css | stream-02-rules |" ""
+state "$R" stream-02-rules "$START" "req-002" "" "- face-oversize"
+OUT=$(run "$R"); EX=$?
+assert_equals "1" "$EX" "req-017: a changed file over 1 MB doesn't count as a use"
+assert_contains "skipped src/big.css" "$OUT" "req-017: the finding names the skipped oversize file"
+
+R="$SCRATCH/join-outside"
+START=$(make_repo "$R")
+echo "face-join-outside" > "$SCRATCH/join-outside.txt"
+stream_commit "$R" stream-01-faces src/faces.css ".face-join-outside { }"
+state "$R" stream-01-faces "$START" "req-001" "| face-join-outside | src/faces.css | join-p3-01 |" ""
+join_record "$R" join-p3-01 "$START" "" "- face-join-outside" "- $SCRATCH/join-outside.txt"
+OUT=$(run "$R"); EX=$?
+assert_equals "1" "$EX" "req-017: a join's listed path outside the repo doesn't count as a use"
+
+echo "=== req-017: a join's changed files come from git (security review) ==="
+R="$SCRATCH/join-reqfile"
+make_repo "$R" > /dev/null
+printf '# req-001\nUses face-join-req.\n' > "$R/plan/current/requirements/req-001-faces.md"
+git -C "$R" add -A && git -C "$R" commit -q -m "plan: req"
+START=$(git -C "$R" rev-parse HEAD)
+stream_commit "$R" stream-01-faces src/faces.css ".face-join-req { }"
+state "$R" stream-01-faces "$START" "req-001" "| face-join-req | src/faces.css | join-p3-01 |" ""
+join_record "$R" join-p3-01 "$START" "" "- face-join-req" "- plan/current/requirements/req-001-faces.md"
+OUT=$(run "$R"); EX=$?
+assert_equals "1" "$EX" "req-017: a join listing a file git didn't change in its range doesn't count as a use"
+
+R="$SCRATCH/join-clean"
+START=$(make_repo "$R")
+stream_commit "$R" stream-01-faces src/faces.css ".face-join-ok { }"
+mkdir -p "$R/src" && echo "h1 { font: face-join-ok; }" > "$R/src/use.css"
+git -C "$R" add -A && git -C "$R" commit -q -m "feat: batch use"
+state "$R" stream-01-faces "$START" "req-001" "| face-join-ok | src/faces.css | join-p3-01 |" ""
+join_record "$R" join-p3-01 "$START" "" "- face-join-ok" "- src/use.css"
+OUT=$(run "$R"); EX=$?
+assert_exit_zero "$EX" "req-017: a join whose listed file git changed in its range exits 0"
+assert_equals "" "$OUT" "req-017: a clean join prints nothing"
+
+echo "=== req-017: control characters never reach output (security review) ==="
+R="$SCRATCH/ansi"
+START=$(make_repo "$R")
+stream_commit "$R" stream-01-faces src/faces.css ".face-ansi { }"
+state "$R" stream-01-faces "$START" "req-001" "| face-ansi"$'\e[2J'" | src/faces.css |  |" ""
+OUT=$(run "$R"); EX=$?
+assert_equals "1" "$EX" "req-017: an artifact ID with an ANSI escape still reports a finding"
+assert_equals "absent" "$([[ "$OUT" == *$'\e'* ]] && echo present || echo absent)" \
+  "req-017: an ANSI escape in an artifact ID never reaches output"
+
+echo "=== req-017: git pathspecs are literal ==="
+yes_if "req-017: stream-reconcile.mjs sets GIT_LITERAL_PATHSPECS=1" \
+  grep -q 'GIT_LITERAL_PATHSPECS: "1"' "$RECONCILE"
+yes_if "req-017: archive-current.mjs sets GIT_LITERAL_PATHSPECS=1" \
+  grep -q 'GIT_LITERAL_PATHSPECS: "1"' "$FRAMEWORK/scripts/archive-current.mjs"
+
 echo "=== req-017: absent streams/ directory ==="
 R="$SCRATCH/absent"
 make_repo "$R" > /dev/null
