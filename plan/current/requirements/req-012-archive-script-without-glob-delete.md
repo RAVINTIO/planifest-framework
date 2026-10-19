@@ -27,14 +27,20 @@ The script follows the house style of `product-version.mjs`: a header comment wi
 - **Target directory:**
   1. If `plan/current/.archive-target` exists, the script reads the target from it. This is the resume case.
   2. Otherwise the script picks `plan/_archive/{feature-id}-{YYYY-MM-DD}/`. If that path exists, it picks the first free `-2`, `-3`, and so on. It writes the chosen path to `plan/current/.archive-target` before it moves anything.
-- **Moves:** The script reads the entries of `plan/current/` with a directory listing, never a glob. For each entry other than `.archive-target` and the sentinels below, it does one of these:
+- **Moves:** The script reads the entries of `plan/current/` with a directory listing, never a glob. For each entry other than `.archive-target` and the explicit-path list below, it does one of these:
   - If git tracks the entry, run `git mv -- plan/current/<item> <target>/<item>`.
   - If git doesn't track it, rename it into the target on disk, then `git add` the new path.
-- **Sentinels:** The script removes `plan/current/.skips` and `plan/current/.planifest-session` by explicit path. It runs `git rm --cached --ignore-unmatch -q -- <path>` and then deletes the file. These two paths are the only ones it ever deletes. It never names a session marker (`.orchestrator-active`, `.orchestrator-ack`, `.run-mode`). 0000032 req-001 clears those in P9.
+- **Explicit-path list:** The script removes these four paths by explicit path, as Step 6 deletes them today:
+  - `plan/current/.skips`
+  - `plan/current/.planifest-session`
+  - `plan/current/.feature-id`
+  - `plan/current/capability-skills/`
+
+  For each one it runs `git rm -r --cached --ignore-unmatch -q -- <path>` and then deletes it from disk. These four paths, and `.archive-target`, are the only ones it ever deletes. It never names a session marker (`.orchestrator-active`, `.orchestrator-ack`, `.run-mode`). 0000032 req-001 clears those in P9.
 - **One command per step:** Each `git mv`, `git add`, and `git rm` runs as its own child process with an argument array and no shell. A refused step therefore leaves every earlier step done.
 - **Idempotent resume:** If an entry's source is absent and its target exists, the script prints it as skipped and moves on. A rerun after a stop repeats only the unfinished steps.
 - **Conflict:** If both the source and the target of an entry exist, the script stops. It names the entry and exits 3. It never overwrites.
-- **Finish:** After the moves, the script removes `plan/current/.archive-target` by explicit path. It leaves `plan/current/` in place as an empty directory, so the Step 7 `git add plan/current/` line still matches. If any entry other than the removed sentinels remains, it names the entry and exits 3.
+- **Finish:** After the moves, the script removes `plan/current/.archive-target` by explicit path. It leaves `plan/current/` in place as an empty directory, so the Step 7 `git add plan/current/` line still matches. If any other entry remains, it names the entry and exits 3.
 - **Output:** One line per action on stdout: `moved: <from> -> <to>`, `removed: <path>`, or `skipped: <path> (already archived)`. The last line is `archive-dir: <target>`.
 - **Exit codes:** 0 when the archive is complete. 2 for invalid input (see Input Validation). 3 for a conflict or a leftover entry. A failed git command exits non-zero with git's message on stderr.
 
@@ -53,9 +59,9 @@ The script follows the house style of `product-version.mjs`: a header comment wi
 ### Tests
 
 - A new Bash suite, `planifest-framework/tests/test-0000033-req-012-archive-script-without-glob-delete.sh`, covers the script by running it in a temporary git repository. It also asserts the ship skill text. `run-tests.sh` picks it up.
-- `planifest-framework/tests/test-0000025-req-002-ship-agent-p7-git-add.sh` asserts `Copy-then-delete` in Step 6. Update that assertion to the script name.
+- Listed exception: `planifest-framework/tests/test-0000025-req-002-ship-agent-p7-git-add.sh` asserts `Copy-then-delete` in Step 6. This requirement edits that assertion to check for `archive-current.mjs`. It is the only existing suite this requirement edits.
+- `planifest-framework/tests/test-0000032-req-001-marker-clear-before-tag.sh` checks that Step 6 names no session marker. req-007 edits that suite as a listed exception. It must pass in its req-007 form.
 - These suites must pass unchanged:
-  - `planifest-framework/tests/test-0000032-req-001-marker-clear-before-tag.sh` (Step 6 names no session marker)
   - `planifest-framework/tests/test-0000017-req-007-change-agent-archive.sh` (Step 6 keeps its cross-reference check)
   - `planifest-framework/tests/test-0000032-req-002-resume-from-archive-evidence.sh`
 
@@ -63,7 +69,7 @@ The script follows the house style of `product-version.mjs`: a header comment wi
 
 - In a fixture repo with tracked and untracked items, the script moves every item into `plan/_archive/{feature-id}-{date}/` and exits 0. `git status --porcelain` shows renames, not deletions.
 - After the run, `plan/current/` exists and is empty, and `git add plan/current/` exits 0.
-- The script removes `.skips` and `.planifest-session` and no other path. The `plan/.orchestrator-active` fixture file is untouched.
+- The script removes `.skips`, `.planifest-session`, `.feature-id`, and `capability-skills/`, and no other path. None of them appears in the archive. The `plan/.orchestrator-active` fixture file is untouched.
 - With an existing `{feature-id}-{date}/`, the script picks `-2`.
 - A second run after a forced stop half-way prints `skipped:` for the moved items, moves the rest into the same directory, and creates no `-2`.
 - With a source and target both present, the script exits 3 and changes nothing.
@@ -74,15 +80,16 @@ The script follows the house style of `product-version.mjs`: a header comment wi
 
 ## Acceptance Criteria
 
-- [ ] (feature AC 5) `archive-current.mjs` archives `plan/current/` with one `git mv` or rename per item. It deletes only `.skips` and `.planifest-session`, by explicit path, and never uses a glob.
+- [ ] (feature AC 5) `archive-current.mjs` archives `plan/current/` with one `git mv` or rename per item. It deletes only the four explicit-path sentinels and never uses a glob.
 - [ ] (feature AC 5) After a stop part-way through, a rerun finishes into the same archive directory and repeats only the unfinished moves.
-- [ ] (feature AC 7) The ship skill's P7 Step 6 calls the script. The new suite, the updated 0000025 suite, and the unchanged 0000032 and 0000017 suites pass under `run-tests.sh`.
+- [ ] (feature AC 7) The ship skill's P7 Step 6 calls the script. The new suite, the edited 0000025 suite, the req-007 form of the 0000032 req-001 suite, and the unchanged 0000032 req-002 and 0000017 suites pass under `run-tests.sh`.
 
 ## Dependencies
 
 - 0000032 req-001: the P9 marker step clears the session markers and defines `{archive-dir}`. This requirement doesn't move marker handling.
 - 0000032 req-002: Resume Detection step 2a picks the archive directory from evidence. The new `.archive-target` check comes before it.
 - req-013 relies on the `archive-dir:` line this script prints.
+- req-007 edits `test-0000032-req-001-marker-clear-before-tag.sh`.
 
 ## Input Validation
 
