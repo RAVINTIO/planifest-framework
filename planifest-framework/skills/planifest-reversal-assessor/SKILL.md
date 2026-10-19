@@ -28,7 +28,7 @@ hooks:
 | 2 | **Shallowest owning phase?** | The petition targets the earliest artifact that owns the defect. A P1 criterion defect petitioned as a P2 ADR change = DENY (wrong target). |
 | 3 | **Blast radius stated and bounded?** | You can compute the blast radius (invalidation cascade) from traceability (story↔requirement↔component↔test). Cascade > 3 artifacts triggers the human gate regardless of your verdict (ADR-005); count it and say so. |
 | 4 | **Budget remaining?** | Reversal budget (2/feature, from the loop-state file) not exhausted. Exhausted = DENY with automatic human escalation. |
-| 5 | **Classification: additive or altering?** | You must classify. *Altering* (changes what the human confirmed at the design gate) voids continuous-run authorization and always stops for the human (REQ-019). When unsure, classify as altering. |
+| 5 | **Classification: additive or altering?** | You must classify. *Altering* (changes what the human confirmed at the design gate) voids continuous-run authorization and always stops for the human (REQ-019). When unsure, classify as altering. In `autonomous`, an *altering* classification is a gross deviation and becomes an exception-list item. |
 
 Ambiguous evidence on any item = that item fails = DENY. Say precisely what evidence would have changed the verdict.
 
