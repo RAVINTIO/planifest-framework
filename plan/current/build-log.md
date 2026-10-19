@@ -64,3 +64,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | Requirement IDs fixed by the orchestrator before dispatch, so parallel streams can't collide. |
+- P1 cross-stream review (fresh-context, REJECT-default, outside the `design_critic` toggle): REJECT with 1 blocker, 6 major, and 12 minor findings. The orchestrator decided fixes F1 to F19 and sent each stream its items.
+- Requirement Change (P1, clarifying): the design's clean close-out row gains D-010 and D-011. Intent unchanged. No phase re-run.

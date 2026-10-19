@@ -103,7 +103,13 @@ The drafting streams found gaps that the design doesn't settle. In continuous mo
 | D-005 | The combined P0 confirmation against 0000014-ADR-008 | It becomes a second named exception, alongside 0000025-ADR-003. P2 writes the ADR. |
 | D-006 | Size classes for the release budget | `standards/release-sizing.md` defines small, medium, and large. A fill over the ceiling gets a split recommendation, not a hard block. |
 | D-007 | Where reconciliation runs | A script, `scripts/stream-reconcile.mjs`, because the check is deterministic (0000016-ADR-007). Dispatch rules stay in skill text (0000006-ADR-003). |
-| D-008 | The P8 report's question-count flag | P8 flags a P0 question count above 3. It can't check whether the brief was complete, so the flag is advisory. |
+| D-008 | The P8 report's question-count flag | P0 records `Brief complete` and `Stack unchanged` lines. P8 flags a question count above 3 only when both read yes. |
+| D-009 | Where later phases read the run mode | A `Run mode` row in the build-log header, written at P0. The P9 marker step deletes `plan/.run-mode`, so nothing reads that file after it. |
+| D-010 | Which commit carries the P8 report | The 0000032 P9 marker-step commit. It is the run's closing archive commit. |
+| D-011 | Leftover files outside `autonomous` | The P9 gate summary lists them and asks whether to commit them. That gate already stops, so no new stop appears. |
+| D-012 | Toggle defaults in `autonomous` | An absent `design_critic`, `verify_by_execution`, `cross_model_review`, `reversal_protocol`, or `parallel_streams` key reads as `on`. An explicit value wins. The template ships those keys commented out. |
+| D-013 | Who classifies a deviation as *altering* | The fresh-context reversal assessor, never the deviating agent. |
+| D-014 | Scope of the approach counter | Per loop instance: the phase gate at P1, P2, P4, P5, and P6, and each requirement's TDD loop at P3. |
 
 ## Assumptions
 
