@@ -128,7 +128,7 @@ RESULT=$(run_ratchet_capture "$PROJ_B1/plan/current/requirements-doc.md" "$WEAK"
 RC=$(split_rc "$RESULT")
 OUT=$(split_out "$RESULT")
 assert_equals "2" "$RC" "req-002b: line missing '|' delimiter is treated as no-approval (blocked)"
-assert_equals "yes" "$(printf '%s' "$OUT" | grep -qF "while a loop is active" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -qF "while a loop is active" <<<"$OUT" && echo yes || echo no)" \
   "req-002b: block uses the standard weakening message, not the uncommitted-approval message"
 
 # Missing a field (empty reason between the pipes).
@@ -163,11 +163,11 @@ RESULT=$(run_ratchet_capture "$PROJ_C/plan/current/requirements-doc.md" "$WEAK" 
 RC=$(split_rc "$RESULT")
 OUT=$(split_out "$RESULT")
 assert_equals "2" "$RC" "req-002c: weakening write is blocked when approval is uncommitted"
-assert_equals "yes" "$(printf '%s' "$OUT" | grep -qi "uncommitted" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -qi "uncommitted" <<<"$OUT" && echo yes || echo no)" \
   "req-002c: block message explicitly names the uncommitted state"
-assert_equals "yes" "$(printf '%s' "$OUT" | grep -qF "plan/current/.ratchet-approve" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -qF "plan/current/.ratchet-approve" <<<"$OUT" && echo yes || echo no)" \
   "req-002c: block message names the pending marker path"
-assert_equals "yes" "$(printf '%s' "$OUT" | grep -qi "commit" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -qi "commit" <<<"$OUT" && echo yes || echo no)" \
   "req-002c: block message instructs the approver to commit first"
 
 if [ -s "$PROJ_C/plan/current/.ratchet-approve" ]; then
@@ -199,7 +199,7 @@ assert_equals "yes" "$(file_exists "$AUDIT_E")" \
   "req-002e: audit log created for long-reason approval"
 assert_equals "no" "$(file_contains "$AUDIT_E" "$TAIL_MARKER")" \
   "req-002e: audit log does not contain the un-truncated tail of a >500 char reason"
-assert_equals "yes" "$(printf '%s' "$(cat "$AUDIT_E" 2>/dev/null)" | grep -qi "truncated" && echo yes || echo no)" \
+assert_equals "yes" "$(grep -qi "truncated" "$AUDIT_E" 2>/dev/null && echo yes || echo no)" \
   "req-002e: audit log marks the truncation explicitly"
 
 print_summary

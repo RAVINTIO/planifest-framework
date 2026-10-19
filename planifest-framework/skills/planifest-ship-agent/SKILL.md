@@ -18,7 +18,7 @@ hooks:
 Emit the correct phase prefix as you move through each step:
 - `P7:` for all archive work (Steps 1–7)
 - `P8:` for build assessment (Step 8)
-- `P9:` for ship steps (Steps 9–12)
+- `P9:` for ship steps (the P9 marker step and Steps 9–12)
 
 No exceptions. Including single-line acknowledgements.
 
@@ -29,6 +29,7 @@ No exceptions. Including single-line acknowledgements.
 3. Credentials are never in your context.
 4. Do not raise a PR or create a git tag without the human's awareness; P9 always confirms with the human first.
 5. **One question at a time.**
+6. **Handover notes route through a track.** Any P9 handover note, next-steps list, or runbook pointer routes each next step through Fast Path, Change Pipeline, or Feature Pipeline. A code change always needs a track. The note never says a code change needs no P0, and never points to a runbook that pushes to `main`.
 
 ## P7: Archive
 
@@ -103,10 +104,7 @@ Generate the test report artifact before archiving.
 2. If path exists, use `{feature-id}-{YYYY-MM-DD}-2/`, `-3/`, etc.
 3. Recursively copy all files from `plan/current/` to the archive path (including `capability-skills/` if present)
 4. Delete `plan/current/` contents: including `.skips` (already processed), `.planifest-session`, `.feature-id`, `capability-skills/`
-5. Delete `plan/.orchestrator-active`: this sentinel must be removed last, after archive is confirmed complete
-6. Delete `plan/.orchestrator-ack` if it exists: removes the strict-mode session ack so the next pipeline starts clean
-7. Delete `plan/.run-mode` if it exists: removes the run-mode preference so the next P0 always asks fresh
-8. Cross-reference check: confirm the check above (which updates `docs/decisions-index.md` ADR links and other living-doc references pointing at `plan/current/...`) has already run before this point.
+5. Cross-reference check: confirm the check above (which updates `docs/decisions-index.md` ADR links and other living-doc references pointing at `plan/current/...`) has already run before this point.
 
 ### Step 6b: Write docs/about.md
 
@@ -121,7 +119,7 @@ Generate the test report artifact before archiving.
 Commit the archive, changelog, and `docs/about.md` to the branch:
 
 ```
-git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 git commit -m "plan(p7): archive {feature-id}"
 ```
 
@@ -147,7 +145,41 @@ git commit -m "plan(p7): archive {feature-id}"
 
 **Build log:** Append a P9 phase block to `plan/_archive/{feature-id}-{YYYY-MM-DD}/build-log.md` before beginning ship steps.
 
+### P9 marker step: Clear session markers
+
+The session markers stay in place through P7 and P8, so hooks treat the whole close-out as part of the run. Clear them here, before the tag, so the tag never carries a marker.
+
+In this step, `{archive-dir}` is the directory P7 Step 6 created, with any `-2` or `-3` suffix it added. On a resume, it is the directory that Resume Detection step 2a resolved. Never rebuild it from the date.
+
+1. Run `git status --porcelain plan/_archive/`. If it lists a change outside this feature's archive directory, report those paths to the human on the loop. Do not stage them.
+2. Stage only `{archive-dir}`. The commit then also carries the P8 `build-report.md` and the P8 and P9 build-log blocks.
+
+```bash
+git status --porcelain plan/_archive/
+git add -- "{archive-dir}"
+```
+
+3. Delete the markers, stage the deletions, and commit as one uninterrupted sequence. Do no other work between the first delete and the commit.
+   - Delete `plan/.orchestrator-active`.
+   - Delete `plan/.orchestrator-ack` if it exists.
+   - Delete `plan/.run-mode` if it exists.
+4. Run the sequence, then check that no marker stays tracked:
+
+```bash
+rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers for {feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
+git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
+```
+
+The commit names its paths after `--`, so it commits only `{archive-dir}` and the markers. Other staged changes stay staged and stay out of this commit. The `git ls-tree` call lists only the markers that `HEAD` tracks. A marker path that git doesn't know would make `git commit` fail, so the list leaves it out. The `--ignore-unmatch` flag lets the stage step pass when an optional marker never existed.
+
+If nothing is staged under these paths, skip the commit and continue to Step 9. The `git diff --cached --quiet -- ...` guard does this. If the `git ls-files` output is empty, proceed to Step 9. If it isn't empty, stop and name each tracked path to the human on the loop. Do not tag.
+
 ### Step 9: Create git tag
+
+Run this step only after the P9 marker step commits, or skips an empty commit.
+
 
 Determine the release version (ADR-002, product-level versioning):
 
@@ -164,16 +196,6 @@ Validate the final value: must match `[0-9]+\.[0-9]+(\.[0-9]+)?` and be ≤20 ch
 ```bash
 git tag v{version} -m "{feature-id}"
 ```
-
-### Step 9b: Marker tracking pre-flight check
-
-Durable backstop for the Step 7 atomic marker fix. Run:
-
-```bash
-git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-```
-
-If the output is empty, the markers were correctly removed and committed in Step 7; proceed to Step 10. If the output is non-empty, one or more markers are still tracked: surface a clear warning to the human before proceeding, naming the tracked path(s) and stating that Step 7's archive commit did not fully stage the marker deletions.
 
 ### Step 10: Push/PR decision
 
@@ -245,10 +267,18 @@ Build report: plan/_archive/{feature-id}-{YYYY-MM-DD}/build-report.md
 plan/current/ is empty and ready for the next feature.
 ```
 
-### Step 12: New session recommendation
+If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline (Hard Limit 6).
 
-After the confirmation above, emit this advisory (do not block, do not ask for confirmation, do not repeat it):
+### Step 12: Blocking context clear
+
+This step blocks new work (0000032 ADR-003). After the confirmation above:
+
+1. Ask the human on the loop to run `/clear`, or the host tool's equivalent, or to start a new session.
+2. If a new request arrives in the same session, refuse that work and repeat the request to clear context.
+3. Don't start triage, P0, or any edit for the new request in this session.
+
+Use this message:
 
 ```
-⚡ For best results on your next feature, start a fresh session before beginning P0.
+P9: This run is complete. Run /clear (or your tool's equivalent) or start a new session before the next request. I won't start new work in this session.
 ```

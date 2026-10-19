@@ -28,7 +28,7 @@
 ## Deferred
 
 - Narrower clean-up that deletes shipped file names only (backlog 0000090)
-- Live PowerShell checks in CI (backlog 0000091)
+- Live PowerShell checks beyond `test_setup.ps1`, such as stale-entry clean-up and retired flags
 - `setup all` stopping at roo-code (backlog 0000087) and the opencode PowerShell null skills folder (backlog 0000088)
 - `setup.ps1` skill subcommand routing (TD-006) — add in next iteration
 - `validate_skill_name()` security guard (TD-001/002/003) — add via change-agent

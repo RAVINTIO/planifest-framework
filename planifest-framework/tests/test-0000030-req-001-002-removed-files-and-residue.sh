@@ -33,7 +33,10 @@ count=$(grep -cE '^  - id: ' product.yml)
 assert_equals "2" "$count" "req-001: product.yml components[] has two items"
 assert_equals "0" "$(grep -c 'context-mode-hooks' product.yml)" "req-001: product.yml never names context-mode-hooks"
 version=$(node planifest-framework/scripts/product-version.mjs 2>/dev/null)
-assert_equals "0.29.0" "$version" "req-001: product-version.mjs derives 0.29.0"
+# Compare with the framework component's own version rather than a fixed
+# value, so a later version bump doesn't break this check (0000031 P4).
+framework_version=$(sed -n 's/^version: "\(.*\)"$/\1/p' planifest-framework/component.yml)
+assert_equals "$framework_version" "$version" "req-001: product-version.mjs derives the framework component version"
 
 echo "=== req-002: CI has no telemetry job ==="
 assert_equals "0" "$(grep -ci 'telemetry' .github/workflows/planifest.yml)" "req-002: .github/workflows/planifest.yml has no telemetry job or step"

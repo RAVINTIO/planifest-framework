@@ -30,10 +30,11 @@ The feature deleted every test of the removed telemetry and context-mode integra
 
 - `skill-sync.sh` operations (add, remove, preserve, sync) — no automated tests
 - `commit-msg` hook warning output — no automated tests
-- `gate-write.mjs` and `check-design.mjs` enforcement — no automated tests
+- `gate-write.mjs` enforcement: covered by the `planifest-framework` suites, including the 0000032 req-006, req-007, and req-009 suites
+- `check-design.mjs` enforcement: no automated tests
 - Setup.ps1 correctness — partially covered by `test_setup.ps1`
-- `Write-SetupFlagsMarker` (setup.ps1, 0000020), checked statically only, no `pwsh` runtime in this dev environment (Q-006)
-- The `setup.ps1` clean-up, retired-flag branch, and `Write-SettingsFile` (0000030), checked statically only (Q-013, backlog 0000091)
+- `Write-SetupFlagsMarker` (setup.ps1, 0000020), run live by the Windows CI job since 0000031. `test_setup.ps1` checks every marker field (Q-006, resolved).
+- The `setup.ps1` clean-up and `Write-SettingsFile` (0000030) run live in the Windows CI job on a fresh install, with nothing stale to remove. The clean-up of stale entries and the retired-flag branch are still checked statically only (Q-013).
 
 ## Recommendation
 

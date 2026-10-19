@@ -11,6 +11,7 @@ This project uses the confirmed design framework. These rules are non-negotiable
 5. **Data is owned by one component.** Never write to data owned by another component.
 6. **No credentials in context.** If a credential appears anywhere, flag it immediately and do not use it.
 7. **Update documentation after any deviation.** If implementation required deviating from the spec, plan, or design decisions, you MUST update the affected artifacts (plan/, docs/, or component.yml) to reflect what was actually built. Documentation must always match reality.
+8. **Code changes go through Write or Edit.** Make every change to code and project files through **Write** or **Edit**, never through Bash. Don't use `>`, `tee`, `sed -i`, `cp`, a script, or an interpreter one-liner to change them. The shell guard is a heuristic. It can't see writes made inside scripts, interpreters, build tools, or git, and some tools don't run it at all.
 
 ## Operational Directives
 
@@ -23,13 +24,14 @@ This project uses the confirmed design framework. These rules are non-negotiable
 
 Planifest installs these deterministic enforcement hooks via `setup.sh`:
 
-- **gate-write** (PreToolUse: Write, Edit): Blocks writes to `src/` unless `plan/current/design.md` exists AND the target path matches a declared component. Writes to `plan/`, `docs/`, and other always-permitted paths are never blocked.
+- **gate-write** (PreToolUse: Write, Edit): Blocks writes to `src/` unless `plan/current/design.md` exists AND the target path matches a declared component. Writes to `plan/`, `docs/`, and other always-permitted paths are never blocked. Paths outside the repository are never gated.
+- **shell-write-guard** (PreToolUse: Bash, Claude Code only): Blocks common shell writers, such as `>`, `tee`, `sed -i`, `cp`, `mv`, and `rm`, when `gate-write` would block a **Write** to the same path. It is a heuristic and passes git commands and anything it can't parse, so Hard Limit 8 still applies.
 - **auto-trigger-orchestrator** (UserPromptSubmit): At the start of every session in a Planifest project (`planifest-framework/` present and `plan/.orchestrator-active` absent), automatically loads the `planifest-orchestrator` skill before the first prompt is processed. This is the primary trigger mechanism for Claude Code. For tools without `UserPromptSubmit` hook support (Cursor, Windsurf, Cline, etc.): **at the start of every session in a Planifest project, load the `planifest-orchestrator` skill** before doing any other work.
 - **check-design** (UserPromptSubmit): Injects active component scope from `design.md` as additional context.
 - **commit-msg** (git hook): Blocks commits with AI attribution, affirmatory language, or >72-char subjects. Exit 1 on violation; use `git commit --no-verify` to bypass intentionally.
 - **ratchet-check** (PreToolUse: Write, Edit): While a loop/reversal is active (a `plan/current/loop-state-*.md` with `status: active`), blocks writes that remove acceptance-criteria or in-scope lines from `plan/current/` artifacts. Strengthening passes; intentional weakening needs a human-written `plan/current/.ratchet-approve` line (single-use). Agents must never write that marker.
 
-Enforcement failures exit 2 and surface a human-readable message. All unexpected errors exit 0; hooks never block your session unexpectedly.
+Enforcement failures exit 2 and surface a human-readable message. Each blocking hook writes its block reason to stderr, so the agent sees why a write was blocked. All unexpected errors exit 0; hooks never block your session unexpectedly.
 
 ## Escalation
 

@@ -88,7 +88,8 @@ assert_contains "library-standards/_version-policy.md" "$ORCH" "req-006: _versio
 echo ""
 echo "=== req-007: orchestrator sentinel ==="
 
-GATE=$(cat "$FRAMEWORK/hooks/enforcement/gate-write.mjs")
+# gate-write.mjs takes its rules from path-rules.mjs (0000032 req-006).
+GATE=$(cat "$FRAMEWORK/hooks/enforcement/gate-write.mjs" "$FRAMEWORK/hooks/enforcement/path-rules.mjs")
 assert_contains "orchestrator-active"           "$GATE" "req-007: sentinel path in gate-write"
 assert_contains "plan/current/"                 "$GATE" "req-007: plan/current guard present"
 

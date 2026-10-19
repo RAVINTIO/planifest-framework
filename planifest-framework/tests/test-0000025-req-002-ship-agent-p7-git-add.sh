@@ -31,22 +31,20 @@ assert_contains "plan/current/" "$GIT_ADD_LINE" \
   "req-002: git add command explicitly lists plan/current/ as a path argument"
 
 echo ""
-echo "=== req-002: the six pre-existing paths are still staged (unchanged) ==="
+echo "=== req-002: the pre-existing archive paths are still staged ==="
 
+# Updated by feature 0000032, req-001: the three session markers left this
+# line. The P9 marker step now deletes and commits them before the tag.
 assert_contains "plan/_archive/" "$GIT_ADD_LINE" "req-002: plan/_archive/ still staged"
 assert_contains "plan/changelog/" "$GIT_ADD_LINE" "req-002: plan/changelog/ still staged"
 assert_contains "docs/about.md" "$GIT_ADD_LINE" "req-002: docs/about.md still staged"
-assert_contains "plan/.orchestrator-active" "$GIT_ADD_LINE" "req-002: plan/.orchestrator-active still staged"
-assert_contains "plan/.orchestrator-ack" "$GIT_ADD_LINE" "req-002: plan/.orchestrator-ack still staged"
-assert_contains "plan/.run-mode" "$GIT_ADD_LINE" "req-002: plan/.run-mode still staged"
 
 echo ""
-echo "=== req-002: path count — exactly seven explicit path arguments ==="
+echo "=== req-002: path count, exactly four explicit path arguments ==="
 
-# git add <7 paths> — split on whitespace after the literal "git add " prefix.
 PATH_COUNT=$(printf '%s' "$GIT_ADD_LINE" | sed 's/^git add //' | wc -w | tr -d ' ')
-assert_equals "7" "$PATH_COUNT" \
-  "req-002: git add names exactly 7 explicit paths (6 pre-existing + plan/current/)"
+assert_equals "4" "$PATH_COUNT" \
+  "req-002: git add names exactly 4 explicit paths (3 archive paths + plan/current/)"
 
 echo ""
 echo "=== req-002: Step 6 archive mechanics untouched ==="

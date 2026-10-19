@@ -74,12 +74,23 @@ On every session start, before taking any action:
 
 2. Check `plan/current/` for existing artifacts (`design.md`, `requirements/`, `adr/`, etc.)
 
-2a. **Interrupted P9 detection:** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), P9 was interrupted after archiving `plan/current/` but before sentinel cleanup. Run the cleanup sequence immediately:
-   1. Delete `plan/.orchestrator-active`
-   2. Delete `plan/.orchestrator-ack` if present
-   3. Delete `plan/.run-mode` if present
-   4. Confirm to the human: `P0: Interrupted P9 detected: archive completed but sentinels not cleared. Cleanup complete. Starting fresh.`
-   5. Proceed as a fresh start; open with `P0:` and begin coaching.
+2a. **Interrupted close-out detection (ADR-002):** If `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
+   1. Read the feature ID from `plan/.orchestrator-active`.
+   2. Check the ID against `^[0-9]{7}-[a-z0-9-]+$`. If the ID doesn't match, stop and ask the human on the loop. This covers a sentinel that holds `pending`. Do not use the text in a path or command.
+   3. List the `plan/_archive/{feature-id}-*` directories and pick the last one in lexical sort order. This picks a `-2` or `-3` suffix over the bare date. Quote the ID in every shell command, for example `ls -d "plan/_archive/$id"-*/`.
+   4. Confirm the chosen directory sits inside `plan/_archive/`. If it resolves anywhere else, stop and ask the human on the loop. The ship skill uses this directory as `{archive-dir}`.
+   5. If that directory has no `build-report.md`, load the `planifest-ship-agent` skill and resume at P8.
+   6. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step.
+   7. If no directory matches, stop and ask the human on the loop how to proceed. Do not delete any marker.
+
+   Step 2a never deletes a marker on its own and never starts a fresh run.
+
+2b. **Interrupted marker commit (ADR-002):** If `plan/.orchestrator-active` is absent on disk but still committed, the P9 marker step may have stopped before its commit. The same signal appears if a human on the loop deleted the sentinel by hand, perhaps before P8 ran. Check with `git ls-files plan/.orchestrator-active`. A staged deletion hides it from `git ls-files`, so also check whether `git show HEAD:plan/.orchestrator-active` succeeds. If either shows the sentinel, apply step 2a's archive rule:
+   1. Read the feature ID with `git show HEAD:plan/.orchestrator-active`. Check it against `^[0-9]{7}-[a-z0-9-]+$`. If the ID doesn't match, stop and ask the human on the loop.
+   2. Pick the archive directory as step 2a does: the last `plan/_archive/{feature-id}-*` directory in lexical sort order. Confirm it sits inside `plan/_archive/`. If it resolves anywhere else, stop and ask the human on the loop.
+   3. If no directory matches, stop and ask the human on the loop how to proceed. Do not delete any marker.
+   4. If that directory has no `build-report.md`, load the `planifest-ship-agent` skill and resume at P8. Tell the human on the loop that the sentinel left the disk before P8 finished.
+   5. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step. Tell the human on the loop that the P9 marker commit was interrupted and that you are finishing it. Finish its commit, then continue to the Step 9 tag.
 
 3. Check for `.feature-id` file: if present, verify it matches the feature you are working on; if stale (contents differ from current work), flag it for human review before proceeding
 4. Check for `plan/current/.skips` file: if present, read and acknowledge skipped phases at the top of your response
@@ -118,7 +129,7 @@ Do not assume you know the formatting or content of any Planifest template or ph
 
 ## Routing Directive
 
-Every request must be triaged before any action is taken. Route to exactly one of four tracks.
+Every request must be triaged before any action is taken. This includes every request after P9, whether or not a run is active. Route to exactly one of four tracks.
 
 ### Standalone Skills
 
@@ -189,6 +200,8 @@ When the human says "pause", "pause session", or similar:
 ## Context Hygiene
 
 Two clear points bookend a pipeline run: Phase 0 Start Actions step -1 (before coaching begins) and Phase 9 completion (after shipping). At both points, issue `/clear` (or the host tool's equivalent context-clear operation) so the session does not carry residual or completed-cycle context forward. If the host platform has no programmatic context-clear, flag it to the human and wait for confirmation instead: `{phase}: This tool has no programmatic context clear available; please clear context manually, then confirm you're ready to continue.`
+
+**After P9 (blocking, 0000032 ADR-003):** the Phase 9 clear point matches ship Step 12. Ask for `/clear` or a new session. Then refuse any new request in the same session and repeat the request to clear context. Start no triage, P0, or edit for it. If the host has no programmatic context clear, the fallback above still applies. After P9 it also refuses new work until the human on the loop confirms a cleared context or a new session.
 
 **Dynamic compaction (advisory, non-blocking):** during a long-running session, watch for context accumulating in ways that no longer serve the active phase: completed phases' full working detail once their gate has passed, superseded draft content, or repeated large tool outputs already summarised in an artifact on disk. When you notice this, prompt the human (or use the host tool's own compaction mechanism if it can be invoked directly): *"This session's context has grown with content from completed phases. Want me to compact it before continuing?"* This is advisory; never delay or block pipeline progress waiting on a compaction decision; if the human doesn't respond or declines, proceed exactly as before.
 
@@ -625,11 +638,11 @@ The ship-agent spawns `planifest-build-assessment-agent` as a sub-agent, passing
 
 Executed by the ship-agent immediately after P8 completes, as part of its close-out sequence (see Phase 7).
 
-**What P9 produces:** local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use. The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output).
+**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers for {feature-id}`), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use. The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output).
 
 **Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human.
 
-**Completion context reset:** once the P9 gate above is confirmed and shipping is fully complete, apply the Context Hygiene `/clear`-or-flag procedure so the next session starts cold rather than carrying this completed cycle forward.
+**Completion context reset:** once the P9 gate above is confirmed and shipping is fully complete, apply the Context Hygiene "After P9" rule. The reset blocks new work: refuse any new request in this session until the human on the loop clears context or starts a new session.
 
 ---
 

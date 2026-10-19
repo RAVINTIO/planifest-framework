@@ -24,6 +24,8 @@ Before any external skills are added, `external-skills.json` does not exist. `cm
 
 The `.claude/.planifest-setup-flags` marker write added to `setup.ps1` (REQ-008) could not be exercised by a live invocation during this feature's codegen pass because no PowerShell runtime (`pwsh`) is available in this session's environment. `bash`/`setup.sh`'s equivalent logic was verified with live temp-workspace runs (see `tests/test-0000020-req-008-install-time-marker-write.sh`, parts a-d); the `setup.ps1` side (part e) is checked statically (function exists, calls the marker writer, uses the matching field names). Recommend a live `pwsh` run of `test_setup.ps1` plus a manual `.\planifest-framework\setup.ps1 claude-code` invocation on Windows or a pwsh-enabled CI runner before this feature ships, to catch anything the static check cannot (e.g. a `ConvertTo-Json` depth or encoding mismatch).
 
+**Resolved in 0000031.** The `Setup under PowerShell 7 (Windows)` CI job now runs `test_setup.ps1` live on every pull request. The test parses the marker after a plain run and after a `--include-full-skill-library` run, and checks every field. It also rejects three broken markers. The first live run passed on 2026-10-16 (CI run 38944916328).
+
 ## Q-008: `cline.ps1`'s boot-file relocation (0000027-req-002) verified statically only, no pwsh in this dev environment
 
 Same constraint as Q-006. `cline.ps1`'s `BootFile` was relocated from `.clinerules` to `.clinerules\00-planifest-boot.md` to fix the boot-file/skills-dir path collision (mirroring `cline.sh`'s fix, which was verified live via a new regression test on a disposable workspace). No PowerShell runtime available in this session's environment to exercise `cline.ps1` live — verified via structural source assertions (exact `BootFile`/`SkillsDir` string values) in `tests/test-0000027-req-002-cline-path-collision.sh`, part (e). Recommend a live `pwsh` run before this feature ships, same recommendation as Q-006.
@@ -56,7 +58,9 @@ The clean-up deletes `hooks/context-mode/` and `hooks/telemetry/` as whole folde
 
 ## Q-013: PowerShell changes in 0000030 have static checks only (backlog 0000091)
 
-The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), the exclusive temporary file (F5), the BOM-less `Write-SettingsFile`, and the PowerShell retired-flag branch were never run, because no `pwsh` exists in this environment and CI runs no PowerShell. Source-text assertions in `test-0000030-req-004-install-clean-up-and-retired-flags.sh` check them. Same constraint as Q-006 and Q-008. Backlog 0000091 adds a CI PowerShell job.
+The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), the exclusive temporary file (F5), the BOM-less `Write-SettingsFile`, and the PowerShell retired-flag branch were never run, because no `pwsh` exists in this environment and CI runs no PowerShell. Source-text assertions in `test-0000030-req-004-install-clean-up-and-retired-flags.sh` check them. Same constraint as Q-006 and Q-008.
+
+**Partly resolved in 0000031.** The Windows CI job now runs `setup.ps1` live on a fresh install, which exercises `Write-SettingsFile` and the clean-up pass with nothing to remove. No live test yet seeds stale entries or passes a retired flag under PowerShell.
 
 ## Q-014: `Write-SettingsFile` writes UTF-8 without a BOM (0000030)
 

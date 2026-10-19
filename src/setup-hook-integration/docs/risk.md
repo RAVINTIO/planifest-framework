@@ -9,10 +9,10 @@ Derived from `plan/_archive/0000030-context-mode-and-telemetry-mcp-removal-2026-
 | TD-002 | JS injection via `$name` in `node -e` | Medium | Use env-var pattern — see tech-debt.md | Open (TD-002) |
 | TD-003 | `--from` URL accepts non-HTTPS schemes | Low-Medium | Validate `https://` prefix — see tech-debt.md | Open (TD-003) |
 | TD-006 | `setup.ps1` missing skill subcommand routing | Low | Add equivalent to setup.ps1 | Open (TD-006) |
-| R-010 | `setup.sh`/`setup.ps1` marker-write addition (0000020) could drift out of parity between the two scripts | Medium likelihood / Low impact | Parity acceptance criteria (REQ-008) and a live test suite for the bash side; PowerShell side checked statically only, see quirks.md Q-006 | Open |
+| R-010 | `setup.sh`/`setup.ps1` marker-write addition (0000020) could drift out of parity between the two scripts | Medium likelihood / Low impact | Parity acceptance criteria (REQ-008) and a live test suite for the bash side; PowerShell side runs live in the Windows CI job since 0000031, see quirks.md Q-006 | Mitigated |
 | R-011 | `.planifest-setup-flags` written outside a gitignored directory for `copilot`/`opencode`, risking accidental commit (0000020 P5 security finding) | Was Medium, now mitigated | Global `.planifest-setup-flags` gitignore pattern added and verified live for all affected tools | Mitigated |
 | R-003 | Clean-up over-reach removes a file a person stored in a stale hook folder (0000030) | Low | Entries match by command path, setup prints each removal, and the folder deletion is accepted as F6 (Q-012, backlog 0000090) | Partly mitigated |
-| R-004 | PowerShell drift with no live run (0000030) | Medium likelihood / Low impact | Static checks only, see Q-013 and backlog 0000091 | Open |
+| R-004 | PowerShell drift with no live run (0000030) | Low likelihood / Low impact | Since 0000031, the Windows CI job runs `test_setup.ps1` under PowerShell 7 on every pull request. Stale-entry clean-up and retired flags stay static-only, see Q-013. | Open |
 | R-012 | Replay of a retired flag from an old marker (0000030) | Low | Notice only, never recorded, value never echoed or stored (0000030-ADR-003) | Mitigated |
 | R-013 | Settings file corrupted by a crash or a malformed parse (0000030) | Low | Malformed files stay byte-identical. Writes use an exclusive temporary file and a rename, including `opencode.json` (F1) | Mitigated |
 | R-014 | Node missing during clean-up (0000030) | Low | The pass skips with a warning and setup exits 0 | Mitigated |

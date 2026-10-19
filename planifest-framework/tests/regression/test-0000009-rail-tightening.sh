@@ -13,6 +13,8 @@ SETUP_PS1="$FRAMEWORK/setup.ps1"
 ORCHESTRATOR="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
 SHIP_AGENT="$FRAMEWORK/skills/planifest-ship-agent/SKILL.md"
 GATE_WRITE="$FRAMEWORK/hooks/enforcement/gate-write.mjs"
+# gate-write.mjs takes its rules from path-rules.mjs (0000032 req-006).
+PATH_RULES="$FRAMEWORK/hooks/enforcement/path-rules.mjs"
 AUTO_TRIGGER="$FRAMEWORK/hooks/enforcement/auto-trigger-orchestrator.mjs"
 PRESENCE_CHECK="$FRAMEWORK/hooks/enforcement/check-orchestrator-presence.mjs"
 DESIGN_TPL="$FRAMEWORK/templates/design.template.md"
@@ -114,10 +116,10 @@ assert_equals "yes" "$(grep_has "active_task" "$PAUSE_TPL")" \
 assert_equals "yes" "$(grep_has "Pause Command" "$ORCHESTRATOR")" \
   "REQ-005: orchestrator has Pause Command section"
 
-assert_equals "yes" "$(grep_has "pause\.md" "$GATE_WRITE")" \
+assert_equals "yes" "$(grep_has "pause\.md" "$PATH_RULES")" \
   "REQ-005: gate-write permits pause.md"
 
-assert_equals "yes" "$(grep_has "isAlwaysPermittedBasename" "$GATE_WRITE")" \
+assert_equals "yes" "$(grep_has "isAlwaysPermittedBasename" "$PATH_RULES")" \
   "REQ-005: gate-write bypasses sentinel for always-permitted basenames"
 
 # ── REQ-006/REQ-007: setup.sh override instructions parity ───────────────────
@@ -213,13 +215,13 @@ assert_equals "yes" "$(file_exists "$FRAMEWORK/hooks/adapters/opencode/package.j
 echo ""
 echo "=== REQ-012: gate-write.mjs Windows path normalisation ==="
 
-assert_equals "yes" "$(grep_has "function norm\|const norm" "$GATE_WRITE")" \
+assert_equals "yes" "$(grep_has "function norm\|const norm" "$PATH_RULES")" \
   "REQ-012: gate-write.mjs defines norm() helper"
 
-assert_equals "yes" "$(grep_has "cwdPrefix" "$GATE_WRITE")" \
-  "REQ-012: gate-write.mjs uses cwdPrefix for comparison"
+assert_equals "yes" "$(grep_has "rootPrefix" "$PATH_RULES")" \
+  "REQ-012: path-rules.mjs uses rootPrefix for comparison"
 
-assert_equals "no" "$(grep_has "cwdWithSep" "$GATE_WRITE")" \
+assert_equals "no" "$(grep_has "cwdWithSep" "$PATH_RULES")" \
   "REQ-012: gate-write.mjs does not use old cwdWithSep"
 
 assert_equals "yes" "$(file_exists "$FRAMEWORK/tests/test-gate-write-windows.mjs")" \

@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 TOTAL_PASS=0
 TOTAL_FAIL=0
+FAILED_SUITES=()
 
 run_suite() {
   local file="$1"
@@ -19,6 +20,7 @@ run_suite() {
     TOTAL_PASS=$((TOTAL_PASS + 1))
   else
     TOTAL_FAIL=$((TOTAL_FAIL + 1))
+    FAILED_SUITES+=("$name")
   fi
 }
 
@@ -52,11 +54,20 @@ else
       REGRESSION_PASS=$((REGRESSION_PASS + 1))
     else
       REGRESSION_FAIL=$((REGRESSION_FAIL + 1))
+      FAILED_SUITES+=("regression/$name")
     fi
   done
 fi
 
 # ── Summary ───────────────────────────────────────────────────────────────────
+
+if [ "${#FAILED_SUITES[@]}" -gt 0 ]; then
+  echo ""
+  echo "Failed suites:"
+  for failed in "${FAILED_SUITES[@]}"; do
+    echo "  $failed"
+  done
+fi
 
 echo ""
 echo "================================"

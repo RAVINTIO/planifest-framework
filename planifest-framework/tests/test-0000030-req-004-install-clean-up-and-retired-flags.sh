@@ -127,9 +127,9 @@ for tool in claude-code cursor opencode antigravity; do
       [ "$n" -gt 0 ] && ok=yes || ok=no
       assert_equals "yes" "$ok" "fresh claude-code: $ev enforcement wiring present"
     done
-    gm=$(node -e 'const s=require(process.argv[1]);console.log((s.hooks.PreToolUse||[]).filter(g=>["Grep","Bash","WebFetch"].includes(g.matcher)).length)' \
+    gm=$(node -e 'const s=require(process.argv[1]);console.log((s.hooks.PreToolUse||[]).filter(g=>["Grep","Bash","WebFetch"].includes(g.matcher)&&!(g.hooks||[]).some(h=>(h.command||"").includes("shell-write-guard"))).length)' \
       "$WS/.claude/settings.json")
-    assert_equals "0" "$gm" "fresh claude-code: no Grep, Bash, or WebFetch PreToolUse entry"
+    assert_equals "0" "$gm" "fresh claude-code: no Grep, Bash, or WebFetch PreToolUse entry other than the 0000032 shell-write guard"
   fi
   rm -rf "$WS"
 done

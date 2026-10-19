@@ -75,7 +75,7 @@ for skill_dir in "$EXTERNAL_SKILLS_DIR"/*/; do
   check_field() {
     local field_pattern="$1"
     local field_name="$2"
-    if printf '%s' "$attr_content" | grep -qi "$field_pattern"; then
+    if grep -qi "$field_pattern" <<<"$attr_content"; then
       echo "    PASS: $skill_name — $field_name present"
       ((PASS++)) || true
     else
@@ -94,7 +94,7 @@ for skill_dir in "$EXTERNAL_SKILLS_DIR"/*/; do
   # Heuristic: look for LICENSE:, MIT License, Apache License, or ISC License headers
   # OR a long block of text that looks like a license
   license_present=false
-  if printf '%s' "$attr_content" | grep -qi "^LICENSE:\|^MIT License\|^Apache License\|^ISC License\|^BSD.*License\|Permission is hereby granted\|Licensed under"; then
+  if grep -qi "^LICENSE:\|^MIT License\|^Apache License\|^ISC License\|^BSD.*License\|Permission is hereby granted\|Licensed under" <<<"$attr_content"; then
     license_present=true
   fi
   # Also accept if the file is long enough to contain a full license (>500 chars)

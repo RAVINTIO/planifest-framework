@@ -17,8 +17,8 @@
 
 | Output | Type | Description |
 |---|---|---|
-| `.claude/settings.json` | File (merged) | Hook wiring for PreToolUse and UserPromptSubmit. Additive merge, never full replacement. Every enforcement command string is written with a `node` interpreter prefix (0000028 P5 SEC-001); a bare `.mjs` path exits 126 against the non-executable committed file mode and fails open silently |
-| `.claude/hooks/enforcement/` | Directory | Every `*.mjs` under `hooks/enforcement/`, always installed, not gated on any flag. Currently `gate-write.mjs`, `check-design.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs` (0000028), `auto-trigger-orchestrator.mjs`, `check-orchestrator-presence.mjs`, plus the shared module `read-stdin.mjs` (0000028) |
+| `.claude/settings.json` | File (merged) | Hook wiring for PreToolUse and UserPromptSubmit. Additive merge, never full replacement. Every enforcement command string is written with a `node` interpreter prefix (0000028 P5 SEC-001); a bare `.mjs` path exits 126 against the non-executable committed file mode and fails open silently. For Claude Code, setup also registers `shell-write-guard.mjs` on a `Bash` PreToolUse matcher (0000032-ADR-006). It first removes any earlier `Bash` group whose command names `shell-write-guard`, so a re-run leaves exactly one. Other `Bash` groups stay in place. |
+| `.claude/hooks/enforcement/` | Directory | Every `*.mjs` under `hooks/enforcement/`, always installed, not gated on any flag. Currently `gate-write.mjs`, `check-design.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs` (0000028), `auto-trigger-orchestrator.mjs`, `check-orchestrator-presence.mjs`, `shell-write-guard.mjs` (0000032), plus the shared modules `read-stdin.mjs` (0000028) and `path-rules.mjs` (0000032) |
 | `.claude/skills/` | Directory | Skill files from `planifest-framework/skills/` |
 | `CLAUDE.md` | File | Generated from `templates/standard-boot.md` (Claude Code only) |
 | `git config core.hooksPath` | Git config | Points to `planifest-framework/hooks/` for advisory commit-msg hook |
