@@ -27,9 +27,9 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Start | `2026-10-19T01:00:25Z` |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator |
-| Agents spawned | `0` |
+| Agents spawned | `4` |
 | MCP calls | `0` |
-| Parallel task batches | `0` |
+| Parallel task batches | `1` |
 | Notes | See entries below. |
 
 - Migrations: two files outside `_done/`. Both target downstream projects, and this repo ships them. The human chose to re-run `setup.sh claude-code --strict-orchestrator` and keep both files in place. The shell-write guard is now installed here. The context-mode and telemetry migration doesn't apply, because no stale entries exist.
@@ -60,10 +60,14 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Start | `2026-10-19T01:33:46Z` |
 | Model tier | primary (orchestrator), cheaper (requirement drafting subagents) |
 | Skills loaded | planifest-spec-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `7` (plus 4 resumed for fixes) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` |
 | Notes | Requirement IDs fixed by the orchestrator before dispatch, so parallel streams can't collide. |
 - P1 cross-stream review (fresh-context, REJECT-default, outside the `design_critic` toggle): REJECT with 1 blocker, 6 major, and 12 minor findings. The orchestrator decided fixes F1 to F19 and sent each stream its items.
 - Requirement Change (P1, clarifying): the design's clean close-out row gains D-010 and D-011. Intent unchanged. No phase re-run.
 - P1 re-review: ACCEPT. All 19 fixes closed. Four minor wording gaps fixed by the orchestrator: approach counter wording now says per loop instance, the back-compat risk cites NFR-003, the back-compat scope lists req-006's every-mode changes, and req-005 names the live build log before Step 6.
+- Artifacts: execution plan, 18 requirements (3 acceptance criteria each), scope, risk register, and domain glossary. No OpenAPI spec, operational model, SLO definitions, or cost model, because no trigger applies. `planifest-framework/component.yml` already exists, and P6 updates it.
+- `consistency-check.mjs`: 15 hits, all cross-feature ADR references (backlog 0000079 false positive).
+- End: `2026-10-19T01:51:00Z`
+- Gate passed: P1 (continuous run, no stop)
