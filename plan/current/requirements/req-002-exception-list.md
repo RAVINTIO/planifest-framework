@@ -30,6 +30,8 @@ As the human on the loop, I get asked only for items on a declared exception lis
 - **Human review item:** The agent lists every page or endpoint for review as a full link.
 - **Human-only input item:** The agent runs the check up to the point that needs the input.
 - **Gross deviation:** A gross deviation is a change the reversal protocol would class as *altering*. It changes the confirmed problem, the users, or the in-scope list. Every other deviation keeps the design's intent, and the agent records it as *additive*.
+- **Who classifies:** The fresh-context `planifest-reversal-assessor` classifies a deviation as *altering*. The agent that deviates never classifies its own deviation. If that agent suspects a gross deviation, it files a defect report and the assessor decides.
+- **Reversal protocol on:** In `autonomous`, an absent `reversal_protocol` toggle key reads as `on` (req-003). The assessor is therefore available in every `autonomous` run.
 - **Decisions are recorded, not asked:** In `autonomous`, a question that isn't an exception-list item becomes a decision. The agent takes the option it would have recommended. It records the decision in the build log and in the requirement, ADR, or design the decision touches.
 - **Build-log line formats:**
   - `Decision (P{N}): {what was decided} / reason: {one line}`
@@ -63,7 +65,7 @@ As the human on the loop, I get asked only for items on a declared exception lis
   - `planifest-security-agent`
   - `planifest-docs-agent`
   - `planifest-ship-agent`
-- **Codegen `**Deviation & Escalation Protocol:**`:** In `autonomous`, option 2 (Stop-and-Ask) applies only to a gross deviation, which becomes an exception-list item. Any other deviation takes option 1 and records an *additive* deviation.
+- **Codegen `**Deviation & Escalation Protocol:**`:** In `autonomous`, option 2 (Stop-and-Ask) becomes a defect report to the reversal assessor. If the assessor classes it *altering*, it becomes an exception-list item. Otherwise codegen takes option 1 and records an *additive* deviation.
 
 ### Tests
 
@@ -73,7 +75,7 @@ As the human on the loop, I get asked only for items on a declared exception lis
 ### Verified by
 
 - The standards file has a `## Exception list` heading, and the section names all six items.
-- The section defines a gross deviation as the reversal protocol's *altering* class.
+- The section defines a gross deviation as the reversal protocol's *altering* class. It names `planifest-reversal-assessor` as the classifier and says the deviating agent never classifies its own deviation.
 - The section gives the `Decision`, `Deviation`, and `Exception waiting` line formats.
 - The section says merging stays human-only in every mode, and names `planifest-overrides/exception-list.yml`.
 - `planifest-framework/templates/exception-list.template.yml` exists and has an `additional:` key.
@@ -90,6 +92,7 @@ As the human on the loop, I get asked only for items on a declared exception lis
 ## Dependencies
 
 - req-001 creates the standards file and the `autonomous_run` flag.
+- req-003 owns the toggle rule that reads an absent `reversal_protocol` key as `on` in `autonomous`.
 - req-004 defines the approach budget that item 6 names.
 - req-005 lists each waiting item in the final report.
 - req-006 counts a touchpoint for each item that reaches the human on the loop.

@@ -1,6 +1,6 @@
 ---
 title: "Requirement: req-004 - escalation-changes-approach"
-summary: "In autonomous mode a loop that hits its cap or makes no progress tries a different approach, up to 3 per gate. A fourth approach becomes an exception-list item."
+summary: "In autonomous mode a loop that hits its cap or makes no progress tries a different approach, up to 3 per loop instance. A fourth approach becomes an exception-list item."
 status: "draft"
 version: "0.1.0"
 ---
@@ -23,8 +23,10 @@ As the human on the loop, I see a failed gate retried by a fresh-context checker
   1. When a loop hits its iteration cap or the no-progress rule, the agent records the attempts and starts a new approach.
   2. A new approach states how it differs from each earlier approach, such as a new root-cause hypothesis or a new method. Restating an earlier approach doesn't count as a new one.
   3. The iteration counter restarts at 1 for each approach. The approach counter never restarts.
-  4. Each gate allows up to 3 approaches. If the gate needs a fourth, the loop escalates as an exhausted budget, which is an exception-list item (req-002).
-  5. The reversal budget stays at 2 per feature. Its exhaustion is an exception-list item in `autonomous`.
+  4. The approach counter belongs to one loop instance. At P1, P2, P4, P5, and P6 the instance is the phase gate. At P3 it is each requirement's TDD loop.
+  5. Each loop instance allows up to 3 approaches. If it needs a fourth, the loop escalates as an exhausted budget, which is an exception-list item (req-002).
+  6. The reversal budget stays at 2 per feature. Its exhaustion is an exception-list item in `autonomous`.
+  7. If a new approach would change the confirmed design, the agent files a defect report. The fresh-context reversal assessor classes it, never the agent that filed it.
 
 ### Loop runner (`planifest-framework/skills/planifest-loop-runner/SKILL.md`)
 
@@ -61,7 +63,8 @@ As the human on the loop, I see a failed gate retried by a fresh-context checker
 
 ### Verified by
 
-- The standards file has a `## Changing approach` heading. The section names 3 approaches per gate and says the reversal budget stays at 2.
+- The standards file has a `## Changing approach` heading. The section names 3 approaches per loop instance and says the reversal budget stays at 2.
+- The section names the phase gate as the instance at P1, P2, P4, P5, and P6, and each requirement's TDD loop at P3.
 - The section says the approach counter never restarts.
 - The loop runner names `change-approach` in both the Iteration Cycle and the Stop Rules sections.
 - The Stop Rules table still has its four rows, with cap 3, P4's 5, and the reversal budget of 2.
@@ -72,12 +75,12 @@ As the human on the loop, I see a failed gate retried by a fresh-context checker
 
 ## Acceptance Criteria
 
-- [ ] (AC-1) In `autonomous`, the loop runner, validate, codegen, and the cross-model gate change approach at a cap or a no-progress halt, up to 3 approaches per gate.
+- [ ] (AC-1) In `autonomous`, the loop runner, validate, codegen, and the cross-model gate change approach at a cap or a no-progress halt, up to 3 approaches per loop instance.
 - [ ] (AC-2) A fourth approach, or an exhausted reversal budget of 2, becomes an exception-list item, and the run carries on with independent work.
 - [ ] (AC-7) The escalation text for `interactive` and `continuous` stays, and the new suite and the 0000016 suite pass under `run-tests.sh`.
 
 ## Dependencies
 
 - req-002 defines the exception list and the `Exception waiting` line.
-- req-003 makes each gate a loop.
+- req-003 makes each gate a loop, and reads an absent `reversal_protocol` key as `on` in `autonomous`.
 - 0000016-ADR-007 keeps budget counters in the git-tracked loop-state file, so a restart doesn't reset the approach counter.

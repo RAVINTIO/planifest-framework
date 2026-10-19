@@ -21,7 +21,7 @@ This is a wording fix. It applies in every run mode and isn't gated on `autonomo
 
 ### Formatting standards (`planifest-framework/standards/formatting-standards.md`)
 
-- **New `## 5. Choice Prompts` section:** An option that describes an action names who acts, as "Agent ..." or "Human ...". Options never use "I", "me", or "my". The question line names the actor too, such as "Who pushes the branch and raises the PR?"
+- **New `## 5. Choice Prompts` section:** An option that describes an action names who acts. It names the agent as "the agent" or "Agent". It names the human on the loop as "you" or "Human". An example is "Interactive: the agent stops for you at every phase gate". Options never use "I", "me", or "my". The question line names the actor too, such as "Who pushes the branch and raises the PR?"
 
 ### Ship skill (`planifest-framework/skills/planifest-ship-agent/SKILL.md`)
 
@@ -46,17 +46,17 @@ This is a wording fix. It applies in every run mode and isn't gated on `autonomo
 ### Tests
 
 - Add `planifest-framework/tests/test-0000033-req-007-choice-prompts-name-the-actor.sh`. `run-tests.sh` picks it up.
-- `planifest-framework/tests/test-0000032-req-001-marker-clear-before-tag.sh` asserts `[2] I'll do it` in Step 10. Update that assertion to the new option [2] text.
+- Listed exception: this requirement edits one assertion in `planifest-framework/tests/test-0000032-req-001-marker-clear-before-tag.sh`. Its line 145 asserts `[2] I'll do it` in Step 10. Update that assertion to the new option [2] text. The suite's other assertions stay as they are.
 - `planifest-framework/tests/test-0000025-req-001-ship-agent-pr-footer.sh` must pass unchanged.
 
 ### Verified by
 
-- `formatting-standards.md` has a `## 5. Choice Prompts` heading, and the section bans "I", "me", and "my" in options.
+- `formatting-standards.md` has a `## 5. Choice Prompts` heading. The section bans "I", "me", and "my" in options, and names "the agent" and "you" as the actor words.
 - Step 10 contains `Who pushes the branch and raises the PR?`, and doesn't contain `Should I push`.
 - Step 10's option lines start `[1] Agent` and `[2] Human`, and neither contains "I'll" or "me".
 - The orchestrator's compaction prompt doesn't contain `Want me to`.
 - The Scope Lock fallback offer doesn't contain `Want me to`, apart from the quoted history line.
-- The run-mode prompt's option lines contain no "I" or "me".
+- Each run-mode prompt option names `the agent`, and none contains "I" or "me".
 - No option line in any `SKILL.md` under `planifest-framework/skills/` matches `^\s*\[[0-9]\].*\b(I|I'll|me|my)\b`.
 
 ## Acceptance Criteria
