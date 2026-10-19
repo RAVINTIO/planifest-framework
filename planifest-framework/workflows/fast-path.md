@@ -9,7 +9,9 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
 
 ## Prerequisites
 
-- An existing feature with code at `src/{component-id}/`
+- One of these two targets:
+  - an existing feature with code at `src/{component-id}/`
+  - a change with no `src/` target, such as a change to documentation, governance, tooling, or framework text
 - The request meets **ALL** Fast Path criteria (verified by the orchestrator)
 
 ## Fast Path Criteria
@@ -35,7 +37,7 @@ The orchestrator must confirm all four before this workflow is used:
 
 3. **Validate.** Run CI checks (lint, typecheck, test, build). Self-correct up to 3 times. If CI still fails after 3 attempts, escalate to the Change Pipeline.
 
-4. **Update `component.yml`.**
+4. **Update `component.yml`.** Update the `component.yml` that covers the changed paths, such as `planifest-framework/component.yml`. If no manifest covers them, skip step 4.
    - Increment the patch version (e.g. `1.2.3` → `1.2.4`)
    - Update `metadata.updatedAt` to today's ISO-8601 date
 
@@ -46,6 +48,7 @@ The orchestrator must confirm all four before this workflow is used:
    - Component: {component-id}
    - Reason: {why}
    ```
+   For a no-`src/` change, the `Component:` line names the covering manifest's component, or the changed paths if no manifest covers them.
 
 6. **Commit** using the fast-path convention:
    ```

@@ -1,0 +1,17 @@
+# release-budget.yml: release size in size points (0000033-ADR-008)
+#
+# COPY THIS FILE to planifest-overrides/release-budget.yml to set a budget.
+# planifest-overrides/ is user-owned: the framework and its agents never write
+# there, so setting a budget is always a deliberate human act, as with
+# loop-toggles.yml.
+#
+# Absent file = the three-story rule stays (orchestrator ### Decomposition).
+# Invalid file = the three-story rule stays, with a one-line warning. A file is
+# invalid if either key is missing or not a positive whole number, or if
+# target is greater than ceiling.
+#
+# Size points: small (1), medium (2), large (3). See
+# planifest-framework/standards/release-sizing.md for the classes and the fill.
+
+target: 6     # P0 recommends a fill up to this many points
+ceiling: 9    # P0 never recommends a fill above this. Past it, P0 recommends a split.

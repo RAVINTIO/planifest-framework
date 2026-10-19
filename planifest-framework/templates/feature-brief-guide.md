@@ -40,7 +40,7 @@ Each feature should be **small enough for one agent session**. Think:
 - One UI screen with its state management, data fetching, and tests
 - One integration with its adapter, contract, and error handling
 
-**Rule of thumb:** If a feature has more than 3 user stories, split it.
+**Rule of thumb:** If a feature has more than 3 user stories, split it. If the repo has `planifest-overrides/release-budget.yml`, its size-point budget replaces this rule.
 
 The Priority column uses MoSCoW: must-have, should-have, could-have. The orchestrator builds must-haves first.
 
