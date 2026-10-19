@@ -171,10 +171,19 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Start | `2026-10-19T03:15:43Z` |
 | Model tier | primary (orchestrator), cheaper (living-doc subagents) |
 | Skills loaded | planifest-docs-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `3` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | none |
 - Gate A: `docs/` exists.
 - P6 Gate B: docs update assessment (continuous run, auto-accepted). This run adds the `autonomous` run mode, P0 and close-out changes, parallel streams, three scripts, and four standards files to `planifest-framework`. Auto-accepted: updating `docs/component-registry.md`, `docs/architecture-overview.md`, `docs/dependency-graph.md`, and `docs/decisions-index.md`. `docs/api-index.md` doesn't apply, because no component exposes an API.
 - Dogfooding: this run applies req-014's post-P6 revalidation from the source docs-agent skill, although the installed copy predates it.
+- Living docs updated: `docs/decisions-index.md` (15 new rows, six prior ADRs amended, 0000003-ADR-006 superseded, 0000032-ADR-002 amended by ADR-011), `docs/component-registry.md`, `docs/architecture-overview.md`, and `docs/dependency-graph.md`. `planifest-framework/component.yml` lists the new scripts, standards, and templates.
+- Per-component `src/{id}/docs/` artifacts: not applicable. `planifest-framework` lives outside `src/`, and `setup-hook-integration` didn't change.
+- Drift: none found. No API, no data ownership change, and no new component. The glossary terms match the standards text.
+- Plan artifacts: execution plan, 18 requirements, scope, risk register, glossary, 15 ADRs, security report, iteration log, and recommendations. No OpenAPI, operational model, SLO, or cost model, because no trigger applies.
+- Backlog filed from recommendations: 0000122 (design critic default) and 0000123 (file-ownership batching). TD-004 resolved by re-running setup, so P7 to P9 use the 0.32.0 ship agent.
+- Post-P6 revalidation (req-014): `self-description-check` and `consistency-check` clean, `node --check` passes on all three scripts, and the full suite passes with 78 feature and 24 regression suites. No added line holds an em dash.
+- Cross-model review: toggle off, not run. Deviation review: `autonomous` only, not run.
+- End: `2026-10-19T03:21:30Z`
+- Gate passed: P6 (zero drift, all expected artifacts present)
