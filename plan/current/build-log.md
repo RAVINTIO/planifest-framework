@@ -89,3 +89,18 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Design critic: toggle off, not run. The P1 cross-stream review already checked the decisions these ADRs record.
 - End: `2026-10-19T01:55:48Z`
 - Gate passed: P2 (continuous run, no stop)
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T01:59:49Z` |
+| Model tier | primary (orchestrator and work-package agents) |
+| Skills loaded | planifest-codegen-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Baseline before P3: 59 feature and 24 regression suites pass. |
+- Dispatch plan: requirements grouped into six work packages by the files they change. Wave 1 runs five packages in parallel. Wave 2 runs req-015 to req-017, because they edit every phase skill that wave 1 also edits.
+- Deviation: each work-package agent runs the red, green, and refactor steps itself, rather than spawning three subagents per requirement. The tests are Bash text assertions, so a nested spawn per step costs more than it gains. Each agent still confirms RED before GREEN.
+- Shared files: wave 1 packages share `planifest-orchestrator/SKILL.md`, the build-log template, and the build-assessment skill. Agents edit them with targeted edits only, never a whole-file rewrite, and the orchestrator commits after each package reports.
