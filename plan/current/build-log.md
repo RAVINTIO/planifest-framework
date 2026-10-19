@@ -40,3 +40,12 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Adoption mode: standard-iterative, derived from `plan/_archive/` and `docs/about.md`. Recorded in the design draft for one confirmation, per the human's direction to keep P0 questions to real forks.
 - Version: `0.31.0` to `0.32.0` (Feature Pipeline, minor bump). Recorded in the design draft for one confirmation.
 - Scope Lock: dispatched four `planifest-scope-lock-agent` instances in parallel, one per scenario path, on `claude-sonnet-5-5`.
+- Scope Lock (happy path): You choose `autonomous` at P0 and confirm design, scope answers, and run mode in one turn; the run reaches a raised PR with no gate waiting, ending in one report and a clean tree. [source: agent-draft-accepted]
+- Scope Lock (first-run path): An upgraded product sees no change until the human chooses `autonomous`; existing overrides keep working. [source: agent-draft-accepted]
+- Scope Lock clarification (first-run): no release setting keeps the three-story rule; an override wins over `autonomous` text; an override never counts as choosing `autonomous`. [source: agent-draft-accepted]
+- Scope Lock (error path): A gate the run can't clear gets a changed approach, not a stop; exception-list items wait in the final report after all other work finishes. [source: agent-draft-accepted]
+- Scope Lock clarification (error): gross deviation uses the reversal protocol's altering class; an exhausted budget becomes an exception-list item. [source: agent-draft-accepted]
+- Scope Lock (cross-session): A resumed run keeps its mode, loop counts, budgets, and stream state, and repeats only unfinished P7 archive steps. [source: agent-draft-accepted]
+- Scope Lock clarification (cross-session): amend 0000012-ADR-005 so `autonomous` is recognised; keep every loop cap, with up to 3 approaches per gate before an exception; reversal budget stays at 2; stream state under `plan/current/streams/`. [source: agent-draft-accepted]
+- P0 exchange (Scope Lock): Q: accept, edit, or reject each of the four drafts and gap answers? / A: accept all.
+- Scope Lock complete. All four scenario paths captured.
