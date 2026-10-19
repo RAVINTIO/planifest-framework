@@ -173,6 +173,9 @@ Recommended action: {what the human should do}
 
 ## Parallel Dispatch Checklist
 
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One TDD subagent per leaf requirement. Checklist step 3 is that batch.
+
 Follows the canonical Parallelism Directive (Parallelism Rules) in `planifest-framework/standards/agent-dispatch-standards.md`. Independent implementation work MUST be parallelised. Run this checklist **before writing any implementation code**:
 
 1. **List all requirements** for this phase from `plan/current/requirements/`.

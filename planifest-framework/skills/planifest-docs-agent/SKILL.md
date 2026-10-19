@@ -161,6 +161,11 @@ Do not flag legitimate absences as drift. Do flag missing artifacts that should 
 
 ## Parallelism Directive
 
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- Per-component docs for independent components.
+- Living-doc updates with no shared content.
+- Recommendations and the iteration log.
+
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|
 | Per-component docs for independent components (purpose, interface, risk, scope) | Dependency graph before all component dependency files exist |

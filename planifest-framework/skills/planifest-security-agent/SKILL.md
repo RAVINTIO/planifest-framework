@@ -75,6 +75,10 @@ Top actions before production:
 
 ## Parallelism Directive
 
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- STRIDE threat modelling, dependency audit, secrets scan, and input validation scan.
+- One review per component with no shared secrets or auth logic.
+
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|
 | STRIDE threat modelling + dependency audit (independent analyses) | Auth review before the OpenAPI spec is read |

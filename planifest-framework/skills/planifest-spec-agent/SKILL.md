@@ -96,6 +96,10 @@ When the confirmed design indicates a waved feature (features grouped into waves
 
 ## Parallelism Directive
 
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One subagent per requirement file with no cross-reference to a sibling.
+- Scope, risk register, and domain glossary.
+
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|
 | Requirement files for independent features | Requirements that reference each other |

@@ -96,6 +96,10 @@ Do NOT proceed to the next pipeline phase if any check is failing. The pipeline 
 
 ## Parallelism Directive
 
+**Always parallel:** dispatch each set in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- Lint and typecheck, as Batch 1.
+- Independent component test suites, within Batch 2.
+
 **Pre-Execution Parallelism Plan:** before executing any CI check, identify independent checks and dispatch them in a single parallel batch (multiple Bash calls in one message); state the dependency reason for anything run serially.
 
 | MUST parallelise | Cannot parallelise |

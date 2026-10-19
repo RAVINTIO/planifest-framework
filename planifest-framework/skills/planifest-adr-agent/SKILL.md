@@ -47,6 +47,9 @@ A decision does **not** require an ADR if it is already documented in the design
 
 ## Parallelism Directive
 
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One subagent per ADR that doesn't cite another ADR in this run.
+
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|
 | ADRs for stack choices that do not reference each other | ADR-B that says "given the decision in ADR-A, we choose..." |

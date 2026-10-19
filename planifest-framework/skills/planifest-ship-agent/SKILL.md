@@ -37,6 +37,13 @@ Read the run mode from the `Run mode` row in the build-log Header table. Before 
 
 In `autonomous`, P7 to P9 ask the human on the loop nothing (0000033 ADR-006). The final report in Step 11 is the only output that addresses them. See `planifest-framework/standards/autonomous-run-standards.md`.
 
+## Parallelism Directive
+
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- The P7 cross-reference search for `plan/current/...` links, and the Step 4 scan for `# REGRESSION-CANDIDATE:` tags. Both are read-only searches.
+
+The numbered P7 and P9 steps stay in order, because each step reads the output of the step before it.
+
 ## P7: Archive
 
 **Build log first:** Append a P7 phase block to `plan/current/build-log.md` before doing any work in this phase. When P7 finishes, fill `End`, `Wall-clock`, and `Agents spawned`, then write the P7 progress line to the archived build log, in every run mode.
