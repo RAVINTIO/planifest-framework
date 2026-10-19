@@ -33,5 +33,5 @@ version: "0.1.0"
 | ID | Assumption | Impact if Wrong | Status |
 |----|-----------|----------------|--------|
 | A-001 | A fresh-context checker can stand in for the human at a phase gate. Likelihood: medium. | Autonomous runs ship defects a human would have caught. The human still reviews before merging. | open |
-| A-002 | Three approaches per gate is enough for most failures. Likelihood: medium. | More runs end with an exception. The P8 report shows how often. | open |
+| A-002 | Three approaches per loop instance is enough for most failures. Likelihood: medium. | More runs end with an exception. The P8 report shows how often. | open |
 | A-003 | Downstream overrides like `ovelunor`'s keep working. Likelihood: medium. | A product's hands-off runs change behaviour on upgrade. The first-run path says overrides win. | open |

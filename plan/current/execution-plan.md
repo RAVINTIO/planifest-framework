@@ -22,7 +22,7 @@ Each file follows the [Requirement Template](../../planifest-framework/templates
 | 1 run modes and gates | [req-001](requirements/req-001-autonomous-run-mode.md) | `autonomous` as a third run mode, recorded only when picked, restored on resume |
 | 1 | [req-002](requirements/req-002-exception-list.md) | Only exception-list items wait for the human on the loop. A product can add items. |
 | 1 | [req-003](requirements/req-003-gates-as-loops.md) | P1 to P6 gates run as loops with fresh-context checkers in `autonomous` |
-| 1 | [req-004](requirements/req-004-escalation-changes-approach.md) | A cap or no-progress halt tries a new approach, up to 3 per gate |
+| 1 | [req-004](requirements/req-004-escalation-changes-approach.md) | A cap or no-progress halt tries a new approach, up to 3 per loop instance |
 | 1 | [req-005](requirements/req-005-ship-without-asking-and-final-report.md) | P7 to P9 ask nothing in `autonomous`, and the run ends with one final report |
 | 1 | [req-006](requirements/req-006-on-the-loop-visibility.md) | Progress lines and a touchpoint count, flagged by P8 |
 | 1 | [req-007](requirements/req-007-choice-prompts-name-the-actor.md) | Choice prompts name who acts in each option |
@@ -61,6 +61,7 @@ The design applies some fixes in every run mode. These change `interactive` and 
 - P6 reruns the P4 checks (req-014).
 - Phase skills dispatch their always-parallel units in one batch (req-016), and the orchestrator reconciles each join (req-017).
 - The build log records subagent counts and wall-clock time (req-018).
+- The build log has a `Run mode` header row and one progress line per phase (req-006).
 
 Everything else new sits behind `autonomous` or the `parallel_streams` toggle.
 
@@ -118,7 +119,7 @@ Each is a risk item with likelihood: medium.
 | ID | Assumption | Impact if Wrong |
 |----|-----------|----------------|
 | A-001 | A fresh-context checker can stand in for the human at a phase gate | Autonomous runs ship defects a human would have caught. The human still reviews before merging. |
-| A-002 | Three approaches per gate is enough for most failures | More runs end with an exception. The P8 report shows how often. |
+| A-002 | Three approaches per loop instance is enough for most failures | More runs end with an exception. The P8 report shows how often. |
 | A-003 | Downstream overrides keep working after the upgrade | A product's hands-off runs change behaviour. The first-run path says overrides win. |
 | A-004 | No hook reads `plan/.run-mode` | A hook mishandles `autonomous`. Stream 1 checked this by search. |
 

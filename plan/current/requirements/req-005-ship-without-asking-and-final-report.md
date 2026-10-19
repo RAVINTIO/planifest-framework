@@ -31,7 +31,7 @@ As the human on the loop, I choose `autonomous` at P0, so that the run goes from
 
 ### Ship skill (`planifest-framework/skills/planifest-ship-agent/SKILL.md`)
 
-- **Reading the run mode:** The ship agent reads the run mode from the build-log Header table's `Run mode` row (req-006), in the archived build log after Step 6. It never reads `plan/.run-mode` after the P9 marker step deletes it. A resume after the marker step reads the same row.
+- **Reading the run mode:** The ship agent reads the run mode from the build-log Header table's `Run mode` row (req-006), in `plan/current/build-log.md` before Step 6 and in the archived build log after it. It never reads `plan/.run-mode` after the P9 marker step deletes it. A resume after the marker step reads the same row.
 - **Hard Limit 4:** The rule stays for `interactive` and `continuous`. In `autonomous`, the human on the loop's P0 choice gives that awareness, and the final report confirms the tag and the PR.
 - **P7 Step 4 (Regression confirmation):** In `autonomous`, the agent decides each candidate as a recorded decision. It passes `agent` as the promoted-by argument to `promote-to-regression.sh`. The final report lists each candidate and its decision.
 - **Step 10 (Push/PR decision):** The `local-git-only` check runs first, as now, and an override still wins. In `autonomous` with no such override, skip the prompt and take Option [1]. With the override, take Option [2] and put its PR title and description in the final report.

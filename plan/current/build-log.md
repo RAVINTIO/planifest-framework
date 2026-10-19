@@ -66,3 +66,4 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Notes | Requirement IDs fixed by the orchestrator before dispatch, so parallel streams can't collide. |
 - P1 cross-stream review (fresh-context, REJECT-default, outside the `design_critic` toggle): REJECT with 1 blocker, 6 major, and 12 minor findings. The orchestrator decided fixes F1 to F19 and sent each stream its items.
 - Requirement Change (P1, clarifying): the design's clean close-out row gains D-010 and D-011. Intent unchanged. No phase re-run.
+- P1 re-review: ACCEPT. All 19 fixes closed. Four minor wording gaps fixed by the orchestrator: approach counter wording now says per loop instance, the back-compat risk cites NFR-003, the back-compat scope lists req-006's every-mode changes, and req-005 names the live build log before Step 6.

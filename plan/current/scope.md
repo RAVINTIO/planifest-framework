@@ -17,7 +17,7 @@ Each item maps to a requirement and to the backlog entry it came from.
 - req-001 autonomous-run-mode (0000078). `autonomous` becomes a third `plan/.run-mode` value. 0000012-ADR-005 changes so the value is recognised. Unknown values still read as `interactive`, and an older framework reads `autonomous` as `interactive`.
 - req-002 exception-list (0000078). Only these items wait for the human: schema and destructive changes, a gross deviation, human review of the running result, promotion beyond the candidate environment, a human-only input, and an exhausted budget. A product can add items in an override.
 - req-003 gates-as-loops (0000078). In `autonomous`, every phase gate runs as a loop under `planifest-loop-runner` with a fresh-context checker. Existing caps stay.
-- req-004 escalation-changes-approach (0000078). At a cap, the run tries a different approach, up to 3 approaches per gate. The fourth becomes an exception. The reversal budget stays at 2.
+- req-004 escalation-changes-approach (0000078). At a cap, the run tries a different approach, up to 3 approaches per loop instance. The fourth becomes an exception. The reversal budget stays at 2.
 - req-005 ship-without-asking-and-final-report (0000078). P9 pushes and raises the PR without asking. One report at the end of P9 lists what shipped, every decision and deviation, the version, the PR and its CI result, and every exception waiting.
 - req-006 on-the-loop-visibility (0000078). The build log gets a one-line progress entry per phase and a human-touchpoint count. The P8 report flags the count.
 - req-007 choice-prompts-name-the-actor (0000059). Every two-option prompt names the actor in each option. The P9 push prompt is the first case, and a sweep covers the other phase skills.

@@ -34,7 +34,7 @@
 | Run mode | `autonomous` becomes a third `plan/.run-mode` value. 0000012-ADR-005 changes so `autonomous` is recognised. Unknown values still read as `interactive`. |
 | Exception list | Only these wait for the human: schema and destructive changes, a gross deviation, human review of the running result, promotion beyond the candidate environment, a human-only input, and an exhausted budget. A product can add items in an override. |
 | Gross deviation | A change the reversal protocol would class as *altering*: it changes the confirmed problem, users, or in-scope list. |
-| Gates become loops | In `autonomous`, every phase gate runs as a loop under `planifest-loop-runner` with a fresh-context checker. Existing caps stay. At a cap, the run tries a different approach, up to 3 approaches per gate. The fourth becomes an exception. The reversal budget stays at 2. |
+| Gates become loops | In `autonomous`, every phase gate runs as a loop under `planifest-loop-runner` with a fresh-context checker. Existing caps stay. At a cap, the run tries a different approach, up to 3 approaches per loop instance (D-014). The fourth becomes an exception. The reversal budget stays at 2. |
 | Final report | One report at the end of P9: what shipped, every decision and deviation, the version, the PR and its CI result, and every exception waiting. |
 | Visibility | A one-line progress entry per phase in the build log, and a human-touchpoint count that the P8 report flags. No push notifications. |
 | P0 questions | P0 asks only real forks. Adoption mode, version, stack, NFRs, risks, the component split, and the feature ID go into the design draft for one confirmation, unless a conflict warning applies. The design, the Scope Lock batch, and the run mode confirm in one turn. The P0 build-log block records the question count. |
@@ -75,13 +75,13 @@
 
 ## Assumptions
 - A fresh-context checker can stand in for the human at a phase gate. Impact if wrong: autonomous runs ship defects a human would have caught. The human still reviews before merging.
-- Three approaches per gate is enough for most failures. Impact if wrong: more runs end with an exception. The P8 report shows how often.
+- Three approaches per loop instance is enough for most failures. Impact if wrong: more runs end with an exception. The P8 report shows how often.
 - Downstream overrides like ovelunor's keep working. Impact if wrong: a product's hands-off runs change behaviour on upgrade. The first-run path says overrides win.
 
 ## Risks
 - The orchestrator skill grows further, at 9,276 words already. Likelihood: high. Impact: medium. Mitigation: put new detail in standards files and link to them. 0000020 follows this run.
 - Parallel streams break the order the gates rely on. Likelihood: medium. Impact: high. Mitigation: streams join at every review gate, and the orchestrator owns each join.
-- Back-compat regressions in `interactive` or `continuous`. Likelihood: medium. Impact: high. Mitigation: every existing suite must pass unchanged, plus new tests for each mode.
+- Back-compat regressions in `interactive` or `continuous`. Likelihood: medium. Impact: high. Mitigation: every existing suite passes, with edits only where a listed requirement changes the asserted text (NFR-003), plus new tests for each mode.
 - Run size. This run holds 10 stories, against today's three-story rule. Likelihood: medium. Impact: medium. Mitigation: four parallel streams, and P4 runs the full suite.
 
 ## Dependencies

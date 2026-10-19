@@ -135,7 +135,7 @@ One wave. The human chose all 11 entries in one run. The four streams in the tab
 
 **Error / sad path:**
 
-> The most likely failure is a gate the run can't clear. The run doesn't stop and doesn't ask. It records each attempt and tries a different approach, up to 3 approaches per gate. The fourth becomes an exception-list item. A gross deviation is one the reversal protocol would class as *altering*. An exhausted budget is also an exception-list item. Exception-list items wait in the final report, and the run finishes all other work first.
+> The most likely failure is a gate the run can't clear. The run doesn't stop and doesn't ask. It records each attempt and tries a different approach, up to 3 approaches per loop instance. The fourth becomes an exception-list item. A gross deviation is one the reversal protocol would class as *altering*. An exhausted budget is also an exception-list item. Exception-list items wait in the final report, and the run finishes all other work first.
 
 **Cross-session continuity:**
 
