@@ -74,7 +74,7 @@ If `planifest-overrides/` does not exist or the language subdir is a stub (conta
 
 ## Rules
 
-**One question at a time.** When you need human input (to resolve a blocker, escalate a TDD failure, or confirm a deviation), ask one question.
+**One question at a time.** When you need human input (to resolve a blocker, escalate a TDD failure, or confirm a deviation), ask one question. In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 
 **Implement against the requirements:**
 - If building an API, the OpenAPI spec defines the contract. Implement every endpoint it describes. Do not add or remove endpoints.
@@ -86,6 +86,8 @@ If `planifest-overrides/` does not exist or the language subdir is a stub (conta
 - If a fundamental architectural blocker makes the pre-set specification flawed, you have two choices:
   1. **Documented Deviation:** Proceed with an alternative path. Flag the deviation and its justification in the final component manifest and `src/{component-id}/docs/quirks.md`.
   2. **Escalation (Stop-and-Ask):** Pause the build immediately if continuing would be wasteful or deviate too far from the original intent. Request a human review of the Plan and the encountered blocker before proceeding.
+- In `autonomous`, option 2 becomes a defect report to `planifest-reversal-assessor`. If the assessor classes it *altering*, it becomes an exception-list item. Otherwise take option 1 and record the deviation per `planifest-framework/standards/autonomous-run-standards.md`.
+- In `autonomous`, write a `Deviation (P{N}, unclassified)` build-log line for every deviation and never classify it yourself. The reversal assessor reviews each one before P7 and sets `additive` or `altering`.
 
 **Domain language:**
 - Use the domain glossary terms throughout - in code, comments, file names, variable names.
@@ -115,6 +117,8 @@ for each requirement in plan/current/requirements/:
       ESCALATE to human: do not proceed to next requirement
       wait for human direction before continuing
 ```
+
+In `interactive` and `continuous`, the escalation above and the `TDD LOOP BLOCKED` format below apply. In `autonomous`, the third failed attempt on one requirement starts a new approach per `standards/autonomous-run-standards.md` (Changing approach). After 3 approaches, the requirement becomes an exception-list item. Move on to requirements that don't depend on it.
 
 **Sub-agent model tier:** Sub-agents declare `recommended_model: haiku` in their frontmatter. Invoke them at the cheaper model tier when the tool supports per-invocation model override. You (the codegen-agent) retain the full model for orchestration, synthesis, and cross-requirement coherence.
 
@@ -169,6 +173,9 @@ Recommended action: {what the human should do}
 - If you discover tech debt, write it to `src/{component-id}/docs/tech-debt.md` and add it to the `quality.techDebt` array in `component.yml`.
 
 ## Parallel Dispatch Checklist
+
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One TDD subagent per leaf requirement. Checklist step 3 is that batch.
 
 Follows the canonical Parallelism Directive (Parallelism Rules) in `planifest-framework/standards/agent-dispatch-standards.md`. Independent implementation work MUST be parallelised. Run this checklist **before writing any implementation code**:
 

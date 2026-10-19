@@ -37,7 +37,7 @@ A decision does **not** require an ADR if it is already documented in the design
 
 ## Rules
 
-- **One question at a time.** When you need human input to resolve an ambiguous decision or confirm a trade-off, ask one question.
+- **One question at a time.** When you need human input to resolve an ambiguous decision or confirm a trade-off, ask one question. In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 - Be specific. Vague ADRs are useless.
 - Consequences must include at least one positive and one negative consequence.
 - Write one ADR that records the stack choice itself, referencing the design.
@@ -46,6 +46,9 @@ A decision does **not** require an ADR if it is already documented in the design
 - Write each ADR to disk as you complete it. Do not hold them all in memory.
 
 ## Parallelism Directive
+
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One subagent per ADR that doesn't cite another ADR in this run.
 
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|

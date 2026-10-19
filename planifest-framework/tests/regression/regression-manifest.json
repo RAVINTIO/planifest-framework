@@ -176,6 +176,55 @@
       "promotionDate": "2026-10-19",
       "promotedBy": "human",
       "filePath": "tests/regression/test-0000032-req-012-write-or-edit-boot-rule.sh"
+    },
+    {
+      "name": "test-0000033-req-001-run-mode-script.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-001-run-mode-script.sh"
+    },
+    {
+      "name": "test-0000033-req-002-exception-list.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-002-exception-list.sh"
+    },
+    {
+      "name": "test-0000033-req-003-gates-as-loops.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-003-gates-as-loops.sh"
+    },
+    {
+      "name": "test-0000033-req-005-ship-without-asking-and-final-report.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-005-ship-without-asking-and-final-report.sh"
+    },
+    {
+      "name": "test-0000033-req-012-archive-script-without-glob-delete.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-012-archive-script-without-glob-delete.sh"
+    },
+    {
+      "name": "test-0000033-req-013-clean-close-out.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-013-clean-close-out.sh"
+    },
+    {
+      "name": "test-0000033-req-017-join-owner-and-reconciliation.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-017-join-owner-and-reconciliation.sh"
     }
   ]
 }

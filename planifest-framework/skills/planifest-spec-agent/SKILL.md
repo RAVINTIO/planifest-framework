@@ -41,7 +41,7 @@ Write each spec artifact to `plan/` as you complete it. Write the component mani
 
 ## Rules
 
-**One question at a time.**
+**One question at a time.** In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 
 **Retrofit mode:** if `adoption_mode: retrofit`, follow the structured scan in `planifest-framework/workflows/retrofit.md`; the execution plan must describe the system as it exists and what is changing, not just the change in isolation.
 
@@ -95,6 +95,10 @@ When the confirmed design indicates a waved feature (features grouped into waves
 - **Carry forward the domain glossary and risk register.** Both are cumulative: add new terms/risks from each wave; never remove prior-wave entries (risks remain unless explicitly mitigated).
 
 ## Parallelism Directive
+
+**Always parallel:** dispatch these units in one batch (see Always-parallel work units in `planifest-framework/standards/agent-dispatch-standards.md`).
+- One subagent per requirement file with no cross-reference to a sibling.
+- Scope, risk register, and domain glossary.
 
 | MUST parallelise | Cannot parallelise |
 |------------------|--------------------|

@@ -84,3 +84,25 @@ The em dash character (U+2014) is not permitted in Planifest artifacts. Use a co
 ### Bypass
 
 A single-line sentinel comment, `<!-- planifest-em-dash-allow -->`, present anywhere in the content being written, allows that write through regardless of em dash matches. The sentinel is reusable, not single-use, and either a human or an agent may write it: an em dash carries no weakening semantics, so it does not need the human-only, single-use marker `plan/current/.ratchet-approve` uses for ratchet approvals.
+
+---
+
+## 5. Choice Prompts
+
+A choice prompt offers the human on the loop numbered or named options (feature 0000033, req-007). Each option that describes an action names who acts:
+
+- Name the agent as "the agent" or "Agent".
+- Name the human on the loop as "you" or "Human".
+- Never use "I", "me", or "my" in an option. The reader can't tell who "I" means once the agent quotes the human or the human replies.
+
+The question line names the actor too. Write "Who pushes the branch and raises the PR?", not "Should I push?".
+
+Example options:
+
+```
+How should the agent run this session?
+  [1] Interactive: the agent stops for you at every phase gate
+  [2] Continuous: the agent runs P1 to P6 without stopping for you
+```
+
+The rule applies in every run mode.

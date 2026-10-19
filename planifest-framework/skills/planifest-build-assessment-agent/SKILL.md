@@ -53,6 +53,13 @@ Write the build report to `plan/_archive/{feature-id}-{date}/build-report.md`.
 
 **Total agents spawned:** {count}
 
+## Phase Timing
+
+| Phase | Subagents | Parallel batches | Streams | Wall-clock |
+|-------|-----------|------------------|---------|------------|
+| ...   | ...       | ...              | ...     | ...        |
+| Total | {sum}     |                  |         | {sum}      |
+
 ## MCP Tool Usage
 
 | Tool | Call count | Purpose |
@@ -98,11 +105,19 @@ Write the build report to `plan/_archive/{feature-id}-{date}/build-report.md`.
 - Which phases recorded zero parallel task batches? For each, list the tasks that were run and assess whether they were independent (and therefore should have been parallelised).
 - Were multiple Agent tool calls dispatched in a single message for any phase? If not, why not?
 - "No parallelism opportunities existed" is only acceptable if the phase had a single task. For any multi-task phase, parallelism must be evidenced or the absence must be flagged as a finding.
+- Flag a phase that has two or more always-parallel units and recorded fewer than two subagents in `Agents spawned`.
+- Flag a run with 10 or more independent requirements where the Header's `Parallel streams` row reads `off`. This is the design's scalability target.
+- If `Parallel streams` reads `on`, compare the P1 to P4 `Wall-clock` with the sum of the stream phase times in each stream state file's `## Phase history`. Report the time saved.
 
 **Phase gate audit**
 - Was a human confirmation gate honoured at every phase transition (P1→P7)?
 - If `continuous_run` was set: was this pre-authorised by the human at P0, or did the pipeline run autonomously without being asked?
 - If any phase gate was skipped without either condition being met: flag it as a process violation.
+
+**P0 question audit**
+- Report the `P0 questions asked` count from the P0 block.
+- Flag a count above 3 only when `Brief complete` and `Stack unchanged` both read `yes` (NFR-002). Otherwise report the count with no flag.
+- If any of the three lines is missing, flag it as a build-log gap.
 
 **Self-correction audit**
 - How many self-corrections occurred? For each: was it avoidable? (Spec ambiguity, premature implementation, wrong assumption?)
@@ -112,6 +127,14 @@ Write the build report to `plan/_archive/{feature-id}-{date}/build-report.md`.
 - Are all phases represented in the build log?
 - Are per-phase fields (model tier, agent count, MCP calls, parallel batches) populated or missing?
 - Missing entries reduce accountability. Flag any phase with incomplete or absent log entries.
+- Check `End`, `Wall-clock`, and `Streams` among the per-phase fields. A log from before 0000033 lacks them, so mark them "not captured".
+- Each phase from P1 to P9 has a progress line, in every run mode. A missing progress line is a finding.
+- The Header has a `Run mode` row. Every run-mode check in this audit runs `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads that row and checks its git anchor.
+
+**Human touchpoint audit** (`autonomous` only)
+- Apply this audit only when `run-mode.mjs` prints `autonomous`. In `interactive` and `continuous`, the report has no touchpoint audit.
+- Count every `Human touchpoint` line, and count the ones outside the exception list.
+- Flag each touchpoint outside the exception list as a finding.
 
 ## Rules
 

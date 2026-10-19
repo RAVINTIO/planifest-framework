@@ -86,7 +86,7 @@ Execute the confirmed design Agentic Iteration Loop.
 Feature brief: plan/current/feature-brief.md
 ```
 
-The orchestrator will assess your brief, coach you through any gaps, produce a confirmed design, then ask whether you want per-phase confirmation or a continuous run before executing the pipeline.
+The orchestrator will assess your brief, coach you through any gaps, produce a confirmed design, then ask whether you want per-phase confirmation, a continuous run, or an autonomous run before executing the pipeline.
 
 ---
 

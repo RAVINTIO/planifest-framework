@@ -22,7 +22,7 @@ version: "0.1.0"
 
 Break the feature into discrete features. Each feature should be small enough that an agent can implement it within a single session.
 
-> **Rule of thumb:** If a feature has more than 3 user stories, it's too big. Split it further. Big features should have many small features, not a few large ones.
+> **Rule of thumb:** If a feature has more than 3 user stories, it's too big. Split it further. Big features should have many small features, not a few large ones. If the repo has `planifest-overrides/release-budget.yml`, its size-point budget replaces this rule.
 >
 > **User story format:** Write each story as "As a [role], I [action], so that [outcome]." Each story becomes one requirement doc. If a story implies more than 3 acceptance criteria, split it into two stories.
 

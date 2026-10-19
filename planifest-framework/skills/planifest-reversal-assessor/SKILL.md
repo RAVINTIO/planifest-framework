@@ -19,6 +19,7 @@ hooks:
 - Spawned fresh by the orchestrator when a defect report is filed (toggle `reversal_protocol`). Your prompt contains: this skill, the defect report path, the artifacts it references, and the loop-state file (for budget); never the filer's conversation.
 - An incomplete report (any of its five sections missing) is returned unassessed: completeness is the filer's job.
 - You judge; the **orchestrator** executes. You never revise artifacts, never re-run phases.
+- In `autonomous`, the orchestrator also spawns you at the end of P6 for the deviation review. See `## Deviation review`.
 
 ## Rubric: ALL five must be evidenced to grant (REJECT-default)
 
@@ -26,9 +27,9 @@ hooks:
 |---|----------|----------------|
 | 1 | **Real blocker?** | The evidence shows the work *cannot* proceed as specified, not that another design would be nicer. A workaround existing within the current design = DENY. |
 | 2 | **Shallowest owning phase?** | The petition targets the earliest artifact that owns the defect. A P1 criterion defect petitioned as a P2 ADR change = DENY (wrong target). |
-| 3 | **Blast radius stated and bounded?** | You can compute the blast radius (invalidation cascade) from traceability (story↔requirement↔component↔test). Cascade > 3 artifacts triggers the human gate regardless of your verdict (ADR-005); count it and say so. |
+| 3 | **Blast radius stated and bounded?** | You can compute the blast radius (invalidation cascade) from traceability (story↔requirement↔component↔test). Cascade > 3 artifacts triggers the human gate regardless of your verdict (ADR-005); count it and say so. In `autonomous`, an *additive* cascade over 3 proceeds and the build log records it. An *altering* reversal waits as an exception-list item. |
 | 4 | **Budget remaining?** | Reversal budget (2/feature, from the loop-state file) not exhausted. Exhausted = DENY with automatic human escalation. |
-| 5 | **Classification: additive or altering?** | You must classify. *Altering* (changes what the human confirmed at the design gate) voids continuous-run authorization and always stops for the human (REQ-019). When unsure, classify as altering. |
+| 5 | **Classification: additive or altering?** | You must classify. *Altering* (changes what the human confirmed at the design gate) voids continuous-run authorization and always stops for the human (REQ-019). When unsure, classify as altering. In `autonomous`, an *altering* classification is a gross deviation and becomes an exception-list item. |
 
 Ambiguous evidence on any item = that item fails = DENY. Say precisely what evidence would have changed the verdict.
 
@@ -46,7 +47,7 @@ Write `plan/current/defect-reports/{seq}-verdict.md`:
 |-------------|---------|----------------|
 | 1 Real blocker | pass/fail | {from the report's Evidence section} |
 | 2 Shallowest phase | pass/fail | {target artifact justification} |
-| 3 Blast radius | pass/fail | cascade: {list of paths} ({n} artifacts{; >3 → human gate}) |
+| 3 Blast radius | pass/fail | cascade: {list of paths} ({n} artifacts{; >3 → human gate, or recorded in autonomous if additive}) |
 | 4 Budget | pass/fail | {counter reading} |
 | 5 Classification | additive/altering | {what the human confirmed vs. what changes} |
 
@@ -55,4 +56,29 @@ Write `plan/current/defect-reports/{seq}-verdict.md`:
 
 ## What would change this verdict (DENY only)
 {Specific missing evidence.}
+```
+
+## Deviation review
+
+The orchestrator spawns you at the end of P6 in `autonomous`, before the cross-model gate and P7. Your prompt holds these inputs:
+
+- every `Deviation (P{N}, unclassified)` line from the build log
+- every recorded decision touching data, schema, or a destructive operation
+- `plan/current/design.md` and the artifacts each line names
+
+You review lines, not a defect report, so the five-item rubric doesn't apply. Follow these steps:
+
+1. For each line, compare what changed with what the human on the loop confirmed at the design gate.
+2. Classify each line as `additive` or `altering`. An *altering* line changes what the human confirmed. When unsure, classify it as altering.
+3. Flag a line `schema` if it changes a schema. Flag it `destructive` if it drops, deletes, or renames data.
+4. Write your verdicts to `plan/current/deviation-review.md`, one row per line.
+5. Mark each altering, schema, or destructive item as an exception-list item.
+
+You never edit the build log. The orchestrator rewrites each line with your class.
+
+```markdown
+# Deviation Review
+| # | Build-log line | Class | Flags | Exception-list item | Evidence |
+|---|----------------|-------|-------|---------------------|----------|
+| 1 | {line as written} | additive/altering | schema, destructive, or none | yes/no | {what the human confirmed vs. what changed} |
 ```

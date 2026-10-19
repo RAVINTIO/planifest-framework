@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
+Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026)
 
 ---
 
@@ -46,6 +46,12 @@ flowchart TD
         RC["ratchet-check.mjs\n(criteria/scope weakening block,\narmed while a loop is active)"]
         ED["em-dash-guard.mjs\n(U+2014 rejected in Planifest prose,\nsentinel bypass, 0000028)"]
         SHE["read-stdin.mjs\n(shared module, always installed)"]
+    end
+
+    subgraph Scripts["Scripts (planifest-framework/scripts/, 0000033)"]
+        ARC["archive-current.mjs\n(P7 archive by explicit path)"]
+        SRC["stream-reconcile.mjs\n(join reconciliation)"]
+        RMD["run-mode.mjs\n(effective run mode)"]
     end
 
     subgraph Setup["Setup (planifest-framework/)"]
@@ -96,6 +102,11 @@ flowchart TD
 
     SH -->|"copies skills + writes hook configs"| IDE
     SS -->|"syncs on re-run"| IDE
+
+    ORCH -.->|"calls"| SRC
+    ORCH -.->|"calls"| RMD
+    SHIP -.->|"calls"| ARC
+    SHIP -.->|"calls"| RMD
 
     ORCH --> SPEC --> ADR --> CG --> VAL --> SEC --> DOCS --> SHIP
 ```
@@ -198,9 +209,50 @@ It judges each target with `toRootRelative` and `evaluateWrite` from `path-rules
 
 ---
 
+## Run modes and autonomous runs (0000033)
+
+`plan/.run-mode` now holds one of three values: `interactive`, `continuous`, or `autonomous`. An unknown value reads as `interactive`, so an older framework treats `autonomous` as `interactive` (0000033-ADR-002). `scripts/run-mode.mjs` prints the effective mode for every reader after P0. It prints `autonomous` only when git history anchors the confirmation. Otherwise it prints `interactive` and gives the reason on stderr.
+
+### Exception list and standing rules
+
+In `autonomous`, the run stops for the human on the loop only on a declared exception list (0000033-ADR-003). The standing rules live in `standards/autonomous-run-standards.md`.
+
+- Schema and destructive changes.
+- A gross deviation, meaning a change the reversal protocol would class as altering the confirmed problem, users, or scope.
+- Human review of the running result.
+- Promotion beyond the candidate environment.
+- A human-only input.
+- An exhausted budget.
+
+A product adds items through `planifest-overrides/` using `templates/exception-list.template.yml`. Merging pull requests stays human-only in every mode. The ship agent ships without asking and ends P9 with one final report.
+
+### Gates as loops
+
+In `autonomous`, every phase gate runs as a loop under `planifest-loop-runner` with a fresh-context checker (0000033-ADR-004). Existing caps stay. At a cap, the run tries a different approach, up to 3 approaches per loop instance (0000033-ADR-005). The fourth becomes an exception. The reversal budget stays at 2 per feature. Each phase writes a one-line progress entry to the build log, and the P8 report flags the human-touchpoint count.
+
+### P0 questions and release sizing
+
+`standards/p0-question-policy.md` limits P0 to real forks (0000033-ADR-007). Adoption mode, version, stack, and similar items go into the design draft for one confirmation. The design, the Scope Lock batch, and the run mode confirm in one turn. The build log records the question count. When a design depends on existing records, discovery samples recent rows and the design states the usable rate as an assumption. `standards/release-sizing.md` sizes each requirement as small (1), medium (2), or large (3). P0 fills the release from the backlog up to the target in `planifest-overrides/release-budget.yml` (0000033-ADR-008). Without that file, the three-story rule applies.
+
+### Fast Path for changes with no src target
+
+Fast Path now admits a change with no `src/` target (0000033-ADR-009). Its four criteria are unchanged, and the orchestrator's track table says so.
+
+### Parallel streams and join reconciliation
+
+Parallel dispatch is the default in every phase (`standards/agent-dispatch-standards.md`). Independent requirements move through P1 to P4 as separate streams. Each stream has a state file under `plan/current/streams/`, from `templates/stream-state.template.md`. The `parallel_streams` toggle in `loop-toggles.yml` defaults to `on` in `autonomous` and `off` otherwise (0000033-ADR-013). The orchestrator owns every join. After each join, `scripts/stream-reconcile.mjs` checks that every artifact one stream declares is consumed by another stream or by a requirement (0000033-ADR-014).
+
+### Close-out and scripts
+
+`scripts/archive-current.mjs` runs the P7 archive (0000033-ADR-010). It moves each tracked item with `git mv`, removes markers by explicit path, and prints what it moved. Each step is a separate command, so a resumed run repeats only unfinished steps. It never uses a glob delete. The P8 build report goes into the archive commit, which is the 0000032 marker-step commit (0000033-ADR-011). P8 and P9 end with a scoped `git status --porcelain` check. In `autonomous`, the run commits any leftover file. In other modes, the P9 gate summary lists leftovers and asks. After P6, the docs agent reruns the P4 check set, or a smaller command declared in `templates/doc-checks.template.yml` (0000033-ADR-012). Every two-option prompt names the actor in each option.
+
+---
+
 ## Data Ownership
 
 No components own persistent data. Planifest operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.planifest-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `planifest-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `planifest-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
+
+Clarified in 0000033: `planifest-framework` owns `plan/.run-mode`, `plan/current/`, and `plan/current/streams/`. The human on the loop owns `planifest-overrides/` (exception list, release budget, doc checks), and the framework only reads it (0000033-ADR-015).
 
 Clarified in 0000032: `planifest-framework` owns the three committed session markers, `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`. The orchestrator writes them at P0, and the ship skill deletes them in the P9 marker step. Hooks read them only.
 
@@ -248,6 +300,16 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-004 (0000032):** One module, `path-rules.mjs`, holds the gated-path rules and the repository-root walk. Targets outside the root pass.
 - **ADR-005 (0000032):** Every enforcement hook that exits 2 writes its reason to stderr and keeps its existing stdout.
 - **ADR-006 (0000032):** A heuristic Bash shell-write guard, registered for Claude Code only, fails open and is backed by a boot-file Hard Limit.
+- **ADR-002 (0000033):** `autonomous` is a third `plan/.run-mode` value. Unknown values still read as `interactive`.
+- **ADR-003 (0000033):** An autonomous run stops only on a declared exception list. A product can add items in an override.
+- **ADR-004 (0000033):** In `autonomous`, every gate runs as a loop with a fresh-context checker.
+- **ADR-005 (0000033):** A loop that hits its cap tries up to 3 different approaches before it becomes an exception.
+- **ADR-007 (0000033):** P0 asks only real forks and confirms the design, Scope Lock batch, and run mode in one turn.
+- **ADR-008 (0000033):** The release budget counts size points, not stories.
+- **ADR-009 (0000033):** Fast Path admits a change with no `src/` target.
+- **ADR-010 (0000033):** `archive-current.mjs` replaces the glob delete in the P7 archive.
+- **ADR-013 (0000033):** Parallel streams use a `parallel_streams` toggle and per-stream state files.
+- **ADR-014 (0000033):** The orchestrator owns joins and runs `stream-reconcile.mjs` after each.
 
 ---
 

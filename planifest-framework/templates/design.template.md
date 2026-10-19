@@ -33,9 +33,11 @@
 - In: {list}
 - Out: {list}
 - Deferred: {list - with notes on what is blocked until resolved}
+- Release size: {each in-scope candidate's size class, the total, the target, and the ceiling, or `three-story rule` if no budget file exists}
 
 ## Assumptions
 - {assumption} - impact if wrong: {what breaks}
+- {one line per `discovery.md` `## Record Samples` row: source, value, and usable rate} - impact if wrong: {what the design loses if the rate is lower, e.g. "the skip rarely fires"}
 
 ## Risks
 - {list with likelihood/impact}

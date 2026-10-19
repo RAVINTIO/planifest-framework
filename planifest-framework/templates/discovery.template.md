@@ -49,3 +49,14 @@ summary: "Raw P0 discovery-pass findings: what the orchestrator knew before coac
 
 - `external-versioning.md` constraints: {{full constraints}}
 - Underlying mode content: append whichever underlying mode's findings apply to what else is present in the repo: archive present → also the Standard-Iterative content; source only → also the Retrofit scan; neither → the Greenfield baseline. {{Standard-Iterative / Retrofit / Greenfield findings per the rule above}}
+
+## Record Samples
+
+<!-- All adoption modes. If the design reads no existing records, write None
+     in place of the table. Otherwise add one row per value the design relies
+     on. Sampling is read-only: never write to the records you sample.
+     If a source can't be read, its row says the rate could not be determined. -->
+
+| Source | Value relied on | Rows sampled | Usable rows | Usable rate |
+|--------|-----------------|--------------|-------------|-------------|
+| {{log, database table, or config history}} | {{field or column}} | {{count and window, e.g. "last 8 rows"}} | {{count}} | {{usable / sampled, e.g. "6/8 (75%)"}} |

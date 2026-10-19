@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
+Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026). Adds an `autonomous` run mode and amends or supersedes seven earlier ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -29,7 +29,7 @@ Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
 | ADR-003 | Flag-file deduplication | active | `.orchestrator-active` sentinel prevents duplicate orchestrator activation per session |
 | ADR-004 | Two-check gate model | active | gate-write performs (1) sentinel check, (2) component-path allowlist (in order) |
 | ADR-005 | Exit-zero failure mode | active | Hooks never exit non-zero on unexpected errors; session must never be blocked by a hook bug |
-| ADR-006 | Copy-then-delete archive | active | Archive uses explicit copy then delete, not atomic move, to survive partial failures |
+| ADR-006 | Copy-then-delete archive | superseded by 0000033 ADR-010 | Archive uses explicit copy then delete, not atomic move, to survive partial failures. **Superseded:** 0000033-ADR-010 moves each item with `git mv` through `archive-current.mjs` and deletes only explicit paths, never a glob. |
 | ADR-007 | Px prefix convention | active | Every phase response begins with its phase prefix (P0:, P1:, ...) for instant human orientation |
 | ADR-008 | Advisory commit-msg hook | active | commit-msg hook rejects AI attribution and >72-char subjects; exit 1 on violation |
 | ADR-009 | Anthropic-first skill trust model | active | Skills in `.claude/skills/` are trusted; external skills require explicit `--include-full-skill-library` |
@@ -41,7 +41,7 @@ Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
 |-----|-------|--------|---------|
 | ADR-001 | TDD inner loop as codegen subloop | active | codegen-agent orchestrates test-writer → implementer → refactor per requirement, not per feature |
 | ADR-002 | Subagent model tier convention | active | Sub-agents declare `recommended_model: haiku`; codegen-agent retains full model for orchestration |
-| ADR-003 | Regression promotion criteria | active | Tests promoted to regression pack only with human confirmation; `promote-to-regression.sh` is the mechanism |
+| ADR-003 | Regression promotion criteria | amended by 0000033 ADR-006 | Tests promoted to regression pack only with human confirmation; `promote-to-regression.sh` is the mechanism. **Amended:** 0000033-ADR-006 keeps human confirmation for `interactive` and `continuous`. In `autonomous`, the agent decides and records each candidate. |
 
 ### Feature 0000005: framework-governance
 
@@ -114,8 +114,8 @@ Last updated: 0000032-governance-continuity-and-write-gate-scope (17 Oct 2026)
 | ADR-001 | Three-file documentation architecture | active | Framework docs split into `getting-started.md` (entry point), `pipeline-reference.md` (deep reference), `project-operations.md` (operational guide); no single monolithic file |
 | ADR-002 | Formal P9 Ship phase | active | Ship is a discrete phase (P9) separate from Archive (P7); pipeline is exactly P0–P9; no phase beyond P9 |
 | ADR-003 | Ship-agent orchestrates P7–P9 | active | ship-agent owns the complete close-out sequence: P7 Archive, P8 Build Assessment (sub-agent), P9 Ship |
-| ADR-004 | P9 human push/PR decision protocol | active | P9 always presents a push/PR choice to the human; agent never pushes without awareness; local-git-only defaults to PR description output |
-| ADR-005 | Run-mode sentinel file | active | `plan/.run-mode` written at P0 persists the run mode across session boundaries; any value other than `continuous` defaults to `interactive` |
+| ADR-004 | P9 human push/PR decision protocol | amended by 0000033 ADR-006 | P9 always presents a push/PR choice to the human; agent never pushes without awareness; local-git-only defaults to PR description output. **Amended:** 0000033-ADR-006 keeps the protocol for `interactive` and `continuous`. In `autonomous`, the agent takes Option [1] without asking, unless `local-git-only` applies. |
+| ADR-005 | Run-mode sentinel file | amended by 0000033 ADR-002 | `plan/.run-mode` written at P0 persists the run mode across session boundaries; any value other than `continuous` defaults to `interactive`. **Amended:** 0000033-ADR-002 adds `autonomous` as a third value. Unknown values still read as `interactive`, and P0 also writes the mode to a build-log Run mode row. |
 | ADR-006 | Retroactive tags via Planifest migration | active | Historical release tags applied through a migration file, not a script; human-confirmed per tag; tags are local-only until human pushes |
 
 ### Feature 0000023: framework-pipeline-fixes
@@ -149,7 +149,7 @@ ADR files: [plan/_archive/0000023-framework-pipeline-fixes-2026-08-02/adr/](../p
 | ADR-005 | Version Regression Hard Block | accepted | Orchestrator refuses versions lower than current recorded version; hard block, not a warning |
 | ADR-006 | Resumable Migration with Progress File | accepted | Migrations track state in `migrations/_progress/{name}.json` so they can resume across sessions |
 | ADR-007 | Derived Scope Lock Scenarios over Fixed Checklist | accepted | Orchestrator generates scenario questions specific to the feature from requirements, not a generic checklist |
-| ADR-008 | One-Question-at-a-Time as Framework-Wide Instruction | accepted | Every phase skill states the one-question rule explicitly; recommend-then-confirm pattern throughout |
+| ADR-008 | One-Question-at-a-Time as Framework-Wide Instruction | amended by 0000033 ADR-007 | Every phase skill states the one-question rule explicitly; recommend-then-confirm pattern throughout. **Amended:** 0000033-ADR-007 makes the P0 combined confirmation turn the second named exception. The rule still governs every real fork. |
 | ADR-009 | Incremental P0 Audit Trail Writes | accepted | Build log is appended after each coaching exchange, not batched at the end of P0 |
 | ADR-010 | docs/ Lifecycle Ownership | accepted | Docs-agent (P6) owns living docs updates; ship-agent (P7) owns docs/about.md creation as a blocking step |
 
@@ -168,9 +168,9 @@ ADR files: [plan/_archive/0000023-framework-pipeline-fixes-2026-08-02/adr/](../p
 |-----|-------|--------|---------|
 | ADR-001 | Backlog Folder Instead of Editable Post-Archive Lifecycle | accepted | Deferred work lives in `plan/backlog/{id}-{slug}/`, surfaced at the next P0; P7 stays the lock line: bug-bounty-hunter PR #4's editable-P7–P9 design rejected |
 | ADR-002 | product.yml with versionPolicy | amended by 0000026 ADR-001 | Root `product.yml` aggregates one release version across components (`max-component-version` \| `explicit` \| `external`); single-component projects keep component.yml behaviour. **Amended:** 0000026 ADR-001 changes `components[]` under `max-component-version` from a cached `{id, version}` to a `{id, path}` pointer, read live by `product-version.mjs` at derivation time: eliminates the P9 sync-drift risk the cached copy created |
-| ADR-003 | Loop Toggles in planifest-overrides/loop-toggles.yml | accepted | Per-loop `off \| report-only \| on`; user-owned directory so agents cannot self-enable; absent = all off |
+| ADR-003 | Loop Toggles in planifest-overrides/loop-toggles.yml | amended by 0000033 ADR-004 | Per-loop `off \| report-only \| on`; user-owned directory so agents cannot self-enable; absent = all off. **Amended:** 0000033-ADR-004 reads an absent key as `on` for five named keys in `autonomous` only, and checkers start at `on`, not `report-only`. |
 | ADR-004 | Single-Use Marker File for Approved Weakening | amended by 0000017 ADR-001 | Human-created `plan/current/.ratchet-approve` (path per line, consumed on use) is the only path past the ratchet; agents prohibited from writing it. **Amended:** 0000017 ADR-001 permits the agent to write the marker on explicit in-the-moment human instruction, extends the format to `path \| reason \| timestamp`, and keeps the same-changeset backstop with an explicit approver message. |
-| ADR-005 | Cascade Threshold of 3 Artifacts | accepted | A reversal invalidating >3 downstream artifacts always stops for the human, regardless of run mode |
+| ADR-005 | Cascade Threshold of 3 Artifacts | amended by 0000033 ADR-003 | A reversal invalidating >3 downstream artifacts always stops for the human, regardless of run mode. **Amended:** 0000033-ADR-003 lets an additive cascade over 3 artifacts proceed in `autonomous` with a build-log record. An altering reversal still waits as a gross deviation. |
 | ADR-006 | Verifiers as Fresh-Context REJECT-Default Subagents | accepted | Critic, assessor, and cross-model reviewer never share context with the maker; approval requires cited positive evidence |
 | ADR-007 | Deterministic Caps, Budget, and Ratchet Enforcement | accepted | Iteration caps (3 default, P4 keeps 5), reversal budget (2/feature), and weakening blocks are enforced by hooks + control flow over git-tracked state, never skill prose alone |
 | ADR-008 | Cross-Model Review Gate at End of P6, Pre-Archive | accepted | The second-model review runs while implementation is live and editable; the brief's original "before P9" placement was structurally self-contradictory and is corrected |
@@ -297,11 +297,33 @@ ADR files: [plan/_archive/0000032-governance-continuity-and-write-gate-scope-202
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
 | ADR-001 | Stack and enforcement approach | accepted | Hooks stay dependency-free Node ES modules that read stdin through `read-stdin.mjs` and fail open. Setup stays in Bash and PowerShell, and tests stay in Bash suites. |
-| ADR-002 | Session markers cleared in P9 before the tag | accepted | The three session markers stay committed. A P9 step deletes and commits them with the archive after P8 and before the Step 9 tag. Resume Detection steps 2a and 2b resume an interrupted close-out from archive evidence. Supersedes 0000015-ADR-001 and amends 0000015-ADR-004. |
+| ADR-002 | Session markers cleared in P9 before the tag | amended by 0000033 ADR-011 | The three session markers stay committed. A P9 step deletes and commits them with the archive after P8 and before the Step 9 tag. Resume Detection steps 2a and 2b resume an interrupted close-out from archive evidence. Supersedes 0000015-ADR-001 and amends 0000015-ADR-004. **Amended:** 0000033-ADR-011 makes that marker-step commit the run's closing archive commit, which must carry the P8 `build-report.md`. |
 | ADR-003 | Blocking context clear after P9 | accepted | Ship Step 12 asks for `/clear` or a new session and refuses new work in the same session. The auto-trigger hook says no run is active and requires triage. Handover notes route every next step through a track. Supersedes 0000015-ADR-002. |
 | ADR-004 | Shared path rules and repository root | accepted | `path-rules.mjs` holds the gated-path rules for `gate-write.mjs` and the shell guard. The root is the nearest `planifest-framework/` folder, else the nearest `.git`, found by a walk from `CLAUDE_PROJECT_DIR` or `cwd`. Targets outside the root pass. |
 | ADR-005 | Block reasons on stderr | accepted | Every enforcement hook that exits 2 writes a plain-text reason to stderr, where Claude Code reads it. Existing stdout stays byte for byte for the adapters. |
 | ADR-006 | Heuristic Bash shell-write guard | accepted | `shell-write-guard.mjs` runs on Claude Code's Bash PreToolUse event. It finds common shell writers, judges their targets with `path-rules.mjs`, and fails open on anything it can't parse. A boot-file Hard Limit covers its gaps. |
+
+### Feature 0000033: human-on-the-loop-run-mode
+
+ADR files: [plan/_archive/0000033-human-on-the-loop-run-mode-2026-10-19/adr/](../plan/_archive/0000033-human-on-the-loop-run-mode-2026-10-19/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged, new detail in standards files | accepted | The declared stack of Markdown skills and Node `.mjs` scripts stays. New autonomous, sizing, and dispatch detail goes into standards files that the skills link to. |
+| ADR-002 | Autonomous as a third run-mode value | accepted | `plan/.run-mode` gains `autonomous`, which sets both `continuous_run` and `autonomous_run`. Unknown values still read as `interactive`. P0 also writes a build-log Run mode row. Amends 0000012-ADR-005. |
+| ADR-003 | Declared exception list | accepted | In `autonomous`, only six declared items wait for the human on the loop. Every other question becomes a recorded decision. A product can add items in `planifest-overrides/exception-list.yml` but can't remove any. Amends 0000016-ADR-005. |
+| ADR-004 | Gates as loops with fresh checkers | accepted | In `autonomous`, every P1 to P6 gate runs as a loop under `planifest-loop-runner` with a named checker. Five toggle keys read as `on` when absent. Amends 0000016-ADR-003. |
+| ADR-005 | Approach budget per loop instance | accepted | A loop that hits its cap or the no-progress rule starts a new approach. Each loop instance allows 3 approaches, and a fourth becomes an exhausted-budget exception. The reversal budget stays at 2. |
+| ADR-006 | Ship without asking in autonomous | accepted | In `autonomous`, P7 to P9 ask nothing. P9 always raises the PR, as a draft when an exception waits. Merging stays human-only. Amends 0000012-ADR-004 and 0000004-ADR-003. |
+| ADR-007 | P0 real forks and one confirmation turn | accepted | P0 asks only real forks. The design, the Scope Lock batch, and the run mode confirm in one turn, which is the second named exception to 0000014-ADR-008. |
+| ADR-008 | Release budget in size points | accepted | A product sets a target and a ceiling in size points in `planifest-overrides/release-budget.yml`. P0 sizes each candidate and recommends a fill. An absent or invalid file keeps the three-story rule. |
+| ADR-009 | Fast Path admits no-src changes | accepted | Fast Path's prerequisite relaxes to admit a change with no `src/` target. Its four criteria stay word for word. |
+| ADR-010 | Archive script replaces glob delete | accepted | P7 Step 6 runs `archive-current.mjs`, which moves each item with `git mv` and deletes only four sentinels by explicit path. `plan/current/.archive-target` lets a stopped archive resume. Supersedes 0000003-ADR-006. |
+| ADR-011 | Close-out commit and leftovers | accepted | The P8 build report reaches git in the 0000032 P9 marker-step commit. P8 and P9 each end with a scoped clean-tree check. Leftovers are committed by explicit path in `autonomous`. Amends 0000032-ADR-002. |
+| ADR-012 | Revalidate after P6 | accepted | After its last P6 edit, the docs agent reruns the P4 check set or a smaller command declared in `planifest-overrides/doc-checks.yml`. A failure enters a loop capped at 5 that fixes the doc edit, never the check. |
+| ADR-013 | Parallel streams toggle and state | accepted | A `parallel_streams` loop toggle, on by default in `autonomous`, moves independent requirements through P1 to P4 as separate streams. Each stream keeps a committed state file. |
+| ADR-014 | Orchestrator owns joins and a reconcile script | accepted | The orchestrator owns every join between streams or batches. It runs `scripts/stream-reconcile.mjs` after each join and before the gate check. A finding blocks the gate and enters a fix loop capped at 3. |
+| ADR-015 | Data ownership of run state and overrides | accepted | `planifest-framework` owns `plan/.run-mode`, `plan/current/` with its `streams/` folder, and `plan/current/.archive-target`. The human on the loop owns the `planifest-overrides/` files, which the framework only reads. |
 
 ---
 
