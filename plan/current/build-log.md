@@ -71,3 +71,15 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - `consistency-check.mjs`: 15 hits, all cross-feature ADR references (backlog 0000079 false positive).
 - End: `2026-10-19T01:51:00Z`
 - Gate passed: P1 (continuous run, no stop)
+
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-19T01:51:22Z` |
+| Model tier | primary (orchestrator and ADR drafting) |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | ADR numbers fixed by the orchestrator before dispatch. |
