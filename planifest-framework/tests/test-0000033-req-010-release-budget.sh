@@ -63,6 +63,14 @@ assert_equals "yes" "$([ -n "$STEP3C" ] && echo yes || echo no)" "req-010: step 
 has "release-budget.yml" "$STEP3C" "req-010: step 3c names release-budget.yml"
 has "Release budget: {total} of target" "$STEP3C" "req-010: step 3c has the budget build-log form"
 has "Release budget: none, three-story rule" "$STEP3C" "req-010: step 3c has the no-budget build-log form"
+has "If the file is absent or invalid, step 3c behaves as above" "$STEP3C" "req-010: step 3c keeps the three-story path for an absent or invalid file (AC-3)"
+
+echo ""
+echo "=== req-010: fill confirmation and ceiling ==="
+
+has "The human confirms or edits the list in one answer" "$SIZING_TEXT" "req-010: the human confirms or edits the fill (AC-2)"
+has "P0 never recommends a fill above \`ceiling\`" "$SIZING_TEXT" "req-010: P0 never recommends a fill above the ceiling (AC-2)"
+has "The human confirms or edits it in one answer" "$STEP3C" "req-010: step 3c asks the human to confirm or edit the fill (AC-2)"
 
 echo ""
 echo "=== req-010: design and brief templates ==="

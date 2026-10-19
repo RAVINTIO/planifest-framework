@@ -56,5 +56,6 @@ echo "=== req-009: design template assumption ==="
 
 has "Record Samples" "$ASSUMPTIONS" "req-009: design Assumptions names Record Samples"
 has "usable rate" "$ASSUMPTIONS" "req-009: design Assumptions names the usable rate"
+has "usable rate} - impact if wrong:" "$ASSUMPTIONS" "req-009: each usable-rate assumption carries its impact if wrong (AC-2)"
 
 print_summary
