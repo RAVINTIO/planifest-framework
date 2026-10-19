@@ -10,7 +10,10 @@
 #
 # autonomous run mode (0000033 ADR-004): an absent key reads as on for
 # design_critic, verify_by_execution, cross_model_review, reversal_protocol,
-# and parallel_streams. An explicit value below always wins. Outside
+# and parallel_streams. An explicit value below wins over the default. In
+# autonomous, an explicit off or report-only for a checker key (design_critic,
+# verify_by_execution, cross_model_review, reversal_protocol) blocks the
+# autonomous choice at P0. parallel_streams stays free to set. Outside
 # autonomous, an absent key still reads as off. Those keys ship commented out,
 # so copying this file never sets an explicit off by accident. Uncomment a
 # line only to set its value on purpose.

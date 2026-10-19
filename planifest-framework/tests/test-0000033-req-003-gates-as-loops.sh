@@ -99,4 +99,32 @@ assert_contains "autonomous" "$(grep '^6\. \*\*Verify by execution' "$VALIDATE")
 assert_contains "fresh-context re-review" "$(cat "$SECURITY")" \
   "req-003: security skill re-reviews each fixed finding in autonomous"
 
+echo ""
+echo "=== req-003: explicit off for a checker blocks autonomous (P5 G1) ==="
+
+for txt in "$TP" "$GATES"; do
+  assert_contains "blocks the \`autonomous\` choice at P0" "$txt" "req-003: explicit off or report-only blocks autonomous at P0 (P5 G1)"
+  for k in design_critic reversal_protocol verify_by_execution cross_model_review; do
+    assert_contains "\`$k\`" "$(grep 'blocks the `autonomous` choice' <<< "$txt")" "req-003: block rule names $k (P5 G1)"
+  done
+  assert_contains "\`report-only\`" "$(grep 'blocks the `autonomous` choice' <<< "$txt")" "req-003: block rule names report-only (P5 G1)"
+  assert_contains "removing it or setting \`on\`" "$txt" "req-003: P0 recommends removing the key or setting on (P5 G1)"
+  assert_contains "\`parallel_streams\` stays free to set" "$txt" "req-003: parallel_streams stays free to set (P5 G1)"
+done
+RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$ORCH")
+assert_contains "checker key" "$RM_TEXT" "req-003: orchestrator run-mode text names the checker-key block (P5 G1)"
+assert_contains "Toggle Protocol" "$(grep 'checker key' <<< "$RM_TEXT")" "req-003: orchestrator block line links to the Toggle Protocol (P5 G1)"
+lacks "always wins, including \`off\` and \`report-only\`" "$TP" "req-003: Toggle Protocol no longer says an explicit off always wins (P5 G1)"
+assert_contains "checker key" "$(sed -n '1,/p0_completeness/p' "$TOG")" "req-003: toggles template header states the checker-key block (P5 G1)"
+
+echo ""
+echo "=== req-003: P1 records every resolved toggle and its source (P5 G8) ==="
+
+REC=$(grep 'Toggle record' <<< "$TP")
+assert_contains "at P1 start" "$REC" "req-003: toggle record happens at P1 start (P5 G8)"
+assert_contains "every resolved toggle" "$REC" "req-003: build log records every resolved toggle (P5 G8)"
+for s in "file value" "autonomous default" "absent default"; do
+  assert_contains "\`$s\`" "$REC" "req-003: toggle record names the $s source (P5 G8)"
+done
+
 print_summary

@@ -24,6 +24,11 @@ section() {
   awk -v h="$1" 'index($0, h) == 1 { on = 1; print; next } on && /^## / { exit } on { print }' "$2"
 }
 
+# lacks <needle> <haystack> <label>: passes when the haystack omits the needle.
+lacks() {
+  assert_equals "absent" "$([[ "$2" == *"$1"* ]] && echo present || echo absent)" "$3"
+}
+
 echo "=== req-002: standards file exception list ==="
 
 EXC=$( [ -f "$STD" ] && section "## Exception list" "$STD" )
@@ -87,5 +92,52 @@ for s in spec adr codegen validate security docs ship; do
   LINE=$(grep -m1 'One question at a time' "$F")
   assert_contains "autonomous-run-standards.md" "$LINE" "req-002: planifest-$s-agent one-question rule names autonomous-run-standards.md"
 done
+
+echo ""
+echo "=== req-002: precedence of standing rules over overrides (P5 G2) ==="
+
+RM=$(section "## Run modes" "$STD")
+PREC=$(grep 'Precedence' <<< "$RM")
+assert_contains "rank above every override" "$PREC" "req-002: standing rules rank above every override (P5 G2)"
+assert_contains "\`planifest-overrides/instructions/\`" "$PREC" "req-002: precedence names planifest-overrides/instructions/ (P5 G2)"
+assert_contains "Hard Limits" "$PREC" "req-002: precedence names the orchestrator Hard Limits (P5 G2)"
+assert_contains "exception-list items" "$PREC" "req-002: precedence names the exception-list items (P5 G2)"
+assert_contains "merging" "$PREC" "req-002: precedence names merging as human-only (P5 G2)"
+assert_contains "all other behaviour only" "$RM" "req-002: overrides win for all other behaviour only (P5 G2)"
+lacks "conflicts with the \`autonomous\` text, the override wins." "$RM" "req-002: the unqualified overrides-win sentence is gone (P5 G2)"
+
+echo ""
+echo "=== req-002: assessor reviews deviations before P7 (P5 G4) ==="
+
+REVIEW=$(grep 'before P7' <<< "$EXC")
+assert_contains "\`planifest-reversal-assessor\`" "$REVIEW" "req-002: the fresh-context assessor reviews before P7 (P5 G4)"
+assert_contains "every \`Deviation\` line" "$REVIEW" "req-002: review covers every Deviation line (P5 G4)"
+assert_contains "data, a schema, or a destructive operation" "$REVIEW" "req-002: review covers data, schema, and destructive decisions (P5 G4)"
+assert_contains "altering, schema, or destructive" "$REVIEW" "req-002: those classes become exception items (P5 G4)"
+assert_contains "never classifies its own deviation" "$REVIEW" "req-002: the maker never classifies its own deviation (P5 G4)"
+CG_RULES=$(sed -n '/^## Rules/,/^## /p' "$CODEGEN")
+assert_contains "before P7" "$(grep 'Deviation' <<< "$CG_RULES")" "req-002: codegen Rules names the pre-P7 assessor review (P5 G4)"
+
+echo ""
+echo "=== req-002: assessor cascade rule matches autonomous (P5 G10) ==="
+
+ROW3=$(grep -E '^\| 3 \| \*\*Blast radius' "$ASSESSOR")
+assert_contains "\`autonomous\`" "$ROW3" "req-002: assessor row 3 names autonomous (P5 G10)"
+assert_contains "*additive* cascade over 3 proceeds" "$ROW3" "req-002: an additive cascade over 3 proceeds (P5 G10)"
+assert_contains "*altering* reversal waits" "$ROW3" "req-002: an altering reversal waits (P5 G10)"
+
+echo ""
+echo "=== req-002: Hard Limits 4 and 6 and the credential item (P5 G11) ==="
+
+STAND=$(sed -n '/^\*\*Standing rules in every mode:\*\*/,/^\*\*Product extension/p' "$STD")
+assert_contains "Hard Limit 4" "$STAND" "req-002: standing rules name Hard Limit 4 (P5 G11)"
+assert_contains "Hard Limit 6" "$STAND" "req-002: standing rules name Hard Limit 6 (P5 G11)"
+assert_contains "these seven items" "$EXC" "req-002: the list holds seven items (P5 G11)"
+assert_equals "1" "$(grep -c -E '^7\. A credential sighting' <<< "$EXC")" "req-002: item 7 is a credential sighting (P5 G11)"
+ITEM7=$(grep -E '^7\. ' <<< "$EXC")
+assert_contains "stops using it" "$ITEM7" "req-002: the run stops using the credential (P5 G11)"
+assert_contains "final report" "$ITEM7" "req-002: the credential goes in the final report (P5 G11)"
+lacks "six" "$EXC" "req-002: the section no longer says six items (P5 G11)"
+lacks "six" "$TPL_TEXT" "req-002: the template no longer says six items (P5 G11)"
 
 print_summary

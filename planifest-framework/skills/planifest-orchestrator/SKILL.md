@@ -95,7 +95,7 @@ On every session start, before taking any action:
 3. Check for `.feature-id` file: if present, verify it matches the feature you are working on; if stale (contents differ from current work), flag it for human review before proceeding
 4. Check for `plan/current/.skips` file: if present, read and acknowledge skipped phases at the top of your response
 5. Check for `plan/current/pause.md` file: if present, open with `Px: Resuming: {active_task from pause.md}`, restore in-progress state from the file, delete `plan/current/pause.md`, and continue from where the session paused
-6. Read `plan/.run-mode` if present: restore run mode (`continuous`, `interactive`, or `autonomous`) without re-asking the human. Restoring `autonomous` sets `continuous_run: true` and `autonomous_run: true`. Any other value defaults to `interactive`. If the file is absent or unreadable, default to `interactive`.
+6. Read `plan/.run-mode` if present: restore run mode (`continuous`, `interactive`, or `autonomous`) without re-asking the human. Accept `autonomous` only when three sources all agree: `plan/.run-mode`, the build-log `Run mode` row, and the P0 `Run mode confirmed:` line. If they don't, read `interactive` and log the mismatch in the build log. Restoring `autonomous` sets `continuous_run: true` and `autonomous_run: true`. Any other value defaults to `interactive`. If the file is absent or unreadable, default to `interactive`.
 6a. Check `plan/current/discovery.md`: if present and complete for the confirmed adoption mode, trust it as-is and do not re-run the discovery pass. If missing or incomplete mid-run, regenerate it fresh (never patch a partial file).
 6b. **Stream resume (0000033 ADR-013):** read every file under `plan/current/streams/` whose `kind` is `stream`.
    1. If any stream has `status: active`, resume each active stream at its recorded `phase` and `## Next step`. Dispatch all of them in one batch.
@@ -153,7 +153,7 @@ These skills exist outside the main pipeline phases. Invoke them directly when t
 |--------|-------|
 | Confined to UI styling, copy/text changes, or an isolated pure-function bug | **Fast Path** - if ALL Fast Path criteria are met |
 | Dependency version bump with no API changes | **Fast Path** - if ALL Fast Path criteria are met |
-| A change with no `src/` target, such as documentation, governance, or tooling | **Fast Path** - if ALL Fast Path criteria are met |
+| A change with no `src/` target, such as documentation, governance, or tooling. It never touches `planifest-framework/hooks/`, `planifest-framework/scripts/`, `setup.sh`, `setup.ps1`, or an enforcement hook. Those take the Change or Feature Pipeline. | **Fast Path** - if ALL Fast Path criteria are met |
 | Bug fix or targeted change to 1–2 existing components | **Change Pipeline** |
 | Adds a new component to an existing feature | **Change Pipeline** (change-agent creates it) |
 | New user stories that fit within an existing feature's scope (< 3 stories) | **Change Pipeline** |
@@ -164,7 +164,7 @@ These skills exist outside the main pipeline phases. Invoke them directly when t
 
 ### Fast Path Criteria and Execution
 
-Do not use Fast Path for changes that "feel" minor - use the heuristics deterministically. Full criteria and execution steps: `planifest-framework/workflows/fast-path.md`. Fast Path admits a change with no `src/` target, and its four criteria still apply.
+Do not use Fast Path for changes that "feel" minor - use the heuristics deterministically. Full criteria and execution steps: `planifest-framework/workflows/fast-path.md`. Fast Path admits a change with no `src/` target, and its four criteria still apply. It never admits a change to an enforcement path that `fast-path.md` lists.
 
 ---
 
@@ -309,7 +309,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
    1. Run `git branch --show-current`. Validate the output matches `[a-zA-Z0-9/_\-.]`; truncate beyond 255 chars; substitute "unknown branch" on error. Report the result to the human.
    2. Ask: "Are all previous PRs merged and is main up to date?"; wait for confirmation. Note: `git pull` is not attempted (no remote passphrase).
    3. If not on `main`: offer `git checkout main`, execute if human accepts.
-   4. After confirming main (or if already on main): offer `git checkout -b feat/{feature-id}`: execute if human accepts. (Feature-id may be `pending` at this point; update the branch name once confirmed.)
+   4. After confirming main (or if already on main): offer `git checkout -b feat/{feature-id}`: execute if human accepts. (Feature-id may be `pending` at this point; update the branch name once confirmed.) An `autonomous` run requires a `feat/` branch. If the human declines one, P0 can't record `autonomous`.
 
 0b. **Stale run-mode check (fresh starts only: skip on resume):** Before writing the sentinel, check for `plan/.run-mode`. If the file is present and this is a fresh start (no existing `plan/current/` artifacts), it is stale from a prior P9 that did not complete cleanup. Warn and clear automatically; do not block:
    ```
@@ -449,6 +449,8 @@ How should the agent run this session?
 Record their answer. If [2], set `continuous_run: true` for this session and do
 not stop at per-phase gates. If [1], honour every STOP gate below.
 If [3], set `continuous_run: true` and `autonomous_run: true`, and write `autonomous` to `plan/.run-mode`. Then follow `planifest-framework/standards/autonomous-run-standards.md`.
+
+Before recording [3], check two things. If the human declined a `feat/` branch at pre-flight step 4, don't record `autonomous`. If `planifest-overrides/loop-toggles.yml` sets a checker key to `off` or `report-only`, don't record it either. Name that checker key and recommend removing it or setting `on`, per the loop runner's Toggle Protocol. In both cases, ask the human on the loop to pick again. After recording [3], append `Run mode confirmed: autonomous ({ISO-8601 timestamp})` to the P0 build-log block.
 
 Immediately after recording the answer, write `plan/.run-mode` containing `continuous` for [2] or `interactive` for [1]. For every option, also write the chosen value to the build-log `Run mode` row (req-006). Include this file in the P0 commit. On resume, read `plan/.run-mode` to restore `interactive`, `continuous`, or `autonomous` without re-asking. Any other value defaults to `interactive`.
 

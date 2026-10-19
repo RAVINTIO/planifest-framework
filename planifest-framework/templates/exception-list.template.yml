@@ -5,8 +5,8 @@
 # never writes there, and neither do its agents.
 #
 # In an autonomous run, only exception-list items wait for the human on the
-# loop. The six framework items always apply. This file can only add items. It
-# can't remove any. Absent file = the six framework items alone.
+# loop. The seven framework items always apply. This file can only add items. It
+# can't remove any. Absent file = the seven framework items alone.
 # See planifest-framework/standards/autonomous-run-standards.md (## Exception list).
 #
 # Each item is one line of free text naming what waits for the human on the loop.

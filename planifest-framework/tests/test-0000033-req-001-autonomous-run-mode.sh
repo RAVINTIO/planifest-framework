@@ -96,4 +96,23 @@ assert_contains "autonomous run" "$(cat "$GS")" "req-001: getting-started.md nam
 assert_contains "[3] Autonomous" "$(cat "$PR")" "req-001: pipeline-reference.md shows the autonomous option"
 assert_contains "autonomous" "$(grep '^| `P0:`' "$PR")" "req-001: pipeline-reference.md P0 row names autonomous"
 
+echo ""
+echo "=== req-001: autonomous requires a feat/ branch (P5 G3) ==="
+
+PRE4=$(grep -E '^   4\. After confirming main' "$ORCH")
+assert_contains "\`autonomous\` run requires a \`feat/\` branch" "$PRE4" "req-001: pre-flight step 4 says autonomous requires a feat/ branch (P5 G3)"
+RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$ORCH")
+assert_contains "declined a \`feat/\` branch" "$RM_TEXT" "req-001: run-mode text refuses autonomous without a feat/ branch (P5 G3)"
+assert_contains "\`feat/\` branch" "$RUN_MODES" "req-001: Run modes names the feat/ branch rule (P5 G3)"
+
+echo ""
+echo "=== req-001: resume accepts autonomous only when three sources agree (P5 G6) ==="
+
+STEP6=$(grep -E '^6\. Read `plan/.run-mode`' "$ORCH")
+assert_contains "all agree" "$STEP6" "req-001: step 6 requires the sources to agree (P5 G6)"
+assert_contains "\`Run mode\` row" "$STEP6" "req-001: step 6 names the build-log Run mode row (P5 G6)"
+assert_contains "\`Run mode confirmed:\`" "$STEP6" "req-001: step 6 names the P0 confirmation line (P5 G6)"
+assert_contains "log the mismatch" "$STEP6" "req-001: step 6 logs a mismatch (P5 G6)"
+assert_contains "Run mode confirmed: autonomous" "$RM_TEXT" "req-001: P0 writes the confirmation line for autonomous (P5 G6)"
+
 print_summary

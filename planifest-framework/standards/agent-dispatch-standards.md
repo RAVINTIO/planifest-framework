@@ -87,7 +87,7 @@ The list sets a floor, not a ceiling. A phase may batch more units when they pas
 
 A stream is one group of independent requirements that moves through P1 to P4 as its own subagent track (0000033 ADR-013). The `parallel_streams` toggle turns streams on. See the loop runner's Toggle Protocol for how it resolves.
 
-- **When streams run:** the orchestrator resolves `parallel_streams` at the start of P1. It records the value and its source in the P1 build-log block. The source is `toggle file` or `autonomous default`.
+- **When streams run:** the orchestrator resolves `parallel_streams` at the start of P1. It records the value and its source in the P1 build-log block. The source is `file value`, `autonomous default`, or `absent default`, as in the loop runner's toggle record.
 - **Forming streams:** if the toggle resolves `on`, the orchestrator groups the in-scope user stories into streams. Two stories go in separate streams only if they pass the dependency test in `## Parallelism Rules`. If fewer than two streams result, the run proceeds as a single stream with no state files.
 - **Stream scope:** each stream carries its requirements through P1, P2, P3, and P4. Each P1 to P4 gate runs once over the joined streams. P5 onward runs once over the joined set.
 - **Identifier blocks:** before dispatch, the orchestrator gives each stream a distinct block of requirement IDs, ADR IDs, and backlog IDs. No two streams allocate from the same block. This extends the backlog-ID rule in `## Agent Dispatch Template`.

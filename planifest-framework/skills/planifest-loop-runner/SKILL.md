@@ -36,7 +36,11 @@ Before arming any loop, read `planifest-overrides/loop-toggles.yml` (see `templa
 - `reversal_protocol`
 - `parallel_streams`
 
-An explicit value in `planifest-overrides/loop-toggles.yml` always wins, including `off` and `report-only`. Outside `autonomous`, an absent key still reads as **off**, so behaviour doesn't change. `p0_completeness` keeps its default in every mode.
+An explicit value in `planifest-overrides/loop-toggles.yml` wins over the default. Outside `autonomous`, an absent key still reads as **off**, so behaviour doesn't change. `p0_completeness` keeps its default in every mode.
+
+**Checker keys in `autonomous`:** an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set. See `standards/autonomous-run-standards.md` (Gates as loops).
+
+**Toggle record:** at P1 start, the orchestrator writes every resolved toggle and its source to the P1 build-log block. The source is `file value`, `autonomous default`, or `absent default`.
 
 **`parallel_streams` resolution (0000033 ADR-013):** this key is a dispatch setting, not a loop. It arms no loop-state file and no stop rule. It resolves in this order:
 
