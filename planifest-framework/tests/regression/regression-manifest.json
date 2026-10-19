@@ -106,6 +106,76 @@
       "promotionDate": "2026-08-01",
       "promotedBy": "agent",
       "filePath": "tests/regression/test-regression-pack.sh"
+    },
+    {
+      "name": "test-0000032-req-001-marker-clear-before-tag.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-001-marker-clear-before-tag.sh"
+    },
+    {
+      "name": "test-0000032-req-002-resume-from-archive-evidence.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-002-resume-from-archive-evidence.sh"
+    },
+    {
+      "name": "test-0000032-req-003-no-run-triage-message.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-003-no-run-triage-message.sh"
+    },
+    {
+      "name": "test-0000032-req-004-handover-note-routing.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-004-handover-note-routing.sh"
+    },
+    {
+      "name": "test-0000032-req-005-blocking-context-clear.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-005-blocking-context-clear.sh"
+    },
+    {
+      "name": "test-0000032-req-006-outside-repository-pass.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-006-outside-repository-pass.sh"
+    },
+    {
+      "name": "test-0000032-req-007-stderr-block-reasons.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-007-stderr-block-reasons.sh"
+    },
+    {
+      "name": "test-0000032-req-008-shell-writer-detection.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-008-shell-writer-detection.sh"
+    },
+    {
+      "name": "test-0000032-req-009-shell-guard-path-parity.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-009-shell-guard-path-parity.sh"
+    },
+    {
+      "name": "test-0000032-req-012-write-or-edit-boot-rule.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-012-write-or-edit-boot-rule.sh"
     }
   ]
 }
