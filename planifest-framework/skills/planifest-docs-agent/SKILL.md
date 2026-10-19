@@ -75,7 +75,7 @@ Confirm? (proceed / skip docs update / update different docs)
 
 Wait for the human to confirm before proceeding. Record the confirmed decision in the P6 build log block.
 
-**One question at a time.**
+**One question at a time.** In `autonomous`, follow the exception list and decision rule in `planifest-framework/standards/autonomous-run-standards.md` instead.
 
 ## Input
 
@@ -110,6 +110,19 @@ Confirm the following exist at `plan/` and are consistent: the minimal Phase 1 s
 ### Audit trail
 
 Write `plan/changelog/{feature-id}-<YYYY-MM-DD>.md`. Read `planifest-framework/templates/iteration-log.template.md` now before producing the audit trail.
+
+## Post-P6 revalidation
+
+Run this after your last doc edit and before you report P6 complete. A doc edit must not break a check that passed at P4.
+
+**Which checks run:**
+1. If `planifest-overrides/doc-checks.yml` exists and declares a `command`, run that command. The value must be one line of at most 500 characters. See `planifest-framework/templates/doc-checks.template.yml`.
+2. Otherwise, rerun the P4 check set: steps 0 to 5 of the validate-agent `## Process` section. Step 6 (verify by execution) doesn't rerun. If the override has no valid `command`, log why.
+
+- **On pass:** Record the command or check set and the result in the P6 build-log block.
+- **On failure:** Fix the P6 edit that caused it, then rerun the failing check. Fix the doc, never the check. The loop follows `planifest-loop-runner` with the P4 cap of 5 cycles. If the cap runs out, escalate in the validate-agent `VALIDATION BLOCKED` format. In `autonomous`, `standards/autonomous-run-standards.md` `## Changing approach` governs what happens at the cap.
+- **Not caused by P6:** If the failing check doesn't trace to a P6 edit, record it and escalate in the same format. Don't change code under `src/` outside `docs/`.
+- **Skip case:** If Gate B decided no docs update was needed and P6 made no edit, record `Post-P6 revalidation: skipped, no P6 edits` in the P6 build-log block.
 
 ## Rules
 
