@@ -44,3 +44,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - P0 exchange (release fill): Q: add 0000062, 0000106, 0000107, 0000109, 0000114, and 0000117, split into two waves? / A: all nine entries together, one single wave.
 - Release budget: none, three-story rule. The human on the loop chose one wave over the rule's split.
 - Backlog pickup: pull-in 0000062, 0000081, 0000106, 0000107, 0000109, 0000114, 0000117, 0000124, 0000125. Every other entry: leave.
+- P0 exchange (Fast Path authorisation): Q: scope record or wider allowlist for Fast Path writes? / A: not yet answered. The human on the loop added a tenth item instead.
+- Backlog filed: 0000126 (migration run state lives outside the framework folder), at the request of the human on the loop. Pull-in: 0000126, same single wave.
