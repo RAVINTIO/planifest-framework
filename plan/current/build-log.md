@@ -49,3 +49,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - P0 exchange (old migrations): Q: how many old migrations, and do they need state too? / A (orchestrator): eight migrations, each needs a record. Five of six `_done/` files arrived already in `_done/`, so downstream projects never ran them. Recommended scan-then-record with no seeding from `_done/`.
 - P0 exchange (migration state and Fast Path): Q: scan-then-record, then scope record or wider allowlist? / A: "And yes confirmed scope". Read as scan-then-record and the scope record.
 - Backlog pickup committed: ten entry folders deleted, folded into `feature-brief.md`.
+- Version suggested: `0.32.0` → `0.33.0` (Feature Pipeline, minor). Confirmed with the design.
+- Scope Lock dispatch: four `planifest-scope-lock-agent` instances in one parallel batch, tier cheaper (`claude-sonnet-5-5`). All four returned drafts. Three raised flags, which go to the human on the loop unchanged.
