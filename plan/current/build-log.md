@@ -60,5 +60,8 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Scope Lock complete. All four scenario paths captured.
 - Adoption mode: standard-iterative, confirmed by human on 2026-10-22
 - Version confirmed: 0.33.0
-- Run mode confirmed: autonomous (2026-10-21T23:37:01Z)
+- Decision (P0): re-record the autonomous anchor in a new commit / reason: commit `38541a5` wrote the confirmation line as a list item, so `run-mode.mjs` found no line that starts with its prefix. A force push to amend it is a standing-rule breach. The new commit adds the line below and re-states the design Confirmation line, which the human on the loop confirmed at 2026-10-21T23:37:01Z.
+
+Run mode confirmed: autonomous (2026-10-21T23:37:01Z)
+
 - Progress: P0 done at 2026-10-21T23:37:01Z: design confirmed, ten backlog entries in one wave, autonomous run
