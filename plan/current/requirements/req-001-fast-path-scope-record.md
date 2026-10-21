@@ -27,12 +27,13 @@ As the human on the loop, I see a Fast Path change written through **Write** and
   4. One `- <path>` line per target path, with at least one such line.
 - The parser skips blank lines and lines that start with `#`. Any other line that breaks the grammar makes the whole record invalid.
 - Each `<path>` is relative to the repository root. A path that ends in `/` names a folder and covers everything below it. A path without a trailing `/` covers that file, and also everything below it if it is a folder.
-- Path matching uses the 0000009-ADR-005 normalisation and whole path segments, as `matchesComponentPath` does today. The record has no glob syntax.
+- Path matching uses the 0000009 ADR 005 normalisation and whole path segments, as `matchesComponentPath` does today. The record has no glob syntax.
+- The gate matches each record path against the target's resolved `relPath` from `resolveTarget` (req-003). It never matches the link path the hook received.
 - The format is artifact `fast-path-scope-record-format`. `workflows/fast-path.md` shows one complete example of it.
 
 ### Record life
 
-- `path-rules.mjs` reads the current branch and `HEAD` commit without a process spawn (0000032 ADR-004). It follows these steps:
+- `path-rules.mjs` reads the current branch and `HEAD` commit without a process spawn (0000032 ADR 004). It follows these steps:
   1. Find the nearest `.git` at or above the repository root.
   2. If `.git` is a folder, it is the git folder. If `.git` is a file, read its `gitdir: <path>` line and resolve `<path>` against the folder that holds the file. This covers worktrees and submodules.
   3. Read `<gitdir>/HEAD`. A `ref: refs/heads/<name>` line gives the branch `<name>`. A bare commit ID gives the branch `(detached)` and that commit.
@@ -57,7 +58,29 @@ As the human on the loop, I see a Fast Path change written through **Write** and
   - any path whose last segment is `setup.sh` or `setup.ps1`
   - any path that holds the segment pair `hooks/enforcement/`, which covers every installed hook folder such as `.claude/hooks/enforcement/`
   - `.git/` and everything below it
-- A scope record never admits a path that matches `FAST_PATH_ENFORCEMENT_PATHS`, whatever it lists. The gate blocks that write with exit 2. The reason names the path and 0000033 ADR-009, and says to use the Change or Feature Pipeline.
+  - any path that holds the segment pair `hooks/adapters/`, which covers every installed Tier 1 adapter such as `.cursor/hooks/adapters/cursor.mjs`
+  - the hook wiring files that `setup.sh` and `setup.ps1` write, listed below
+- The hook wiring files are the tool settings and config files that register the hooks. `setup.sh` and `setup.ps1` write these:
+  - `.claude/settings.json` (Claude Code)
+  - `.cursor/settings.json` (Cursor)
+  - `.clinerules/hooks.json` (Cline)
+  - `.windsurf/hooks.json` (Windsurf)
+  - `.github/hooks/planifest.json` (Copilot)
+  - `.codex/config.toml` (Codex CLI)
+  - `opencode.json` and `.opencode/plugins/@planifest/opencode-hooks/` (OpenCode)
+- Without these entries, a record could list a wiring file and let a Fast Path change unwire `gate-write` itself.
+- Enforcement matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)`, using the existing `norm` export (0000009 ADR 005 normalisation). On a case-insensitive volume, `Planifest-Framework/Hooks/x.mjs` therefore matches `planifest-framework/hooks/`.
+- The same change updates the enforcement list in the `planifest-framework/workflows/fast-path.md` prerequisites to name every entry above. The constant and the doc stay in step, and the suite parity check enforces it.
+- A scope record never admits a path that matches `FAST_PATH_ENFORCEMENT_PATHS`, whatever it lists. The gate blocks that write with exit 2. The reason names the path and 0000033 ADR 009, and says to use the Change or Feature Pipeline.
+
+### Self-authorisation and visibility
+
+- The scope record is self-authorisation. The agent that makes the change also writes the record, and no human step sits between the two.
+- The human on the loop accepted this residual risk at P0, when they chose the scope record over a wider allowlist (design.md, "Decisions confirmed at P0", Fast Path authorisation).
+- The branch and `HEAD` binding bounds staleness only. It is not a security control, because the agent that writes the record also reads both values.
+- Each write the gate admits through the record writes one line to stderr and still exits 0. The line names `plan/.fast-path-scope` and the root-relative path, for example `[planifest] gate-write: admitted src/x.js through plan/.fast-path-scope`.
+- `gate-write.mjs` and `shell-write-guard.mjs` both write this notice, so every admitted Fast Path write shows in the hook output the human on the loop sees.
+- The notice prints the resolved `relPath`, cut to its first 200 characters. It never prints raw record text.
 - The shell-write guard honours the record through `evaluateWrite`, with no copy of the rules. A shell write to a listed path passes, and a shell write to an unlisted or enforcement path blocks.
 
 ### Fast Path workflow text
@@ -69,7 +92,9 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - If the agent commits or switches branch mid-change, it rewrites the record before its next write.
 - If a target matches an enforcement path, the workflow stops and routes the change to the Change or Feature Pipeline. The prerequisites list and `FAST_PATH_ENFORCEMENT_PATHS` name the same entries.
 - Step 6 removes the record with `rm -f plan/.fast-path-scope` before `git commit`, as the ship agent removes `plan/.orchestrator-active`. No commit holds the record.
-- The "What is NOT touched" list stays as it is. Fast Path still admits changes with no `src/` target (0000033 ADR-009 and 0000062).
+- The "What is NOT touched" list stays as it is. Fast Path still admits changes with no `src/` target (0000033 ADR 009 and 0000062).
+- The root `.gitignore` gains a `plan/.fast-path-scope` line, so a mid-change `git add -A` can't commit the record. `.gitignore` is always permitted.
+- Step 6 uses `rm -f` on the marker, as the ship agent skill does for `plan/.orchestrator-active` (`planifest-framework/skills/planifest-ship-agent/SKILL.md` line 224). Hard Limit 8 permits this, because the record is a session marker and not code.
 
 ### Tests
 
@@ -81,12 +106,17 @@ As the human on the loop, I see a Fast Path change written through **Write** and
   - a worktree whose `.git` is a file
   - a ref held only in `packed-refs`
   - each invalid-record case in the Input Validation section
+  - a record that lists `.claude/settings.json`, where the write exits 2
+  - a mixed-case target `Planifest-Framework/Hooks/x.mjs`, where the write exits 2
+  - an admitted write, where stderr holds the notice that names the record and the path
 - A source check asserts that every enforcement path in the `fast-path.md` prerequisites appears in `FAST_PATH_ENFORCEMENT_PATHS`.
+- A source check asserts that the root `.gitignore` holds a `plan/.fast-path-scope` line.
 
 ### Non-functional
 
 - Each hook call stays under 500 ms with a valid record and a `packed-refs` file of 10,000 lines.
-- `path-rules.mjs` uses Node built-in modules only and spawns no process. A suite source check asserts that it imports no `node:child_process`.
+- `path-rules.mjs` and the new code in this requirement use Node built-in modules only and spawn no process. A suite source check asserts that `path-rules.mjs` imports no `node:child_process`.
+- The existing `git status` spawn in `ratchet-check.mjs` predates this feature and stays out of this rule. Backlog 0000128 tracks it.
 
 ## Acceptance Criteria
 
@@ -100,7 +130,8 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - req-001 extends `evaluateWrite`. It works on the root-relative path that req-003 produces, so its link cases follow req-003's rules. It needs no other artifact from req-003.
 - req-001 reads the root from `resolveRoot`, which req-004 and req-006 change. Its tests use a fixture with a normal cwd, so they don't depend on those changes.
 - `planifest-framework/workflows/fast-path.md` (edited here).
-- 0000033 ADR-009 (enforcement paths) and 0000003-ADR-005 (fail-open on unexpected errors).
+- 0000033 ADR 009 (enforcement paths) and 0000003 ADR 005 (fail-open on unexpected errors).
+- The root `.gitignore` (one line added).
 
 ## Input Validation
 

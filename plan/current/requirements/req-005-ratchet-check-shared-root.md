@@ -24,7 +24,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 - The hook finds `plan/current/`, `plan/current/.ratchet-approve`, and `plan/ratchet-audit-log.md` under the root from `resolveRoot`, not under `process.cwd()`.
 - The hook resolves `file_path` with `resolveTarget(root, cwd, file_path)`. A relative `file_path` resolves against `cwd`.
 - The hook reads the current file content from the root plus `relPath`, not from `resolve(filePath)`.
-- The `plan/current/` and `.md` checks, and the exemptions for `loop-state-*`, `ratchet-log.md`, and `build-log.md`, compare the normalised `relPath`. That uses the 0000009-ADR-005 forward-slash and lower-case form.
+- The `plan/current/` and `.md` checks, and the exemptions for `loop-state-*`, `ratchet-log.md`, and `build-log.md`, compare the normalised `relPath`. That uses the 0000009 ADR 005 forward-slash and lower-case form.
 - The hook passes with exit 0 in these cases:
   - `resolveRoot` returns `null`
   - `resolveTarget` returns `outside`
@@ -43,6 +43,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 ### Non-functional
 
 - Each `ratchet-check.mjs` call stays under 500 ms on a 10-hop link chain.
+- The new code in this requirement uses Node built-in modules only and spawns no process. The existing `git status` spawn in `ratchet-check.mjs` predates this feature, and backlog 0000128 tracks it.
 
 ## Acceptance Criteria
 
@@ -55,7 +56,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 - Consumes `path-rules-resolveRoot-deleted-cwd` from req-004. Build req-004 first.
 - Consumes `path-rules-resolveTarget-links` from req-003. Build req-003 first.
 - All five requirements in this stream change or import `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
-- `setup.sh` and `setup.ps1` already copy every `*.mjs` in `hooks/enforcement/`, so the import resolves in every install (0000028-ADR-002).
+- `setup.sh` and `setup.ps1` already copy every `*.mjs` in `hooks/enforcement/`, so the import resolves in every install (0000028 ADR 002).
 
 ## Input Validation
 

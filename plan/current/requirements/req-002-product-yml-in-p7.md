@@ -1,12 +1,12 @@
 ---
 title: "Requirement: req-002 - product-yml-in-p7"
-summary: "The ship agent sets product.yml version and feature in P7, before the archive step, so the gate never blocks the update."
-status: "active"
+summary: "The ship agent sets product.yml version and feature in P7, before the archive step, through a Node script that no write gate judges."
+status: "draft"
 version: "0.1.0"
 ---
 # Requirement: req-002 - product-yml-in-p7
 
-**Skill:** [spec-agent](../skills/planifest-spec-agent/SKILL.md)
+**Skill:** [spec-agent](../../../planifest-framework/skills/planifest-spec-agent/SKILL.md)
 **Feature:** 0000035-write-gate-scope-and-path-hardening
 **Source:** US-002 (backlog 0000124)
 **Priority:** must-have
@@ -19,9 +19,12 @@ As the human on the loop, I see `product.yml` name the released version and feat
 
 ## Functional Requirements
 
-- The ship skill source `planifest-framework/skills/planifest-ship-agent/SKILL.md` gains a step that updates `product.yml` in P7. The step sits after Step 5 and before Step 6, which archives `design.md`. While `design.md` exists, `gate-write` admits the update. The gate stays unchanged for root files.
-- The update sets the top-level `version` and `feature` lines of `product.yml` and touches nothing else. It does not edit `components[]` unless a component was added or removed in this feature.
-- A new script `planifest-framework/scripts/set-product-release.mjs` makes the update. It follows the precedent of `archive-current.mjs` (0000033 ADR-010). The call is `node planifest-framework/scripts/set-product-release.mjs --feature-id "{feature-id}" --version "{version}" [--root <dir>]`. The ship agent takes `{version}` from the version the human on the loop confirmed in `design.md` at P0.
+- The ship skill source `planifest-framework/skills/planifest-ship-agent/SKILL.md` gains a step that updates `product.yml` in P7. The step sits after Step 5 and before Step 6, which archives `design.md`. The gate stays unchanged for root files.
+- `set-product-release.mjs` writes `product.yml` through Node, so no write-gate hook judges the write. This holds in this repo and downstream, whatever paths a design lists. The ship agent never changes `product.yml` through **Write** or **Edit**.
+- The update sets the top-level `version` and `feature` lines of `product.yml`. It changes `components[]` only when the ship agent passes `--component` arguments.
+- The ship agent owns every `components[]` edit. If a component was added or removed in this feature, it passes one `--component "{id}={path}"` argument for each component in the design. The script then replaces the whole `components[]` list with those entries. Without `--component`, the script leaves `components[]` byte-identical.
+- A new script `planifest-framework/scripts/set-product-release.mjs` makes the update. It follows the precedent of `archive-current.mjs` (0000033 ADR 010). The call is `node planifest-framework/scripts/set-product-release.mjs --feature-id "{feature-id}" --version "{version}" [--create --product-id "{id}" --product-name "{name}"] [--component "{id}={path}" ...] [--root <dir>]`. The ship agent takes `{version}` from the version the human on the loop confirmed in `design.md` at P0.
+- The new script is an architectural choice beyond the P0 text, so a P2 ADR records it.
 - The script rewrites the two lines in place. It never appends a line. Running it twice with the same arguments gives a byte-identical file.
 - The script handles each `versionPolicy` as follows:
 
@@ -32,9 +35,12 @@ As the human on the loop, I see `product.yml` name the released version and feat
   | `external` | Write `feature` only and leave `version` as it is. Exit 5, so the ship agent knows Step 9 must consult the external anchor or the human on the loop. |
 
 - If `product-version.mjs` exits 2 because the manifest is invalid, the script writes nothing and exits 2 with that reason. The ship agent shows the reason and applies the existing Step 9 rule, which never tags a fabricated version.
-- If `product.yml` doesn't exist, the script writes nothing and exits 4. The ship agent then follows the existing no-file cases before Step 6:
+- If `product.yml` doesn't exist and `--create` is absent, the script writes nothing and exits 4. The ship agent then follows the existing no-file cases before Step 6:
   - With exactly one component, it does nothing. Step 9 reads that `component.yml`.
-  - With two or more components, it creates `product.yml` from `planifest-framework/templates/product.template.yml` with `versionPolicy: max-component-version`. It then reruns the script. This moves Step 9 case 3 into P7.
+  - With two or more components, it reruns the script with `--create`, `--product-id`, `--product-name`, and one `--component` for each component. This moves Step 9 case 3 into P7.
+- With `--create` and no `product.yml`, the script builds the file from `planifest-framework/templates/product.template.yml`. It sets `id`, `name`, `version`, and `feature` from its arguments. It sets `versionPolicy: max-component-version` and writes `components[]` from the `--component` arguments. It then applies the `max-component-version` row above.
+- `--create` needs `--product-id`, `--product-name`, and at least two `--component` arguments. If one is missing, the script writes nothing and exits 2. If `product.yml` already exists, `--create` has no effect.
+- The ship agent never creates `product.yml` through **Write**. Downstream, a **Write** to a root file the design doesn't list would meet `gate-write`.
 - A stale `product.yml` stays as it is until the next P7 corrects it. No later step repairs it, and the ship agent does not edit it at Step 9 or Step 10b.
 - Step 7 stages `product.yml` with the archive, changelog, and `docs/about.md`, in the same commit.
 - Step 9 only reads the version through `product-version.mjs` and validates it. Step 9 no longer contains an instruction to update `product.yml`. If the derived version differs from the tag's expected version, Step 9 stops and reports, and it does not edit the file.
@@ -49,12 +55,14 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - Under `external`, only `feature` changes and the script exits 5.
   - Under `max-component-version`, a `--version` that differs from the derived one exits 2 and leaves the file unchanged.
   - With no `product.yml`, the script exits 4 and writes nothing.
+  - With no `product.yml` and `--create` with two components, the script creates the file under `max-component-version` with both `components[]` entries.
+  - With `--component` arguments, `components[]` holds exactly those entries. Without them, `components[]` stays byte-identical.
 - [ ] The suite checks the ship skill source text. The `product.yml` step comes before Step 6. Step 7 stages `product.yml`. Step 9 holds no instruction to edit `product.yml`.
 - [ ] `product.yml` reads `0.33.0` and `0000035-write-gate-scope-and-path-hardening` at P9.
 
 ## Dependencies
 
 - `planifest-framework/scripts/product-version.mjs` and its exit codes (0, 2, 4, 5), unchanged.
-- `planifest-framework/skills/planifest-ship-agent/SKILL.md` Step 6, Step 7, and Step 9 (0000016 ADR-002, 0000033 ADR-010).
+- `planifest-framework/skills/planifest-ship-agent/SKILL.md` Step 6, Step 7, and Step 9 (0000016 ADR 002, 0000033 ADR 010).
 - `planifest-framework/component.yml` carries `0.33.0` before P7 runs. It is a design-confirmed precondition and not part of this requirement.
 - No dependency on req-001 or req-003 to req-007.

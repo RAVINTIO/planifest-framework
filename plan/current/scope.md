@@ -45,6 +45,14 @@ version: "0.1.0"
 - Tests for each story under `planifest-framework/tests/`, run through `run-tests.sh`.
 - Version `0.32.0` to `0.33.0` in `planifest-framework/component.yml`.
 - Setup integration docs under `src/setup-hook-integration/`, only if setup behaviour changes.
+- Clarifications that refine the lines above without replacing them:
+  - The enforcement list `FAST_PATH_ENFORCEMENT_PATHS` concretises the list in `planifest-framework/workflows/fast-path.md` and adds the hook wiring files that setup writes, such as `.claude/settings.json`, and `.git/`. The same change updates `fast-path.md`. No path leaves the list.
+  - Fast Path step 6 removes the scope record before `git commit`, so no commit holds it. This sharpens the "deletes it in the Fast Path commit" line.
+  - Each write admitted through the scope record prints a one-line stderr notice.
+  - A new `set-product-release.mjs` script writes `product.yml` through Node, so no write gate judges it. It also creates `product.yml` from the template when needed.
+  - In an autonomous run, a migration whose scan has findings stays pending and appears as an exception waiting for human review. AC-007.3 stays open for the human on the loop.
+  - The hop limit is 40. A link loop, a chain past 40 hops, or a resolution error inside the root blocks with exit 2.
+  - There are eight migrations, which are the top-level `*.md` files once `_done/` returns. Two helper scripts belong to `0003-archive-dirname.md`.
 
 ## Out of Scope
 
@@ -53,7 +61,8 @@ version: "0.1.0"
 - Running the two downstream-only migrations in this repo.
 - Seeding migration records from the old `_done/` folder. Each record comes from a scan.
 - Changes to the gate rule for root files. `product.yml` is handled by moving the ship agent step, not by relaxing the gate.
-- Any change to the always-permitted path list or to which paths count as enforcement paths.
+- Any change to the always-permitted path list.
+- Removing a path from the enforcement set. `FAST_PATH_ENFORCEMENT_PATHS` is made concrete and extended to hook wiring files and `.git/` (US-001), and no path leaves it.
 - New run modes, release budgets, or changes to the three-story rule.
 
 ## Deferred

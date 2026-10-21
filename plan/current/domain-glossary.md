@@ -16,9 +16,9 @@ version: "0.1.0"
 
 | Term | Definition | Aliases | Used In |
 |------|-----------|---------|---------|
-| Scope record | The file `plan/.fast-path-scope`. It lists the target paths of one Fast Path change. The gate accepts it in place of `design.md`. It also stores the branch and `HEAD` commit it was written at. | Fast Path scope record | planifest-framework |
-| Fast Path | The route for a trivial change with no feature brief, execution plan, or ADR. Since 0000033 ADR-009 it admits changes with no `src/` target and never an enforcement path. | | planifest-framework |
-| Enforcement path | A path the framework gates whatever the scope record lists, such as `planifest-framework/hooks/`. Fast Path never admits one. | gated path | planifest-framework |
+| Scope record | The file `plan/.fast-path-scope`. It lists the target paths of one Fast Path change. The gate accepts it in place of `design.md`. It also stores the branch and `HEAD` commit it was written at, which bound staleness only. The record is self-authorisation, and each admitted write prints a stderr notice. Fast Path removes it before the commit. | Fast Path scope record | planifest-framework |
+| Fast Path | The route for a trivial change with no feature brief, execution plan, or ADR. Since 0000033 ADR 009 it admits changes with no `src/` target and never an enforcement path. | | planifest-framework |
+| Enforcement path | A path the framework gates whatever the scope record lists, such as `planifest-framework/hooks/`. `FAST_PATH_ENFORCEMENT_PATHS` lists them, including hook wiring files and `.git/`. Matching is case-insensitive through `norm`. Fast Path never admits one. | gated path | planifest-framework |
 | Always-permitted path | A path the gate never blocks for lack of a design. It is a prefix in `ALWAYS_PERMITTED_PREFIXES` (`plan/`, `docs/`) or a file in `ALWAYS_PERMITTED_FILES`, such as `claude.md`. | always-permitted prefix, always-permitted file | planifest-framework |
 | Root marker | A folder whose presence marks a repository root. The markers are `planifest-framework` and `.git`, checked in that order. | `ROOT_MARKERS` | planifest-framework |
 | Planted marker | A root marker created under an always-permitted name, for example `plan/w/.git`. Moving the folder could turn it into a false root. The gates ignore it (US-006). | planted root, planted `.git` | planifest-framework |
@@ -26,9 +26,9 @@ version: "0.1.0"
 | `CLAUDE_PROJECT_DIR` | The environment variable that names the project root. The gates read it when the working directory no longer exists. 0000118 has not checked it live. | | planifest-framework |
 | Real target | The path a write lands on after every symbolic link in it resolves. The gates judge this path, not the text of the path given. | real path, resolved path | planifest-framework |
 | Dangling link | A symbolic link whose target does not exist. A write through it creates the target, so the gates judge the target. | | planifest-framework |
-| Hop limit | The most links the gates follow in one chain. A chain past it blocks. The design names no number, and the latency target uses a 10-hop chain. | | planifest-framework |
+| Hop limit | The most links the gates follow in one chain. A chain past it blocks with exit 2. The limit is 40, the Linux `MAXSYMLINKS` value. The latency target uses a 10-hop chain. | | planifest-framework |
 | Link loop | A chain of links that returns to a link already followed. It blocks with exit 2. | | planifest-framework |
-| Fail open | A hook outcome that allows the write because it hit an error it can't judge. It exits 0 (0000003-ADR-005). | | planifest-framework |
+| Fail open | A hook outcome that allows the write because it hit an error it can't judge. It exits 0 (0000003 ADR 005). | | planifest-framework |
 | Fail closed | A hook outcome that blocks the write because it can't judge the path. It exits 2 with a reason on stderr. This feature applies it to path resolution errors inside the repo root. | | planifest-framework |
 | Fail-closed line | The boundary between errors that fail closed and errors that fail open. Resolution errors for a path inside the root fail closed. All other errors fail open. | | planifest-framework |
 | `gate-write` | The PreToolUse hook on **Write** and **Edit**. It blocks writes to `src/` without a confirmed design or a matching scope record. | write gate | planifest-framework |
@@ -54,7 +54,6 @@ version: "0.1.0"
 ## Concepts without a clear name
 
 - **Stale scope record.** The design says the gate "ignores" a record once the branch or `HEAD` changes, and "stale" appears in the brief. No agreed term exists for this state. This glossary uses "stale scope record" until the human on the loop names it.
-- **Resolution error.** The design says "any resolution error". It does not define which errors count, such as permission denied, too many links, or a name too long. The requirement should list them.
-- **Hop limit value.** The term exists but the number does not. The requirement should set it.
-- **Migration count.** The brief says eight existing migrations. The `migrations/` folder holds three entries and `_done/` holds six, and one entry is a `.sh` and `.ps1` pair. The count needs a check in the requirement.
+- **Resolution error.** Req-003 and req-004 define it. A link loop, a chain past 40 hops, and an error such as `EACCES`, `EIO`, or `ELOOP` count when the target or the real path reached lies inside the root. Each blocks with exit 2.
+- **Migration count.** There are eight migrations, which are the top-level `*.md` files once `_done/` returns. Two helper scripts, `migrate-archive-dirname.sh` and `migrate-archive-dirname.ps1`, belong to `0003-archive-dirname.md` and are not migrations.
 - **Anchor.** The build log uses "anchor" for the run-mode confirmation record. Backlog 0000127 notes the format is not settled.

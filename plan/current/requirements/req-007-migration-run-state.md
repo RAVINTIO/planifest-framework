@@ -6,7 +6,7 @@ version: "0.1.0"
 ---
 # Requirement: req-007 - migration-run-state
 
-**Skill:** [spec-agent](../skills/planifest-spec-agent/SKILL.md)
+**Skill:** [spec-agent](../../../planifest-framework/skills/planifest-spec-agent/SKILL.md)
 **Feature:** 0000035-write-gate-scope-and-path-hardening
 **Source:** US-007 (backlog 0000126)
 **Priority:** must-have
@@ -116,12 +116,20 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   - `migrate-remove-context-mode-and-telemetry.md`
 - The record body for each of the two names the reason: this repo is the framework source.
 
+### FR-007.11 Judging AC-007.3 in this repo
+
+- In this repo, AC-007.3 passes only once every one of the six scans is clean, or the human on the loop has answered each finding. The two downstream-only migrations count through their `not applicable` records.
+- An answer of apply gives an `applied` record. An answer of `none` gives a `skipped` record.
+- If any scan has findings in an `autonomous` run, that migration stays pending and gets no record. P3 writes one build-log line in the form `Exception waiting (P3, human review): {migration}: {findings}` for each such migration.
+- While an `Exception waiting` line stands for a migration, P4 reports AC-007.3 as open and waiting on the human on the loop. No agent forces a record to close it.
+- AC-007.3 closes once the human on the loop answers the findings and the migrator writes the record.
+
 ### FR-007.10 Documentation and tests
 
 - `planifest-framework/pipeline-reference.md` "Check for pending migrations" describes the record rule. It drops the `grep -v _done` and `-notmatch '_done'` commands.
 - `planifest-framework/project-operations.md` says that a pending migration is one with no record in `plan/_migrations/`.
 - `README.md` describes `migrations/` as the framework's migrations, with run state kept in `plan/_migrations/`.
-- `docs/decisions-index.md` ADR-005 no longer says that applied migrations go to `_done/`.
+- The `docs/decisions-index.md` entry for 0000005 ADR 005 no longer says that applied migrations go to `_done/`.
 - These suites drop their `_done/` expectations and check the new layout:
   - `planifest-framework/tests/test-0000005-framework-governance.sh` and `planifest-framework/tests/regression/test-0000005-framework-governance.sh` (req-014 block)
   - `planifest-framework/tests/test-0000032-req-011-rerun-setup-migration.sh` (the `DONE_COPY` check, the `## Archive` section, and the `_done/` text check)

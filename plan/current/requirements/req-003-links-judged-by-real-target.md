@@ -42,7 +42,7 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 - Other resolution errors include `EACCES`, `EIO`, and an operating-system `ELOOP`.
 - An `unresolvable` result blocks with exit 2 in `gate-write.mjs` and in `shell-write-guard.mjs`. The reason names the target and the cause, such as "link loop", "more than 40 links", or the error code. It goes to stderr.
 - If both paths in the two cases above lie outside the root, the result is `outside` and the write passes.
-- Errors outside path resolution keep their fail-open behaviour (0000003-ADR-005). Examples are bad JSON on stdin and a throw in the hook's own code.
+- Errors outside path resolution keep their fail-open behaviour (0000003 ADR 005). Examples are bad JSON on stdin and a throw in the hook's own code.
 
 ### Tests
 
@@ -59,7 +59,8 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 ### Non-functional
 
 - Each hook call stays under 500 ms on a 10-hop link chain. The suite times one `gate-write.mjs` call and one `shell-write-guard.mjs` call on that chain.
-- `path-rules.mjs` uses Node built-in modules only and spawns no process.
+- `path-rules.mjs` and the new code in this requirement use Node built-in modules only and spawn no process.
+- The existing `git status` spawn in `ratchet-check.mjs` predates this feature and stays out of this rule. Backlog 0000128 tracks it.
 
 ## Acceptance Criteria
 

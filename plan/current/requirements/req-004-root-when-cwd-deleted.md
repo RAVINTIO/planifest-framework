@@ -23,6 +23,9 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - If `cwd` is not a folder, `resolveRoot` walks up from `cwd` with `dirname` to the nearest existing folder. It starts the marker walk from the real path of that folder.
 - If that walk finds no marker, the root is the real path of the nearest existing folder. This keeps the 0000032 rule that the root is cwd when no marker exists.
 - `resolveRoot` returns `null` only when `cwd` is not a non-empty string. It never throws.
+- If `realpathSync` fails on the nearest existing folder, for example with `EACCES`, the hook treats it as a resolution error.
+- That resolution error blocks the write with exit 2 when the target lies inside the root that `CLAUDE_PROJECT_DIR` gives. The reason names the error code and goes to stderr.
+- If `CLAUDE_PROJECT_DIR` is unset or gives no root, or the target lies outside that root, the hook fails open with exit 0 as before (0000003 ADR 005). This follows the fail-closed line in design.md.
 - The changed lookup is artifact `path-rules-resolveRoot-deleted-cwd`.
 - Relative targets from a deleted `cwd` resolve against the `cwd` text, through its nearest existing parent with the missing segments appended.
 
@@ -42,11 +45,13 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - The suite runs `gate-write.mjs` and `shell-write-guard.mjs` with `CLAUDE_PROJECT_DIR` set to the fixture, and again with it unset.
 - With the variable unset, the deleted folder sits inside the fixture, so the nearest existing parent finds the fixture's marker.
 - The suite also covers a deleted `cwd` with no marker above it, where the root is the nearest existing folder.
+- The suite covers a nearest existing folder that `realpathSync` can't read, made with `chmod 000` on its parent. With `CLAUDE_PROJECT_DIR` set to the fixture, a write to `src/x.js` exits 2. The suite skips this case when it runs as root, since `chmod` then doesn't block.
 
 ### Non-functional
 
 - Each hook call stays under 500 ms with a deleted `cwd` 20 segments deep.
-- `path-rules.mjs` uses Node built-in modules only and spawns no process.
+- `path-rules.mjs` and the new code in this requirement use Node built-in modules only and spawn no process.
+- The existing `git status` spawn in `ratchet-check.mjs` predates this feature and stays out of this rule. Backlog 0000128 tracks it.
 
 ## Acceptance Criteria
 

@@ -21,7 +21,7 @@ As the human on the loop, I rely on the gates to ignore a `.git` marker planted 
 
 - `markedRoot` keeps the rule that distrusts a marked folder whose first segment below a higher marked folder is `plan` or `docs`.
 - `markedRoot` also distrusts a marked folder when any segment of its path below a higher marked folder matches an entry in `ALWAYS_PERMITTED_FILES`. The check includes the candidate folder's own name.
-- The comparison uses the 0000009-ADR-005 normalisation, so `CLAUDE.md` and `claude.md` both match.
+- The comparison uses the 0000009 ADR 005 normalisation, so `CLAUDE.md` and `claude.md` both match.
 - The rule applies to both marker kinds, `planifest-framework/` and `.git` (folder or file).
 - The rule applies to the walk from `CLAUDE_PROJECT_DIR` and to the walk from `cwd`, because both call `markedRoot`.
 - A distrusted marker never ends the walk. The walk goes on to the next trusted marked folder above it.
@@ -39,7 +39,8 @@ As the human on the loop, I rely on the gates to ignore a `.git` marker planted 
 ### Non-functional
 
 - Each hook call stays under 500 ms with a `cwd` 20 segments deep.
-- `path-rules.mjs` uses Node built-in modules only and spawns no process.
+- `path-rules.mjs` and the new code in this requirement use Node built-in modules only and spawn no process.
+- The existing `git status` spawn in `ratchet-check.mjs` predates this feature and stays out of this rule. Backlog 0000128 tracks it.
 
 ## Acceptance Criteria
 
