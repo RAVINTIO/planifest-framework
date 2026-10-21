@@ -18,8 +18,8 @@
   - US-007: As the human on the loop, I see every migration stay in `planifest-framework/migrations/` with its run state recorded in `plan/_migrations/`, so that the framework repo and each downstream project track their own runs. (0000126)
 - Acceptance criteria confirmed: 13 (see `feature-brief.md`)
 - Constraints:
-  - 0000032 ADR-004: hooks use Node built-ins only, with no process spawn.
-  - 0000033 ADR-009: Fast Path never admits an enforcement path.
+  - 0000032 ADR 004: hooks use Node built-ins only, with no process spawn.
+  - 0000033 ADR 009: Fast Path never admits an enforcement path.
   - Hard Limit 8: changes go through **Write** or **Edit**.
 - Integrations: none
 
@@ -30,7 +30,7 @@
 - Existing migrations: no seeding from `_done/`. In this repo, P3 runs each migration's scan and writes the record from the result. The two downstream-only migrations get `not applicable`. A downstream project runs each scan on first use, and a compliant project gets a clean result and a record.
 - Release fill: ten backlog entries in one wave, chosen by the human on the loop over the three-story rule.
 - Migration records: a `not applicable` entry counts as a record. The migrator creates `plan/_migrations/` on its first record. A record that can't be read counts as pending. Downstream projects treat the two downstream-only migrations as applicable, and each scan decides.
-- Fail-closed line: a link loop, a chain past the hop limit, or any resolution error for a path inside the repo root blocks with exit 2. Only errors outside path resolution still fail open (0000003-ADR-005).
+- Fail-closed line: a link loop, a chain past the hop limit, or any resolution error for a path inside the repo root blocks with exit 2. Only errors outside path resolution still fail open (0000003 ADR 005).
 - Scope record life: the record stores the branch and `HEAD` commit it was written at. The gate ignores a record once either one changes. The next Fast Path overwrites a stale record.
 - Idempotence: a migration re-run and the P7 `product.yml` update each give the same result when run twice. A stale `product.yml` stays as it is until the next P7 corrects it.
 - Run mode: `autonomous`.
@@ -39,7 +39,7 @@
 - Latency target: each hook call stays under 500 ms on a 10-hop link chain
 - Availability target: not applicable (local hooks)
 - Scalability target: not applicable
-- Security: no auth. The gates are the control under change. Every new block path exits 2 with its reason on stderr. Unexpected errors still exit 0 (0000003-ADR-005). Data classification: repository files only, no regulated data.
+- Security: no auth. The gates are the control under change. Every new block path exits 2 with its reason on stderr. Unexpected errors still exit 0 (0000003 ADR 005). Data classification: repository files only, no regulated data.
 - Data privacy: no regulated data
 - Observability: standard defaults. Block reasons go to stderr.
 - Cost boundary: not constrained
