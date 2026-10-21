@@ -25,9 +25,8 @@ updated: "2026-10-21T23:45:00Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `SET-PRODUCT-RELEASE-SCRIPT` | `planifest-framework/scripts/set-product-release.mjs` | req-002 |
-| `SHIP-P7-PRODUCT-YML-STEP` | `planifest-framework/skills/planifest-ship-agent/SKILL.md` | req-002 |
-| `TEST-0000035-REQ-002-SUITE` | `planifest-framework/tests/test-0000035-req-002-product-yml-in-p7.sh` | req-002 |
+
+None. `SET-PRODUCT-RELEASE-SCRIPT`, `SHIP-P7-PRODUCT-YML-STEP`, and `TEST-0000035-REQ-002-SUITE` serve req-002 only.
 
 ## Consumes
 

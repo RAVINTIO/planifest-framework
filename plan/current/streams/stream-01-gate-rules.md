@@ -30,12 +30,8 @@ updated: "2026-10-21T23:55:00Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `path-rules-resolveTarget-links` | `plan/current/requirements/req-003-links-judged-by-real-target.md` | req-005 |
-| `path-rules-resolveRoot-deleted-cwd` | `plan/current/requirements/req-004-root-when-cwd-deleted.md` | req-005 |
-| `path-rules-markedRoot-basename-distrust` | `plan/current/requirements/req-006-no-planted-root-marker.md` | req-004 |
-| `path-rules-fast-path-enforcement-paths` | `plan/current/requirements/req-001-fast-path-scope-record.md` | req-001 |
-| `path-rules-readGitState` | `plan/current/requirements/req-001-fast-path-scope-record.md` | req-001 |
-| `fast-path-scope-record-format` | `plan/current/requirements/req-001-fast-path-scope-record.md` | req-001 |
+
+None. Every artifact this stream makes has its consumer inside this stream: `path-rules-resolveTarget-links` and `path-rules-resolveRoot-deleted-cwd` feed req-005, and `path-rules-markedRoot-basename-distrust` feeds req-004.
 
 ## Consumes
 

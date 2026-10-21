@@ -27,9 +27,8 @@ updated: "2026-10-21T23:50:00Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `MIGRATION-RECORD-PATH-PLAN-MIGRATIONS` | `plan/current/requirements/req-007-migration-run-state.md` | req-007 |
-| `MIGRATION-UNREADABLE-RECORD-RULE` | `plan/current/requirements/req-007-migration-run-state.md` | req-007 |
-| `TEST-0000035-REQ-007-SUITE` | `planifest-framework/tests/test-0000035-req-007-migration-run-state.sh` | req-007 |
+
+None. The record path, the unreadable-record rule, and the req-007 suite serve req-007 only.
 
 ## Consumes
 
