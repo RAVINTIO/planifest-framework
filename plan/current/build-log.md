@@ -51,3 +51,4 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Backlog pickup committed: ten entry folders deleted, folded into `feature-brief.md`.
 - Version suggested: `0.32.0` → `0.33.0` (Feature Pipeline, minor). Confirmed with the design.
 - Scope Lock dispatch: four `planifest-scope-lock-agent` instances in one parallel batch, tier cheaper (`claude-sonnet-5-5`). All four returned drafts. Three raised flags, which go to the human on the loop unchanged.
+- P0 exchange (combined confirmation turn): Q: confirm the design, accept / edit / reject each Scope Lock draft, and pick a run mode / A: "3" (Autonomous). Design and Scope Lock items not yet answered, so neither counts as confirmed. Run mode not yet recorded, because the `Run mode confirmed:` line must share the commit that confirms the design.
