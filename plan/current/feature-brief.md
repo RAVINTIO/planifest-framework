@@ -110,19 +110,19 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 
 **Happy path:**
 
-> Drafted at the Scope Lock Challenge.
+> A Fast Path change declares its target paths in `plan/.fast-path-scope`, then edits them with **Write** and **Edit**. The gate admits matching writes, blocks the rest, and never admits an enforcement path. The Fast Path commit deletes the record. At release, `product.yml` names the version and feature before the archive step. Writes through links or a deleted working directory are blocked, and a planted `.git` doesn't become a root. Migration files stay put, and resume detection lists only migrations with no `plan/_migrations/` record. A `not applicable` entry counts as a record.
 
 **First-run path:**
 
-> Drafted at the Scope Lock Challenge.
+> A project with no `plan/_migrations/` folder sees every migration as pending on first refresh. The migrator creates the folder on its first record. Each scan runs, and a compliant project gets a record with nothing to change. Downstream projects treat the two downstream-only migrations as applicable, and each scan decides. With no scope record, Fast Path writes stay blocked until the change declares one. A stale `product.yml` stays as it is until the next P7 corrects it.
 
 **Error / sad path:**
 
-> Drafted at the Scope Lock Challenge.
+> The most likely failure is a stale `plan/.fast-path-scope` left by an interrupted Fast Path. The next Fast Path overwrites it. A link loop, a chain past the hop limit, or any resolution error inside the repo root blocks the write with exit 2 and a reason on stderr. Only errors outside path resolution still fail open. A migration record that can't be read counts as pending, and the migrator rescans. A scan with findings records nothing until the human on the loop confirms the fix.
 
 **Cross-session continuity:**
 
-> Drafted at the Scope Lock Challenge.
+> The scope record stores the branch and `HEAD` commit it was written at. The gate ignores the record once either one changes. A migration counts as applied only once its record exists, so an interrupted one shows as pending and runs again. A migration re-run and the P7 `product.yml` update each give the same result when run twice.
 
 ## Acceptance Criteria
 

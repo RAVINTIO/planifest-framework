@@ -29,6 +29,11 @@
 - Migration state: migration files never move. Each project writes one record per migration under `plan/_migrations/`. A migration with no record is pending. The `_done/` folder goes away, and its six files return beside the others.
 - Existing migrations: no seeding from `_done/`. In this repo, P3 runs each migration's scan and writes the record from the result. The two downstream-only migrations get `not applicable`. A downstream project runs each scan on first use, and a compliant project gets a clean result and a record.
 - Release fill: ten backlog entries in one wave, chosen by the human on the loop over the three-story rule.
+- Migration records: a `not applicable` entry counts as a record. The migrator creates `plan/_migrations/` on its first record. A record that can't be read counts as pending. Downstream projects treat the two downstream-only migrations as applicable, and each scan decides.
+- Fail-closed line: a link loop, a chain past the hop limit, or any resolution error for a path inside the repo root blocks with exit 2. Only errors outside path resolution still fail open (0000003-ADR-005).
+- Scope record life: the record stores the branch and `HEAD` commit it was written at. The gate ignores a record once either one changes. The next Fast Path overwrites a stale record.
+- Idempotence: a migration re-run and the P7 `product.yml` update each give the same result when run twice. A stale `product.yml` stays as it is until the next P7 corrects it.
+- Run mode: `autonomous`.
 
 ## Architecture Layer
 - Latency target: each hook call stays under 500 ms on a 10-hop link chain
@@ -104,4 +109,4 @@ None
 - `custom-005-p9-push-and-raise-pr.md`: at P9, push the branch and tag and raise the PR without asking. Never merge, and never push to `main`.
 
 ## Confirmation
-Human confirmed this design before proceeding: no // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 22 Oct 2026 @ 12:37 a.m. BST
