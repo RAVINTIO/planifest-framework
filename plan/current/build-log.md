@@ -102,3 +102,13 @@ Streams formed (dependency test: stories that change the same file share a strea
 
 - Decision (P1): US-001, US-003, US-004, and US-006 share one stream / reason: each changes `path-rules.mjs`. US-005 joins them because `ratchet-check.mjs` consumes `resolveRoot` from the same file.
 - Decision (P1): shared artifacts (scope, risk register, domain glossary) go to one extra subagent, and the orchestrator writes the execution plan after the join / reason: the execution plan summarises the requirements, so it can't start first.
+- Decision (P1): the scope record is line-based text with `branch`, `head`, and `paths`, capped at 16 KiB and 64 paths / reason: a fixed grammar lets the gate reject any malformed record whole.
+- Decision (P1): the gate reads branch and `HEAD` from `.git` files, following `gitdir:` and `commondir`, and ignores the record when git state can't be read / reason: hooks spawn no process (0000032 ADR-004), and ignoring the record fails closed.
+- Decision (P1): the link hop limit is 40 / reason: it matches Linux `MAXSYMLINKS`.
+- Decision (P1): `set-product-release.mjs` carries the P7 `product.yml` update / reason: a script can be run twice and tested in a fixture, as `archive-current.mjs` is.
+- Decision (P1): migration outcomes are `applied`, `not applicable`, and `skipped` / reason: a findings state would break the rule that no record means pending, and `skipped` keeps the migrator's `none` answer.
+- Decision (P1): a migration with findings in this repo gets no record, and its findings go to the final report as an exception waiting for human review / reason: the confirmed design says a scan with findings records nothing until the human on the loop confirms the fix.
+- Deviation (P1, unclassified): the scope record never enters a commit. Fast Path removes it before `git commit`, where the brief said the Fast Path commit deletes it.
+- Deviation (P1, unclassified): a missing cwd now blocks a write into `src/`, which supersedes the 0000032 assertion in `test-0000032-req-006-outside-repository-pass.sh` lines 364 to 366.
+- Backlog filed (P1): 0000128 (`ratchet-check.mjs` spawns `git status`), 0000136 (a framework-only migration becomes pending downstream), and 0000137 (the migration progress file lives in the framework folder).
+- P1 join: all three streams at-join. `stream-reconcile.mjs` first reported 12 self-consumer findings, because each stream listed artifacts its own requirements consume. No artifact crosses streams, so the orchestrator cleared the Declares rows. The second run exited 0.
