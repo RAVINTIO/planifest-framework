@@ -65,3 +65,40 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 Run mode confirmed: autonomous (2026-10-21T23:37:01Z)
 
 - Progress: P0 done at 2026-10-21T23:37:01Z: design confirmed, ten backlog entries in one wave, autonomous run
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-21T23:39:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` |
+| Model tier | primary (stream 01), cheaper (streams 02 and 03, shared artifacts) |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. P1 checker re-check: no `loop-toggles.yml`, so no checker key is off. |
+
+Toggle record (P1, binding for the run):
+
+| Toggle | Value | Source |
+|--------|-------|--------|
+| `design_critic` | `on` | autonomous default |
+| `verify_by_execution` | `on` | autonomous default |
+| `cross_model_review` | `on` | autonomous default |
+| `reversal_protocol` | `on` | autonomous default |
+| `parallel_streams` | `on` | autonomous default |
+| `p0_completeness` | `off` | absent default |
+
+Streams formed (dependency test: stories that change the same file share a stream):
+
+| Stream | Stories | Requirements | ID blocks |
+|--------|---------|--------------|-----------|
+| `stream-01-gate-rules` | US-001, US-003, US-004, US-005, US-006 | req-001, req-003, req-004, req-005, req-006 | ADR-001 to ADR-009, backlog 0000128 to 0000132 |
+| `stream-02-release-manifest` | US-002 | req-002 | ADR-010 to ADR-014, backlog 0000133 to 0000135 |
+| `stream-03-migration-state` | US-007 | req-007 | ADR-015 to ADR-019, backlog 0000136 to 0000138 |
+
+- Decision (P1): US-001, US-003, US-004, and US-006 share one stream / reason: each changes `path-rules.mjs`. US-005 joins them because `ratchet-check.mjs` consumes `resolveRoot` from the same file.
+- Decision (P1): shared artifacts (scope, risk register, domain glossary) go to one extra subagent, and the orchestrator writes the execution plan after the join / reason: the execution plan summarises the requirements, so it can't start first.
