@@ -703,7 +703,7 @@ function judgeCommand(cwd, command) {
     if (result.allowed) return null;
     const reason = result.reason.replace(/^\[Planifest\]\s*/, "").trim();
     return (
-      `${PREFIX} Shell write blocked: '${writer}' writes '${relPath || "."}'. ${reason} ` +
+      `${PREFIX} Shell write blocked: '${writer}' writes '${shown(relPath || ".", 80)}'. ${reason} ` +
       "Make the change through the Write or Edit tool once the design covers the path.\n"
     );
   };
@@ -744,12 +744,12 @@ function judgeCommand(cwd, command) {
       if (word.v === "") continue;
       const literal = expandTilde(word, word.dyn >= 0 ? word.v.slice(0, word.dyn) : word.v);
       if (!literal) {
-        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' (no literal prefix). Command allowed.\n`);
+        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${shown(word.v, 80)}' (no literal prefix). Command allowed.\n`);
         continue;
       }
       if (overflow && !isAbsolute(literal)) {
         blocks.push(
-          `${PREFIX} Shell write blocked: '${writer}' writes '${word.v}', and the command may run in more than ` +
+          `${PREFIX} Shell write blocked: '${writer}' writes '${shown(word.v, 80)}', and the command may run in more than ` +
           `${MAX_BASES} folders, too many to judge. Use an absolute path, or fewer cd steps that may fail.\n`,
         );
         continue;
@@ -765,7 +765,7 @@ function judgeCommand(cwd, command) {
         if (reason) { blocks.push(reason); blocked = true; }
       }
       if (!blocked && from.includes(null)) {
-        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' after a cd it can't follow. Command allowed.\n`);
+        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${shown(word.v, 80)}' after a cd it can't follow. Command allowed.\n`);
       }
     }
 

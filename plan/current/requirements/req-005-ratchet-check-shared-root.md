@@ -31,6 +31,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
   - `resolveTarget` returns `outside`
   - `resolveTarget` returns `unresolvable`, because `gate-write.mjs` already blocks that write with exit 2
 - The weakening rules, the approval format, the audit log, and the block output stay as they are.
+- The block output passes each path it prints through `shown` from `path-rules.mjs`, cut to `MAX_PATH_CHARS` (P5 re-review finding G-N1). A path that holds a control character can't then forge a line of hook output. A path with no control character prints whole, as before.
 - The uncommitted-marker backstop keeps its `git status` call. This requirement does not change it (see backlog 0000128).
 
 ### Tests

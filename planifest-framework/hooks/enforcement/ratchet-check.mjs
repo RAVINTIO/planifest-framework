@@ -57,7 +57,7 @@ import {
 } from "node:fs";
 import { join, normalize, relative } from "node:path";
 
-import { hookCwd, norm as normPath, resolveRoot, resolveTargetBoth } from "./path-rules.mjs";
+import { MAX_PATH_CHARS, hookCwd, norm as normPath, resolveRoot, resolveTargetBoth, shown } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const AUDIT_LOG_REL = join("plan", "ratchet-audit-log.md");
@@ -250,21 +250,24 @@ function checkWeakening(toolInput, projectRoot, planCurrent, relPath) {
   const consumption = consumeApproval(planCurrent, projectRoot, relPath);
   if (consumption.outcome === "consumed") return;
 
+  // Each printed path goes through shown(), so a control character in it
+  // can't forge a line of hook output (G-N1). The cap keeps a judgeable path whole.
+  const pathShown = (p) => shown(p, MAX_PATH_CHARS);
   let reason;
   if (consumption.outcome === "uncommitted") {
     reason = [
-      `Ratchet: an approval for ${consumption.path} exists in plan/current/.ratchet-approve,`,
+      `Ratchet: an approval for ${pathShown(consumption.path)} exists in plan/current/.ratchet-approve,`,
       "but that marker file itself is uncommitted.",
-      `Pending path: ${consumption.path}`,
+      `Pending path: ${pathShown(consumption.path)}`,
       "Commit plan/current/.ratchet-approve in its own dedicated commit, then retry this write.",
     ].join("\n");
   } else {
     reason = [
-      `Ratchet: this write weakens ${relPath} while a loop is active.`,
+      `Ratchet: this write weakens ${pathShown(relPath)} while a loop is active.`,
       ...removed.map((l) => `  removed: "${l}"`),
       "Loops may strengthen criteria/scope but never weaken them (ADR-007).",
       "If this weakening is intentional, add a line to plan/current/.ratchet-approve:",
-      `  ${relPath} | <reason> | <timestamp>`,
+      `  ${pathShown(relPath)} | <reason> | <timestamp>`,
       "(ADR-001: the agent may write this only on explicit human instruction, committed",
       "immediately in its own dedicated commit before this write proceeds.)",
     ].join("\n");
