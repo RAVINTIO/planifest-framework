@@ -158,3 +158,34 @@ Streams (start commit `8375ca7`):
 - Design critic P2 iteration 3: APPROVE (0 critical, 0 major, 2 minor). Loop closed as `done` at 2026-10-22T22:22:12Z. The orchestrator fixed both minor findings after the loop disarmed.
 - Gate (P2): twelve ADRs cover the stack, the gate rules, the drift check, the migration, and the skill-text decisions. `consistency-check.mjs` clean. Skill Map unchanged.
 - Progress: P2 done at 2026-10-22T22:22:12Z: twelve ADRs, critic approved at iteration 3
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T22:23:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` |
+| Model tier | primary (codegen workers) |
+| Skills loaded | planifest-codegen-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Baseline suite run started in the background at P3 start. |
+
+Dispatch plan by file ownership (start commit `e248df9`):
+
+| Batch | Worker | Requirements | Files it owns |
+|-------|--------|--------------|---------------|
+| 1 | W1 (stream 01) | req-008, req-009, req-011 | `path-rules.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs`, three new suites, suites that assert a `shown()` cut |
+| 1 | W2 (stream 01) | req-010 | `run-tests.sh`, the seven suites req-010 lists, one new suite |
+| 1 | W3 (stream 02) | req-001 | the new migration, `framework-update-policy.md`, the two 0000035 migration suites, one new suite |
+| 1 | W4 (stream 02) | req-002, script part | `scripts/skill-drift-check.mjs`, one new suite |
+| 1 | W5 (stream 03) | req-004, script part | `scripts/run-mode.mjs`, `templates/build-log.template.md`, `test-0000033-req-001-run-mode-script.sh` and its regression copy |
+| 1 | W6 (stream 03) | req-007 | spec agent, design critic, and loop runner skills, one new suite |
+| 2 | W7 (stream 03) | req-006, req-003, and the orchestrator text of req-002 and req-004 | orchestrator, ship agent, loop runner, toggles template, `autonomous-run-standards.md`, living docs, their suites |
+| 3 | W8 (stream 03) | req-005 | every hard-limit citation |
+
+- Decision (P3): each worker runs red, green, and refactor itself and reports the RED and GREEN output / reason: the work is mostly skill text and small scripts, and nested TDD subagents would triple the dispatch count for no gain.
+- Decision (P3): batches 2 and 3 wait for batch 1 / reason: they share the orchestrator, loop runner, spec agent, and ship agent skills with batch 1 and with each other.
