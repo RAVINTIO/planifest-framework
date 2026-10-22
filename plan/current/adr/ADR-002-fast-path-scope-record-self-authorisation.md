@@ -37,7 +37,7 @@ The design names data ownership: the Fast Path workflow owns `plan/.fast-path-sc
 - **Self-authorisation accepted:** The design records the residual risk as accepted at P0. The run adds two visibility controls:
   - Each admitted write prints one stderr line that names the record and the resolved path, cut to 200 characters. The hook still exits 0.
   - Fast Path step 5 writes a changelog entry that lists every record path. The human on the loop sees the admitted paths there, because Claude Code keeps exit-0 hook output out of the main view.
-- **Life of the record:** Fast Path writes a new record before the first change and overwrites any old one. Step 6 removes it with `rm -f` before `git commit`, so no commit holds it. The root `.gitignore` lists it as a second guard. Staleness is bounded by branch and `HEAD` (ADR-003).
+- **Life of the record:** Fast Path writes a new record before the first change and overwrites any old one. Step 6 removes it with `rm -f` before `git commit`, so no commit holds it. Hard Limit 8 gives no rule for this marker. The step follows the ship agent's marker removal, and the shell-write guard passes it because the gates always permit `plan/`. The root `.gitignore` lists it as a second guard. Staleness is bounded by branch and `HEAD` (ADR-003).
 - **Limits on what it admits:** A record never admits an enforcement path (ADR-004).
 
 ## Alternatives Considered

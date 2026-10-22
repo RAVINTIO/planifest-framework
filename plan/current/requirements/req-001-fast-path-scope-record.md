@@ -85,7 +85,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - Step 6 removes the record with `rm -f plan/.fast-path-scope` before `git commit`, as the ship agent removes `plan/.orchestrator-active`. No commit holds the record.
 - The "What is NOT touched" list stays as it is. Fast Path still admits changes with no `src/` target (0000033 ADR 009 and 0000062).
 - The root `.gitignore` gains a `plan/.fast-path-scope` line, so a mid-change `git add -A` can't commit the record. `.gitignore` is always permitted.
-- Step 6 uses `rm -f` on the marker, as the ship agent skill does for `plan/.orchestrator-active` (`planifest-framework/skills/planifest-ship-agent/SKILL.md` line 224). Hard Limit 8 permits this, because the record is a session marker and not code.
+- Step 6 uses `rm -f` on the marker, as the ship agent skill does for `plan/.orchestrator-active` (`planifest-framework/skills/planifest-ship-agent/SKILL.md`, "Clear session markers"). Hard Limit 8 covers code and project files and gives no rule for a git-ignored session marker. The shell-write guard passes the `rm`, because the gates always permit `plan/`.
 
 ### Tests
 
