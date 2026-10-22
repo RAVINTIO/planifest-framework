@@ -164,14 +164,14 @@ Streams (start commit `8375ca7`):
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T22:23:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T22:54:32Z` |
+| Wall-clock | `31` |
 | Streams | `3` |
-| Model tier | primary (codegen workers) |
+| Model tier | primary (W1, W3, W4, W5, W7, W8), cheaper (W2, W6) |
 | Skills loaded | planifest-codegen-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `8` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Baseline suite run started in the background at P3 start. |
 
 Dispatch plan by file ownership (start commit `e248df9`):
@@ -192,3 +192,10 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Baseline suite run (concurrent with batch 1): 85 feature suites and 31 regression suites passed, 3 and 2 failed. The three feature failures were batch 1 RED states. The two shell-guard regression failures pass on a clean `main` clone, so W1's in-progress `path-rules.mjs` edit caused them. The orchestrator rechecks them after W1.
 - Batch 1 returns: W6 req-007 (`3a7f736`), W2 req-010 (`5ace843`), W3 req-001 (`f2df647`), W4 req-002 script (`faa98b5`), W5 req-004 script (`ceb9bfb`).
 - Decision (P3): W7 starts while W1 still runs / reason: W7's files don't overlap W1's hooks and hook suites.
+- W1 req-008, req-009, req-011 (`1f64fde`). The shell-guard regression suites pass again. The orchestrator fixed a `printf` pipe into `grep -q` in W4's suite (`75b49c9`).
+- W7 req-006, req-003, and the orchestrator text of req-002 and req-004 (`080593c`).
+- W8 req-005 (`5d9ce6a`). Full suite: 97 feature and 33 regression suites passed, 0 failed.
+- Deviation (P3, unclassified): the dispatch-template sentence that req-005 fixes word for word cites "(the Write-or-Edit rule, boot Hard Limit 8)", a bracketed form beside ADR-010's main form. The req-005 suite accepts both.
+- Decision (P3): `planifest-framework/component.yml` moves to `0.34.0` and names this feature / reason: the codegen skill's framework close-out rule.
+- Gate (P3): every requirement reached GREEN in its own suite. In `autonomous`, the P4 CI run checks the P3 output.
+- Progress: P3 done at 2026-10-22T22:54:32Z: eleven requirements built in three batches, full suite green
