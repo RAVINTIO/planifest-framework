@@ -393,3 +393,8 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Run mode from `run-mode.mjs` on the archived build log. |
+
+- P9 marker step: the `commit-msg` hook rejected the template subject `plan(p9): clear session markers for 0000035-write-gate-scope-and-path-hardening` at 79 characters. The markers were already deleted and staged. The retry committed as `plan(p9): clear session markers`, with the feature ID in the body (`c1614d6`). `git ls-files` lists no marker.
+- Backlog filed (P9): 0000160 (ship commit subjects overrun 72 characters).
+- Step 9: `product-version.mjs` derived `0.33.0`, which matches P0 and is above `v0.32.0`. Tag `v0.33.0` created.
+- Step 10: no `local-git-only` or `restore-pr-attribution` override. Branch `feat/0000035-write-gate-scope-and-path-hardening`. Option [1] as a draft PR, because 11 `Exception waiting` lines remain.
