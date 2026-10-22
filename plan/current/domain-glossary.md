@@ -52,7 +52,7 @@ version: "0.1.0"
 | Normal route | How the gate judges a path with no shortcut: through the design scope, or the Fast Path scope verdict. | | planifest-framework |
 | Fast Path | The route for a trivial change with no feature brief, execution plan, or ADR. | | planifest-framework |
 | Scope record | The file `plan/.fast-path-scope`. It lists the target paths of one Fast Path change. | Fast Path scope record | planifest-framework |
-| `path-rules.mjs` | The shared module that holds `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, and `shown`. Today `gate-write.mjs`, `shell-write-guard.mjs`, and `ratchet-check.mjs` import it. `em-dash-guard.mjs` imports `shown` from it only once req-011 lands. | | planifest-framework |
+| `path-rules.mjs` | The shared module that holds `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, and `shown`. `gate-write.mjs` imports `judgeWrite` from it. `shell-write-guard.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs`, and `scripts/skill-drift-check.mjs` import `shown` from it. | | planifest-framework |
 | `shown()` | The function in `path-rules.mjs` that escapes quoted text for hook output and caps its length. It must not cut an escape sequence in half (US-011). | | planifest-framework |
 | `gate-write` | The PreToolUse hook on **Write** and **Edit**. It blocks writes to `src/` without a confirmed design or a matching scope record. | write gate | planifest-framework |
 | `ratchet-check` | The PreToolUse hook that blocks writes removing acceptance-criteria or in-scope lines while a loop is active. | ratchet | planifest-framework |
