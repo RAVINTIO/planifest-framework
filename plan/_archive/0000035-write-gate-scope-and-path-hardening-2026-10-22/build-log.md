@@ -16,7 +16,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
 | Run mode | `autonomous` |
-| Parallel streams | `pending` (resolved at P1 start) |
+| Parallel streams | `on` (resolved at P1 start, three streams) |
 
 ---
 
@@ -334,14 +334,14 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T09:14:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T09:20:11Z` |
+| Wall-clock | `371` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent (source copy at `planifest-framework/skills/planifest-ship-agent/SKILL.md`, per the P4 decision) |
-| Agents spawned | `pending` |
+| Agents spawned | `0` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` (cross-reference search and regression-tag scan) |
 | Notes | Run mode from `run-mode.mjs`: autonomous. |
 
 - Decision (P7): the P6 docs agent wrote the iteration log at the Step 1 changelog path. The orchestrator moves it to `plan/current/iteration-log.md`, where the 0000033 run kept it, and marks P6 done in it. Step 1 then writes the changelog at its own path / reason: the two documents have different readers, and the archive carries the iteration log.
@@ -357,3 +357,39 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 - Quirk (P7): line 276 holds a raw U+2028 character, which the **Edit** tool wrote when it decoded a ` ` escape at P5. An exact-match **Edit** can't target it, and Hard Limit 8 rules out a shell rewrite. It stays as it is. Readers that split on U+2028 see one extra line break there.
 - Gate (P7): passed. `plan/current/` is empty, and the archive, changelog, test report, `docs/about.md`, and `product.yml` go in one commit.
 - Progress: P7 done at 2026-10-22T09:20:11Z: archived to `plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22`, `product.yml` at 0.33.0
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T09:21:00Z` |
+| End | `2026-10-22T09:24:11Z` |
+| Wall-clock | `191` |
+| Streams | `n/a` |
+| Model tier | cheaper (`claude-haiku-5-5`) |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Archive path: `plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22/`. |
+
+- Build assessment: `build-report.md` written. 49 subagents, 12 parallel batches, 1 self-correction, and 7 review-driven rework rounds over P0 to P6.
+- Decision (P8): fill the log fields the assessment found stale: the P7 block and the header `Parallel streams` row / reason: each had a known value.
+- Note (P8): the P0 `Wall-clock` of 1448 seconds counts active time. Its start and end span 86,913 seconds, because the session paused overnight between P0 questions.
+- Clean-tree check: two lines, both under the archive directory (`build-log.md` modified, `build-report.md` new). The P9 marker step commits them. No other leftover.
+- Progress: P8 done at 2026-10-22T09:24:11Z: build report written, tree clean outside the archive
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T09:24:30Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent (source copy) |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Run mode from `run-mode.mjs` on the archived build log. |
