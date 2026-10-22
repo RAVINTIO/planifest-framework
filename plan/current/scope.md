@@ -10,7 +10,7 @@ version: "0.1.0"
 **Feature:** 0000035-write-gate-scope-and-path-hardening
 **Version:** 0.33.0
 
-> Release size follows the three-story rule, with no `release-budget.yml`. This run carries seven stories in one wave, by the choice of the human on the loop.
+> Release size follows the three-story rule, with no `release-budget.yml`. This run carries eight stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2.
 
 ## In Scope
 
@@ -41,6 +41,7 @@ version: "0.1.0"
   - A migration with no record is pending.
   - The `_done/` folder goes away and its six files return beside the others.
   - The migrator skill and orchestrator resume detection read and write the records.
+- Sanctioned scripts in Hard Limit 8 (US-008): both boot templates name the seven framework scripts that may write files, and `set-product-release.mjs` validates every argument (req-008).
 - A `plan/_migrations/` record for each of the eight existing migrations in this repo, written from a scan run here in P3. The two downstream-only migrations get a `not applicable` record.
 - Tests for each story under `planifest-framework/tests/`, run through `run-tests.sh`.
 - Version `0.32.0` to `0.33.0` in `planifest-framework/component.yml`.
@@ -55,9 +56,9 @@ version: "0.1.0"
   - There are eight migrations, which are the top-level `*.md` files once `_done/` returns. Two helper scripts belong to `0003-archive-dirname.md`.
   - The enforcement list also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json` and `opencode.jsonc`. It also holds the per-tool setup scripts folder `planifest-framework/setup/`. The `fast-path.md` list changes in step (req-001).
   - The stderr notice reaches the agent and the session transcript, not the main view of the human on the loop. The Fast Path changelog entry lists every path from the scope record, so the human on the loop sees each admitted path there.
-  - `set-product-release.mjs` falls under a narrow Hard Limit 8 carve-out, which the P2 ADR records. It is a fixed framework script with its own suite, as `archive-current.mjs` is (0000033 ADR 010). The agent passes it arguments, never content. It writes only the named fields of `product.yml` and refuses any other path (req-002).
-  - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-002).
-  - The req-002 Input Validation section treats every script argument as untrusted. It binds `--root` to the folder that `resolveRoot` returns, and gives each argument a pattern and a length cap.
+  - `set-product-release.mjs` falls under a narrow Hard Limit 8 carve-out, which the P2 ADR records. It is a fixed framework script with its own suite, as `archive-current.mjs` is (0000033 ADR 010). The agent passes it arguments, never content. It writes only the named fields of `product.yml` and refuses any other path (req-008).
+  - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-008).
+  - The req-008 Input Validation section treats every script argument as untrusted. It binds `--root` to the folder that `resolveRoot` returns, and gives each argument a pattern and a length cap.
 - The acceptance-criteria limit in `consistency-check.mjs` rises from 3 to 10 per requirement, at the instruction of the human on the loop on 2026-10-22. The feature brief template still asks for 3 and prefers a split above that. From 4 to 10, the check prints a warning and still exits 0. `test-0000016-pipeline-governance.sh` and its regression copy test 10 as a pass with a warning and 11 as a finding.
 
 ## Out of Scope

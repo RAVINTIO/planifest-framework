@@ -25,12 +25,13 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 | Ratchet check from any folder (0000109) | US-005: As the human on the loop, I rely on `ratchet-check` to find the active loop from any subfolder, so that a weakening write is blocked wherever the agent runs it. | must-have | 1 |
 | No planted root under a permitted name (0000114) | US-006: As the human on the loop, I rely on the gates to ignore a `.git` marker planted under an always-permitted name, so that a moved folder can't become a new root. | must-have | 1 |
 | Migration run state per project (0000126) | US-007: As the human on the loop, I see every migration stay in `planifest-framework/migrations/` with its run state recorded in `plan/_migrations/`, so that the framework repo and each downstream project track their own runs. | must-have | 1 |
+| Sanctioned scripts in Hard Limit 8 (0000124) | US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script. | must-have | 1 |
 
 ## Waves
 
 | Wave | Features Included | Ships When |
 |------|-------------------|------------|
-| 1 | All seven | Every acceptance criterion passes and the full suite passes on CI |
+| 1 | All eight | Every acceptance criterion passes and the full suite passes on CI |
 
 ## Target Architecture
 
@@ -139,3 +140,5 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 - [ ] US-007: No migration file moves when it runs, and `_done/` no longer exists.
 - [ ] US-007: Resume detection lists as pending only migrations with no record in `plan/_migrations/`.
 - [ ] US-007: This repo holds a record for each of the eight migrations, from a scan run here.
+- [ ] US-008: `standard-boot.md` and `cursor-boot.md` each hold one `Sanctioned scripts:` sentence in Hard Limit 8, and both name the same seven scripts.
+- [ ] US-008: `set-product-release.mjs` exits 2 and writes nothing when any argument breaks its Input Validation rules.

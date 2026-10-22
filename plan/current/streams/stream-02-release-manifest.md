@@ -4,10 +4,10 @@ kind: stream
 start-commit: "2baa848"
 status: at-join
 phase: P2
-requirements: [req-002]
-stories: [US-002]
-id-blocks: "req-002, ADR-010 to ADR-014, backlog 0000133 to 0000135"
-updated: "2026-10-22T05:51:00Z"
+requirements: [req-002, req-008]
+stories: [US-002, US-008]
+id-blocks: "req-002, req-008, ADR-010 to ADR-014, backlog 0000133 to 0000135"
+updated: "2026-10-22T05:57:02Z"
 ---
 # Stream State: stream-02-release-manifest
 
@@ -21,6 +21,7 @@ updated: "2026-10-22T05:51:00Z"
 ## Files changed
 
 - `plan/current/requirements/req-002-product-yml-in-p7.md`
+- `plan/current/requirements/req-008-sanctioned-scripts.md`
 - `plan/current/adr/ADR-010-product-yml-set-in-p7-by-script.md`
 - `plan/current/adr/ADR-011-hard-limit-8-sanctioned-scripts.md`
 
@@ -29,7 +30,7 @@ updated: "2026-10-22T05:51:00Z"
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
 
-None. `SET-PRODUCT-RELEASE-SCRIPT`, `SHIP-P7-PRODUCT-YML-STEP`, and `TEST-0000035-REQ-002-SUITE` serve req-002 only.
+None. `SET-PRODUCT-RELEASE-SCRIPT`, `SHIP-P7-PRODUCT-YML-STEP`, and `TEST-0000035-REQ-002-SUITE` serve req-002 only. `TEST-0000035-REQ-008-SUITE` and the boot template sentence serve req-008 only.
 
 ## Consumes
 
@@ -37,4 +38,4 @@ None. `SET-PRODUCT-RELEASE-SCRIPT`, `SHIP-P7-PRODUCT-YML-STEP`, and `TEST-000003
 
 ## Next step
 
-P3: build req-002.
+P3: build req-002 and req-008.

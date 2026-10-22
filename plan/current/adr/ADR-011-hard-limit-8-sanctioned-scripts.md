@@ -17,7 +17,7 @@ Hard Limit 8 says every change to code and project files goes through **Write** 
 
 Skill text already runs fixed framework scripts that write files. The ship skill runs `archive-current.mjs` at P7 (0000033 ADR 010). The refresh-setup skill reruns `setup.sh`. The boot text doesn't name these as allowed, so the rule and the skills disagree.
 
-ADR-010 adds `set-product-release.mjs`. It writes `product.yml`, and no write gate judges that write. Risk R-020 records the danger. A wrong root or a crafted argument would write past the gate.
+ADR-010 adds `set-product-release.mjs`. It writes `product.yml`, and no write gate judges that write. Risk R-020 records the danger. A wrong root or a crafted argument would write past the gate. Requirement req-008 holds the carve-out, its limits, and the argument rules that this ADR records.
 
 The boot files are build outputs. On every setup run, `write_boot_file` in `setup.sh` and `Write-PlanifestBootFile` in `setup.ps1` rewrite each boot file from its template (0000029 ADR 001). The root `CLAUDE.md` and `AGENTS.md` come from `standard-boot.md`, and the root `.gitignore` lists both.
 

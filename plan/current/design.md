@@ -16,7 +16,8 @@
   - US-005: As the human on the loop, I rely on `ratchet-check` to find the active loop from any subfolder, so that a weakening write is blocked wherever the agent runs it. (0000109)
   - US-006: As the human on the loop, I rely on the gates to ignore a `.git` marker planted under an always-permitted name, so that a moved folder can't become a new root. (0000114)
   - US-007: As the human on the loop, I see every migration stay in `planifest-framework/migrations/` with its run state recorded in `plan/_migrations/`, so that the framework repo and each downstream project track their own runs. (0000126)
-- Acceptance criteria confirmed: 13 (see `feature-brief.md`)
+  - US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script. (0000124)
+- Acceptance criteria confirmed: 15 (see `feature-brief.md`)
 - Constraints:
   - 0000032 ADR 004: hooks use Node built-ins only, with no process spawn.
   - 0000033 ADR 009: Fast Path never admits an enforcement path.
@@ -36,7 +37,7 @@
 - Run mode: `autonomous`.
 
 ## Decisions added at P1
-- Hard Limit 8 carve-out: `set-product-release.mjs` writes `product.yml` as a sanctioned script. Both boot templates gain a `Sanctioned scripts:` sentence that names seven framework scripts (req-002). A P2 ADR records the rule.
+- Hard Limit 8 carve-out: `set-product-release.mjs` writes `product.yml` as a sanctioned script. Both boot templates gain a `Sanctioned scripts:` sentence that names seven framework scripts (req-008). A P2 ADR records the rule.
 - Acceptance-criteria limit: `consistency-check.mjs` allows up to 10 criteria per requirement, and the feature brief template asks for 3. From 4 to 10, the check prints a warning but doesn't fail. The human on the loop set this on 2026-10-22.
 
 ## Architecture Layer
@@ -74,7 +75,7 @@
   - A hook that enforces the post-P9 refusal (0000112).
   - Running the two downstream-only migrations in this repo.
 - Deferred: nothing deferred.
-- Release size: three-story rule (no `release-budget.yml`). Seven stories in one wave, by the choice of the human on the loop.
+- Release size: three-story rule (no `release-budget.yml`). Eight stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2.
 
 ## Assumptions
 - Claude Code passes `CLAUDE_PROJECT_DIR` to hooks - impact if wrong: the deleted-cwd fix falls back to the nearest existing parent only. 0000118 has not checked this live.
@@ -85,7 +86,7 @@
 - Resolving each path segment through links adds file-system calls to every hook call. Likelihood medium, impact low. The latency NFR and the existing length limits bound it.
 - A scope record left after an interrupted Fast Path keeps admitting writes to its paths. Likelihood medium, impact medium. The requirement must bound its life, for example by checking it against the branch or a timestamp.
 - A downstream project sees six old migrations as pending after refresh. Likelihood high, impact low. Each scan finds nothing on a compliant project.
-- Seven stories in one run exceed the three-story rule. Likelihood medium, impact medium. The run uses parallel work by file ownership.
+- Eight stories in one run exceed the three-story rule. Likelihood medium, impact medium. The run uses parallel work by file ownership.
 
 ## Dependencies
 - Upstream: 0000032 `path-rules.mjs` and the shell-write guard. 0000033 Fast Path admission.
@@ -104,6 +105,7 @@ None
 | REQ-005 - ratchet-check-shared-root | planifest-codegen-agent | `ratchet-check.mjs` imports the shared rules |
 | REQ-006 - no-planted-root-marker | planifest-codegen-agent | `markedRoot` trust rule, test first |
 | REQ-007 - migration-run-state | planifest-codegen-agent | Migrator and orchestrator text, file moves, records, suites |
+| REQ-008 - sanctioned-scripts | planifest-codegen-agent | Boot template sentence plus argument validation, test first |
 
 ## Repo Instructions
 - `custom-001-local-git-only.md`: fetch, pull, push, and `gh pr create` without asking. Work on a `feat/` branch. Committing to `main` and merging PRs stay human-only. Commit after every meaningful artifact write.
