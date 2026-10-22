@@ -62,6 +62,16 @@ A record with no matching migration file is ignored. It never makes a migration 
 
 Read the migration file. Output a one-paragraph summary: what it scans for, what it changes, which directories it covers.
 
+### Step 1b: Target check
+
+Read the `**Target:**` line near the top of the migration file. If the file has no such line, go to Step 2.
+
+1. Decide whether this project is the framework source. It is when the root `product.yml` has `id: "planifest-framework"`.
+2. If the line names only a downstream project and this project is the framework source, skip Steps 2 to 4. Don't run the Migrator Instructions.
+3. Record the outcome `not applicable` with both counts at `0` (Step 5). The body says that this project is the framework source.
+
+In every other case, go to Step 2.
+
 ### Step 2: Scan
 
 Scan the declared scope directories for matches as described in the migration file. Collect all findings before presenting any, recording the file path, line number, current value, and proposed correction for each.

@@ -29,7 +29,7 @@ As the human on the loop, I see this repo hold a run record for each of its eigh
 - P3 writes `not applicable` records for the two downstream-only migrations without running their Migrator Instructions:
   - `migrate-0.31.0-rerun-setup-for-shell-write-guard.md`
   - `migrate-remove-context-mode-and-telemetry.md`
-- For these two, the scan run here is the target check. P3 reads the `**Target:**` line at the top of each file. Both lines name a downstream project. This repo is the framework source, so the target check decides `not applicable`.
+- For these two, the scan run here is the target check. P3 reads the `**Target:**` line at the top of each file. Both lines name a downstream project. This repo is the framework source, so the target check decides `not applicable`. The migrator skill defines the check in Step 1b.
 - "From a scan run here" in the story and in AC-010.1 therefore covers all eight migrations. Six get a full scan, and two get the target check.
 - The record body for each of the two names the reason: this repo is the framework source.
 
