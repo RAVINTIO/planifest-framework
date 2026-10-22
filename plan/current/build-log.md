@@ -145,3 +145,6 @@ Streams formed (dependency test: stories that change the same file share a strea
 
 - P2 exchange (acceptance-criteria warning): A: "There should still be a warning above 3 and less than 10 though for feedback. Just not a hard block."
 - Decision (P2): `consistency-check.mjs` prints a `⚠` warning for 4 to 10 criteria and still exits 0. Above 10 stays a finding / reason: instruction from the human on the loop. Both governance suite copies pass, 96 tests each.
+- P2 exchange (story split): Q: why no story split before adding criteria? / A (orchestrator): the fold aimed at the count and skipped the split the brief template asks for. Offered a split of req-002 into req-002 (P7 update) and req-008 (sanctioned scripts). Awaiting the answer of the human on the loop.
+- P2 join: all three streams at-join with 15 ADRs (ADR-001 to ADR-008, ADR-010, ADR-011, ADR-015 to ADR-019). `stream-reconcile.mjs` exits 0. ADR-001 is the only stack ADR.
+- Backlog filed (P2): 0000130 (no check ties setup wiring files to the Fast Path enforcement list).
