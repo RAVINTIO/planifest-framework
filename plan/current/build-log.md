@@ -150,3 +150,6 @@ Streams (start commit `8375ca7`):
 - Streams returned ADR-001 to ADR-012 (stream 01: ADR-001 to ADR-004, stream 02: ADR-005 to ADR-007, stream 03: ADR-008 to ADR-012). `consistency-check.mjs` and `stream-reconcile.mjs` clean.
 - Backlog filed (P2): 0000167 (two rules disagree on who may write `.ratchet-approve`).
 - Decision (P2): the 0.34.0 migration targets the framework source too, and P3 re-runs setup here before it writes the `applied` record (ADR-007) / reason: this repo's installed hooks differ from source today.
+- Design critic P2 iteration 1: REJECT (0 critical, 2 major, 11 minor).
+- Decision (P2): NFR-003 and R-010 scope the no-spawn check to this feature's changes and allow the existing `git` spawn in `ratchet-check.mjs` by name / reason: removing that spawn is backlog 0000128, out of scope.
+- Decision (P2): this repo's setup re-run and the `applied` record move to the end of P6, after the last change to a setup-delivered file / reason: a P3 run would leave stale installed copies if P4 to P6 change a skill or hook.

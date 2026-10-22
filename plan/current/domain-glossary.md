@@ -32,7 +32,7 @@ version: "0.1.0"
 | Run-mode anchor | The recorded run-mode confirmation line in the build log. `run-mode.mjs` reads it. It is a bare line or one leading `- ` list item, and the bare line in a code block is the preferred form (US-004). | anchor | planifest-framework |
 | Run mode | The value in `plan/.run-mode`. It is `interactive`, `continuous`, or `autonomous`. This run is `autonomous`. | | planifest-framework |
 | One-commit rule | The rule that `run-mode.mjs` trusts the anchor only when one commit added it. A line added in a later commit reads as `interactive`. | | planifest-framework |
-| Hard limit | A numbered rule in a boot file or the orchestrator skill. Two rules share the number 8, so citations name the rule and the source. | Hard Limit | planifest-framework |
+| Hard limit | A numbered rule in a boot file or in a skill's `## Hard Limits` list, such as the orchestrator, ship agent, migrator, or loop runner. Two rules share the number 8, so citations name the rule and the source. | Hard Limit | planifest-framework |
 | Build-log rule | Orchestrator Hard Limit 8, which covers the build log. | | planifest-framework |
 | Write-or-Edit rule | Boot Hard Limit 8, which requires every change to code and project files through **Write** or **Edit**. | | planifest-framework |
 | Bare citation | A hard-limit citation that gives a number and no rule name, such as "Hard Limit 8". A suite fails on one (US-005). | | planifest-framework |
@@ -43,7 +43,7 @@ version: "0.1.0"
 | Split step | A step in the spec agent, the design critic rubric, and the loop runner fix dispatch. It fires when a requirement would reach a fourth criterion and asks whether it holds two concerns (US-007). | | planifest-framework |
 | Three-story rule | The release size limit of three stories when no `release-budget.yml` exists. This run exceeds it by choice. | | planifest-framework |
 | Wave | A group of features that ships together. This release has one wave of eleven stories. | | planifest-framework |
-| Non-regular file | Anything at a path that is not a regular file, such as a folder or a FIFO. A non-regular `plan/current/design.md` counts as no design (US-008). | | planifest-framework |
+| Non-regular file | Anything at a path that is not a regular file, such as a folder, a FIFO, or a symbolic link. A non-regular `plan/current/design.md` counts as no design (US-008). | | planifest-framework |
 | FIFO | A named pipe. Opening one waits for a writer, so the hook never opens a non-regular `design.md`. | named pipe | planifest-framework |
 | `lstat` | The call that reads a path's type without following links. It runs before any read of `design.md`. If it throws, the gate reads that as no design. | | planifest-framework |
 | Fail open | A hook outcome that allows the write because it hit an error it can't judge. It exits 0 (0000003 ADR-005). | | planifest-framework |
