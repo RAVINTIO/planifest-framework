@@ -168,14 +168,14 @@ Streams formed (dependency test: stories that change the same file share a strea
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T06:20:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T06:50:13Z` |
+| Wall-clock | `1813` |
 | Streams | `3` |
 | Model tier | primary |
 | Skills loaded | planifest-codegen-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `3` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Skills inbox empty. Live hooks run from the git-ignored copies under `.claude/hooks/`, so source edits can't block this session. |
 
 - Decision (P3): one codegen agent per stream, in one parallel batch. Stream 01 builds req-006, req-004, req-003, req-005, req-001, then req-009 in sequence, because each changes `path-rules.mjs`. Stream 02 builds req-002, then req-008. Stream 03 builds req-007, then req-010 / reason: inside each stream, every requirement changes a file the one before it changes.
@@ -200,3 +200,14 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Deviation (P3, unclassified): stream 03 also edited `planifest-framework/project-operations.md`, which FR-007.10 requires.
 - Decision (P3): add `./README.md` to the `design.md` Component Paths, then make the FR-007.10 README edit and restore its suite check / reason: req-007 requires the README change, and the path list missed it. This resolves the README deviation above. The check failed first, then passed.
 - Exception waiting count after the stream 03 join: three. The req-010 suite now passes 45 of 45.
+- Stream 01 at-join: req-006 (`cdc1a9d`), req-004 (`cf05b31`), req-003 (`cbdaba4`), req-005 (`67315b8`), req-001 (`76eead2`), and req-009 (`745961f`) GREEN, each RED first. New suites pass 23, 26, 35, 19, 99, and 101.
+- Deviation (P3, unclassified): `test-0000032-req-006-outside-repository-pass.sh` lines 364 to 366 and its regression copy now expect exit 2 for a deleted cwd writing `src/a.js`. req-004 planned this at P1.
+- Deviation (P3, unclassified): `resolveRoot` also returns `null` when the cwd walk stops where `realpathSync` fails and `CLAUDE_PROJECT_DIR` gives no root. ADR-006 names `null` only for a non-string cwd. The extra case keeps the spec's fail-open exit 0 there.
+- Deviation (P3, unclassified): `workflows/fast-path.md` writes the scope record in a named sub-step at the end of step 1, not a new numbered step. Steps 5 and 6 keep the numbers that ADR-002, `scope.md`, and the execution plan cite.
+- Deviation (P3, unclassified): the ratchet suites `test-0000016-pipeline-governance.sh`, `test-0000017-req-002-ratchet-approve.sh`, and both regression copies gained `unset CLAUDE_PROJECT_DIR`. The ratchet now reads that variable, so they failed inside a Claude Code session. They sit outside the req-005 file list.
+- Deviation (P3, unclassified): `resolveTarget` returns `outside` for a path too long to judge, which keeps the existing warn-and-allow result. Both gates check the length limit before they call it. ADR-005 doesn't name this case.
+- Deviation (P3, unclassified): the admitted-write notice reads `[Planifest] Fast Path: admitted '<relPath>' through plan/.fast-path-scope.`, shared by both hooks. req-001 gave `[planifest] gate-write: admitted ...` as an example.
+- Decision (P3): leave orchestrator skill line 161 as it is / reason: it names part of the enforcement list, stays true, and line 172 points to the full list in `fast-path.md`.
+- P3 join: all three streams at-join. `planifest-framework/component.yml` set to `0.33.0` with feature `0000035-write-gate-scope-and-path-hardening`. `run-tests.sh` exits 0: 88 feature suites and 31 regression suites pass. `stream-reconcile.mjs` exits 0, and `consistency-check.mjs` reports clean.
+- Gate (P3): passed. Every requirement has a GREEN suite. Three exceptions wait for the human on the loop (req-010 migrations).
+- Progress: P3 done at 2026-10-22T06:50:13Z: ten requirements built test first, 88 feature suites green, three migration exceptions waiting
