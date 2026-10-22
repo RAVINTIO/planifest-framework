@@ -236,3 +236,10 @@ Dispatch plan by file ownership (start commit `e248df9`):
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | Two reviewers in one batch: hooks (req-008, req-009, req-011, req-010) and scripts plus skill text (req-001 to req-007). |
+
+- Review (scripts): High. S-1 High: the build-log template holds the anchor at column 1, so a copied build log carries an anchor. S-3, S-5, S-6 Medium. S-2, S-4, S-7 Low.
+- Review (hooks): Medium. Finding 2 Medium: an oversize regular `design.md` fails the gate open (pre-existing). Finding 1 Low: a link swapped in after `lstat` fails open. Findings 3 to 7 Low and pre-existing or accepted.
+- Backlog filed (P5): 0000178 (oversize `design.md` fails open), 0000179 (`.gitattributes` can hide hook diffs), 0000180 (re-run-setup migrations run before the provenance gate).
+- Decision (P5): fix S-1 to S-6 and hooks findings 1 and 2 in this feature / reason: each sits in code or text this feature changed. Hooks finding 2 is pre-existing, but the fix is one size check in the same function, and it closes backlog 0000178.
+- Decision (P5): accept S-7 and hooks findings 3 to 7 / reason: each is Low and pre-existing or accepted in an ADR. Backlog 0000179 and 0000180 track two of them.
+- Three fix agents in one batch, by file group: gate (`path-rules.mjs`), run-mode (script, template, suite), and drift check plus orchestrator step plus migration.
