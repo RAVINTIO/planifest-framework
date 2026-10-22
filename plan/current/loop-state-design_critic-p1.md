@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p1"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "done"
+status: "active"
 ---
 # Loop State: design_critic-p1
 
@@ -18,8 +18,8 @@ status: "done"
 | Iteration | `1` of cap `3` |
 | Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `done` |
-| Last updated | `2026-10-22T05:49:00Z` |
+| Last decision | `reopened` |
+| Last updated | `2026-10-22T06:02:00Z` |
 
 ---
 
@@ -52,6 +52,11 @@ status: "done"
 - **Resolution (2026-10-22):** the human on the loop raised the limit to 10 criteria, with 3 preferred. req-002 keeps six criteria, and `consistency-check.mjs` reports clean. A fresh critic instance now reviews approach 2.
 - **Verdict (approach 2 critic):** APPROVE, 0 critical, 0 major, 5 minor, in `plan/current/design-critic-p1-approach-2.md`. The orchestrator fixed all five minors in req-002, the risk register, `design.md`, and the glossary. `consistency-check.mjs` reports clean.
 - **Decision:** done: the P1 gate passes.
+
+### Re-run after the req-002 split (2026-10-22T06:02:00Z)
+- **Approach:** 2, iteration count reset for a re-run that the human on the loop requested.
+- **Action:** the human on the loop asked for req-002 to split into req-002 and req-008 (US-008), then for P1 and P2 to repeat by assessing the existing work. A fresh critic instance reviews the P1 artifacts after the split.
+- **Observation:** pending.
 
 ---
 
