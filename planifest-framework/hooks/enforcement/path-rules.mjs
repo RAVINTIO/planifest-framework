@@ -18,22 +18,29 @@
  *     because those prefixes are always permitted and anyone can plant one.
  *     Nor does a marker with an always-permitted basename, such as
  *     claude.md, in its path below a higher marked folder (0000035 ADR-008).
- *   - Both sides of the root comparison are real paths, with symbolic links
- *     resolved. A missing target resolves through its nearest existing parent.
- *   - plan/.orchestrator-active and plan/current/design.md are looked up from
- *     the root, not from cwd.
+ *     A cwd that no longer exists walks up to its nearest existing folder
+ *     (0000035 ADR-006).
+ *   - Both sides of the root comparison are real paths. A target resolves
+ *     one segment at a time through symbolic links, with a 40-hop limit, and
+ *     a resolution error for a path inside the root blocks (0000035 ADR-005).
+ *   - plan/.orchestrator-active, plan/current/design.md, and
+ *     plan/.fast-path-scope are looked up from the root, not from cwd.
  *   - Comparisons use the 0000009-ADR-005 normalisation: forward slashes and
  *     lower case.
  *
  * Exports:
  *   resolveRoot(cwd)                 real repository root, or null if cwd is unusable
- *   resolveTarget(root, cwd, target)  { kind: inside | outside | unresolvable } for a target
+ *   resolveTarget(root, cwd, target) { status: inside | outside | unresolvable } for a target
  *   toRootRelative(root, cwd, target) root-relative path, or null when outside the root
  *   hookCwd(input)                   the folder a hook judges from, or null
- *   evaluateWrite(root, relPath)     { allowed, reason?, warning? } for a root-relative path
- *   judgeWrite(cwd, target)          resolveRoot, toRootRelative, and evaluateWrite in one call
+ *   evaluateWrite(root, relPath)     { allowed, reason?, warning?, notice? } for a root-relative path
+ *   judgeWrite(cwd, target)          resolveRoot, resolveTarget, and evaluateWrite in one call
  *   unjudgeable(base, target)        a warning when the path is too long to judge, or null
  *   norm(p)                          the shared comparison normalisation
+ *   parseScopeRecord(text)           the Fast Path scope record fields, or { error }
+ *   readGitState(root)               { branch, head } read from .git files, or { error }
+ *   isEnforcementPath(relPath)       whether FAST_PATH_ENFORCEMENT_PATHS covers relPath
+ *   FAST_PATH_ENFORCEMENT_PATHS      paths no scope record admits (0000035 ADR-004)
  */
 
 import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
