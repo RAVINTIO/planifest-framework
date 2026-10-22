@@ -21,16 +21,22 @@ As the human on the loop in a downstream project, I get a migration that re-runs
 
 - A setup-delivered file is a framework file that `setup.sh` or `setup.ps1` copies into a tool folder or writes into a boot file. These count:
   - each `skills/*/SKILL.md`, with the `scripts/`, `assets/`, and `references/` folders that setup copies beside it
-  - each template, standard, and schema that a skill bundles through `bundle_templates` or `bundle_standards`, and every file in `schemas/`
+  - every file in `templates/`
+  - every top-level file in `standards/`, but not `standards/reference/`
+  - every file in `schemas/`
   - each `hooks/enforcement/*.mjs` file and each `hooks/adapters/` file
-  - `templates/standard-boot.md` and `templates/cursor-boot.md`
   - each `workflows/*.md` file
   - the hook wiring that setup writes into a tool's settings file
+- The template and standard rules follow what setup does, not what the manifests name. `copy_skills()` in `setup.sh` (lines 111-148) works like this:
+  - If a skill's `bundle_templates` key is absent or empty, setup copies every file in `templates/` into that skill's `assets/templates/`. The same fallback applies to `bundle_standards` and the top-level standards.
+  - Six skills omit `bundle_templates`, and three set it to `[]`. Nine skills omit `bundle_standards`. So each install carries every template and every top-level standard.
+  - The orchestrator's `SKILL.md` starts with a UTF-8 byte order mark. The `awk '/^---$/'` parse never finds its frontmatter, so `setup.sh` ignores its `bundle_templates` key and copies every template. `setup.ps1` reads the key. Backlog 0000170 covers that defect.
+- A `bundle_templates` or `bundle_standards` list never narrows the set. The copy-all fallback reaches every file, so a change to any of them needs a re-run.
 - Git hooks in `hooks/` don't count. Git runs them in place through `core.hooksPath`, so they need no re-run.
 
 ### FR-001.2 What 0.33.0 changed
 
-The 0000035 merge (`5c7859a`) changed these setup-delivered files against `2253e80`. The 0.33.0 release shipped no re-run-setup migration for them.
+The 0000035 merge (`5c7859a`) changed these setup-delivered files against `2253e80`. The 0.33.0 release shipped no re-run-setup migration for them. The list comes from `git diff --name-only 2253e80 5c7859a`, filtered by the FR-001.1 definition. That diff changes no file in `standards/`, `schemas/`, or `hooks/adapters/`.
 
 | File | Change |
 |------|--------|
@@ -43,7 +49,8 @@ The 0000035 merge (`5c7859a`) changed these setup-delivered files against `2253e
 | `skills/planifest-migrator/SKILL.md` | Record step and target check |
 | `skills/planifest-orchestrator/SKILL.md` | migration run state in Resume Detection |
 | `skills/planifest-ship-agent/SKILL.md` | P7 product release step |
-| `templates/feature-brief.template.md` | bundled by the orchestrator |
+| `templates/feature-brief.template.md` | template change, copied into skill `assets/templates/` folders |
+| `templates/product.template.yml` | template change, copied by the copy-all fallback |
 | `workflows/fast-path.md` | Fast Path scope record |
 
 0000034 (0.32.0) changed no setup-delivered file, so the migration doesn't name 0.32.0.
@@ -57,9 +64,12 @@ The migration names the setup-delivered files that this release changes. The exp
 - `hooks/enforcement/gate-write.mjs`, if req-008 changes it
 - `templates/standard-boot.md` and `templates/cursor-boot.md`, which cite hard limits by name (req-005)
 - the skills that the other requirements change, including the ship agent, orchestrator, loop runner, spec agent, and design critic
-- the bundled templates that change, including `loop-toggles.template.yml` (req-006) and the build-log template (req-004)
+- each template that changes, including `loop-toggles.template.yml` (req-006) and `build-log.template.md` (req-004)
+- each top-level standard that changes, such as `framework-update-policy.md` (FR-001.6)
 
-Before P3 closes, the agent compares this list with `git diff --name-only main` and adds any setup-delivered file it missed. New scripts in `planifest-framework/scripts/`, such as `skill-drift-check.mjs` (req-002), stay in place and aren't setup-delivered.
+No skill names `build-log.template.md` in its `bundle_templates` list. It is setup-delivered because the copy-all fallback in FR-001.1 copies it. The same reasoning covers every other template and top-level standard.
+
+Before P3 closes, the agent compares this list with `git diff --name-only main` and adds any setup-delivered file it missed. It applies the FR-001.1 rules to each path in that diff. It never filters the diff by the `bundle_templates` or `bundle_standards` lists. New scripts in `planifest-framework/scripts/`, such as `skill-drift-check.mjs` (req-002), stay in place and aren't setup-delivered.
 
 ### FR-001.4 The migration file
 
@@ -87,7 +97,12 @@ A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and th
 
 ### FR-001.6 Update policy
 
-- `planifest-framework/standards/framework-update-policy.md` gains a section on setup-delivered files. It defines them as FR-001.1 does.
+- `planifest-framework/standards/framework-update-policy.md` gains a section on setup-delivered files. It defines them as FR-001.1 does:
+  - each skill's `SKILL.md`, with its `scripts/`, `assets/`, and `references/` folders
+  - every file in `templates/` and `schemas/`, and every top-level file in `standards/`
+  - each enforcement hook, hook adapter, and workflow file
+  - the hook wiring that setup writes into a settings file
+- The section says that setup copies every template and top-level standard when a skill's `bundle_templates` or `bundle_standards` key is absent or empty. So a release can't treat a template or standard as safe because no manifest names it.
 - The section states this sentence: "A release that changes a setup-delivered file ships a re-run-setup migration."
 - The section also says that one migration may cover several releases when an earlier release shipped none.
 
