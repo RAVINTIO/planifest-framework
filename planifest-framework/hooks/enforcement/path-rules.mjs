@@ -445,7 +445,7 @@ export const FAST_PATH_ENFORCEMENT_PATHS = Object.freeze([
   ".codex/config.toml",
   "opencode.json",
   ".opencode/plugins/@planifest/opencode-hooks/",
-  // Tool-local settings files that a tool also loads hooks from
+  // Tool-local settings files, which can also register or turn off hooks
   ".claude/settings.local.json",
   "opencode.jsonc",
 ]);
