@@ -44,7 +44,7 @@ version: "0.1.0"
   - `lstat` runs before any read. A folder, FIFO, or other non-regular file counts as no design, and a `src/` write blocks with exit 2.
   - The hook never opens a non-regular `design.md`.
   - If `lstat` throws, for example with `EACCES`, or a regular file can't be read, the hook fails open.
-  - An ADR narrows 0000003 ADR-005 for the non-regular case only.
+  - An ADR narrows 0000003 ADR 005 for the non-regular case only.
 - Permitted names in enforcement paths (US-009): the always-permitted shortcut skips paths inside the enforcement list. Those paths take the normal route through the design scope or the Fast Path scope verdict. A suite covers both cases with and without `design.md`.
 - Test runner (US-010): `run-tests.sh` clears `CLAUDE_PROJECT_DIR` before any suite. The four gate-related suites that lack it clear the variable for a standalone run. A suite checks both.
 - Escaped hook output (US-011): `ratchet-check.mjs` and `em-dash-guard.mjs` print quoted text through `shown()`. `shown()` never cuts an escape sequence in half at its length cap. Suite cases cover a control character, U+202E, and an over-long value.

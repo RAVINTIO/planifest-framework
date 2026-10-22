@@ -22,9 +22,9 @@
   - US-011: As the human on the loop, I see every hook message escape the text it quotes, so that a crafted criterion or path can't forge or hide hook output. (0000149)
 - Acceptance criteria confirmed: 30 (see `feature-brief.md`)
 - Constraints:
-  - 0000035 ADR-001 and 0000032 ADR-004: hooks use Node built-ins only, with no process spawn.
-  - 0000003 ADR-005: hooks fail open on unexpected errors. US-008 narrows it for a non-regular `design.md` only.
-  - 0000033 ADR-009: Fast Path never admits an enforcement path.
+  - 0000035 ADR 001 and 0000032 ADR 004: hooks use Node built-ins only, with no process spawn.
+  - 0000003 ADR 005: hooks fail open on unexpected errors. US-008 narrows it for a non-regular `design.md` only.
+  - 0000033 ADR 009: Fast Path never admits an enforcement path.
   - Every change goes through **Write** or **Edit**.
 - Integrations: none
 
@@ -37,10 +37,10 @@
 - Hard-limit citations (US-005): cite by name and source, for example "the build-log rule (orchestrator Hard Limit 8)" and "the Write-or-Edit rule (boot Hard Limit 8)". No renumbering.
 - Design critic default (US-006): an absent key reads as `report-only` outside `autonomous`, as the entry suggests. `autonomous` stays `on`. Moving the default to `on` waits until the false-positive rate is known. An ADR records the change.
 - Split step (US-007): the step fires when a requirement would reach a fourth criterion. It asks whether the requirement holds two concerns. If it does, the agent splits it into a new requirement and story.
-- Non-regular `design.md` (US-008): `lstat` runs before any read. Anything other than a regular file counts as no design. An ADR narrows 0000003 ADR-005 for this case only. A failed read of a regular file still fails open.
+- Non-regular `design.md` (US-008): `lstat` runs before any read. Anything other than a regular file counts as no design. An ADR narrows 0000003 ADR 005 for this case only. A failed read of a regular file still fails open.
 - Permitted names (US-009): the always-permitted shortcut skips paths inside the enforcement list. Those paths take the normal route, through the design scope or the Fast Path scope verdict. Every other path behaves as before.
 - Drift check outcomes (US-002, from Scope Lock flags): exit 0 when every copy matches, 1 on drift or a missing copy, and 2 when it can't compare. A project with no installed copies reports "not installed" with exit 1 and a setup recommendation. If the active tool is unknown, the check covers every installed tool folder it finds. The orchestrator runs the check again after any setup run in the same session.
-- `lstat` failure (US-008, from Scope Lock flags): only a successful `lstat` that shows a non-regular file blocks. If `lstat` itself throws, for example with `EACCES`, the hook fails open under 0000003 ADR-005.
+- `lstat` failure (US-008, from Scope Lock flags): only a successful `lstat` that shows a non-regular file blocks. If `lstat` itself throws, for example with `EACCES`, the hook fails open under 0000003 ADR 005.
 - Anchor fallback (US-004, from Scope Lock flags): a forged, uncommitted, or missing anchor reads as `interactive`, as `run-mode.mjs` does today.
 - Toggle file (US-006, from Scope Lock flags): a missing `loop-toggles.yml` reads the same as a missing key. Critic verdicts go to the build log, with no dismissal step.
 - Migration on a fresh 0.34.0 install (US-001): the migration still applies. Setup is safe to re-run, and the migrator writes the record only when the run completes.
