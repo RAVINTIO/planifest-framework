@@ -44,15 +44,16 @@ As the human on the loop, I see the design critic review P1 and P2 in every run 
 ### Text to change
 
 - `planifest-framework/skills/planifest-loop-runner/SKILL.md` Toggle Protocol: the absent-key bullet at `:27` and the sentence at `:39` state the `report-only` default for `design_critic` outside `autonomous`.
-- `planifest-framework/templates/loop-toggles.template.yml`: the header lines `:7` and `:17` and the commented `design_critic` line at `:28` state the new default. The line stays commented out, so copying the file sets no explicit value.
+- `planifest-framework/templates/loop-toggles.template.yml`: the header lines `:7`, `:8-9`, and `:17` and the commented `design_critic` line at `:28` state the new default. The line stays commented out, so copying the file sets no explicit value.
+- Lines `:8-9` say that zero-config behaviour is identical to a pipeline without loop support. That claim stops being true, because the design critic now runs in `report-only` with no file. The lines state that exception.
 - `planifest-framework/skills/planifest-orchestrator/SKILL.md:596`: the design-critic paragraph states the default in each run mode and the build-log record.
 - `planifest-framework/standards/autonomous-run-standards.md:110`: the toggle-defaults bullet says the `design_critic` default outside `autonomous` is `report-only`.
 - `docs/architecture-overview.md:122`: the loop-layer sentence no longer says that an absent file turns every loop off.
-- `docs/decisions-index.md:171`: the 0000016 ADR 003 row notes the amendment by this feature's ADR.
+- `docs/decisions-index.md:171`: the 0000016 ADR 003 row ("Loop Toggles in planifest-overrides/loop-toggles.yml") notes the amendment by this feature's ADR. The row also says "absent = all off", and the edit corrects that phrase for `design_critic`.
 
 ### Decision record
 
-- A P2 ADR records the new default and amends 0000016 ADR 003 and 0000033 ADR 004.
+- A P2 ADR records the new default and amends 0000016 ADR 003 and 0000033 ADR 004. The `docs/decisions-index.md:171` row points to it.
 - The ADR states why the default stops at `report-only`. Moving it to `on` waits until the critic's false-positive rate is known.
 - The ADR names the cost: one extra critic subagent at each of the P1 and P2 gates outside `autonomous`.
 

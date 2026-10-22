@@ -21,7 +21,8 @@ As the human on the loop, I see `run-tests.sh` clear `CLAUDE_PROJECT_DIR` before
 
 - `resolveRoot` reads `CLAUDE_PROJECT_DIR` first (`path-rules.mjs:311`), and `hookCwd` falls back to it (`path-rules.mjs:417`). A suite run inside a Claude Code session inherits the variable, so a hook under test can find the real repo as its root.
 - `planifest-framework/tests/run-tests.sh` never mentions the variable. It runs each `tests/test-*.sh` through `run_suite` (`run-tests.sh:13-25`, `:31-33`) and each `tests/regression/test-*.sh` in a second loop (`:49-58`).
-- 25 suite files clear the variable themselves. These suites name an enforcement hook file and don't clear it:
+- 25 suite files under `planifest-framework/tests/` and `planifest-framework/tests/regression/` mention `CLAUDE_PROJECT_DIR`. Only 21 of them hold an `unset CLAUDE_PROJECT_DIR` line (checked with `grep -rl`). The other four are the 0000035 suites `test-0000035-req-002-product-yml-in-p7.sh` and `test-0000035-req-008-sanctioned-scripts.sh`, each with a regression copy. They set the variable for single hook calls and never unset it.
+- These suites name an enforcement hook file and don't clear it:
   - `tests/test-0000005-framework-governance.sh`
   - `tests/test-0000009-rail-tightening.sh`
   - `tests/test-0000028-req-002-shared-module-extraction.sh`
