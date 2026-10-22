@@ -282,5 +282,5 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Decision (P5): send the seven round 2 items to backlog and stop the review rounds / reason: none is above Low, none comes from a fix, and the orchestrator set this stop rule before round 2.
 - Backlog filed (P5): 0000149 (escape remaining hook output), 0000150 (`set-product-release.mjs` keeps other bytes), and 0000151 (promote script partial state and read race). 0000148 widened to cover a lone CR.
 - Gate (P5): passed. Overall risk after fixes Medium, down from High. Open Medium items each have an owner: G-S04 (0000144), G-S05 (0000146), G-S08 (accepted, R-005), G-S12 (0000143), and P-S13 (accepted, R-021, 0000141). G-S08 and P-S13 rest on accepted risk, so the PR names them for the human on the loop.
-- Progress: P5 done at 2026-10-22T08:15:36Z: two High bypasses closed, 23 findings fixed over two batches, risk Medium
+- Progress: P5 done at 2026-10-22T08:15:36Z: two High bypasses closed, 19 findings fixed over two batches, risk Medium
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
