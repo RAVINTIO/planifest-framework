@@ -45,7 +45,7 @@ version: "0.1.0"
 | Wave | A group of features that ships together. This release has one wave of eleven stories. | | planifest-framework |
 | Non-regular file | Anything at a path that is not a regular file, such as a folder or a FIFO. A non-regular `plan/current/design.md` counts as no design (US-008). | | planifest-framework |
 | FIFO | A named pipe. Opening one waits for a writer, so the hook never opens a non-regular `design.md`. | named pipe | planifest-framework |
-| `lstat` | The call that reads a path's type without following links. It runs before any read of `design.md`. If it throws, the hook fails open. | | planifest-framework |
+| `lstat` | The call that reads a path's type without following links. It runs before any read of `design.md`. If it throws, the gate reads that as no design. | | planifest-framework |
 | Fail open | A hook outcome that allows the write because it hit an error it can't judge. It exits 0 (0000003 ADR-005). | | planifest-framework |
 | Always-permitted name | A path the gate never blocks for lack of a design, such as `plan/`, `docs/`, or a file like `claude.md`. Inside an enforcement path it gets no shortcut (US-009). | always-permitted path, permitted name | planifest-framework |
 | Enforcement path | A path the framework gates whatever a scope record lists, such as `planifest-framework/hooks/`. Fast Path never admits one (0000033 ADR-009). | enforcement list, gated path | planifest-framework |
