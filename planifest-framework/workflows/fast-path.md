@@ -13,7 +13,7 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
   - an existing feature with code at `src/{component-id}/`
   - a change with no `src/` target, such as a change to documentation, governance, tooling, or framework text
 - The request meets **ALL** Fast Path criteria (verified by the orchestrator)
-- The change touches none of these enforcement paths. `FAST_PATH_ENFORCEMENT_PATHS` in `planifest-framework/hooks/enforcement/path-rules.mjs` lists the same entries. The gate checks them, ignoring case, before any scope record, so a record never admits one. An entry ending in `/` covers everything below it, and a `**/` entry matches at any depth:
+- The change touches none of these enforcement paths. `FAST_PATH_ENFORCEMENT_PATHS` in `planifest-framework/hooks/enforcement/path-rules.mjs` lists the same entries. The gate checks them, ignoring case, before any scope record, so a record never admits one. An always-permitted file name, such as `claude.md`, still passes without a record, even inside an enforcement folder (backlog 0000159). An entry ending in `/` covers everything below it, and a `**/` entry matches at any depth:
   - `planifest-framework/hooks/`
   - `planifest-framework/scripts/`
   - `planifest-framework/setup/`, whose per-tool scripts write the hook wiring files

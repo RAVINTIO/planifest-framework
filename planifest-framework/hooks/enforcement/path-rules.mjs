@@ -34,7 +34,6 @@
  * Exports:
  *   resolveRoot(cwd)                 real repository root, or null if cwd is unusable
  *   resolveTarget(root, cwd, target) { status: inside | outside | unresolvable } for a target
- *   resolveTargetText(root, cwd, target) the same, with .. collapsed as text first (G-S01)
  *   resolveTargetBoth(root, cwd, target) the physical and text placements, deduplicated
  *   hookCwd(input)                   the folder a hook judges from, or null
  *   evaluateWrite(root, relPath)     { allowed, reason?, warning?, notice? } for a root-relative path
@@ -355,7 +354,7 @@ export function resolveTarget(root, cwd, target) {
  * moves where the write lands. The shell guard keeps resolveTarget, because
  * the kernel runs a shell redirect's .. through links.
  */
-export function resolveTargetText(root, cwd, target) {
+function resolveTargetText(root, cwd, target) {
   return placeTarget(root, cwd, target, true);
 }
 
