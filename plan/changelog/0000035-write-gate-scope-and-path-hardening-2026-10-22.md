@@ -2,7 +2,7 @@
 
 **Feature:** Write gate scope and path hardening
 **Pipeline run:** P0 to P9 in `autonomous` mode. No phases skipped.
-**PR:** pending
+**PR:** https://github.com/planifest/planifest-framework/pull/61 (draft, 11 exceptions waiting)
 
 ## What Was Built
 
