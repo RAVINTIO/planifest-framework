@@ -210,6 +210,37 @@ assert_equals "0" "$?" "req-003: bad JSON on stdin still fails open"
 
 # =============================================================================
 echo ""
+echo "=== req-003: gate-write also judges the path with .. collapsed as text (G-S01) ==="
+
+# The Write tool collapses .. as text before the system follows any link. With
+# docs/L -> ../plan/x/y, docs/L/../../src/a.js lands in src/a.js, not plan/src/a.js.
+mkdir -p "$FX/plan/x/y" "$FX/docs"
+ln -s ../plan/x/y "$FX/docs/L"
+run_gate "$FX" "docs/L/../../src/a.js"
+assert_equals "2" "$CODE" "req-003: gate-write blocks docs/L/../../src/a.js with no design"
+assert_contains "No confirmed design" "$ERR" "req-003: gate-write judges docs/L/../../src/a.js as src/a.js"
+run_gate "$FX" "$(native "$FX")/docs/L/../../src/a.js"
+assert_equals "2" "$CODE" "req-003: gate-write blocks the absolute form of docs/L/../../src/a.js"
+# The shell runs .. through the link, as the kernel does, so it lands in plan/.
+run_guard "$FX" "touch docs/L/../../src/a.js"
+assert_equals "0" "$CODE" "req-003: the shell guard keeps the physical walk, which lands in plan/src/a.js"
+
+# Under a current scope record, the text-collapsed path still meets the enforcement list.
+FXR="$WORK/repo-record"
+mkdir -p "$FXR/plan/current" "$FXR/plan/x/y" "$FXR/docs" "$FXR/src" "$FXR/.claude"
+git init -q "$FXR" >/dev/null 2>&1
+git -C "$FXR" -c user.name=t -c user.email=t@t -c commit.gpgsign=false commit -q --allow-empty -m init --no-verify >/dev/null 2>&1
+printf 'branch: %s\nhead: %s\npaths:\n- src/a.js\n' \
+  "$(git -C "$FXR" rev-parse --abbrev-ref HEAD)" "$(git -C "$FXR" rev-parse HEAD)" > "$FXR/plan/.fast-path-scope"
+ln -s ../plan/x/y "$FXR/docs/L"
+run_gate "$FXR" "docs/L/../../.claude/settings.json"
+assert_equals "2" "$CODE" "req-003: gate-write blocks docs/L/../../.claude/settings.json under a scope record"
+assert_contains "enforcement path" "$ERR" "req-003: gate-write judges docs/L/../../.claude/settings.json as .claude/settings.json"
+run_gate "$FXR" "src/a.js"
+assert_equals "0" "$CODE" "req-003: control, the record still admits src/a.js"
+
+# =============================================================================
+echo ""
 echo "=== req-003: path-rules.mjs exports resolveTarget and spawns nothing ==="
 
 RULES_SRC="$(cat "$PATH_RULES")"

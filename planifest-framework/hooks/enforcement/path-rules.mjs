@@ -23,6 +23,9 @@
  *   - Both sides of the root comparison are real paths. A target resolves
  *     one segment at a time through symbolic links, with a 40-hop limit, and
  *     a resolution error for a path inside the root blocks (0000035 ADR-005).
+ *     The Write and Edit gates also judge the target with .. collapsed as
+ *     text first, as those tools place it, and block if either verdict
+ *     blocks (G-S01). The shell guard keeps the physical walk only.
  *   - plan/.orchestrator-active, plan/current/design.md, and
  *     plan/.fast-path-scope are looked up from the root, not from cwd.
  *   - Comparisons use the 0000009-ADR-005 normalisation: forward slashes and
@@ -31,6 +34,8 @@
  * Exports:
  *   resolveRoot(cwd)                 real repository root, or null if cwd is unusable
  *   resolveTarget(root, cwd, target) { status: inside | outside | unresolvable } for a target
+ *   resolveTargetText(root, cwd, target) the same, with .. collapsed as text first (G-S01)
+ *   resolveTargetBoth(root, cwd, target) the physical and text placements, deduplicated
  *   toRootRelative(root, cwd, target) root-relative path, or null when outside the root
  *   hookCwd(input)                   the folder a hook judges from, or null
  *   evaluateWrite(root, relPath)     { allowed, reason?, warning?, notice? } for a root-relative path
@@ -317,13 +322,52 @@ function within(root, abs) {
  * characters of target and never prints link text.
  */
 export function resolveTarget(root, cwd, target) {
+  return placeTarget(root, cwd, target, false);
+}
+
+/**
+ * Like resolveTarget, but collapses any .. in target as text first, against
+ * cwd as given, and then resolves the result through every link (G-S01). The
+ * Write and Edit tools place a target this way, so a link before a .. never
+ * moves where the write lands. The shell guard keeps resolveTarget, because
+ * the kernel runs a shell redirect's .. through links.
+ */
+export function resolveTargetText(root, cwd, target) {
+  return placeTarget(root, cwd, target, true);
+}
+
+/**
+ * Both placements of target from cwd, the physical one first (G-S01). Holds
+ * one entry when both land on the same path. The Write and Edit gates judge
+ * each entry and block when either verdict blocks.
+ */
+export function resolveTargetBoth(root, cwd, target) {
+  const physical = resolveTarget(root, cwd, target);
+  const text = resolveTargetText(root, cwd, target);
+  const same =
+    physical.status === text.status &&
+    (physical.status !== "inside" || norm(physical.relPath) === norm(text.relPath));
+  return same ? [physical] : [physical, text];
+}
+
+function placeTarget(root, cwd, target, textual) {
   if (typeof target !== "string" || !target || typeof cwd !== "string") return { status: "outside" };
   if (unjudgeable(cwd, target)) return { status: "outside" }; // no slow file-system walk (F7)
   const textAbs = resolve(cwd, target);
   let abs;
   try {
-    const base = realPathOf(isAbsolute(cwd) ? cwd : resolve(cwd));
-    abs = realPathOf(absoluteText(base, target));
+    if (textual) {
+      // textAbs holds no .., so only its links resolve. A path below cwd
+      // resolves from cwd's real path, so cwd's links don't count as hops.
+      const textCwd = resolve(cwd);
+      const below = relative(textCwd, textAbs);
+      abs = below && !below.startsWith("..") && !isAbsolute(below)
+        ? realPathOf(realPathOf(textCwd) + sep + below)
+        : realPathOf(textAbs);
+    } else {
+      const base = realPathOf(isAbsolute(cwd) ? cwd : resolve(cwd));
+      abs = realPathOf(absoluteText(base, target));
+    }
   } catch (err) {
     if (!(err instanceof ResolutionError)) throw err;
     if (within(root, textAbs) === null && within(root, err.reached) === null) return { status: "outside" };
@@ -735,9 +779,16 @@ export function judgeWrite(cwd, target) {
   if (tooLongWarning) return { allowed: true, warning: tooLongWarning };
   const root = resolveRoot(cwd);
   if (!root) return { allowed: true, outside: true };
-  const placed = resolveTarget(root, cwd, target);
-  if (placed.status === "unresolvable") return { allowed: false, reason: placed.reason, root };
-  if (placed.status === "outside") return { allowed: true, outside: true };
-  const { relPath } = placed;
-  return { ...evaluateWrite(root, relPath), root, relPath };
+  // Judge the physical placement and the text-collapsed one, and block when
+  // either blocks (G-S01). An allowed verdict inside the root wins over outside.
+  let allowed = null;
+  for (const placed of resolveTargetBoth(root, cwd, target)) {
+    if (placed.status === "unresolvable") return { allowed: false, reason: placed.reason, root };
+    if (placed.status === "outside") continue;
+    const { relPath } = placed;
+    const verdict = { ...evaluateWrite(root, relPath), root, relPath };
+    if (!verdict.allowed) return verdict;
+    allowed ??= verdict;
+  }
+  return allowed ?? { allowed: true, outside: true };
 }

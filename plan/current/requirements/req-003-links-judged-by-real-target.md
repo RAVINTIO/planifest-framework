@@ -26,7 +26,12 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 - `resolveTarget` resolves a relative target against `cwd`, and `cwd` itself goes through the same resolution.
 - It walks the absolute path one segment at a time from the file-system root. It calls `lstatSync` on each existing segment.
 - If a segment is a symbolic link, it reads the link with `readlinkSync` and puts the link text in place of that segment. It resolves a relative link text against the real folder that holds the link. An absolute link text restarts the walk at its own root.
-- A `..` segment moves to the real parent of the real path resolved so far. `resolveTarget` never collapses `..` as text before it resolves the segments to its left. This matches how the operating system resolves the path when the write runs.
+- A `..` segment moves to the real parent of the real path resolved so far. `resolveTarget` never collapses `..` as text before it resolves the segments to its left. This matches how the kernel resolves a shell redirect or a shell command's path.
+- The **Write** and **Edit** tools place a target another way. They collapse `..` as text against `cwd` first, and only then does the system follow links (P5 finding G-S01). With `docs/L` a link to `../plan/x/y`, `docs/L/../../src/a.js` lands in `src/a.js`.
+- `path-rules.mjs` exports `resolveTargetText(root, cwd, target)`, which collapses `..` as text first and then resolves the result through links. It returns the same three results as `resolveTarget`.
+- `path-rules.mjs` exports `resolveTargetBoth(root, cwd, target)`. It returns the physical and the text placements, or one entry when both land on the same path.
+- `judgeWrite`, and so `gate-write.mjs`, judges each placement. It blocks if either verdict blocks.
+- `shell-write-guard.mjs` keeps the physical walk only, because the kernel resolves a shell path physically.
 - If `lstatSync` reports `ENOENT` or `ENOTDIR`, the segment and every segment after it are missing. `resolveTarget` appends the missing segments to the real path so far and collapses any `..` among them as text.
 - A dangling link resolves to its target path. The gate judges that target, not the link path.
 - The hop limit is 40 links per call, the Linux `MAXSYMLINKS` value. A link that leads back to a path already in its own chain counts as a loop.
@@ -54,6 +59,8 @@ As the human on the loop, I rely on the gates to judge where a write lands after
   - a chain of 41 links
   - a chain of 10 links into `plan/`, which passes
   - a link under `plan/` to a file outside the root, which passes
+  - `docs/L/../../src/a.js` with `docs/L` a link to `../plan/x/y`, which `gate-write.mjs` blocks with no design
+  - `docs/L/../../.claude/settings.json` under a current scope record, which `gate-write.mjs` blocks as an enforcement path
 - The suite skips the link cases with a clear message when the platform can't create symbolic links, such as Windows without developer mode.
 
 ### Non-functional

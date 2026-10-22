@@ -20,6 +20,7 @@ The write gates already find the root through `resolveRoot` in `path-rules.mjs` 
 ## Decision
 
 - **Import:** `ratchet-check.mjs` imports `resolveRoot` and `resolveTarget` from `path-rules.mjs`. It keeps no root or path logic of its own.
+- **Both placements (P5 finding G-S01):** The hook takes `resolveTarget` through `resolveTargetBoth`, which adds the placement with `..` collapsed as text. It guards any placement that lands on a `plan/current/` artifact.
 - **cwd:** It takes the stdin `cwd`, then `process.cwd()`, then `CLAUDE_PROJECT_DIR`, as `gate-write.mjs` does.
 - **Paths:** It finds `plan/current/`, `.ratchet-approve`, and `plan/ratchet-audit-log.md` under the shared root. It reads the current file from the root plus `relPath`. Its path checks and exemptions compare the normalised `relPath` (0000009 ADR 005).
 - **Pass cases:** It passes with exit 0 when the root is `null`, the target is `outside`, or the target is `unresolvable`. `gate-write.mjs` already blocks an `unresolvable` target, so a second block adds nothing.

@@ -23,6 +23,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 - The hook takes `cwd` from the stdin `cwd` field. It falls back to `process.cwd()`, then to `CLAUDE_PROJECT_DIR`, as `gate-write.mjs` does under req-004.
 - The hook finds `plan/current/`, `plan/current/.ratchet-approve`, and `plan/ratchet-audit-log.md` under the root from `resolveRoot`, not under `process.cwd()`.
 - The hook resolves `file_path` with `resolveTarget(root, cwd, file_path)`. A relative `file_path` resolves against `cwd`.
+- The hook calls `resolveTarget` through `resolveTargetBoth`, which also returns the placement with `..` collapsed as text, as the **Write** tool places it (P5 finding G-S01). The hook guards each placement that lands on a `plan/current/` artifact and blocks if either check blocks.
 - The hook reads the current file content from the root plus `relPath`, not from `resolve(filePath)`.
 - The `plan/current/` and `.md` checks, and the exemptions for `loop-state-*`, `ratchet-log.md`, and `build-log.md`, compare the normalised `relPath`. That uses the 0000009 ADR 005 forward-slash and lower-case form.
 - The hook passes with exit 0 in these cases:

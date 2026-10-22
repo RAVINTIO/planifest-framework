@@ -117,6 +117,18 @@ else
   echo "  SKIP: req-005: this platform can't create symbolic links"
 fi
 
+# The Write tool collapses .. as text, so docs/L/../../plan/current/req.md
+# lands in plan/current/req.md even with docs/L -> ../plan/x/y (G-S01).
+FXT="$(make_fixture textual)"
+mkdir -p "$FXT/plan/x/y" "$FXT/docs"
+if ln -s ../plan/x/y "$FXT/docs/L" 2>/dev/null; then
+  run_ratchet "$FXT" "$FXT" "docs/L/../../plan/current/req.md" "$BETA" ""
+  assert_equals "2" "$CODE" "req-005: removing a criterion through docs/L/../../plan/current/req.md exits 2"
+  assert_contains "Ratchet: this write weakens plan/current/req.md" "$ERR" "req-005: the ratchet judges the text-collapsed path"
+  run_ratchet "$FXT" "$FXT" "docs/L/../../plan/current/req.md" "$BETA" "$GAMMA"
+  assert_equals "0" "$CODE" "req-005: adding a criterion through the same path exits 0"
+fi
+
 # A target outside the root passes.
 mkdir -p "$WORK/outside/plan/current"
 cp "$FX/plan/current/req.md" "$WORK/outside/plan/current/req.md"

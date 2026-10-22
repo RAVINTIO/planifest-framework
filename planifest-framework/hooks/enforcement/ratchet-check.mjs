@@ -8,6 +8,8 @@
  * Root and target (0000035 ADR-007): the hook finds the repository root with
  * resolveRoot and the target with resolveTarget from path-rules.mjs, so it
  * guards plan/current/ from any subfolder. It keeps no path rules of its own.
+ * It judges both placements from resolveTargetBoth, the physical one and the
+ * one with .. collapsed as text, as the Write tool places it (G-S01).
  *
  * Armed only while a loop or reversal is in flight: a plan/current/loop-state-*.md
  * file with status "active" exists. When disarmed, every write passes.
@@ -55,7 +57,7 @@ import {
 } from "node:fs";
 import { join, normalize, relative } from "node:path";
 
-import { hookCwd, norm as normPath, resolveRoot, resolveTarget } from "./path-rules.mjs";
+import { hookCwd, norm as normPath, resolveRoot, resolveTargetBoth } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const AUDIT_LOG_REL = join("plan", "ratchet-audit-log.md");
@@ -207,35 +209,46 @@ async function main() {
   const projectRoot = resolveRoot(cwd);
   if (!projectRoot) process.exit(0);
   // An outside target passes. An unresolvable one passes too, because
-  // gate-write.mjs already blocks it with exit 2.
-  const placed = resolveTarget(projectRoot, cwd, filePath);
-  if (placed.status !== "inside") process.exit(0);
-  const relPath = placed.relPath;
+  // gate-write.mjs already blocks it with exit 2. The Write tool collapses ..
+  // as text, so the hook judges both placements from resolveTargetBoth and
+  // guards any that lands on a plan/current/ artifact (G-S01).
   const planCurrent = join(projectRoot, "plan", "current");
-
-  // Only guard plan/current/ markdown artifacts (not the state/log files
-  // themselves). The checks compare the 0000009-ADR-005 form.
-  const normRel = normPath(relPath);
-  if (!normRel.startsWith("plan/current/") || !normRel.endsWith(".md")) process.exit(0);
-  const base = normRel.split("/").pop() ?? "";
-  if (/^loop-state-/.test(base) || base === "ratchet-log.md" || base === "build-log.md") process.exit(0);
+  const guarded = resolveTargetBoth(projectRoot, cwd, filePath)
+    .filter((placed) => placed.status === "inside" && isGuardedArtifact(placed.relPath));
+  if (!guarded.length) process.exit(0);
 
   // Armed only while a loop is active
   if (!loopActive(planCurrent)) process.exit(0);
 
+  for (const { relPath } of guarded) checkWeakening(toolInput, projectRoot, planCurrent, relPath);
+  process.exit(0);
+}
+
+// isGuardedArtifact: whether relPath is a plan/current/ markdown artifact,
+// not a state or log file. The checks compare the 0000009-ADR-005 form.
+function isGuardedArtifact(relPath) {
+  const normRel = normPath(relPath);
+  if (!normRel.startsWith("plan/current/") || !normRel.endsWith(".md")) return false;
+  const base = normRel.split("/").pop() ?? "";
+  return !(/^loop-state-/.test(base) || base === "ratchet-log.md" || base === "build-log.md");
+}
+
+// checkWeakening: blocks with exit 2 when the write removes a guarded line
+// from relPath and no committed approval covers it. Returns otherwise.
+function checkWeakening(toolInput, projectRoot, planCurrent, relPath) {
   let currentText = null;
-  try { currentText = readFileSync(join(projectRoot, relPath), "utf-8"); } catch { process.exit(0); }
+  try { currentText = readFileSync(join(projectRoot, relPath), "utf-8"); } catch { return; }
 
   const next = proposedContent(toolInput, currentText);
-  if (next === null) process.exit(0);
+  if (next === null) return;
 
   const before = guardedLines(currentText);
   const after = new Set(guardedLines(next));
   const removed = before.filter((l) => !after.has(l));
-  if (removed.length === 0) process.exit(0); // strengthening or neutral
+  if (removed.length === 0) return; // strengthening or neutral
 
   const consumption = consumeApproval(planCurrent, projectRoot, relPath);
-  if (consumption.outcome === "consumed") process.exit(0);
+  if (consumption.outcome === "consumed") return;
 
   let reason;
   if (consumption.outcome === "uncommitted") {

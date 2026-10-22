@@ -29,10 +29,14 @@ Hooks fail open on unexpected errors (0000003 ADR 005). A link loop would then p
   - A link segment gets the link text in its place. Relative text resolves against the link's real folder.
   - A `..` moves to the real parent of the path resolved so far. It never collapses as text before the segments to its left resolve.
   - From the first `ENOENT` or `ENOTDIR`, the remaining segments append as text. A dangling link therefore resolves to its target.
+- **Two placements (P5 finding G-S01):** The physical walk matches the kernel, which resolves a shell path. The **Write** and **Edit** tools collapse `..` as text first, and the system then follows the links that remain. So the two can land on different files.
+  - `resolveTargetText` collapses `..` as text against `cwd`, then resolves the result through links.
+  - `resolveTargetBoth` returns both placements. `judgeWrite` and `ratchet-check` judge each one and block if either verdict blocks.
+  - `shell-write-guard.mjs` keeps the physical walk only.
 - **Hop limit:** 40 links per call, the Linux `MAXSYMLINKS` value. A link that returns to a path in its own chain counts as a loop.
 - **Fail-closed line:** A loop, a chain past 40, or an error such as `EACCES`, `EIO`, or `ELOOP` gives `unresolvable` in two cases. Either the target as text lies inside the root, or the real path reached before the error does. Both gates block `unresolvable` with exit 2 and name the cause on stderr.
 - **Outside the line:** If both paths lie outside the root, the result is `outside` and the write passes. Errors outside path resolution keep exit 0 (0000003 ADR 005).
-- **Callers:** `judgeWrite`, `gate-write.mjs`, and `shell-write-guard.mjs` call `resolveTarget`. `toRootRelative` keeps its signature for existing callers.
+- **Callers:** `shell-write-guard.mjs` calls `resolveTarget`. `judgeWrite`, and so `gate-write.mjs`, calls `resolveTargetBoth`. `toRootRelative` keeps its signature for existing callers.
 - **Existing limit first:** The `MAX_PATH_CHARS` and `MAX_PATH_SEGMENTS` check still runs first and keeps its warn-and-allow result (0000032 finding F7). After each link substitution, a path past either limit counts as `unresolvable` when it started inside the root.
 - **Logging:** The block reason shows the first 80 characters of the target the hook received. It never prints link text.
 
