@@ -78,6 +78,7 @@ Setup is safe to re-run. A fresh 0.34.0 install still runs this migration, and t
    - Setup exits 0 for each tool.
    - The drift check exits 0.
    - Every installed enforcement hook matches its source.
+   - Setup reported no malformed settings file and no missing Node. Setup still exits 0 when it skips hook wiring for a malformed settings file.
 8. If the run completed, record the outcome at `plan/_migrations/migrate-0.34.0-rerun-setup.md`. On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop.
 
 ---

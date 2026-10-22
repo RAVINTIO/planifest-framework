@@ -173,8 +173,10 @@ function parseArgs(argv) {
   throw new CantCompare("usage: node skill-drift-check.mjs [--root <dir>]");
 }
 
+// The reasons for a source SKILL.md that can't compare, by kind (re-review N-4).
 const SOURCE_REASONS = Object.freeze({
   link: "is a link",
+  folder: "is a folder",
   other: "isn't a regular file",
   oversize: `is over ${READ_CAP} bytes`,
 });
@@ -188,7 +190,8 @@ function sourceSkills(root) {
   const skillsDir = join(root, "planifest-framework", "skills");
   const dirKind = kindOf(skillsDir);
   if (dirKind !== "folder") {
-    const reason = dirKind === "missing" ? "ENOENT" : SOURCE_REASONS[dirKind] ?? "isn't a folder";
+    // A file, an oversize file, a FIFO, or any other non-folder isn't a folder (N-4).
+    const reason = dirKind === "missing" ? "ENOENT" : dirKind === "link" ? "is a link" : "isn't a folder";
     throw new CantCompare(`can't read the source skills folder ${shown(skillsDir, NAME_MAX)}: ${reason}`);
   }
   let names;

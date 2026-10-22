@@ -5,10 +5,10 @@
 #          opens it. A folder, FIFO, symbolic link, or other non-regular file
 #          reads as no design, and each block on that route gains the "not a
 #          regular file" line. A throwing lstatSync reads as no design with no
-#          extra line. A regular design.md that can't be read still fails open
-#          (ADR-002). A design.md swapped or removed between lstatSync and
-#          the open, and a regular design.md over the 1 MiB size cap, read
-#          as no design. The suite also holds the NFR-001 timed case and the
+#          extra line. A regular design.md whose open throws EACCES or EPERM
+#          still fails open (ADR-002). A design.md swapped or removed between
+#          lstatSync and the open, a socket among them, and a regular
+#          design.md over the 1 MiB size cap, read as no design. The suite also holds the NFR-001 timed case and the
 #          NFR-003 source check over five hook files (ADR-001).
 #
 # Every fixture lives under mktemp -d. The suite uses git to build fixtures.
@@ -255,15 +255,30 @@ echo "=== req-008: design.md swapped or removed between lstatSync and the open =
 # importers with syncBuiltinESMExports. Right after the first lstatSync call on
 # design.md returns, it swaps the file once. It then calls evaluateWrite on
 # src/a.js and exits 2 on a block, 0 on an admit. The reason goes to stderr.
-# Modes: link (open throws ELOOP), rm (ENOENT), notdir (ENOTDIR).
+# Modes: link (open throws ELOOP), rm (ENOENT), notdir (ENOTDIR), and sock
+# (a Unix socket, where open throws ENXIO on Linux and errno -102 on macOS).
+# The sock mode binds the socket with node:net before the import, then
+# renames it over design.md. It prints nosock and exits 3 if the bind fails.
 SWAP_JS='
 import fs from "node:fs";
+import net from "node:net";
 import { syncBuiltinESMExports } from "node:module";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-const [modPath, root, mode, linkTarget] = process.argv.slice(1);
+const [modPath, root, mode, linkTarget, sockPath] = process.argv.slice(1);
 const current = join(root, "plan", "current");
 const design = join(current, "design.md");
+let server;
+if (mode === "sock") {
+  try {
+    fs.rmSync(sockPath, { force: true });
+    server = net.createServer();
+    await new Promise((ok, fail) => { server.once("error", fail); server.listen(sockPath, ok); });
+  } catch {
+    process.stdout.write("nosock");
+    process.exit(3);
+  }
+}
 const original = fs.lstatSync;
 let swapped = false;
 fs.lstatSync = function (p, ...rest) {
@@ -276,6 +291,7 @@ fs.lstatSync = function (p, ...rest) {
     } else {
       fs.unlinkSync(design);
       if (mode === "link") fs.symlinkSync(linkTarget, design);
+      if (mode === "sock") fs.renameSync(sockPath, design);
     }
   }
   return result;
@@ -283,6 +299,7 @@ fs.lstatSync = function (p, ...rest) {
 syncBuiltinESMExports();
 const { evaluateWrite } = await import(pathToFileURL(modPath).href);
 const verdict = evaluateWrite(root, "src/a.js");
+if (server) server.close();
 process.stderr.write(verdict.reason ?? "");
 process.stdout.write("swapped=" + swapped);
 process.exit(verdict.allowed ? 0 : 2);
@@ -291,7 +308,7 @@ process.exit(verdict.allowed ? 0 : 2);
 # run_swap <mode>: runs the harness and sets CODE, ERR, and OUT.
 run_swap() {
   local errfile="$WORK/swap-stderr.txt"
-  OUT=$(node --input-type=module -e "$SWAP_JS" "$(native "$ENF/path-rules.mjs")" "$(native "$FX")" "$1" "$(native "$WORK/real-design.md")" 2>"$errfile")
+  OUT=$(node --input-type=module -e "$SWAP_JS" "$(native "$ENF/path-rules.mjs")" "$(native "$FX")" "$1" "$(native "$WORK/real-design.md")" "$(native "$WORK/s.sock")" 2>"$errfile")
   CODE=$?
   ERR=$(cat "$errfile")
 }
@@ -305,7 +322,7 @@ restore_current() {
 }
 
 printf '%s' "$DESIGN_TEXT" > "$WORK/real-design.md"
-for mode in link rm notdir; do
+for mode in link rm notdir sock; do
   reset_design
   printf '%s' "$DESIGN_TEXT" > "$DESIGN"
   if [ "$mode" = "link" ] && ! ln -s "$WORK/real-design.md" "$WORK/link-probe" 2>/dev/null; then
@@ -315,6 +332,10 @@ for mode in link rm notdir; do
   rm -f "$WORK/link-probe"
   run_swap "$mode"
   restore_current
+  if [ "$mode" = "sock" ] && [ "$OUT" = "nosock" ]; then
+    echo "  SKIP: req-008: Unix sockets are not available, so the swap-to-socket case can't run"
+    continue
+  fi
   assert_equals "swapped=true" "$OUT" "req-008: the swap harness swapped design.md after lstatSync (mode $mode)"
   assert_equals "2" "$CODE" "req-008: a design.md swapped after lstatSync (mode $mode) blocks src/a.js as no design"
   assert_equals "yes" "$(in_order "$NO_DESIGN" "$NOT_REGULAR" "$ERR")" "req-008: the swap block (mode $mode) gives the no-design reason, then the not-a-regular-file line"

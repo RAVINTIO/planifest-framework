@@ -79,7 +79,15 @@ On every session start, before taking any action:
 
 1b. **Check installed skills for drift** (0000036 ADR-005): run `node planifest-framework/scripts/skill-drift-check.mjs`. It compares each source `SKILL.md` with the active tool's installed copy. The check warns and never blocks. Never run setup yourself because of it.
    - **Exit 0:** report nothing and go on.
-   - **Exit 1 with `stale:` or `missing:` lines:** name each stale or missing skill to the human on the loop, and recommend a `planifest-refresh-setup` run. If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, load no source copy and only report the drift. Otherwise, for the rest of the session, load each one from its source copy at `planifest-framework/skills/{skill}/SKILL.md`, not from the installed copy.
+   - **Exit 1 with `stale:` or `missing:` lines:** name each stale or missing skill to the human on the loop, and recommend a `planifest-refresh-setup` run. Load source copies only in these two step 1a states:
+     - Step 1a ran in this session and found no framework update, and the build log records no rejected one.
+     - The human on the loop confirmed the framework update, with its provenance, in this session.
+
+     In either state, load each stale or missing skill from `planifest-framework/skills/{skill}/SKILL.md` for the rest of the session, not from the installed copy. In every other step 1a state, load no source copy and only report the drift. Those states include:
+     - a framework update that the human on the loop rejected or hasn't confirmed
+     - no recorded previous version, as in a first session
+     - a detection that couldn't run, such as an unreadable `component.yml`
+     - a step 1a that didn't run in this session
    - **Exit 1 with `not installed`:** recommend a run of `setup.sh` or `setup.ps1`.
    - **Exit 2:** report that the check couldn't compare, give its reason, and go on.
    - **After any setup run in this session:** run the check again. A `planifest-refresh-setup` run counts, and so does a re-run-setup migration such as `migrate-0.34.0-rerun-setup.md`.

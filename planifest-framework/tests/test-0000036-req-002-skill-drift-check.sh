@@ -348,6 +348,48 @@ fi
 run_drift --root
 assert_equals "2" "$CODE" "req-002: --root with no value exits 2"
 
+# N-4: each can't-compare reason names what sits at the path.
+FX="$(make_fixture folder-source)"
+mkdir -p "$FX/planifest-framework/skills/demo/SKILL.md" "$FX/.claude/skills/demo"
+printf 'x' > "$FX/.claude/skills/demo/SKILL.md"
+add_marker "$FX" .claude claude-code
+run_drift --root "$FX"
+assert_equals "2" "$CODE" "req-002: a folder at a source SKILL.md can't compare (N-4)"
+assert_contains "demo/SKILL.md is a folder" "$ERR" "req-002: the reason says the source SKILL.md is a folder (N-4)"
+assert_not_contains "undefined" "$ERR" "req-002: the folder reason never prints undefined (N-4)"
+
+FX="$WORK/file-skills"
+mkdir -p "$FX/planifest-framework" "$FX/.claude/skills/demo"
+printf 'x' > "$FX/planifest-framework/skills"
+printf 'x' > "$FX/.claude/skills/demo/SKILL.md"
+add_marker "$FX" .claude claude-code
+run_drift --root "$FX"
+assert_equals "2" "$CODE" "req-002: a regular file at planifest-framework/skills can't compare (N-4)"
+assert_contains "skills: isn't a folder" "$ERR" "req-002: the reason says a regular file at the skills folder isn't a folder (N-4)"
+
+FX="$WORK/oversize-skills"
+mkdir -p "$FX/planifest-framework" "$FX/.claude/skills/demo"
+head -c 1048577 /dev/zero > "$FX/planifest-framework/skills"
+printf 'x' > "$FX/.claude/skills/demo/SKILL.md"
+add_marker "$FX" .claude claude-code
+run_drift --root "$FX"
+assert_equals "2" "$CODE" "req-002: an oversize file at planifest-framework/skills can't compare (N-4)"
+assert_contains "skills: isn't a folder" "$ERR" "req-002: the reason says an oversize file at the skills folder isn't a folder (N-4)"
+
+if [ -z "${WINDIR:-}" ] && command -v mkfifo >/dev/null 2>&1; then
+  FX="$WORK/fifo-skills"
+  mkdir -p "$FX/planifest-framework" "$FX/.claude/skills/demo"
+  mkfifo "$FX/planifest-framework/skills"
+  printf 'x' > "$FX/.claude/skills/demo/SKILL.md"
+  add_marker "$FX" .claude claude-code
+  run_drift --root "$FX"
+  assert_equals "2" "$CODE" "req-002: a FIFO at planifest-framework/skills can't compare (N-4)"
+  assert_contains "skills: isn't a folder" "$ERR" "req-002: the reason says a FIFO at the skills folder isn't a folder (N-4)"
+  assert_not_contains "isn't a regular file" "$ERR" "req-002: the skills folder reason never says isn't a regular file (N-4)"
+else
+  echo "  SKIP: the FIFO skills folder case needs POSIX mkfifo"
+fi
+
 # =============================================================================
 echo ""
 echo "=== req-002: links, FIFOs, and oversize files (S-3, S-4) ==="
@@ -562,7 +604,18 @@ echo "=== req-002: orchestrator Resume Detection runs the check ==="
 RESUME="$(awk '/^## Resume Detection/{f=1; next} f&&/^## /{exit} f' "$ORCH")"
 assert_contains "skill-drift-check.mjs" "$RESUME" "req-002: Resume Detection names the drift script"
 assert_contains "planifest-refresh-setup" "$RESUME" "req-002: Resume Detection recommends planifest-refresh-setup"
-assert_contains "If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, load no source copy and only report the drift." \
+assert_contains "a framework update that the human on the loop rejected or hasn't confirmed" \
   "$RESUME" "req-002: step 1b loads no source copy after an unconfirmed framework update (S-5)"
+# N-3: step 1b loads source copies only in the two named step 1a states.
+assert_contains "Load source copies only in these two step 1a states:" \
+  "$RESUME" "req-002: step 1b names the only step 1a states that load source copies (N-3)"
+assert_contains "Step 1a ran in this session and found no framework update, and the build log records no rejected one." \
+  "$RESUME" "req-002: step 1b loads source copies when step 1a found no update in this session (N-3)"
+assert_contains "The human on the loop confirmed the framework update, with its provenance, in this session." \
+  "$RESUME" "req-002: step 1b loads source copies after an update confirmed in this session (N-3)"
+assert_contains "In every other step 1a state, load no source copy and only report the drift." \
+  "$RESUME" "req-002: every other step 1a state loads no source copy (N-3)"
+assert_equals "no" "$([[ "$RESUME" == *"Otherwise, for the rest of the session"* ]] && echo yes || echo no)" \
+  "req-002: step 1b no longer loads source copies by default (N-3)"
 
 print_summary

@@ -766,9 +766,12 @@ function scopeVerdict(root, relPath) {
 const DESIGN_OPEN_FLAGS =
   fsConstants.O_RDONLY | (fsConstants.O_NONBLOCK ?? 0) | (fsConstants.O_NOFOLLOW ?? 0);
 
-// Open errors that mean the file changed after lstatSync. ELOOP is the
-// O_NOFOLLOW error on Linux and macOS, and EMLINK is the FreeBSD one.
-const SWAPPED_OPEN_ERRORS = new Set(["ELOOP", "EMLINK", "ENOENT", "ENOTDIR"]);
+// The only open or fstat errors that fail open: a permission error on a
+// regular file, the accepted mode 000 class (ADR-002, backlog 0000162). Any
+// other error means the file changed after lstatSync or isn't one the gate
+// can read, such as ELOOP, EMLINK, ENOENT, ENOTDIR, ENXIO, or the macOS
+// socket errno -102 (security re-review N-1).
+const FAIL_OPEN_ERRORS = new Set(["EACCES", "EPERM"]);
 
 // A larger design.md reads as no design (ADR-002, backlog 0000178).
 const DESIGN_MAX_BYTES = 1048576;
@@ -792,11 +795,11 @@ function readFdCapped(fd, size) {
  * any open, so a FIFO or a device is never opened. Returns one of:
  *   { kind: "missing" }      lstatSync threw, such as ENOENT or EACCES
  *   { kind: "non-regular" }  a folder, FIFO, symbolic link, or other type, or
- *                            an open that threw ELOOP, EMLINK, ENOENT, or
- *                            ENOTDIR, because the file changed after lstatSync
+ *                            an open or fstat that threw any error other than
+ *                            EACCES or EPERM, such as ELOOP, ENOENT, or ENXIO
  *   { kind: "oversize" }     a regular file over DESIGN_MAX_BYTES
- *   { kind: "unreadable" }   a regular file whose open, fstat, or read threw
- *                            any other error, such as EACCES
+ *   { kind: "unreadable" }   a regular file whose open or fstat threw EACCES
+ *                            or EPERM, or whose read threw any error
  *   { kind: "regular", content }
  * The fstatSync on the open descriptor closes the gap between lstatSync and
  * the open. The size check runs before the read.
@@ -811,13 +814,15 @@ function readDesign(designPath) {
   if (!stats.isFile()) return { kind: "non-regular" };
   let fd;
   try {
+    let fdStats;
     try {
       fd = openSync(designPath, DESIGN_OPEN_FLAGS);
+      fdStats = fstatSync(fd);
     } catch (err) {
-      // A link or a removal swapped in after lstatSync (security review finding 1).
-      return SWAPPED_OPEN_ERRORS.has(err?.code) ? { kind: "non-regular" } : { kind: "unreadable" };
+      // A link, a socket, or a removal swapped in after lstatSync (security
+      // review finding 1, re-review N-1). Only a permission error fails open.
+      return FAIL_OPEN_ERRORS.has(err?.code) ? { kind: "unreadable" } : { kind: "non-regular" };
     }
-    const fdStats = fstatSync(fd);
     if (!fdStats.isFile()) return { kind: "non-regular" };
     if (fdStats.size > DESIGN_MAX_BYTES) return { kind: "oversize" };
     return { kind: "regular", content: readFdCapped(fd, fdStats.size) };
@@ -848,8 +853,9 @@ function readDesign(designPath) {
  *      A design.md that isn't a regular file, or that lstatSync can't read,
  *      counts as no design. Each block for a non-regular file gains a line
  *      that says so. A design.md over DESIGN_MAX_BYTES also counts as no
- *      design, and each block names the cap. A regular design.md that can't
- *      be read fails open
+ *      design, and each block names the cap. A regular design.md whose open
+ *      throws EACCES or EPERM, or whose read throws, fails open. Any other
+ *      open or fstat error counts as a non-regular file
  *      (0000036 ADR-002, which narrows 0000003-ADR-005).
  *   3. the component-path check, which warns and allows when design.md has no
  *      parseable paths section

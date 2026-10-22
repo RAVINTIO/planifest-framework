@@ -99,6 +99,7 @@ Before P3 closes, the agent compares this list with `git diff --name-only main` 
    - Setup exits 0 for each tool.
    - The drift check exits 0.
    - Every installed enforcement hook matches its source.
+   - Setup reported no malformed settings file and no missing Node. Setup still exits 0 when it skips hook wiring for a malformed settings file (P5 re-review N-2).
 8. If the run completed, record the outcome. On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop (P5 S-6).
 
 A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and the migrator writes the record only after a completed run. The `## Record` section repeats the completed-run rule. The req-001 suite asserts the rule's sentences in both sections.

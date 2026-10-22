@@ -31,6 +31,7 @@ ADR-006 decides that one migration covers 0.33.0 and 0.34.0. This ADR decides wh
    - Setup exits 0 for each tool.
    - The drift check exits 0.
    - Every installed enforcement hook matches its source.
+   - Setup reported no malformed settings file and no missing Node. Setup skips hook wiring for a malformed settings file and still exits 0, so the first three conditions alone can pass with the hooks unwired (P5 re-review N-2).
 
    On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop.
 6. The agent commits the record with the tracked `planifest-overrides/setup-config/claude-code.md` change that setup writes.

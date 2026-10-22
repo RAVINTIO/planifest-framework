@@ -172,6 +172,9 @@ assert_contains "Setup exits 0 for each tool." "$INSTRUCTIONS" "req-001: a compl
 assert_contains "The drift check exits 0." "$INSTRUCTIONS" "req-001: a completed run needs the drift check to exit 0"
 assert_contains "Every installed enforcement hook matches its source." "$INSTRUCTIONS" \
   "req-001: a completed run needs every installed hook to match its source"
+# N-2: setup exits 0 even when it skips hook wiring for a malformed settings file.
+assert_contains "Setup reported no malformed settings file and no missing Node." "$INSTRUCTIONS" \
+  "req-001: a completed run needs setup to report no malformed settings file and no missing Node"
 for text in "$INSTRUCTIONS" "$RECORD_SECTION"; do
   assert_contains "On any other result, the migrator records nothing, so the migration stays pending." "$text" \
     "req-001: any other result records nothing and leaves the migration pending"

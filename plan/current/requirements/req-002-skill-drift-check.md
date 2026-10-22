@@ -86,9 +86,12 @@ As the human on the loop, I see which installed skills differ from source when a
 - On exit 0, the step reports nothing and the session goes on.
 - On exit 1 with stale or missing copies, the orchestrator:
   1. names each stale or missing skill to the human on the loop
-  2. loads the source copy from `planifest-framework/skills/{skill}/SKILL.md` in place of the installed copy for the rest of the session
+  2. loads the source copy from `planifest-framework/skills/{skill}/SKILL.md` in place of the installed copy for the rest of the session, in the two step 1a states below only
   3. recommends a `planifest-refresh-setup` run
-- If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, the orchestrator loads no source copy. It only reports the drift (P5 S-5). An unconfirmed update is untrusted, so its source skills never replace the installed ones.
+- The orchestrator loads source copies only in two step 1a states (P5 re-review N-3):
+  - Step 1a ran in this session and found no framework update, and the build log records no rejected one.
+  - The human on the loop confirmed the framework update, with its provenance, in this session.
+- In every other step 1a state, the orchestrator loads no source copy. It only reports the drift (P5 S-5, N-3). Those states include a rejected or unconfirmed update and a first session with no recorded version. They also include a detection that couldn't run and a step 1a that didn't run. An unconfirmed update is untrusted, so its source skills never replace the installed ones.
 - On `not installed`, the orchestrator recommends a run of `setup.sh` or `setup.ps1`.
 - On exit 2, the orchestrator reports that the check couldn't compare, with its reason, and goes on.
 - The check warns and never blocks. The orchestrator never runs setup itself.
@@ -116,10 +119,13 @@ A new suite `planifest-framework/tests/test-0000036-req-002-skill-drift-check.sh
 - no installed copies: exit 1 with `not installed`
 - no valid marker: the script checks every skills folder it finds
 - a missing source skills folder: exit 2
+- a folder at a source `SKILL.md`: exit 2, with a reason that says it is a folder and never prints `undefined` (N-4)
+- a regular file, an oversize file, or a FIFO at `planifest-framework/skills`: exit 2, with a reason that says it isn't a folder (N-4)
 - a rewrite-list check: the suite reads the four path rewrites from the `sed` expressions in `setup.sh` `copy_skills()` and from the `-replace` calls in `setup.ps1` `Copy-PlanifestSkills`. It compares the from-and-to pairs as a set and asserts that the script's set matches each script's set (R-012). The two scripts apply the two `standards` rewrites in opposite orders, so an ordered compare can't match both.
 - the tool map: each entry matches `TOOL_SKILLS_DIR` in its `setup/{tool}.sh`
 - the orchestrator Resume Detection text names the script and `planifest-refresh-setup`
 - the Resume Detection text holds the sentence that loads no source copy after a rejected or unconfirmed framework update
+- the Resume Detection text names the two step 1a states that load source copies, loads no source copy in every other state, and has no default branch that loads them (N-3)
 - unsafe files, each run under a 5-second limit:
   - a FIFO at an installed `SKILL.md`: exit 1, stale
   - a FIFO marker: the marker isn't valid, and the fallback check exits 0

@@ -53,21 +53,22 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 
 | Open or `fstatSync` outcome | Route |
 |-----------------------------|-------|
-| The open throws `ELOOP`, `EMLINK`, `ENOENT`, or `ENOTDIR` | No design. The file was swapped or removed after `lstatSync`. `scopeVerdict` judges the write, and each block gains the "not a regular file" line. |
-| The open throws any other error, such as `EACCES` | Fail open, as `path-rules.mjs:780-781` does today. |
+| The open or `fstatSync` throws `EACCES` or `EPERM` | Fail open, as `path-rules.mjs:780-781` does today. |
+| The open or `fstatSync` throws any other error, such as `ELOOP`, `EMLINK`, `ENOENT`, `ENOTDIR`, `ENXIO`, or errno -102 | No design. The file was swapped or removed after `lstatSync`, or it isn't a file the gate can read. `scopeVerdict` judges the write, and each block gains the "not a regular file" line. |
 | `fstatSync` shows a non-regular file | No design, as "any other type". |
 | `fstatSync` shows a regular file over 1 MiB (1048576 bytes) | No design. `scopeVerdict` judges the write, and each block gains the size-cap line. |
 | `fstatSync` shows a regular file at or under 1 MiB | Read at most that many bytes, then run the component-path check. |
 
 - `ELOOP` is the `O_NOFOLLOW` error on Linux and macOS. `EMLINK` is the FreeBSD one.
+- A Unix socket swapped in after `lstatSync` makes the open throw `ENXIO` on Linux and errno -102 on macOS (security re-review N-1). An error code the gate doesn't know reads as no design, never as a pass.
 - The size check runs before the read. The read never takes more than the cap, even when the file grows after `fstatSync`.
 - The size-cap line reads `[Planifest] plan/current/design.md is over the 1 MiB size cap, so the gate treats it as no design.` and ends with a newline. Like the "not a regular file" line, it goes after the reason `scopeVerdict` returns, and an admit carries no such line.
-- A regular `design.md` whose `fstatSync` or read throws still fails open, as `path-rules.mjs:780-781` does today.
+- A regular `design.md` whose read throws still fails open, as `path-rules.mjs:780-781` does today. By then `fstatSync` has shown that the descriptor names a regular file.
 - The change touches only the `design.md` step of `evaluateWrite`. The sentinel check, the always-permitted step, and the component-path check keep their order and text.
 
 ### Decision record
 
-- An ADR in this feature's P2 set narrows 0000003 ADR 005 for this case only. It states that a non-regular file or a failed `lstatSync` reads as no design. A swap before the open and a file over the size cap read as no design too. Any other failure after `lstatSync` shows a regular file still fails open.
+- An ADR in this feature's P2 set narrows 0000003 ADR 005 for this case only. It states that a non-regular file or a failed `lstatSync` reads as no design. A swap before the open and a file over the size cap read as no design too. After `lstatSync` shows a regular file, only an `EACCES` or `EPERM` from the open or `fstatSync`, or a failed read, still fails open.
 - The ADR also records that a symbolic link at `design.md` now reads as no design.
 
 ### Out of scope
@@ -88,10 +89,11 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 - A control case with a regular, readable design that lists the target exits 0.
 - A timed case runs `gate-write.mjs` with a regular `design.md` and asserts it finishes under 500 ms (NFR-001).
 - A regular `design.md` with mode `000` exits 0, when the suite runs as a non-root account. The suite skips this case under root.
-- A swap harness imports `path-rules.mjs` with a wrapped `fs.lstatSync`, published through `syncBuiltinESMExports`. Right after `lstatSync` returns for a regular `design.md`, it changes the file once. It then calls `evaluateWrite` on `src/a.js`. It runs three modes:
+- A swap harness imports `path-rules.mjs` with a wrapped `fs.lstatSync`, published through `syncBuiltinESMExports`. Right after `lstatSync` returns for a regular `design.md`, it changes the file once. It then calls `evaluateWrite` on `src/a.js`. It runs four modes:
   - `link` swaps in a link to a design that lists `src/`, so the open throws `ELOOP`
   - `rm` removes the file, so the open throws `ENOENT`
   - `notdir` replaces `plan/current` with a file, so the open throws `ENOTDIR`
+  - `sock` renames a Unix socket, bound with `node:net` in the harness, over the file, so the open throws `ENXIO` or errno -102. The suite skips this mode if the bind fails.
 - Each swap mode blocks (exit 2) with `NO_DESIGN_REASON` followed by the "not a regular file" line.
 - An oversize case extends a design that lists `src/` to 2 MiB with `truncate -s 2M`. A **Write** to `src/a.js` exits 2 from both hooks, with `NO_DESIGN_REASON` followed by the size-cap line and no "not a regular file" line.
 - Two boundary cases check the cap. A `design.md` of exactly 1048576 bytes exits 0, and one of 1048577 bytes exits 2.

@@ -1,6 +1,6 @@
 ---
 title: "ADR 002: A non-regular design.md reads as no design"
-summary: "The write gate calls lstatSync on plan/current/design.md before any read. A folder, FIFO, symbolic link, other non-regular file, or a throwing lstatSync reads as no design. So does a file swapped or removed before the open, or a file over 1 MiB. Any other failed open or read of a regular file still fails open. This narrows 0000003 ADR 005."
+summary: "The write gate calls lstatSync on plan/current/design.md before any read. A folder, FIFO, symbolic link, other non-regular file, or a throwing lstatSync reads as no design. So does a file swapped or removed before the open, or a file over 1 MiB. A regular file whose open throws EACCES or EPERM, or whose read throws, still fails open. Any other open or fstat error reads as no design. This narrows 0000003 ADR 005."
 status: "accepted"
 version: "0.1.0"
 ---
@@ -38,9 +38,14 @@ req-008 serves US-008. It requires this ADR to narrow 0000003 ADR 005 and to rec
 
 - **Symbolic links:** A link at `design.md` reads as no design, even when it points at a regular file. `lstatSync` doesn't follow it, and its target could be a FIFO or a device. This is a change: today a link to a valid design admits writes the design covers.
 - **Open guard:** The gate opens a regular `design.md` once, with `O_RDONLY | O_NONBLOCK | O_NOFOLLOW`, using each flag only where `fs.constants` defines it. It calls `fstatSync` on the descriptor before it reads. If the descriptor isn't a regular file, the route is "any other type". This closes the window between `lstatSync` and the open, where another process could swap the file for a FIFO or a link. `O_NONBLOCK` stops the open waiting on a FIFO. `O_NOFOLLOW` makes the open fail on a swapped-in link.
-- **Swap after `lstatSync`:** If the open of a file that `lstatSync` showed as regular throws `ELOOP`, `EMLINK`, `ENOENT`, or `ENOTDIR`, the file changed in the window. A link was swapped in, or the file or its folder was removed or replaced. The route is then "any other type", and each block gains the "not a regular file" line. `ELOOP` is the `O_NOFOLLOW` error on Linux and macOS, and `EMLINK` is the FreeBSD one. This differs from `main`, where the gate follows a swapped-in link and a deletion fails open (P5 security review, finding 1).
+- **Swap after `lstatSync`:** If the open or `fstatSync` of a file that `lstatSync` showed as regular throws any error other than `EACCES` or `EPERM`, the route is "any other type". Each block then gains the "not a regular file" line. The file changed in the window, or it isn't a file the gate can read. The list is open-ended, and these are the known codes:
+  - `ELOOP` (the `O_NOFOLLOW` error on Linux and macOS) or `EMLINK` (the FreeBSD one), for a swapped-in link
+  - `ENOENT` or `ENOTDIR`, for a file or folder that someone removed or replaced
+  - `ENXIO` on Linux, or errno -102 on macOS, for a swapped-in Unix socket
+
+  The gate reads the error as a block, not a pass, so a code it doesn't know can't fail open. This differs from `main`, where the gate follows a swapped-in link and a deletion fails open (P5 security review, finding 1). The P5 re-review found that a socket swap failed open under the earlier list of four codes (N-1).
 - **Size cap:** After `fstatSync`, a regular `design.md` larger than 1 MiB (1048576 bytes) reads as no design. The check runs before the read. `scopeVerdict` judges the write, and each block gains the line `[Planifest] plan/current/design.md is over the 1 MiB size cap, so the gate treats it as no design.` A file at or under the cap is read for at most the size `fstatSync` gave, so a file that grows after the check can't push the read past the cap. Without the cap, a sparse file past Node's string limit throws in the read and fails open with no race (P5 security review, finding 2, backlog 0000178).
-- **Fail-open line:** If the open of a regular file throws any other error, such as `EACCES`, the write passes, as 0000003 ADR 005 requires. The same holds when `fstatSync` or the read throws.
+- **Fail-open line:** If the open or `fstatSync` of a regular file throws `EACCES` or `EPERM`, the write passes, as 0000003 ADR 005 requires. The same holds when the read throws, because the descriptor already names a regular file by then.
 - **Narrowing:** This ADR narrows 0000003 ADR 005 for the `design.md` step of `evaluateWrite` only. Every other unexpected error in the hooks still exits 0. `check-design.mjs` and `ratchet-check.mjs` keep their reads, and backlog 0000161 tracks them.
 - **Kept bypass:** An agent can run `chmod 000 plan/current/design.md`. The guarded open then throws `EACCES` on a file that `lstatSync` showed as regular, and the gate fails open with no race. This feature keeps that bypass under 0000003 ADR 005. Backlog 0000162 tracks it.
 - **Reason text:** The added line reads `[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.` and goes after the reason `scopeVerdict` returns. `scopeVerdict` stays unchanged, so the enforcement list still runs before the record (0000035 ADR 004).
@@ -59,7 +64,7 @@ req-008 serves US-008. It requires this ADR to narrow 0000003 ADR 005 and to rec
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | The `design.md` step of `evaluateWrite` gains `lstatSync`, the guarded open, and `fstatSync`. `gate-write.mjs` and `shell-write-guard.mjs` gain the rule with no change of their own. The step also gains the 1 MiB size cap. The req-008 suite covers these cases:<br>- a folder, a FIFO, and a link<br>- scope-record cases<br>- `EACCES` and an unreadable regular file<br>- a swap after `lstatSync`<br>- an oversize file |
+| planifest-framework | The `design.md` step of `evaluateWrite` gains `lstatSync`, the guarded open, and `fstatSync`. `gate-write.mjs` and `shell-write-guard.mjs` gain the rule with no change of their own. The step also gains the 1 MiB size cap. The req-008 suite covers these cases:<br>- a folder, a FIFO, and a link<br>- scope-record cases<br>- `EACCES` and an unreadable regular file<br>- a swap after `lstatSync`, a socket among them<br>- an oversize file |
 
 ## Consequences
 
