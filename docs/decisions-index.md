@@ -192,7 +192,7 @@ ADR files: [plan/_archive/0000017-ratchet-forgery-detection-and-telemetry-schema
 |-----|-------|--------|---------|
 | ADR-001 | Unify Telemetry Gating by Removing the --context-mode-mcp Coupling | superseded by 0000030-ADR-002 | Removes the `--context-mode-mcp` AND-condition from telemetry hook installation: `--structured-telemetry-mcp` alone becomes sufficient, closing the exact gap that caused 0000017's telemetry loss |
 | ADR-002 | Telemetry Failure Detection and Interactive Recovery | superseded by 0000030-ADR-002 | Hook-driven emission stays fire-and-forget (ADR-005, 0000003, unchanged) but now writes a durable failure marker on error, checked by the orchestrator at phase-start checkpoints; agent-driven emission stops and asks immediately inline. Human is asked once per distinct root cause per run |
-| ADR-003 | discovery.md Elevated to Hard Limit Status | accepted | discovery.md's existence-and-completeness requirement elevated to Hard Limit status, matching build-log.md's Hard Limit 8 pattern: a self-audit finding from this feature's own P0 |
+| ADR-003 | discovery.md Elevated to Hard Limit Status | accepted | discovery.md's existence-and-completeness requirement elevated to Hard Limit status, matching the pattern of the build-log rule (orchestrator Hard Limit 8): a self-audit finding from this feature's own P0 |
 
 ### Feature 0000019: self-description-and-session-hygiene-fixes
 
@@ -340,7 +340,7 @@ ADR files: [plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22
 | ADR-007 | ratchet-check uses the shared path rules | accepted | `ratchet-check.mjs` imports `resolveRoot` and `resolveTargetBoth` from `path-rules.mjs`, so it finds `plan/current/` from any subfolder. It passes an unresolvable target and leaves that block to `gate-write.mjs`. |
 | ADR-008 | Distrust markers under always-permitted names | accepted | `markedRoot` ignores a `.git` or `planifest-framework` marker below an always-permitted name. The walk goes on to the next trusted marker. |
 | ADR-010 | `product.yml` set in P7 by a script | accepted | The ship agent runs `set-product-release.mjs` after P7 Step 5 and before Step 6. The script applies each `versionPolicy` and exits 0, 2, 4, or 5. The ship agent owns `product.yml`. |
-| ADR-011 | Hard Limit 8 sanctioned scripts | accepted | Both boot templates carry one `Sanctioned scripts:` sentence that names seven fixed framework scripts. Each counts only with the arguments its skill step shows. No other script counts. |
+| ADR-011 | Sanctioned scripts in the Write-or-Edit rule (boot Hard Limit 8) | accepted | Both boot templates carry one `Sanctioned scripts:` sentence that names seven fixed framework scripts. Each counts only with the arguments its skill step shows. No other script counts. |
 | ADR-012 | Acceptance-criteria limit and warning | accepted | `consistency-check.mjs` allows up to 10 criteria per requirement. From 4 to 10 it warns and exits 0. Above 10 it reports a finding. The brief template still asks for 3. |
 | ADR-015 | Migration files never move | accepted | Every migration stays at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder goes away. Supersedes the archive step of 0000005-ADR-005. |
 | ADR-016 | Per-project migration run records | accepted | Each project records each run at `plan/_migrations/{stem}.md`. The frontmatter holds six fields and one outcome: `applied`, `not applicable`, or `skipped`. |

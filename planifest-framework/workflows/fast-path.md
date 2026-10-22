@@ -100,7 +100,7 @@ The orchestrator must confirm all four before this workflow is used:
    ```bash
    rm -f plan/.fast-path-scope
    ```
-   The root `.gitignore` also lists the record, as a second guard. The record is a session marker that no commit holds. Hard Limit 8 covers code and project files and gives no rule for this marker. This step follows the ship agent, which removes its session markers with `rm -f` in the same way. The shell-write guard passes this `rm`, because the gates always permit `plan/`. Then commit:
+   The root `.gitignore` also lists the record, as a second guard. The record is a session marker that no commit holds. The Write-or-Edit rule (boot Hard Limit 8) covers code and project files and gives no rule for this marker. This step follows the ship agent, which removes its session markers with `rm -f` in the same way. The shell-write guard passes this `rm`, because the gates always permit `plan/`. Then commit:
    ```
    fix(fast-path): {description}
    ```

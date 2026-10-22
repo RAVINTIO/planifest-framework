@@ -113,7 +113,7 @@ Generate the test report artifact before archiving.
 
 ### Step 5b: Set product.yml release fields
 
-Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `product.yml`. Write it only through `set-product-release.mjs`, never through **Write** or **Edit**. Hard Limit 8 names the script as a sanctioned script (0000035 ADR-011).
+Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `product.yml`. Write it only through `set-product-release.mjs`, never through **Write** or **Edit**. The Write-or-Edit rule (boot Hard Limit 8) names the script as a sanctioned script (0000035 ADR-011).
 
 1. Take `{version}` from the version the human on the loop confirmed in `plan/current/design.md` at P0. Run:
    ```bash
@@ -198,7 +198,7 @@ The `--untracked-files=all` flag lists each untracked file, not just its directo
   ```
   A non-zero exit refuses that file.
 
-Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
+Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
 - **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
@@ -382,7 +382,7 @@ plan/current/ is empty and ready for the next feature.
 
 Outside `autonomous`, list each P8 and P9 leftover below the clean-tree line, with the step or sub-agent that wrote it, where known. Then ask whether to commit and push them. The P9 gate already stops here, so this adds no new stop. The human on the loop may decline. Never leave a leftover unreported.
 
-If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline (Hard Limit 6).
+If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline. This follows the handover-track rule (ship agent Hard Limit 6).
 
 ### Step 12: Blocking context clear
 

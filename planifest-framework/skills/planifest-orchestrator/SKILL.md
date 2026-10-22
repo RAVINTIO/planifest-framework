@@ -332,7 +332,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
 1. **Write the sentinel**: write `plan/.orchestrator-active` containing the feature-id (or `pending` if the feature-id is not yet known). This unlocks `plan/current/` writes for the duration of the pipeline run. Update the file with the confirmed feature-id once it is known. Include this file in the P0 commit.
 
-2. **Create build log**: copy `planifest-framework/templates/build-log.template.md` to `plan/current/build-log.md`. Fill in the header fields: feature-id, start timestamp (ISO 8601 UTC), tool name, primary model name, cheaper model name. If `plan/current/build-log.md` already exists (resume), do not overwrite: append to it. At the start of every phase (P0–P9), append a new phase block to the build log before doing any phase work. Record: model tier used, skills loaded, agent count, MCP call count, parallel task batch count. This is mandatory: a missing phase block is a pipeline error (Hard Limit 8). At P7 after archiving, fill in the Summary table with totals.
+2. **Create build log**: copy `planifest-framework/templates/build-log.template.md` to `plan/current/build-log.md`. Fill in the header fields: feature-id, start timestamp (ISO 8601 UTC), tool name, primary model name, cheaper model name. If `plan/current/build-log.md` already exists (resume), do not overwrite: append to it. At the start of every phase (P0–P9), append a new phase block to the build log before doing any phase work. Record: model tier used, skills loaded, agent count, MCP call count, parallel task batch count. This is mandatory: a missing phase block is a pipeline error under the build-log rule (orchestrator Hard Limit 8). At P7 after archiving, fill in the Summary table with totals.
 
 3. **Load repo instructions**: check `planifest-overrides/instructions/` (if the directory exists). Read all `.md` files. Write their contents to `plan/current/design.md` under `## Repo Instructions` once design.md is created. If the directory is absent or empty, write `## Repo Instructions: None`.
 
@@ -367,7 +367,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
    **Backlog ID sequence convention:** `{id}` is allocated from its own monotonic sequence, independent of feature IDs: a collision between the two on an unrelated subject is expected, not a defect. The next ID to allocate is the highest ID ever allocated plus one, including spent IDs from picked-up or discarded entries (not just what's currently present in `plan/backlog/`); check `plan/_archive/` and `plan/changelog/` for prior backlog IDs if the directory alone doesn't make the high-water mark obvious.
 
-3d. **Write discovery.md** (Hard Limit 11): before the first coaching question, copy `planifest-framework/templates/discovery.template.md` to `plan/current/discovery.md` and populate it with the findings already gathered by steps 0–3c plus a `planifest-framework/skills-inbox/` scan: the shared header (adoption-mode result + signal, git pre-flight findings, skills-inbox result) and the mode-specific content defined per mode in the Adoption Modes section. Commit `discovery.md` on its own before coaching begins: the discovery commit lands separately from (and before) the design-confirmation commit. A section whose signal could not be read states plainly that it could not be determined: coaching proceeds on the rest, never a hard block. On resume within a still-in-progress run, if `discovery.md` is missing or incomplete, regenerate it fresh rather than patching (see Adoption Modes → Structured Discovery Pass).
+3d. **Write discovery.md** under the discovery rule (orchestrator Hard Limit 11): before the first coaching question, copy `planifest-framework/templates/discovery.template.md` to `plan/current/discovery.md` and populate it with the findings already gathered by steps 0–3c plus a `planifest-framework/skills-inbox/` scan: the shared header (adoption-mode result + signal, git pre-flight findings, skills-inbox result) and the mode-specific content defined per mode in the Adoption Modes section. Commit `discovery.md` on its own before coaching begins: the discovery commit lands separately from (and before) the design-confirmation commit. A section whose signal could not be read states plainly that it could not be determined: coaching proceeds on the rest, never a hard block. On resume within a still-in-progress run, if `discovery.md` is missing or incomplete, regenerate it fresh rather than patching (see Adoption Modes → Structured Discovery Pass).
 
    **Record samples:** if the brief already shows the design reads existing records, step 3d samples them into `## Record Samples`. If coaching reveals the dependency later, the orchestrator samples before it writes the design draft. It appends the rows to `## Record Samples` and commits `discovery.md` again. Each row becomes a design assumption.
 
@@ -568,7 +568,7 @@ Before presenting the confirmed design for confirmation, verify every item:
 - [ ] Version is confirmed and recorded (not lower than current `docs/about.md` version)
   - The human meets both items above by confirming the design that contains them.
 - [ ] Scope Lock Challenge is complete (all four scenario paths captured in build log)
-- [ ] `discovery.md` exists and is complete for the confirmed adoption mode (Hard Limit 11: redundant catch, independent of the enforcement at step 3d)
+- [ ] `discovery.md` exists and is complete for the confirmed adoption mode. This is a redundant catch for the discovery rule (orchestrator Hard Limit 11), independent of the enforcement at step 3d
 - [ ] Feature ID follows the format `{0000000}-{kebab-case-name}`
 
 If any item cannot be checked, coach the human on that specific gap before proceeding.
@@ -577,7 +577,7 @@ If any item cannot be checked, coach the human on that specific gap before proce
 
 ## Phase Conventions (apply to every phase below, P1–P7)
 
-- **Build log first:** append a phase block to `plan/current/build-log.md` before doing any phase work in that phase. A missing block is a pipeline error (Hard Limit 8).
+- **Build log first:** append a phase block to `plan/current/build-log.md` before doing any phase work in that phase. A missing block is a pipeline error under the build-log rule (orchestrator Hard Limit 8).
 - **Progress line:** each phase writes the progress line at its gate. In `autonomous`, every touchpoint also gets a touchpoint line. See `standards/autonomous-run-standards.md` `## Visibility`.
 - **Timestamps:** take every timestamp from `date -u +%Y-%m-%dT%H:%M:%SZ`, never from an estimate. `Wall-clock` is whole minutes from `Start` to `End`. If streams are active, the phase `Start` is the first stream's start and the `End` is the join gate.
 - **Before acting:** load that phase's skill now: do not begin phase work until you have read it.

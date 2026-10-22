@@ -113,6 +113,6 @@ Do NOT proceed to the next pipeline phase if any check is failing. The pipeline 
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
 
-## Commit Cadence (Hard Limit 7)
+## Commit cadence: the commit-cadence rule (orchestrator Hard Limit 7)
 
-Commit after every meaningful artifact write, not batched to the phase gate (see orchestrator Hard Limit 7).
+Commit after every meaningful artifact write, not batched to the phase gate. See the commit-cadence rule (orchestrator Hard Limit 7).

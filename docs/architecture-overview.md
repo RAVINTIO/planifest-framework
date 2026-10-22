@@ -296,9 +296,9 @@ The record is self-authorisation, so the gates add two controls:
 
 The ship agent sets `product.yml` `version` and `feature` in P7, after Step 5 and before Step 6 archives `design.md` (0000035-ADR-010). It runs `scripts/set-product-release.mjs`, which applies each `versionPolicy`. The script exits 0, 2, 4, or 5. It writes only `{root}/product.yml`, through a temp file and a rename. It imports `resolveRoot` from `path-rules.mjs` and clears `CLAUDE_PROJECT_DIR` for that call.
 
-### Hard Limit 8 sanctioned scripts
+### Sanctioned scripts: the Write-or-Edit rule (boot Hard Limit 8)
 
-Hard Limit 8 now names the fixed framework scripts that skill steps run to write files (0000035-ADR-011). Both `standard-boot.md` and `cursor-boot.md` carry one `Sanctioned scripts:` sentence. It names seven scripts:
+The Write-or-Edit rule (boot Hard Limit 8) now names the fixed framework scripts that skill steps run to write files (0000035-ADR-011). Both `standard-boot.md` and `cursor-boot.md` carry one `Sanctioned scripts:` sentence. It names seven scripts:
 
 - `archive-current.mjs`
 - `set-product-release.mjs`
@@ -356,7 +356,7 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-002 (0000003):** Common envelope shape: all adapters normalise to `{ session_id, cwd, tool_input, event }` before delegating
 - **ADR-005 (0000003):** Exit-zero failure mode: hooks never block on unexpected errors (NFR-003)
 - **ADR-003 (0000011):** Hook adapter architecture: delegating pattern; adapters translate envelopes, enforcement logic lives only in shared scripts
-- **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches build-log.md's Hard Limit 8 enforcement pattern
+- **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches the enforcement pattern of the build-log rule (orchestrator Hard Limit 8)
 - **ADR-001 (0000020):** Hardcoded, non-extensible deletion allowlist for the refresh skill, enforced in a dedicated script, not prose alone (P5 security finding)
 - **ADR-002 (0000020):** Single marker file (`.planifest-setup-flags`) serves as both install-time record and refresh retry cache, not two separate files
 - **ADR-003 (0000020):** Mandatory human confirmation gate before any refresh action, regardless of flag-reconstruction confidence
@@ -395,7 +395,7 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-007 (0000035):** `ratchet-check.mjs` uses the shared root and target rules.
 - **ADR-008 (0000035):** Root markers under always-permitted names are not trusted.
 - **ADR-010 (0000035):** `set-product-release.mjs` sets `product.yml` at P7.
-- **ADR-011 (0000035):** Hard Limit 8 names seven sanctioned scripts.
+- **ADR-011 (0000035):** The Write-or-Edit rule (boot Hard Limit 8) names seven sanctioned scripts.
 - **ADR-015 (0000035):** Migration files never move. Supersedes the archive step of **ADR-005 (0000005)**.
 - **ADR-016 (0000035):** Each project records migration runs in `plan/_migrations/`.
 

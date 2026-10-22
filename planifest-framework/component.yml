@@ -34,7 +34,7 @@ responsibilities:
   - "Enforce build log phase block at every phase P0–P9 before doing phase work"
   - "Provide plan/backlog/ convention for deferred work with P0 pickup protocol"
   - "Derive product-level release version from product.yml per versionPolicy at P9"
-  - "Commit after every meaningful artifact write, not only at phase gates (Hard Limit 7)"
+  - "Commit after every meaningful artifact write, not only at phase gates, per the commit-cadence rule (orchestrator Hard Limit 7)"
   - "Provide canonical loop mechanics (state, run log, stop rules, toggles) via planifest-loop-runner"
   - "Run REJECT-default fresh-context verifiers: design-critic, reversal-assessor, cross-model review gate (pre-P7)"
   - "Govern P0-P6 phase reversals: defect report, assessor verdict, scoped correction, 2/feature budget"

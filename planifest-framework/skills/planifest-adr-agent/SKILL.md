@@ -55,6 +55,6 @@ A decision does **not** require an ADR if it is already documented in the design
 | ADRs for stack choices that do not reference each other | ADR-B that says "given the decision in ADR-A, we choose..." |
 | ADRs for independent components (no shared decisions) | ADR for data ownership after component boundaries are settled |
 
-## Commit Cadence (Hard Limit 7)
+## Commit cadence: the commit-cadence rule (orchestrator Hard Limit 7)
 
-Commit after every meaningful artifact write, not batched to the phase gate (see orchestrator Hard Limit 7).
+Commit after every meaningful artifact write, not batched to the phase gate. See the commit-cadence rule (orchestrator Hard Limit 7).

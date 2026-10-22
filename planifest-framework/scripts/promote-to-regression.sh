@@ -12,7 +12,8 @@
 #
 # Idempotent: running twice with the same test file produces no duplicate manifest entries.
 #
-# Hard Limit 8 sanctioned script (0000035 ADR-011, P5 finding P-S09):
+# Sanctioned script under the Write-or-Edit rule (boot Hard Limit 8)
+# (0000035 ADR-011, P5 finding P-S09):
 #   - The source must be a regular file named test-*.sh, with one link,
 #     whose real path lies directly inside {script dir}/../tests/.
 #   - The destination is always {script dir}/../tests/regression/. Neither
