@@ -6,7 +6,9 @@
 #          reads as no design, and each block on that route gains the "not a
 #          regular file" line. A throwing lstatSync reads as no design with no
 #          extra line. A regular design.md that can't be read still fails open
-#          (ADR-002). The suite also holds the NFR-001 timed case and the
+#          (ADR-002). A design.md swapped or removed between lstatSync and
+#          the open, and a regular design.md over the 1 MiB size cap, read
+#          as no design. The suite also holds the NFR-001 timed case and the
 #          NFR-003 source check over five hook files (ADR-001).
 #
 # Every fixture lives under mktemp -d. The suite uses git to build fixtures.
@@ -244,6 +246,108 @@ else
   assert_equals "0" "$CODE" "req-008: a regular design.md with mode 000 still fails open"
 fi
 chmod 644 "$DESIGN"
+
+# =============================================================================
+echo ""
+echo "=== req-008: design.md swapped or removed between lstatSync and the open ==="
+
+# The harness wraps fs.lstatSync and publishes the wrapper to ES module
+# importers with syncBuiltinESMExports. Right after the first lstatSync call on
+# design.md returns, it swaps the file once. It then calls evaluateWrite on
+# src/a.js and exits 2 on a block, 0 on an admit. The reason goes to stderr.
+# Modes: link (open throws ELOOP), rm (ENOENT), notdir (ENOTDIR).
+SWAP_JS='
+import fs from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
+import { join, resolve } from "node:path";
+import { pathToFileURL } from "node:url";
+const [modPath, root, mode, linkTarget] = process.argv.slice(1);
+const current = join(root, "plan", "current");
+const design = join(current, "design.md");
+const original = fs.lstatSync;
+let swapped = false;
+fs.lstatSync = function (p, ...rest) {
+  const result = original.call(this, p, ...rest);
+  if (!swapped && resolve(String(p)) === resolve(design)) {
+    swapped = true;
+    if (mode === "notdir") {
+      fs.renameSync(current, current + ".moved");
+      fs.writeFileSync(current, "");
+    } else {
+      fs.unlinkSync(design);
+      if (mode === "link") fs.symlinkSync(linkTarget, design);
+    }
+  }
+  return result;
+};
+syncBuiltinESMExports();
+const { evaluateWrite } = await import(pathToFileURL(modPath).href);
+const verdict = evaluateWrite(root, "src/a.js");
+process.stderr.write(verdict.reason ?? "");
+process.stdout.write("swapped=" + swapped);
+process.exit(verdict.allowed ? 0 : 2);
+'
+
+# run_swap <mode>: runs the harness and sets CODE, ERR, and OUT.
+run_swap() {
+  local errfile="$WORK/swap-stderr.txt"
+  OUT=$(node --input-type=module -e "$SWAP_JS" "$(native "$ENF/path-rules.mjs")" "$(native "$FX")" "$1" "$(native "$WORK/real-design.md")" 2>"$errfile")
+  CODE=$?
+  ERR=$(cat "$errfile")
+}
+
+# restore_current: undoes the notdir swap.
+restore_current() {
+  if [ -d "$FX/plan/current.moved" ]; then
+    rm -f "$FX/plan/current"
+    mv "$FX/plan/current.moved" "$FX/plan/current"
+  fi
+}
+
+printf '%s' "$DESIGN_TEXT" > "$WORK/real-design.md"
+for mode in link rm notdir; do
+  reset_design
+  printf '%s' "$DESIGN_TEXT" > "$DESIGN"
+  if [ "$mode" = "link" ] && ! ln -s "$WORK/real-design.md" "$WORK/link-probe" 2>/dev/null; then
+    echo "  SKIP: req-008: symbolic links are not available, so the swap-to-link case can't run"
+    continue
+  fi
+  rm -f "$WORK/link-probe"
+  run_swap "$mode"
+  restore_current
+  assert_equals "swapped=true" "$OUT" "req-008: the swap harness swapped design.md after lstatSync (mode $mode)"
+  assert_equals "2" "$CODE" "req-008: a design.md swapped after lstatSync (mode $mode) blocks src/a.js as no design"
+  assert_equals "yes" "$(in_order "$NO_DESIGN" "$NOT_REGULAR" "$ERR")" "req-008: the swap block (mode $mode) gives the no-design reason, then the not-a-regular-file line"
+done
+
+# =============================================================================
+echo ""
+echo "=== req-008: an oversize regular design.md ==="
+
+OVERSIZE="[Planifest] plan/current/design.md is over the 1 MiB size cap, so the gate treats it as no design."
+
+reset_design
+printf '%s' "$DESIGN_TEXT" > "$DESIGN"
+truncate -s 2M "$DESIGN"
+run_gate "src/a.js"
+assert_equals "2" "$CODE" "req-008: a 2 MiB design.md that lists src/ blocks src/a.js as no design"
+assert_equals "yes" "$(in_order "$NO_DESIGN" "$OVERSIZE" "$ERR")" "req-008: the oversize block gives the no-design reason, then the size-cap line"
+assert_equals "no" "$([[ "$ERR" == *"$NOT_REGULAR"* ]] && echo yes || echo no)" "req-008: the oversize block carries no not-a-regular-file line"
+run_guard "touch src/a.js"
+assert_equals "2" "$CODE" "req-008: shell-write-guard blocks src/a.js under a 2 MiB design.md"
+assert_equals "yes" "$(in_order "$NO_DESIGN" "$OVERSIZE" "$ERR")" "req-008: shell-write-guard gives the no-design reason, then the size-cap line"
+
+reset_design
+printf '%s' "$DESIGN_TEXT" > "$DESIGN"
+truncate -s 1048576 "$DESIGN"
+run_gate "src/a.js"
+assert_equals "0" "$CODE" "req-008: a design.md of exactly 1048576 bytes is under the cap and admits src/a.js"
+
+reset_design
+printf '%s' "$DESIGN_TEXT" > "$DESIGN"
+truncate -s 1048577 "$DESIGN"
+run_gate "src/a.js"
+assert_equals "2" "$CODE" "req-008: a design.md of 1048577 bytes is over the cap and blocks src/a.js"
 
 # =============================================================================
 echo ""
