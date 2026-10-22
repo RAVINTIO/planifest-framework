@@ -48,3 +48,6 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Discovery committed: `13d3525`.
 - Backlog pickup: pull-in 0000122, 0000127, 0000139, 0000143, 0000149, 0000154, 0000155, 0000157, 0000158, 0000159, 0000160. Every other entry: leave.
 - Backlog pickup committed: eleven entry folders deleted, folded into `feature-brief.md`.
+- Version suggested: `0.33.0` → `0.34.0` (Feature Pipeline, minor). Confirmed with the design.
+- Scope Lock dispatch: four `planifest-scope-lock-agent` instances in one parallel batch, tier cheaper (`claude-sonnet-5-5`). All four returned drafts, and all four raised flags. The design draft answers the flags under `## Decisions proposed at P0`.
+- Strict-mode ack rewritten with the session ID the strict-mode hook supplied.
