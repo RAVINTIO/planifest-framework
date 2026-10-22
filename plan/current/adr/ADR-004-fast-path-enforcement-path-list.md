@@ -34,6 +34,9 @@ Without these entries, a self-written record could unwire `gate-write` itself. T
   - the hook wiring files per tool, with the whole `.github/hooks/` folder for Copilot
   - the tool-local settings files `.claude/settings.local.json` and `opencode.jsonc`
 - **Matching:** Matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)` (0000009 ADR 005), so a mixed-case path on a case-insensitive volume still matches.
+- **Lookalikes (P5 finding G-S02):** APFS folds some non-ASCII characters onto plain letters, such as the long s (U+017F) onto `s`. Two rules close that gap:
+  - `isEnforcementPath` folds both sides with `normalize("NFKC")`, then `toUpperCase().toLowerCase()`, after `norm`.
+  - The record never admits a target whose root-relative path holds a non-ASCII character. The gate blocks it with exit 2 and a reason.
 - **Precedence:** The enforcement check runs before the record match. A match blocks with exit 2 whatever the record lists. The reason names the path and 0000033 ADR 009, and points to the Change or Feature Pipeline.
 - **One list in two places:** `fast-path.md` names every entry in its prerequisites. A suite source check asserts set equality in both directions. Each doc entry appears in the constant, and each constant entry appears in the doc. The workflow stops and reroutes when a target matches.
 

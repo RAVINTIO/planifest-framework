@@ -37,6 +37,7 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
     - `opencode.jsonc` (OpenCode), which OpenCode reads in place of `opencode.json`
 
   A change to any of them takes the Change or Feature Pipeline, even with no `src/` target. If a target matches one, stop and route the change there.
+- Every target path is plain ASCII. Some file systems fold a lookalike character onto a plain letter. On APFS, `hookſ` names the `hooks` folder. So the scope record never admits a target that holds a non-ASCII character. If a target needs one, take the Change Pipeline.
 
 ## Fast Path Criteria
 

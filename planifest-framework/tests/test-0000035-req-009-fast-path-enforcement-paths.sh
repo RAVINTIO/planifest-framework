@@ -132,6 +132,44 @@ assert_equals "0" "$CODE" "req-009: a hooks/ folder without enforcement/ or adap
 
 # =============================================================================
 echo ""
+echo "=== req-009: a non-ASCII lookalike never reaches an enforcement path (G-S02) ==="
+
+# APFS folds the long s (U+017F) to s, so hookſ names the hooks folder there.
+LONG_S=$'\xc5\xbf'
+mkdir -p "$FX/planifest-framework/hooks/enforcement" "$FX/planifest-framework/setup" "$FX/.claude"
+: > "$FX/planifest-framework/hooks/enforcement/gate-write.mjs"
+: > "$FX/planifest-framework/setup/claude-code.sh"
+echo '{}' > "$FX/.claude/settings.json"
+for pair in \
+  "planifest-framework/|planifest-framework/hook${LONG_S}/enforcement/gate-write.mjs" \
+  "planifest-framework/|planifest-framework/${LONG_S}etup/claude-code.sh" \
+  ".claude/|.claude/${LONG_S}ettings.json"; do
+  record "${pair%%|*}"
+  run_gate "${pair#*|}"
+  assert_equals "2" "$CODE" "req-009: a record listing ${pair%%|*} never admits ${pair#*|}"
+done
+
+# The scope record admits no non-ASCII target, enforcement path or not.
+record "src/"
+run_gate "src/caf${LONG_S}.js"
+assert_equals "2" "$CODE" "req-009: a record listing src/ never admits a non-ASCII target"
+assert_contains "non-ASCII" "$ERR" "req-009: the reason names the non-ASCII rule"
+run_gate "src/cafe.js"
+assert_equals "0" "$CODE" "req-009: control, the record still admits an ASCII target under src/"
+
+# The enforcement match folds compatibility forms and case widely.
+FOLDED=$(node --input-type=module -e "
+import { isEnforcementPath } from '$(native "$PATH_RULES")';
+process.stdout.write([
+  'planifest-framework/hookſ/enforcement/gate-write.mjs',
+  '.claude/ſettings.json',
+  '.claude/settings.jſon',
+].map((p) => String(isEnforcementPath(p))).join(' '));
+")
+assert_equals "true true true" "$FOLDED" "req-009: isEnforcementPath folds the long s to s"
+
+# =============================================================================
+echo ""
 echo "=== req-009: fast-path.md and FAST_PATH_ENFORCEMENT_PATHS name the same entries ==="
 
 CODE_LIST=$(node --input-type=module -e "

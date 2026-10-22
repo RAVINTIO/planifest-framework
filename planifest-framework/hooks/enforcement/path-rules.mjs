@@ -107,6 +107,25 @@ export function norm(p) {
   return normalize(p).replace(/\\/g, "/").toLowerCase();
 }
 
+/**
+ * p as a block reason prints it: each control character escaped, as \n, \r,
+ * \t, or \xNN, and the result cut to max characters. A target that holds a
+ * newline can't then forge a second line of hook output (G-S11).
+ */
+// C0 and C1 controls, DEL, and the Unicode line and paragraph separators.
+const CONTROL_RE = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 0x2029)}]`, "g");
+
+export function shown(p, max = 80) {
+  const escaped = String(p).replace(CONTROL_RE, (c) => {
+    if (c === "\n") return "\\n";
+    if (c === "\r") return "\\r";
+    if (c === "\t") return "\\t";
+    const code = c.charCodeAt(0);
+    return code > 0xff ? `\\u${code.toString(16)}` : `\\x${code.toString(16).padStart(2, "0")}`;
+  });
+  return escaped.slice(0, max);
+}
+
 function isDirectory(p) {
   try {
     return statSync(p).isDirectory();
@@ -494,15 +513,25 @@ export const FAST_PATH_ENFORCEMENT_PATHS = Object.freeze([
   "opencode.jsonc",
 ]);
 
+// foldWide: norm(p) with NFKC compatibility folding and a full case fold, so
+// a lookalike such as the long s (U+017F) meets the plain letter (G-S02).
+// APFS folds names this way, so hookſ can name the hooks folder there.
+const foldWide = (p) => norm(p).normalize("NFKC").toUpperCase().toLowerCase();
+
+// A character outside printable ASCII. The Fast Path record admits no
+// target that holds one (G-S02).
+const NON_ASCII_RE = /[^\x00-\x7f]/;
+
 /**
  * Whether relPath matches an entry in FAST_PATH_ENFORCEMENT_PATHS. Matching
- * compares norm(relPath) with norm(entry), so it ignores case.
+ * compares foldWide(relPath) with foldWide(entry), so it ignores case and
+ * compatibility lookalikes.
  */
 export function isEnforcementPath(relPath) {
-  const target = norm(relPath || ".");
+  const target = foldWide(relPath || ".");
   const segments = target.split("/");
   return FAST_PATH_ENFORCEMENT_PATHS.some((raw) => {
-    const entry = norm(raw);
+    const entry = foldWide(raw);
     if (entry.startsWith("**/")) {
       const rest = entry.slice(3);
       if (!rest.endsWith("/")) return segments[segments.length - 1] === rest;
@@ -695,6 +724,16 @@ function scopeVerdict(root, relPath) {
     return {
       allowed: false,
       reason: NO_DESIGN_REASON + `[Planifest] The gate ignored ${FAST_PATH_SCOPE_FILE}: ${scope.why}.\n`,
+    };
+  }
+  // A file system can fold a non-ASCII name onto an enforcement path, so the
+  // record admits ASCII targets only (G-S02).
+  if (NON_ASCII_RE.test(relPath)) {
+    return {
+      allowed: false,
+      reason:
+        `[Planifest] Path '${shown(relPath, 80)}' holds a non-ASCII character, so ${FAST_PATH_SCOPE_FILE} ` +
+        "never admits it. Rename the target, or take the Change Pipeline.\n",
     };
   }
   if (matchesComponentPath(relPath, scope.paths.map((p) => p.replace(/\/$/, "")))) {
