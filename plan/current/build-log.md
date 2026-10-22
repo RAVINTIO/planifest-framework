@@ -146,3 +146,7 @@ Streams (start commit `8375ca7`):
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | One ADR agent per stream, in one batch. Each uses its stream's ADR block. Process slip: the orchestrator moved the three stream files to P2 with a shell `perl -pi` command, against the Write-or-Edit rule (boot Hard Limit 8). The content matches the intended update, so the files stay as written. Later changes go through **Write** or **Edit** only. |
+
+- Streams returned ADR-001 to ADR-012 (stream 01: ADR-001 to ADR-004, stream 02: ADR-005 to ADR-007, stream 03: ADR-008 to ADR-012). `consistency-check.mjs` and `stream-reconcile.mjs` clean.
+- Backlog filed (P2): 0000167 (two rules disagree on who may write `.ratchet-approve`).
+- Decision (P2): the 0.34.0 migration targets the framework source too, and P3 re-runs setup here before it writes the `applied` record (ADR-007) / reason: this repo's installed hooks differ from source today.
