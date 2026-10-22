@@ -38,14 +38,15 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 
 - "Any other type" covers a folder, FIFO, socket, block or character device, and a symbolic link. A link counts as non-regular even when it points at a regular file. A link can point at a FIFO or a device, and `lstatSync` doesn't follow it.
 - A non-regular `design.md` takes the same `scopeVerdict` route as a missing one. A current Fast Path scope record therefore still admits its listed paths, and the enforcement list still runs first (0000035 ADR 004).
-- With a current Fast Path scope record, a non-regular `design.md` follows `scopeVerdict` in full (`path-rules.mjs:702-742`). The checks run in this order:
-  1. An enforcement path blocks, whatever the record lists.
-  2. A record the gate ignores (stale or invalid) blocks with `NO_DESIGN_REASON` plus the line naming why.
-  3. A non-ASCII target blocks.
-  4. A target the record lists is admitted, with the Fast Path notice. A listed non-enforcement path such as `src/a.js` therefore passes.
-  5. Any other target blocks as not listed in the record.
-- With no record, `scopeVerdict` returns `NO_DESIGN_REASON` alone, and the route below adds the "not a regular file" line.
-- When the non-regular route blocks, the reason is `NO_DESIGN_REASON` with one line added. The added line reads `[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.` and ends with a newline.
+- A non-regular `design.md` follows `scopeVerdict` in full (`path-rules.mjs:702-742`). `scopeVerdict` returns these outcomes in order. Each names the state of the scope record:
+  1. No record: the write blocks with `NO_DESIGN_REASON` alone.
+  2. Any record state, and the target is an enforcement path: the write blocks with the enforcement-path reason, whatever the record lists. This check runs before the record is read.
+  3. A stale or invalid record, which the gate ignores: the write blocks with `NO_DESIGN_REASON` plus the line naming why.
+  4. A current record, and the target is non-ASCII: the write blocks with the non-ASCII reason.
+  5. A current record that lists the target: the write is admitted with the Fast Path notice. A listed non-enforcement path such as `src/a.js` therefore passes.
+  6. A current record that doesn't list the target: the write blocks as not listed in the record.
+- Every block on the non-regular route carries the "not a regular file" line. That covers outcomes 1, 2, 3, 4, and 6. `evaluateWrite` appends the line after the route's own reason, so the human on the loop always sees why `design.md` didn't count. Outcome 5 is an admit, so it carries no such line.
+- The added line reads `[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.` and ends with a newline. The line is appended to the reason that `scopeVerdict` returns, so `scopeVerdict` itself stays unchanged.
 - The read of a regular `design.md` opens the file once, with `O_NONBLOCK` and `O_NOFOLLOW` where `fs.constants` defines them. It calls `fstatSync` on that descriptor before it reads. If the descriptor isn't a regular file, the route is "any other type". This closes the gap between the `lstatSync` call and the open.
 - A regular `design.md` whose open, `fstatSync`, or read throws still fails open, as `path-rules.mjs:780-781` does today.
 - The change touches only the `design.md` step of `evaluateWrite`. The sentinel check, the always-permitted step, and the component-path check keep their order and text.
@@ -67,7 +68,7 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
   - a FIFO made with `mkfifo`
   - a symbolic link to a regular design that lists the target
 - For the FIFO case, the suite runs each hook under a 5-second limit and fails if the limit ends the hook.
-- A scope-record case places a folder at `plan/current/design.md` with a current Fast Path scope record that lists `src/a.js`. A **Write** to `src/a.js` exits 0 with the Fast Path notice. A **Write** to an unlisted `src/b.js` exits 2 with the not-listed reason.
+- A scope-record case places a folder at `plan/current/design.md` with a current Fast Path scope record that lists `src/a.js`. A **Write** to `src/a.js` exits 0 with the Fast Path notice. A **Write** to an unlisted `src/b.js` exits 2 with the not-listed reason followed by the "not a regular file" line. A third case targets an enforcement path under the same record and asserts the enforcement-path reason followed by the same line.
 - A control case with a regular, readable design that lists the target exits 0.
 - A timed case runs `gate-write.mjs` with a regular `design.md` and asserts it finishes under 500 ms (NFR-001).
 - A regular `design.md` with mode `000` exits 0, when the suite runs as a non-root account. The suite skips this case under root.
@@ -75,7 +76,7 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 
 ### Non-functional
 
-- Each hook call stays under 500 ms in every case above.
+- NFR-001 (execution plan) sets the 500 ms target. The timed case above, `gate-write.mjs` with a regular `design.md` under 500 ms, is the one measurement for every hook change in this feature. The other cases assert no timing.
 - The change uses Node built-in modules only and spawns no process.
 
 ## Acceptance Criteria

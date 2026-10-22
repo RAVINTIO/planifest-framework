@@ -54,7 +54,7 @@ As the human on the loop, I see every hook message escape the text it quotes, so
 
 ### Non-functional
 
-- Each hook call stays under 500 ms.
+- NFR-001 sets the 500 ms target. The timed case in the req-008 suite measures it for this change. This requirement adds no timing test of its own.
 - `em-dash-guard.mjs` gains only the `./path-rules.mjs` import, which uses Node built-ins only and spawns no process (0000035 ADR 001).
 
 ## Acceptance Criteria

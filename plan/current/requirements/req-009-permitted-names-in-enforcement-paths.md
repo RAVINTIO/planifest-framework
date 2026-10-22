@@ -57,7 +57,7 @@ As the human on the loop, I rely on the write gate to judge a permitted file nam
 
 ### Non-functional
 
-- Each hook call stays under 500 ms.
+- NFR-001 sets the 500 ms target. The timed case in the req-008 suite measures it for this change. This requirement adds no timing test of its own.
 - The change uses Node built-in modules only and spawns no process.
 
 ## Acceptance Criteria

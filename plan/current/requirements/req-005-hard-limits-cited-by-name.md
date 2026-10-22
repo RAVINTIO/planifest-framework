@@ -67,6 +67,7 @@ A search on 2026-10-22 found bare citations in these files:
 - `planifest-framework/workflows/fast-path.md:103` and `planifest-framework/pipeline-reference.md:67`.
 - Comments in `planifest-framework/scripts/set-product-release.mjs:24` and `promote-to-regression.sh:15`, and the `planifest-framework/component.yml:37` string.
 - Living docs: `docs/architecture-overview.md` (`:299`, `:301`, `:359`, `:398`), `docs/decisions-index.md` (`:195`, `:343`), and `docs/component-registry.md:13`.
+- Living component docs: `src/setup-hook-integration/docs/test-coverage.md:34` and `interface-contract.md:23`. Both cite a bare "Hard Limit 8" for the boot Write-or-Edit rule, and P3 rewrites both to `the Write-or-Edit rule (boot Hard Limit 8)`. They are component docs, not setup outputs, so setup doesn't refresh them. The suite scan also covers `src/*/docs/`.
 
 These stay as they are:
 
@@ -82,7 +83,7 @@ These stay as they are:
 
 ### Suite
 
-- A new suite, `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh`, scans `planifest-framework/` without `tests/`, and `docs/`.
+- A new suite, `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh`, scans `planifest-framework/` without `tests/`, `docs/`, and `src/*/docs/`.
 - It finds each `Hard Limits? [0-9]+` match. It fails on any match that the citation form doesn't wrap, and prints the file and line.
 - The numbered list items that define each limit don't hold the text `Hard Limit`, so the scan doesn't see them.
 - It also asserts that both dispatch prompts and the self-contained prompt rule hold the Write-or-Edit sentence.
