@@ -12,6 +12,10 @@
 
 set -uo pipefail
 
+# ratchet-check finds the root through path-rules.mjs, which prefers
+# CLAUDE_PROJECT_DIR (0000035 req-005). Clear it so the fixture is the root.
+unset CLAUDE_PROJECT_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 

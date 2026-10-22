@@ -5,6 +5,10 @@
  * approval mechanism amended by ADR-001, feature 0000017).
  * Same family as gate-write.mjs.
  *
+ * Root and target (0000035 ADR-007): the hook finds the repository root with
+ * resolveRoot and the target with resolveTarget from path-rules.mjs, so it
+ * guards plan/current/ from any subfolder. It keeps no path rules of its own.
+ *
  * Armed only while a loop or reversal is in flight: a plan/current/loop-state-*.md
  * file with status "active" exists. When disarmed, every write passes.
  *
@@ -46,22 +50,20 @@
 
 import { execFileSync } from "node:child_process";
 import {
-  appendFileSync, existsSync, readFileSync, readdirSync, realpathSync,
+  appendFileSync, existsSync, readFileSync, readdirSync,
   unlinkSync, writeFileSync,
 } from "node:fs";
-import { join, normalize, relative, resolve } from "node:path";
+import { join, normalize, relative } from "node:path";
 
+import { hookCwd, norm as normPath, resolveRoot, resolveTarget } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const AUDIT_LOG_REL = join("plan", "ratchet-audit-log.md");
 const MAX_REASON_LEN = 500;
 const TRUNCATE_MARKER = " …[truncated]";
 
-function realpathSafe(p) {
-  try { return realpathSync(p); } catch { return resolve(p); }
-}
-
-function norm(p) {
+// slashes: p with forward slashes, its case kept. Approval lines match on it.
+function slashes(p) {
   return normalize(p).replace(/\\/g, "/");
 }
 
@@ -134,7 +136,7 @@ function findApproval(markerPath, relPath) {
   for (let i = 0; i < lines.length; i++) {
     const parsed = parseApprovalLine(lines[i]);
     if (!parsed) continue;
-    if (norm(parsed.path) === norm(relPath)) return { index: i, lines, ...parsed };
+    if (slashes(parsed.path) === slashes(relPath)) return { index: i, lines, ...parsed };
   }
   return null;
 }
@@ -142,7 +144,7 @@ function findApproval(markerPath, relPath) {
 /** Best-effort: true if `absPath` has uncommitted changes (or is untracked). */
 function isUncommitted(projectRoot, absPath) {
   try {
-    const relToRoot = norm(relative(projectRoot, absPath));
+    const relToRoot = slashes(relative(projectRoot, absPath));
     const out = execFileSync("git", ["status", "--porcelain", "--", relToRoot], {
       cwd: projectRoot, encoding: "utf-8",
     });
@@ -198,20 +200,31 @@ async function main() {
   const filePath = toolInput.file_path ?? toolInput.filePath;
   if (typeof filePath !== "string") process.exit(0);
 
-  const projectRoot = realpathSafe(process.cwd());
+  // The shared root and target rules (0000035 ADR-007). The cwd is the stdin
+  // cwd, then the process working folder, then CLAUDE_PROJECT_DIR (hookCwd).
+  const cwd = hookCwd(input);
+  if (cwd === null) process.exit(0);
+  const projectRoot = resolveRoot(cwd);
+  if (!projectRoot) process.exit(0);
+  // An outside target passes. An unresolvable one passes too, because
+  // gate-write.mjs already blocks it with exit 2.
+  const placed = resolveTarget(projectRoot, cwd, filePath);
+  if (placed.status !== "inside") process.exit(0);
+  const relPath = placed.relPath;
   const planCurrent = join(projectRoot, "plan", "current");
-  const relPath = norm(relative(projectRoot, realpathSafe(filePath)));
 
-  // Only guard plan/current/ markdown artifacts (not the state/log files themselves)
-  if (!relPath.startsWith("plan/current/") || !relPath.endsWith(".md")) process.exit(0);
-  const base = relPath.split("/").pop() ?? "";
+  // Only guard plan/current/ markdown artifacts (not the state/log files
+  // themselves). The checks compare the 0000009-ADR-005 form.
+  const normRel = normPath(relPath);
+  if (!normRel.startsWith("plan/current/") || !normRel.endsWith(".md")) process.exit(0);
+  const base = normRel.split("/").pop() ?? "";
   if (/^loop-state-/.test(base) || base === "ratchet-log.md" || base === "build-log.md") process.exit(0);
 
   // Armed only while a loop is active
   if (!loopActive(planCurrent)) process.exit(0);
 
   let currentText = null;
-  try { currentText = readFileSync(resolve(filePath), "utf-8"); } catch { process.exit(0); }
+  try { currentText = readFileSync(join(projectRoot, relPath), "utf-8"); } catch { process.exit(0); }
 
   const next = proposedContent(toolInput, currentText);
   if (next === null) process.exit(0);
