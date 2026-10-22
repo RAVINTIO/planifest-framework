@@ -16,7 +16,7 @@ hooks:
 ## Prefix
 
 Emit the correct phase prefix as you move through each step:
-- `P7:` for all archive work (Steps 1–7)
+- `P7:` for all archive work (Steps 1–7, including Step 5b)
 - `P8:` for build assessment (Step 8)
 - `P9:` for ship steps (the P9 marker step and Steps 9–12)
 
@@ -110,6 +110,22 @@ Generate the test report artifact before archiving.
 2. Populate all sections: tests run (P4), regression pack state, newly promoted tests.
 3. Write to: `plan/changelog/{feature-id}-test-report-{YYYY-MM-DD}.md`
 
+### Step 5b: Set product.yml release fields
+
+Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `product.yml`. Write it only through `set-product-release.mjs`, never through **Write** or **Edit**. Hard Limit 8 names the script as a sanctioned script (0000035 ADR-011).
+
+1. Take `{version}` from the version the human on the loop confirmed in `plan/current/design.md` at P0. Run:
+   ```bash
+   node planifest-framework/scripts/set-product-release.mjs --feature-id "{feature-id}" --version "{version}"
+   ```
+2. If this feature added or removed a component, add one `--component "{id}={path}"` for each component in the design. `{path}` is the path to that component's `component.yml`. The script then replaces the whole `components[]` list. Without `--component`, it leaves `components[]` byte-identical.
+3. Act on the exit code:
+   - Exit 0: `product.yml` names this release's `version` and `feature`. Continue.
+   - Exit 5: the policy is `external`, and only `feature` changed. Step 9 consults the external anchor or the human on the loop.
+   - Exit 4: no `product.yml` exists. With exactly one component, do nothing, because Step 9 reads that `component.yml`. With two or more components, rerun the call with `--create --product-id "{id}" --product-name "{name}"` and one `--component` for each component. Take `{id}` and `{name}` from the design.
+   - Exit 2: the script wrote nothing, and stderr names the reason. If an argument broke a rule, correct it and rerun. If the manifest is invalid or the derived version differs from `{version}`, stop and report the reason. Never tag a fabricated version.
+4. Log the line the script printed in the P7 build-log block.
+
 ### Step 6: Archive plan/current/
 
 1. Run the archive script as a single command (0000033 ADR-010):
@@ -132,10 +148,11 @@ Generate the test report artifact before archiving.
 
 ### Step 7: Commit archive
 
-Commit the archive, changelog, and `docs/about.md` to the branch:
+Commit the archive, changelog, `docs/about.md`, and `product.yml` to the branch in one commit. Step 5b wrote `product.yml`, so stage it whenever it exists:
 
 ```
 git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
+if [ -f product.yml ]; then git add product.yml; fi
 git commit -m "plan(p7): archive {feature-id}"
 ```
 
@@ -242,9 +259,11 @@ Determine the release version (ADR-002, product-level versioning):
    ```bash
    node planifest-framework/scripts/product-version.mjs
    ```
-   Exit 0 → use the printed version. Exit 5 (`versionPolicy: external`) → present the external-anchor constraint and ask the human for the version. Exit 2 (invalid version, unknown policy, or a `components[]` entry pointing at a missing/unversioned `component.yml`) → show the script's reason and prompt the human for a manual value; never tag a fabricated version. `components[]` entries hold `{id, path}`, not a cached version: the script reads each referenced `component.yml`'s own `version:` field live, so there is nothing to sync here before tagging. Only update `product.yml`'s top-level `version` (informational under `max-component-version`; authoritative under `explicit`) and `feature` field to reflect this release, and update `components[]` only if a component was added or removed this feature.
+   Exit 0 → use the printed version. Exit 5 (`versionPolicy: external`) → present the external-anchor constraint and ask the human for the version. Exit 2 (invalid version, unknown policy, or a `components[]` entry pointing at a missing/unversioned `component.yml`) → show the script's reason and prompt the human for a manual value; never tag a fabricated version. `components[]` entries hold `{id, path}`, not a cached version: the script reads each referenced `component.yml`'s own `version:` field live, so there is nothing to sync here before tagging.
+
+   Step 9 only reads `product.yml`. Step 5b set its release fields at P7 (0000035 ADR-010). If the derived version differs from the version the human on the loop confirmed at P0, stop and report the difference. Leave the file as it is. A stale file waits for the next P7.
 2. **No `product.yml` and the project has exactly one component** (exit 4): read the `version` field from the single `component.yml` (for this repo: `planifest-framework/component.yml`). This is the unchanged pre-0000016 behaviour.
-3. **No `product.yml` and the project has 2+ components**: create `product.yml` from `planifest-framework/templates/product.template.yml` with `versionPolicy: max-component-version`, populate `components[]` with each component's `{id, path}` (path to its `component.yml`, not its version), then derive as in case 1.
+3. **No `product.yml` and the project has 2+ components**: Step 5b runs the script with `--create` at P7, so the file exists by now. If it is still missing, stop and report it. Don't tag.
 
 Validate the final value: must match `[0-9]+\.[0-9]+(\.[0-9]+)?` and be ≤20 characters, and must not be lower than the last release tag. If validation fails, prompt the human to supply the version manually: do not create the tag with an unvalidated value.
 
@@ -325,7 +344,7 @@ Run the P8 command again after Step 10 (0000033 ADR-011):
 git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**'
 ```
 
-Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any Step 9 `product.yml` change. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
+Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any other late change. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P9 build-log block.
 - **`autonomous`:** Apply the P8 credential guard first. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
