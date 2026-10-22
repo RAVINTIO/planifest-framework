@@ -125,6 +125,27 @@ assert_equals "0" "$CODE" "req-005: a target outside the root passes"
 
 # =============================================================================
 echo ""
+echo "=== req-005: input validation ==="
+
+FX="$(make_fixture limits)"
+# Control: a nested artifact under plan/current/ is guarded.
+mkdir -p "$FX/plan/current/n"
+cp "$FX/plan/current/req.md" "$FX/plan/current/n/req.md"
+run_ratchet "$FX/src" "$FX/src" "../plan/current/n/req.md" "$BETA" ""
+assert_equals "2" "$CODE" "req-005: control, a nested plan/current/ artifact is guarded"
+# The same artifact past MAX_PATH_SEGMENTS passes, as in gate-write.mjs.
+DEEP="plan/current/$(printf 'd/%.0s' $(seq 1 260))"
+mkdir -p "$FX/$DEEP"
+cp "$FX/plan/current/req.md" "$FX/${DEEP}req.md"
+run_ratchet "$FX/src" "$FX/src" "../${DEEP}req.md" "$BETA" ""
+assert_equals "0" "$CODE" "req-005: a file_path past MAX_PATH_SEGMENTS passes with exit 0"
+
+# A non-string file_path passes.
+(cd "$FX/src" && node "$RATCHET" >/dev/null 2>&1 <<< "{\"cwd\":\"$(native "$FX/src")\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":42,\"old_string\":\"x\",\"new_string\":\"\"}}")
+assert_equals "0" "$?" "req-005: a non-string file_path passes with exit 0"
+
+# =============================================================================
+echo ""
 echo "=== req-005: ratchet-check.mjs uses the shared rules ==="
 
 SRC="$(cat "$RATCHET")"
