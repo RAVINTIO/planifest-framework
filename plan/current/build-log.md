@@ -45,3 +45,6 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Release budget: none, three-story rule. The human on the loop asked for a big release over the rule's split.
 - P0 exchange (pre-flight): Q: PR #61 is open, so stack on `feat/0000035` or wait for the merge? / A: stack, then the human on the loop merged PR #61 at 2026-10-22T20:53:17Z. The branch was recreated from `main` at `5c7859a`.
 - Pre-flight: branch `feat/0000036-pipeline-friction-and-gate-fixes` created from `main` at `5c7859a`, up to date with `origin/main`, clean tree.
+- Discovery committed: `13d3525`.
+- Backlog pickup: pull-in 0000122, 0000127, 0000139, 0000143, 0000149, 0000154, 0000155, 0000157, 0000158, 0000159, 0000160. Every other entry: leave.
+- Backlog pickup committed: eleven entry folders deleted, folded into `feature-brief.md`.
