@@ -40,6 +40,8 @@ try {
   const result = judgeWrite(cwd, rawTarget);
 
   if (result.warning) process.stderr.write(result.warning);
+  // A write the Fast Path scope record admits prints one notice (0000035 ADR-002).
+  if (result.notice) process.stderr.write(result.notice);
   if (!result.allowed) {
     // Stdout stays as it was for the stdout adapters. Claude Code reads stderr (ADR-005).
     process.stdout.write(result.reason);

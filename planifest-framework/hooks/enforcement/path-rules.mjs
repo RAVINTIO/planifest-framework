@@ -394,16 +394,224 @@ function matchesComponentPath(relPath, componentPaths) {
   });
 }
 
+// ---------------------------------------------------------------------------
+// Fast Path scope record (0000035 ADR-002 and ADR-003)
+// ---------------------------------------------------------------------------
+
+export const FAST_PATH_SCOPE_FILE = "plan/.fast-path-scope";
+const SCOPE_MAX_BYTES = 16 * 1024;
+const SCOPE_MAX_PATHS = 64;
+const GIT_FILE_MAX_BYTES = 4 * 1024;
+const PACKED_REFS_MAX_BYTES = 4 * 1024 * 1024;
+
+const BRANCH_RE = /^[A-Za-z0-9._/-]{1,255}$/;
+const HEAD_RE = /^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/;
+const SCOPE_PATH_RE = /^[A-Za-z0-9._@+ /-]{1,512}$/;
+const REF_RE = /^refs\/[A-Za-z0-9._/-]{1,255}$/;
+const DETACHED = "(detached)";
+
+// readCapped: the UTF-8 text of file, or null when it is missing, larger than
+// max bytes, or unreadable. The size check runs before the read.
+function readCapped(file, max) {
+  try {
+    const stats = statSync(file);
+    if (!stats.isFile() || stats.size > max) return null;
+    return readFileSync(file, "utf-8");
+  } catch {
+    return null;
+  }
+}
+
+const validBranch = (b) => b === DETACHED || (BRANCH_RE.test(b) && !b.includes("..") && !b.startsWith("-"));
+
+// validScopePath: whether p is a root-relative path the record may list. No
+// glob, no backslash, no drive letter, and no empty, . or .. segment.
+function validScopePath(p) {
+  if (!SCOPE_PATH_RE.test(p) || p.startsWith("/")) return false;
+  const segments = p.replace(/\/$/, "").split("/");
+  return segments.every((s) => s !== "" && s !== "." && s !== "..");
+}
+
+/**
+ * Parses the scope record text. Returns { branch, head, paths } or
+ * { error } when any line breaks the grammar. The error names the line
+ * number and the rule, never a raw value. Blank and # lines are skipped.
+ */
+export function parseScopeRecord(text) {
+  const expected = ["branch", "head", "paths"];
+  const record = { paths: [] };
+  let step = 0;
+  const lines = text.split(/\r?\n/);
+  for (let n = 0; n < lines.length; n++) {
+    const line = lines[n];
+    const at = `line ${n + 1}`;
+    if (line.trim() === "" || line.startsWith("#")) continue;
+    if (step < expected.length) {
+      const key = expected[step];
+      if (key === "paths") {
+        if (!/^paths:\s*$/.test(line)) return { error: `${at}: expected 'paths:'` };
+      } else {
+        const m = line.match(new RegExp(`^${key}: (.*?)\\s*$`));
+        if (!m) return { error: `${at}: expected '${key}: <value>'` };
+        if (key === "branch" && !validBranch(m[1])) return { error: `${at}: the branch breaks the allowed pattern` };
+        if (key === "head" && !HEAD_RE.test(m[1])) return { error: `${at}: the head is not a 40 or 64 character hex commit` };
+        record[key] = m[1];
+      }
+      step += 1;
+      continue;
+    }
+    const m = line.match(/^- (.*)$/);
+    if (!m) return { error: `${at}: expected '- <path>'` };
+    if (!validScopePath(m[1])) return { error: `${at}: the path breaks the allowed pattern` };
+    record.paths.push(m[1]);
+    if (record.paths.length > SCOPE_MAX_PATHS) return { error: `${at}: more than ${SCOPE_MAX_PATHS} paths` };
+  }
+  if (step < expected.length) return { error: `the record ends before '${expected[step]}'` };
+  if (!record.paths.length) return { error: "the record lists no paths" };
+  return record;
+}
+
+/**
+ * Reads the current branch and HEAD commit from the git files at or above
+ * root, with no process spawn (0000035 ADR-003). Returns { branch, head } or
+ * { error } when any step fails, such as a reftable store, an unborn branch,
+ * or a file over its size limit.
+ */
+export function readGitState(root) {
+  let dir = root;
+  let dotGit = null;
+  for (;;) {
+    try {
+      statSync(join(dir, ".git"));
+      dotGit = join(dir, ".git");
+      break;
+    } catch { /* keep climbing */ }
+    const parent = dirname(dir);
+    if (parent === dir) return { error: "no .git found" };
+    dir = parent;
+  }
+
+  let gitDir = dotGit;
+  try {
+    if (!statSync(dotGit).isDirectory()) {
+      const text = readCapped(dotGit, GIT_FILE_MAX_BYTES);
+      const m = text?.match(/^gitdir: (.+?)\s*$/m);
+      if (!m) return { error: "the .git file has no readable gitdir line" };
+      gitDir = resolve(dirname(dotGit), m[1]);
+    }
+  } catch {
+    return { error: "the .git entry can't be read" };
+  }
+
+  const headText = readCapped(join(gitDir, "HEAD"), GIT_FILE_MAX_BYTES);
+  if (headText === null) return { error: "HEAD can't be read" };
+  const headLine = headText.trim();
+  if (HEAD_RE.test(headLine)) return { branch: DETACHED, head: headLine.toLowerCase() };
+  const refMatch = headLine.match(/^ref: (.+)$/);
+  if (!refMatch || !REF_RE.test(refMatch[1]) || refMatch[1].includes("..")) return { error: "HEAD holds no readable ref" };
+  const ref = refMatch[1];
+  const branch = ref.startsWith("refs/heads/") ? ref.slice("refs/heads/".length) : ref;
+
+  const commonText = readCapped(join(gitDir, "commondir"), GIT_FILE_MAX_BYTES);
+  const commonDir = commonText === null ? gitDir : resolve(gitDir, commonText.trim());
+
+  for (const folder of [gitDir, commonDir]) {
+    const value = readCapped(join(folder, ...ref.split("/")), GIT_FILE_MAX_BYTES)?.trim();
+    if (value !== undefined) {
+      return HEAD_RE.test(value) ? { branch, head: value.toLowerCase() } : { error: "the branch ref can't be read" };
+    }
+  }
+  const packed = readCapped(join(commonDir, "packed-refs"), PACKED_REFS_MAX_BYTES);
+  if (packed !== null) {
+    for (const line of packed.split(/\r?\n/)) {
+      if (line.startsWith("#") || line.startsWith("^")) continue;
+      const space = line.indexOf(" ");
+      if (space > 0 && line.slice(space + 1).trim() === ref) {
+        const value = line.slice(0, space);
+        return HEAD_RE.test(value) ? { branch, head: value.toLowerCase() } : { error: "the packed ref can't be read" };
+      }
+    }
+  }
+  return { error: "the branch has no commit" };
+}
+
+// Each hook process reads the record and the git state at most once per root.
+const scopeCache = new Map();
+
+/**
+ * The scope record state for root: { status: "absent" }, { status: "ignored",
+ * why }, or { status: "current", paths }.
+ */
+function loadScope(root) {
+  if (scopeCache.has(root)) return scopeCache.get(root);
+  const state = readScope(root);
+  scopeCache.set(root, state);
+  return state;
+}
+
+function readScope(root) {
+  const file = join(root, ...FAST_PATH_SCOPE_FILE.split("/"));
+  let stats;
+  try {
+    stats = statSync(file);
+  } catch {
+    return { status: "absent" };
+  }
+  if (!stats.isFile() || stats.size > SCOPE_MAX_BYTES) {
+    return { status: "ignored", why: `it is not a file of at most ${SCOPE_MAX_BYTES} bytes` };
+  }
+  let text;
+  try {
+    text = readFileSync(file, "utf-8");
+  } catch {
+    return { status: "ignored", why: "it can't be read" };
+  }
+  const record = parseScopeRecord(text);
+  if (record.error) return { status: "ignored", why: `it is invalid (${record.error})` };
+  const git = readGitState(root);
+  if (git.error) return { status: "ignored", why: `the git state can't be read (${git.error})` };
+  if (record.branch !== git.branch) return { status: "ignored", why: "its branch differs from the current branch" };
+  if (record.head.toLowerCase() !== git.head) return { status: "ignored", why: "its head differs from the current HEAD commit" };
+  return { status: "current", paths: record.paths };
+}
+
+// scopeVerdict: the gate result for relPath when design.md is absent.
+function scopeVerdict(root, relPath) {
+  const scope = loadScope(root);
+  if (scope.status === "absent") return { allowed: false, reason: NO_DESIGN_REASON };
+  if (scope.status === "ignored") {
+    return {
+      allowed: false,
+      reason: NO_DESIGN_REASON + `[Planifest] The gate ignored ${FAST_PATH_SCOPE_FILE}: ${scope.why}.\n`,
+    };
+  }
+  if (matchesComponentPath(relPath, scope.paths.map((p) => p.replace(/\/$/, "")))) {
+    return {
+      allowed: true,
+      notice: `[Planifest] Fast Path: admitted '${relPath.slice(0, 200)}' through ${FAST_PATH_SCOPE_FILE}.\n`,
+    };
+  }
+  return {
+    allowed: false,
+    reason:
+      `[Planifest] Path '${relPath}' is not listed in the Fast Path scope record ${FAST_PATH_SCOPE_FILE}. ` +
+      "Add it to the record, or take the Change Pipeline.\n",
+  };
+}
+
 /**
  * Applies the gate checks, in order, to a root-relative path:
  *   0. the plan/current/** sentinel check, with the feature-brief.md and
  *      always-permitted basename exemptions (0000005-ADR-003)
  *   1. always-permitted prefixes and basenames
- *   2. design.md existence
+ *   2. design.md existence. With no design.md, a current Fast Path scope
+ *      record admits a listed path and blocks the rest (0000035 ADR-002).
+ *      A stale or invalid record admits nothing.
  *   3. the component-path check, which warns and allows when design.md has no
  *      parseable paths section
- * Returns { allowed: true }, { allowed: true, warning }, or
- * { allowed: false, reason }. Each string ends with a newline.
+ * Returns { allowed: true }, { allowed: true, warning }, { allowed: true,
+ * notice } for a write the scope record admits, or { allowed: false, reason }.
+ * Each string ends with a newline.
  */
 export function evaluateWrite(root, relPath) {
   const normRel = norm(relPath || ".");
@@ -421,7 +629,7 @@ export function evaluateWrite(root, relPath) {
   if (isAlwaysPermitted(relPath)) return { allowed: true };
 
   const designPath = join(root, "plan", "current", "design.md");
-  if (!existsSync(designPath)) return { allowed: false, reason: NO_DESIGN_REASON };
+  if (!existsSync(designPath)) return scopeVerdict(root, relPath);
 
   let designContent;
   try {

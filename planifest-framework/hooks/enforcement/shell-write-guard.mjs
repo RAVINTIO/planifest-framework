@@ -661,8 +661,9 @@ function reachAll(start, cds) {
 function judgeCommand(cwd, command) {
   const blocks = [];
   const warnings = [];
+  const notices = []; // writes the Fast Path scope record admits (0000035 ADR-002)
   const root = resolveRoot(cwd);
-  if (!root) return { blocks, warnings };
+  if (!root) return { blocks, warnings, notices };
 
   let items;
   try {
@@ -671,7 +672,7 @@ function judgeCommand(cwd, command) {
     if (!(err instanceof ParseError) && !(err instanceof RangeError)) throw err;
     const why = err instanceof RangeError ? "nesting too deep" : err.message;
     warnings.push(`${PREFIX} Warning: shell-write-guard could not parse the command (${why}). Command allowed.\n`);
-    return { blocks, warnings };
+    return { blocks, warnings, notices };
   }
 
   // judge: the block reason for literal from base, or null when it passes.
@@ -698,6 +699,7 @@ function judgeCommand(cwd, command) {
     const { relPath } = placed;
     const result = evaluateWrite(root, relPath);
     if (result.warning) warnings.push(result.warning);
+    if (result.notice) notices.push(result.notice);
     if (result.allowed) return null;
     const reason = result.reason.replace(/^\[Planifest\]\s*/, "").trim();
     return (
@@ -795,7 +797,7 @@ function judgeCommand(cwd, command) {
       }
     }
   }
-  return { blocks, warnings };
+  return { blocks, warnings, notices };
 }
 
 // At most this many distinct reasons, and the same number of warnings, reach
@@ -824,8 +826,9 @@ try {
   const cwd = hookCwd(input);
   if (cwd === null) process.exit(0);
 
-  const { blocks, warnings } = judgeCommand(cwd, command);
+  const { blocks, warnings, notices } = judgeCommand(cwd, command);
   process.stderr.write(capped(warnings, "warnings"));
+  process.stderr.write(capped(notices, "admitted writes"));
   if (blocks.length) {
     process.stderr.write(capped(blocks, "blocked writes"));
     process.exit(2);

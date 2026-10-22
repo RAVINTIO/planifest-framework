@@ -36,8 +36,27 @@ The orchestrator must confirm all four before this workflow is used:
 ## Steps
 
 1. **Orchestrator evaluates the request** against the Fast Path criteria above.
-   - If all criteria pass: proceed.
+   - If all criteria pass: write the scope record, then proceed.
    - If any criterion fails: stop. Use `/change-pipeline`.
+
+   **Write the scope record.** Before the first change, write `plan/.fast-path-scope` with **Write**. The `plan/` prefix is always permitted, so the gate admits this write. With no design, `gate-write` and the shell-write guard then admit writes to the listed paths and block every other gated path.
+   - Fill `branch` from `git rev-parse --abbrev-ref HEAD`. If that prints `HEAD`, write `(detached)`.
+   - Fill `head` from `git rev-parse HEAD`.
+   - List every path the change writes, one per `- ` line. Include the `component.yml` that step 4 bumps, when one covers the change. `plan/changelog/` needs no entry, because `plan/` is always permitted.
+   - Write each entry as a root-relative file or folder path. A trailing `/` names a folder. The record has no glob syntax.
+   - Write a new record over any record already there, so a stale record never carries into this change.
+   - If you commit or switch branch mid-change, rewrite the record before the next write. The gate ignores a record whose branch or `HEAD` no longer matches.
+
+   The record is self-authorisation. Each write the gate admits through it prints a one-line notice on stderr, and step 5 lists every record path in the changelog. Example:
+
+   ```
+   branch: feat/0000040-fix-typo
+   head: 3f2a9c1d8e7b6a5f4e3d2c1b0a9f8e7d6c5b4a39
+   paths:
+   - planifest-overrides/instructions/review.md
+   - docs-site/
+   - planifest-framework/component.yml
+   ```
 
 2. **Implement the fix directly.** No Feature Brief, Execution Plan, or ADR required.
    - Apply the minimum change to address the request.
@@ -55,10 +74,15 @@ The orchestrator must confirm all four before this workflow is used:
    - Change: {what was changed}
    - Component: {component-id}
    - Reason: {why}
+   - Paths: {every path in plan/.fast-path-scope}
    ```
-   For a no-`src/` change, the `Component:` line names the covering manifest's component, or the changed paths if no manifest covers them.
+   For a no-`src/` change, the `Component:` line names the covering manifest's component, or the changed paths if no manifest covers them. The `Paths:` line lists every path from the scope record, so the human on the loop sees each path the gate admitted.
 
-6. **Commit** using the fast-path convention:
+6. **Commit** using the fast-path convention. First remove the scope record, so that no commit holds it:
+   ```bash
+   rm -f plan/.fast-path-scope
+   ```
+   The root `.gitignore` also lists the record, as a second guard. Hard Limit 8 permits this `rm`, because the record is a session marker and not code. Then commit:
    ```
    fix(fast-path): {description}
    ```
