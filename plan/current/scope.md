@@ -21,7 +21,7 @@ version: "0.1.0"
   - `standards/framework-update-policy.md` states that a release that changes a setup-delivered file ships such a migration.
   - This repo records it as `applied` after P3 re-runs setup here.
 - A skill drift check, `scripts/skill-drift-check.mjs` (US-002):
-  - It compares `SKILL.md` bytes only, source against the installed copy.
+  - It compares `SKILL.md` text only, source against the installed copy.
   - Before it compares, it applies setup's four path rewrites to the source and strips one leading byte order mark from both copies (P1 correction).
   - It warns and never blocks. It exits 0 on a match, 1 on drift or a missing copy, and 2 when it can't compare.
   - A project with no installed copies reports "not installed" with exit 1 and a setup recommendation.
@@ -61,7 +61,7 @@ version: "0.1.0"
 - Renumbering the orchestrator or boot hard limits.
 - Changing what setup copies or where it copies it.
 - Moving the design critic default to `on` outside `autonomous`. That waits until the false-positive rate is known.
-- Having the drift check compare anything but `SKILL.md` bytes, or re-run setup itself.
+- Having the drift check compare anything but `SKILL.md` text, or re-run setup itself.
 - Any change to the three-story rule or to run modes.
 
 ## Deferred

@@ -32,6 +32,7 @@ As the human on the loop, I see an agent ask whether a requirement holds two con
 - If the answer is yes, the agent splits the requirement by addition only:
   - The agent writes the new concern's criteria into a new requirement file with the next free requirement ID. The fourth criterion goes there, not into the existing file.
   - A new user story in the feature brief backs the new requirement. It splits the existing story and adds no new scope. The agent adds the new story's criteria to the brief and leaves the existing story's criteria lines as they are.
+  - A split after P0 changes the confirmed design's story list. The agent records it as `Deviation (P{N}, unclassified): split req-NNN into req-MMM`. The orchestrator then updates the `design.md` story list and criteria count, under the mid-pipeline requirement change protocol as an additive change.
   - The agent never moves or removes an existing acceptance-criteria line during the split.
 - If an existing criterion belongs to the new concern, the agent leaves it in place for now:
   - It adds a cross-reference in both files. The existing file names the new requirement beside that criterion's concern. The new file names the criterion it will receive.

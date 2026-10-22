@@ -48,7 +48,7 @@ As the human on the loop, I see every hook message escape the text it quotes, so
   - a cap that falls inside `\x1b`, which returns the text before the escape
   - a cap that falls between the halves of U+1F600, which returns the text before the character
   - an input under the cap, which returns the full escaped text
-- For `ratchet-check.mjs`, the suite builds an active-loop fixture as the 0000017 req-002 suite does. It removes a criterion that holds the cases listed under Input Validation, then asserts the block output.
+- For `ratchet-check.mjs`, the suite builds an active-loop fixture as the 0000017 req-002 suite does. It removes a criterion that holds the cases listed under Input Validation, then asserts the block output. The ratchet case uses ESC and U+202E only. `guardedLines` splits on newlines (`ratchet-check.mjs:98`), so a removed criterion can never hold `\n`. The em dash case covers `\n`.
 - For `em-dash-guard.mjs`, the suite writes em dash content to a scoped target whose name holds the same cases, then asserts the block output.
 - Each assertion checks both stdout and stderr. Neither holds a raw control character, U+202E, or a second line that starts with `[Planifest]`.
 

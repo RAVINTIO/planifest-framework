@@ -125,4 +125,7 @@ Streams (start commit `8375ca7`):
 - Decision (P1): a split under an active loop only adds files and lines, and any move of an existing criterion waits until no loop is active or a human writes the approve line / reason: `ratchet-check.mjs` blocks a moved criterion, and agents never write `.ratchet-approve`.
 - Decision (P1): the req-005 suite also scans `src/*/docs/` / reason: two bare citations sit in `src/setup-hook-integration/docs/`.
 - Decision (P1): one req-008 timed case measures NFR-001 for every hook change in this feature / reason: req-009 and req-011 add no timing of their own.
+- Design critic P1 iteration 3: APPROVE (0 critical, 0 major, 6 minor). Loop closed as `done` at 2026-10-22T22:01:07Z. The orchestrator fixed all six minor findings after the loop disarmed.
+- Decision (P1): a throwing `lstat` prints no "not a regular file" line / reason: the gate never learned the file type, so that line would be wrong.
+- Decision (P1): a split after P0 is a `Deviation` line, and the orchestrator updates the `design.md` story list as an additive change / reason: the split changes the confirmed story list.
 - Shared files for P3, updated: the orchestrator skill (req-002 to req-006), the ship agent skill (req-003, req-005), `autonomous-run-standards.md` (req-005, req-006), the loop runner skill (req-006, req-007), and the spec agent skill (req-005, req-007).

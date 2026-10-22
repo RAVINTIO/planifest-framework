@@ -22,7 +22,7 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 - `evaluateWrite` in `planifest-framework/hooks/enforcement/path-rules.mjs:774-782` calls `existsSync(designPath)` and then `readFileSync` inside a `try`.
 - A folder at `plan/current/design.md` passes `existsSync`. The read then throws `EISDIR`, and the `catch` at `path-rules.mjs:780-781` allows the write.
 - A FIFO at the same path passes `existsSync`. The read waits for a writer, so the hook stops only when the tool's hook timeout ends it.
-- `gate-write.mjs:40` and `shell-write-guard.mjs:700` both reach this code through `evaluateWrite`, so both hooks share the defect.
+- `gate-write.mjs:39` calls `judgeWrite`, which calls `evaluateWrite` at `path-rules.mjs:820`. `shell-write-guard.mjs:700` reaches the same code through `evaluateWrite`, so both hooks share the defect.
 
 ### File-type check
 
@@ -46,6 +46,7 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
   5. A current record that lists the target: the write is admitted with the Fast Path notice. A listed non-enforcement path such as `src/a.js` therefore passes.
   6. A current record that doesn't list the target: the write blocks as not listed in the record.
 - Every block on the non-regular route carries the "not a regular file" line. That covers outcomes 1, 2, 3, 4, and 6. `evaluateWrite` appends the line after the route's own reason, so the human on the loop always sees why `design.md` didn't count. Outcome 5 is an admit, so it carries no such line.
+- A throwing `lstatSync`, such as `EACCES`, follows `scopeVerdict` as a missing design does. It carries no "not a regular file" line, because the gate never learned the file type. Its reasons match today's missing-design reasons.
 - The added line reads `[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.` and ends with a newline. The line is appended to the reason that `scopeVerdict` returns, so `scopeVerdict` itself stays unchanged.
 - The read of a regular `design.md` opens the file once, with `O_NONBLOCK` and `O_NOFOLLOW` where `fs.constants` defines them. It calls `fstatSync` on that descriptor before it reads. If the descriptor isn't a regular file, the route is "any other type". This closes the gap between the `lstatSync` call and the open.
 - A regular `design.md` whose open, `fstatSync`, or read throws still fails open, as `path-rules.mjs:780-781` does today.
@@ -69,6 +70,8 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
   - a symbolic link to a regular design that lists the target
 - For the FIFO case, the suite runs each hook under a 5-second limit and fails if the limit ends the hook.
 - A scope-record case places a folder at `plan/current/design.md` with a current Fast Path scope record that lists `src/a.js`. A **Write** to `src/a.js` exits 0 with the Fast Path notice. A **Write** to an unlisted `src/b.js` exits 2 with the not-listed reason followed by the "not a regular file" line. A third case targets an enforcement path under the same record and asserts the enforcement-path reason followed by the same line.
+- A stale-record case places a folder at `plan/current/design.md` with a scope record whose branch or `HEAD` no longer matches. A **Write** to `src/a.js` exits 2 with `NO_DESIGN_REASON`, the line naming why the record was ignored, and the "not a regular file" line.
+- A search-permission case removes search permission from `plan/current` (mode `600`), so `lstatSync` throws `EACCES`. A **Write** to `src/a.js` exits 2 with `NO_DESIGN_REASON` and no "not a regular file" line. The suite skips this case under root.
 - A control case with a regular, readable design that lists the target exits 0.
 - A timed case runs `gate-write.mjs` with a regular `design.md` and asserts it finishes under 500 ms (NFR-001).
 - A regular `design.md` with mode `000` exits 0, when the suite runs as a non-root account. The suite skips this case under root.
