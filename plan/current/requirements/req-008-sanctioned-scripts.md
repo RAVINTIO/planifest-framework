@@ -62,6 +62,8 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
   - The source must be a `test-*.sh` regular file with one link, directly inside `planifest-framework/tests/`.
   - The destination is always `planifest-framework/tests/regression/`. Neither that folder nor the destination file may be a link.
   - It refuses `PLANIFEST_REGRESSION_DIR` unless the variable names that same folder.
+  - It refuses a `tests/` folder that is a link. The destination file and `regression-manifest.json` must each be a regular file with one link (P5 re-review finding P-N3).
+  - It writes the test and the manifest to fresh temp files in `tests/regression/`, then renames each into place. It never writes through a link at a fixed temp path (backlog 0000147).
   - A break exits 1 and copies nothing.
 - Skill text also runs scripts that write no file, such as `run-mode.mjs`, `product-version.mjs`, `consistency-check.mjs`, and `stream-reconcile.mjs`. They need no carve-out and stay off the list.
 - If a later feature adds a script that skill text runs to write files, that feature adds it to the sentence in both templates.

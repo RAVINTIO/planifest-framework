@@ -484,10 +484,88 @@ assert_equals "same" "$(same "$SCRATCH/secret-before.sh" "$FX/outside/test-secre
   "req-008: the destination link target stays unchanged"
 rm "$FXT/regression/test-ok2.sh"
 
+# P-N3: a hard link at the destination would let cp overwrite the file
+# outside tests/regression/.
+printf 'victim\n' > "$FX/outside/victim-hl.sh"
+cp "$FX/outside/victim-hl.sh" "$SCRATCH/victim-hl-before.sh"
+cp "$FXT/test-ok.sh" "$FXT/test-hl.sh"
+if ln "$FX/outside/victim-hl.sh" "$FXT/regression/test-hl.sh" 2>/dev/null; then
+  refuse_promote "a destination with a second hard link" "$FXT/test-hl.sh"
+  assert_equals "same" "$(same "$SCRATCH/victim-hl-before.sh" "$FX/outside/victim-hl.sh")" \
+    "req-008: the hard-linked destination target stays unchanged"
+  rm "$FXT/regression/test-hl.sh"
+fi
+rm "$FXT/test-hl.sh"
+
+# P-N3 (backlog 0000147): a link at the old $DEST.tmp path is never written
+# through, and never installed as the destination.
+printf 'victim\n' > "$FX/outside/victim-tmp.sh"
+cp "$FX/outside/victim-tmp.sh" "$SCRATCH/victim-tmp-before.sh"
+cp "$FXT/test-ok.sh" "$FXT/test-tmp.sh"
+ln -s "$FX/outside/victim-tmp.sh" "$FXT/regression/test-tmp.sh.tmp"
+(cd "$FX" && env -u PLANIFEST_REGRESSION_DIR bash "$PROMOTE_FX" "$FXT/test-tmp.sh" "0000035-x" "agent" >/dev/null 2>&1)
+assert_equals "same" "$(same "$SCRATCH/victim-tmp-before.sh" "$FX/outside/victim-tmp.sh")" \
+  "req-008: a link at the temp path leaves its target unchanged"
+assert_equals "absent" "$([ -L "$FXT/regression/test-tmp.sh" ] && echo present || echo absent)" \
+  "req-008: a link at the temp path never becomes the destination"
+rm -f "$FXT/regression/test-tmp.sh.tmp"
+
+# promote_fixture <dir>: a fresh framework tree with one test-ok.sh source.
+promote_fixture() {
+  mkdir -p "$1/planifest-framework/scripts" "$1/planifest-framework/tests/regression" "$1/outside"
+  cp "$FRAMEWORK/scripts/promote-to-regression.sh" "$1/planifest-framework/scripts/"
+  cp "$FXT/test-ok.sh" "$1/planifest-framework/tests/test-ok.sh"
+}
+promote_in() {
+  (cd "$1" && env -u PLANIFEST_REGRESSION_DIR bash "$1/planifest-framework/scripts/promote-to-regression.sh" \
+    "$1/planifest-framework/tests/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
+}
+
+# P-N3: a manifest that is a symlink or a hard link would carry the
+# manifest write outside tests/regression/.
+for KIND in sym hard; do
+  FM="$SCRATCH/promote-manifest-$KIND"
+  promote_fixture "$FM"
+  printf '{"tests":[]}\n' > "$FM/outside/manifest.json"
+  cp "$FM/outside/manifest.json" "$SCRATCH/manifest-before.json"
+  if [ "$KIND" = sym ]; then
+    ln -s "$FM/outside/manifest.json" "$FM/planifest-framework/tests/regression/regression-manifest.json"
+  else
+    ln "$FM/outside/manifest.json" "$FM/planifest-framework/tests/regression/regression-manifest.json" 2>/dev/null || continue
+  fi
+  promote_in "$FM"
+  assert_equals "1" "$?" "req-008: promote refuses a $KIND-linked manifest"
+  assert_equals "same" "$(same "$SCRATCH/manifest-before.json" "$FM/outside/manifest.json")" \
+    "req-008: the $KIND-linked manifest target stays unchanged"
+  assert_equals "regression-manifest.json" "$(ls -A "$FM/planifest-framework/tests/regression")" \
+    "req-008: promote with a $KIND-linked manifest adds nothing to regression/"
+done
+
+# P-N3: a tests/ folder that is a link moves the whole binding elsewhere.
+FT="$SCRATCH/promote-linked-tests"
+mkdir -p "$FT/planifest-framework/scripts" "$FT/realtests/regression"
+cp "$FRAMEWORK/scripts/promote-to-regression.sh" "$FT/planifest-framework/scripts/"
+printf '{"tests":[]}\n' > "$FT/realtests/regression/regression-manifest.json"
+cp "$FXT/test-ok.sh" "$FT/realtests/test-ok.sh"
+ln -s "$FT/realtests" "$FT/planifest-framework/tests"
+promote_in "$FT"
+assert_equals "1" "$?" "req-008: promote refuses a tests/ folder that is a link"
+assert_equals "regression-manifest.json" "$(ls -A "$FT/realtests/regression")" \
+  "req-008: the linked tests/ folder stays unchanged"
+
+# P-N3: the manifest write goes through a temp file and a rename.
+PSRC=$(cat "$FRAMEWORK/scripts/promote-to-regression.sh")
+lacks '"$DEST.tmp"' "$PSRC" "req-008: promote never writes a fixed temp path"
+lacks "fs.writeFileSync('regression-manifest.json'" "$PSRC" "req-008: promote never writes the manifest in place"
+
 (cd "$FX" && env -u PLANIFEST_REGRESSION_DIR bash "$PROMOTE_FX" "$FXT/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
 assert_equals "0" "$?" "req-008: promote of a test-*.sh in tests/ exits 0"
 assert_equals "present" "$([ -f "$FXT/regression/test-ok.sh" ] && echo present || echo absent)" \
   "req-008: promote copies the test into regression/"
+assert_equals "" "$(ls -A "$FXT/regression" | grep -e '^\.promote-' -e '^\.regression-manifest-')" \
+  "req-008: promote leaves no temp file in regression/"
+assert_contains '"test-ok.sh"' "$(cat "$FXT/regression/regression-manifest.json")" \
+  "req-008: promote records the test in the manifest"
 
 FL="$SCRATCH/promote-linked"
 mkdir -p "$FL/planifest-framework/scripts" "$FL/planifest-framework/tests" "$FL/realreg"
