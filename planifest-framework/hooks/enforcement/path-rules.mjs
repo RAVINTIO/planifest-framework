@@ -47,7 +47,10 @@
  *   FAST_PATH_ENFORCEMENT_PATHS      paths no scope record admits (0000035 ADR-004)
  */
 
-import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
+import {
+  closeSync, constants as fsConstants, existsSync, fstatSync, lstatSync, openSync, readFileSync, readlinkSync,
+  realpathSync, statSync,
+} from "node:fs";
 import { dirname, isAbsolute, join, normalize, parse, relative, resolve, sep } from "node:path";
 
 // Always-permitted: planning and doc artefacts and Planifest internal files.
@@ -72,6 +75,8 @@ const SENTINEL_REASON =
 const NO_DESIGN_REASON =
   "[Planifest] No confirmed design at plan/current/design.md. " +
   "Complete Phase 0 first.\n";
+const NOT_REGULAR_LINE =
+  "[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.\n";
 const UNPARSEABLE_WARNING =
   "[Planifest] Warning: Could not parse component paths from " +
   "plan/current/design.md. Ensure a '## Component Paths' section exists. " +
@@ -108,7 +113,8 @@ export function norm(p) {
 
 /**
  * p as a block reason prints it: each control or format character escaped,
- * as \n, \r, \t, \xNN, or \u{XXXX}, and the result cut to max characters. A
+ * as \n, \r, \t, \xNN, or \u{XXXX}, and the result cut to at most max
+ * characters between whole escapes and code points. A
  * target that holds a newline can't then forge a second line of hook output
  * (G-S11). A bidirectional control can't reorder the text on display (G-N3).
  */
@@ -117,16 +123,25 @@ export function norm(p) {
 // Unicode line and paragraph separators (Zl, Zp).
 const CONTROL_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu;
 
+const escapeControl = (c) => {
+  if (c === "\n") return "\\n";
+  if (c === "\r") return "\\r";
+  if (c === "\t") return "\\t";
+  const code = c.codePointAt(0);
+  const hex = code.toString(16).toUpperCase();
+  return code > 0xff ? `\\u{${hex.padStart(4, "0")}}` : `\\x${hex.toLowerCase().padStart(2, "0")}`;
+};
+
+// The cut falls only between whole units: one escape or one code point. The
+// output never ends inside an escape or a surrogate pair (0000036 ADR-004).
 export function shown(p, max = 80) {
-  const escaped = String(p).replace(CONTROL_RE, (c) => {
-    if (c === "\n") return "\\n";
-    if (c === "\r") return "\\r";
-    if (c === "\t") return "\\t";
-    const code = c.codePointAt(0);
-    const hex = code.toString(16).toUpperCase();
-    return code > 0xff ? `\\u{${hex.padStart(4, "0")}}` : `\\x${hex.toLowerCase().padStart(2, "0")}`;
-  });
-  return escaped.slice(0, max);
+  let out = "";
+  for (const c of String(p)) {
+    const unit = c.replace(CONTROL_RE, escapeControl);
+    if (out.length + unit.length > max) break;
+    out += unit;
+  }
+  return out;
 }
 
 function isDirectory(p) {
@@ -419,11 +434,14 @@ export function hookCwd(input) {
   }
 }
 
+// isAlwaysPermitted: a plan/ or docs/ path, or a permitted file name outside
+// every enforcement path. A permitted name inside an enforcement path takes
+// the normal route, so it can't carry a write past the list (0000036 ADR-003).
 function isAlwaysPermitted(relPath) {
   const n = norm(relPath);
+  if (ALWAYS_PERMITTED_PREFIXES.some((prefix) => n.startsWith(prefix))) return true;
   const base = n.split("/").pop() ?? "";
-  if (ALWAYS_PERMITTED_FILES.includes(base)) return true;
-  return ALWAYS_PERMITTED_PREFIXES.some((prefix) => n.startsWith(prefix));
+  return ALWAYS_PERMITTED_FILES.includes(base) && !isEnforcementPath(relPath);
 }
 
 function extractComponentPaths(content) {
@@ -741,15 +759,62 @@ function scopeVerdict(root, relPath) {
   };
 }
 
+// O_NONBLOCK keeps a FIFO from holding the open, and O_NOFOLLOW makes the
+// open fail on a link swapped in after lstatSync. Windows defines neither.
+const DESIGN_OPEN_FLAGS =
+  fsConstants.O_RDONLY | (fsConstants.O_NONBLOCK ?? 0) | (fsConstants.O_NOFOLLOW ?? 0);
+
+/**
+ * readDesign: design.md as the gate sees it (ADR-002). lstatSync runs before
+ * any open, so a FIFO or a device is never opened. Returns one of:
+ *   { kind: "missing" }      lstatSync threw, such as ENOENT or EACCES
+ *   { kind: "non-regular" }  a folder, FIFO, symbolic link, or other type
+ *   { kind: "unreadable" }   a regular file whose open, fstat, or read threw
+ *   { kind: "regular", content }
+ * The fstatSync on the open descriptor closes the gap between lstatSync and
+ * the open.
+ */
+function readDesign(designPath) {
+  let stats;
+  try {
+    stats = lstatSync(designPath);
+  } catch {
+    return { kind: "missing" };
+  }
+  if (!stats.isFile()) return { kind: "non-regular" };
+  let fd;
+  try {
+    fd = openSync(designPath, DESIGN_OPEN_FLAGS);
+    if (!fstatSync(fd).isFile()) return { kind: "non-regular" };
+    return { kind: "regular", content: readFileSync(fd, "utf-8") };
+  } catch {
+    return { kind: "unreadable" };
+  } finally {
+    if (fd !== undefined) {
+      try {
+        closeSync(fd);
+      } catch {
+        // nothing to do: the verdict doesn't depend on the close
+      }
+    }
+  }
+}
+
 /**
  * Applies the gate checks, in order, to a root-relative path:
  *   0. the plan/current/** sentinel check, with the feature-brief.md and
  *      always-permitted basename exemptions (0000005-ADR-003)
- *   1. always-permitted prefixes and basenames
+ *   1. always-permitted prefixes and basenames. A basename counts only when
+ *      isEnforcementPath is false for the path (0000036 ADR-003), so such a
+ *      name inside an enforcement path goes on to step 2.
  *   2. design.md existence. With no design.md, a current Fast Path scope
  *      record admits a listed path and blocks the rest (0000035 ADR-002).
  *      A stale or invalid record admits nothing, and no record admits a
  *      path in FAST_PATH_ENFORCEMENT_PATHS (0000035 ADR-004).
+ *      A design.md that isn't a regular file, or that lstatSync can't read,
+ *      counts as no design. Each block for a non-regular file gains a line
+ *      that says so. A regular design.md that can't be read fails open
+ *      (0000036 ADR-002, which narrows 0000003-ADR-005).
  *   3. the component-path check, which warns and allows when design.md has no
  *      parseable paths section
  * Returns { allowed: true }, { allowed: true, warning }, { allowed: true,
@@ -771,17 +836,16 @@ export function evaluateWrite(root, relPath) {
 
   if (isAlwaysPermitted(relPath)) return { allowed: true };
 
-  const designPath = join(root, "plan", "current", "design.md");
-  if (!existsSync(designPath)) return scopeVerdict(root, relPath);
-
-  let designContent;
-  try {
-    designContent = readFileSync(designPath, "utf-8");
-  } catch {
-    return { allowed: true }; // can't read design.md, so fail open (0000003-ADR-005)
+  const design = readDesign(join(root, "plan", "current", "design.md"));
+  if (design.kind === "missing") return scopeVerdict(root, relPath);
+  if (design.kind === "non-regular") {
+    // The same route as a missing design, and each block says why (ADR-002).
+    const verdict = scopeVerdict(root, relPath);
+    return verdict.allowed ? verdict : { ...verdict, reason: verdict.reason + NOT_REGULAR_LINE };
   }
+  if (design.kind === "unreadable") return { allowed: true }; // can't read design.md, so fail open (0000003-ADR-005)
 
-  const componentPaths = extractComponentPaths(designContent);
+  const componentPaths = extractComponentPaths(design.content);
   if (!componentPaths) return { allowed: true, warning: UNPARSEABLE_WARNING };
 
   if (!matchesComponentPath(relPath, componentPaths)) {

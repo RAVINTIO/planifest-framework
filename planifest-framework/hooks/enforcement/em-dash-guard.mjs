@@ -40,6 +40,7 @@
 
 import { normalize, resolve } from "node:path";
 
+import { shown } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const EM_DASH = "—";
@@ -116,8 +117,10 @@ try {
   const listed = hits.slice(0, MAX_LISTED).join(", ");
   const more = hits.length > MAX_LISTED ? ` (+${hits.length - MAX_LISTED} more)` : "";
 
+  // The target goes through shown(), so a control character in it can't
+  // forge or hide a line of hook output (0000036 ADR-004).
   const reason =
-    `[Planifest] Em dash (U+2014) found in '${relTarget}' at line(s): ${listed}${more}. ` +
+    `[Planifest] Em dash (U+2014) found in '${shown(relTarget, 200)}' at line(s): ${listed}${more}. ` +
     "Replace with a comma, colon, semicolon, full stop, or parentheses depending " +
     "on the sentence. If the character is genuinely required (a literal quotation, " +
     `for example), add ${SENTINEL} anywhere in the content to bypass.\n`;
