@@ -227,14 +227,14 @@ Dispatch plan by file ownership (start commit `e248df9`):
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T23:06:03Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T23:51:49Z` |
+| Wall-clock | `45` |
 | Streams | `n/a` (joined set) |
 | Model tier | primary |
 | Skills loaded | planifest-security-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `8` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `2` |
 | Notes | Two reviewers in one batch: hooks (req-008, req-009, req-011, req-010) and scripts plus skill text (req-001 to req-007). |
 
 - Review (scripts): High. S-1 High: the build-log template holds the anchor at column 1, so a copied build log carries an anchor. S-3, S-5, S-6 Medium. S-2, S-4, S-7 Low.
@@ -246,3 +246,9 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Fixes committed: S-1 and S-2 (`26cc234`), hooks 1 and 2 (`ae3f552`, closes backlog 0000178), S-3 to S-6 (`1a60cdf`). Each fix agent reported a green full suite.
 - Fresh-context re-review (`801f61b`): the feature rates Low. Six fixes hold in full, and S-5 and S-6 partly. New Low findings: N-1 (a socket swapped in after `lstat` fails open), N-2 (a setup run that skips hook wiring still counts as complete), N-3 (step 1b loads source copies in unnamed step 1a states). N-4 and N-5 are informational.
 - Decision (P5): fix N-1 to N-4 in one more round, then a fresh re-review / reason: each is a small change in code or text this feature changed. N-5 is accepted, because the anchor still needs the design-confirm commit.
+- Fix round 2 committed (`3029a22`). Full suite green.
+- Fresh-context re-review round 2: Low. N-1 and N-4 fixed, N-2 and N-3 partly. New Low findings M-1 (an unwritable settings file still counts as a complete setup run) and M-2 (step 1b's first allowed state reads two ways). M-3 informational.
+- Backlog filed (P5): 0000181 (step 1a checks version strings only, pre-existing) and 0000182 (M-1, M-2, and M-3).
+- Decision (P5): stop the fix loop and defer M-1 to M-3 to backlog 0000182 / reason: each round found smaller Low edge cases, and the gate passes at Low with no Critical, High, or Medium finding.
+- Gate (P5): report produced with specific findings. Overall risk Low after two fix rounds, each confirmed by a fresh-context re-review.
+- Progress: P5 done at 2026-10-22T23:51:49Z: High risk fixed to Low in two rounds, five backlog entries filed

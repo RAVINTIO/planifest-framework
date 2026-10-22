@@ -45,9 +45,15 @@ Not applicable. No network surface.
 
 Not applicable. No IaC.
 
+## Re-reviews
+
+- Round 1 (`security-rereview.md`): six fixes hold in full, S-5 and S-6 partly. New Low findings N-1 to N-3, informational N-4 and N-5.
+- Fix round 2 (`3029a22`): the gate fails open only on `EACCES` and `EPERM`. The migration and step 1b rules tighten, and the drift-check reasons are complete.
+- Round 2 (`security-rereview-2.md`): N-1 and N-4 fixed, N-2 and N-3 partly. New Low findings M-1 and M-2, informational M-3. Backlog 0000182 holds all three. Round 2 also filed backlog 0000181 (step 1a checks version strings only, pre-existing).
+
 ## Summary
 
-Overall risk rating before the P5 fixes: High, from S-1. After the fixes, and once the fresh-context re-reviews confirm them, the expected rating is Low.
+Overall risk rating before the P5 fixes: High, from S-1. After two fix rounds and two fresh-context re-reviews: Low. No Critical, High, or Medium finding remains.
 
 Top actions before production:
 1. Fix S-1 and S-2 in `run-mode.mjs` and the build-log template.
