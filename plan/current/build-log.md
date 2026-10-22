@@ -221,3 +221,18 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Decision (P4): the req-001 suite gains no branch-diff check / reason: CI clones may lack a `main` ref, and the end-of-P6 recheck covers the list.
 - Gate (P4): CI passes and every criterion verifies except the AC-001.1 record, which is scheduled for the end of P6.
 - Progress: P4 done at 2026-10-22T23:06:03Z: CI green, 30 of 31 criteria verified, file list fixed
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T23:06:03Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined set) |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Two reviewers in one batch: hooks (req-008, req-009, req-011, req-010) and scripts plus skill text (req-001 to req-007). |
