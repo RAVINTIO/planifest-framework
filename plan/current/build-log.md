@@ -344,4 +344,8 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 | Notes | Run mode from `run-mode.mjs`: autonomous. |
 
 - Decision (P7): the P6 docs agent wrote the iteration log at the Step 1 changelog path. The orchestrator moves it to `plan/current/iteration-log.md`, where the 0000033 run kept it, and marks P6 done in it. Step 1 then writes the changelog at its own path / reason: the two documents have different readers, and the archive carries the iteration log.
+- Cross-reference check: no living doc links to this run's `plan/current/` artifacts. `docs/decisions-index.md` already links to `plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22/adr/`.
+- Step 1: changelog written (`d34d8e1`). Step 2: no `.skips`. Step 3: `.feature-id` written.
+- Decision (P7): promote `test-0000035-req-002-product-yml-in-p7.sh` / reason: it builds its own fixture repos and asserts no state of this repo, so it stays valid after later releases. The regression copy passes 74 of 74.
+- Decision (P7): promote `test-0000035-req-008-sanctioned-scripts.sh` / reason: it guards the sanctioned-script list and the script's input rules, which later features must not weaken. The regression copy passes 293 of 293.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
