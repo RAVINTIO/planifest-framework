@@ -46,7 +46,7 @@ Two close-out leftover commits in the ship agent already keep the ID out of the 
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | `skills/planifest-ship-agent/SKILL.md` changes three subjects and adds the body `-m`. `skills/planifest-orchestrator/SKILL.md` quotes the new P9 marker subject. A new suite, `test-0000036-req-003-ship-commit-subjects.sh`, scans skills and workflows. Four existing suites and their regression copies take the new text. |
+| planifest-framework | `skills/planifest-ship-agent/SKILL.md` changes three subjects and adds the body `-m`. `skills/planifest-orchestrator/SKILL.md` quotes the new P9 marker subject. A new suite, `test-0000036-req-003-ship-commit-subjects.sh`, scans skills and workflows. Three existing suites take the new text, and two of them have regression copies. That makes five files: `test-0000023-req-002-marker-commit-lifecycle.sh`, `test-0000032-req-001-marker-clear-before-tag.sh`, `test-0000033-req-005-ship-without-asking-and-final-report.sh`, and the regression copies of the last two. |
 
 ## Consequences
 

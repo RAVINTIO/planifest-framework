@@ -15,13 +15,20 @@ version: "0.1.0"
 
 This ADR serves [req-005](../requirements/req-005-hard-limits-cited-by-name.md) (US-005, backlog 0000157).
 
-Five files keep their own numbered Hard Limits list:
+Ten sources keep their own numbered Hard Limits list. They are the boot templates and nine skills, each with a `## Hard Limits` heading:
 
-- the orchestrator skill
 - the boot templates
+- the orchestrator skill
 - the ship agent
 - the migrator
 - the loop runner
+- the implementer
+- the refactor skill
+- the test writer
+- the optimise agent
+- the build assessment agent
+
+Only the first five are cited by number today.
 
 Two lists both hold a Hard Limit 8. The orchestrator's is the build-log rule. The boot template's is the Write-or-Edit rule. A bare "Hard Limit 8" can point at either, and agents have mistaken one for the other.
 
@@ -32,14 +39,14 @@ Many files and suites cite limits by number. 0000035 req-008's suite finds boot 
 ## Decision
 
 - **Citation form:** Every citation reads `the {name} rule ({source} Hard Limit {N})`. Two limits from one list read `the {name} and {name} rules ({source} Hard Limits {N} and {M})`.
-- **Sources:** `{source}` is one of `orchestrator`, `boot`, `ship agent`, `migrator`, or `loop runner`. A citation inside the same file still names its source.
+- **Sources:** `{source}` is the boot file or the skill that owns the list. A skill takes its frontmatter name without the `planifest-` prefix, so `planifest-codegen-agent` reads "codegen agent". The set is open, and a new list gets its name the same way. Today's cited sources are `orchestrator`, `boot`, `ship agent`, `migrator`, and `loop runner`. A citation inside the same file still names its source.
 - **Names:** req-005's table fixes the name of each limit that a file cites today. A limit outside that table takes its name from its bold heading, and P3 logs it as a deviation.
 - **Headings:** Headings use the same form, for example `## Commit cadence: the commit-cadence rule (orchestrator Hard Limit 7)`.
 - **No renumbering:** No list changes its numbers, and no limit changes its text.
 - **Number kept in the text:** The form keeps `Hard Limit {N}`, so suites that match that substring keep passing.
 - **Dispatch template:** Both example prompts and the self-contained prompt rule in `agent-dispatch-standards.md` carry one sentence. The sentence states the Write-or-Edit rule and cites boot Hard Limit 8.
 - **Out of scope:** `plan/_archive/`, `plan/changelog/`, and `planifest-framework/tests/` stay as they are. The root `CLAUDE.md`, `AGENTS.md`, and installed copies pick up the change when setup next runs.
-- **Suite:** A new suite scans `planifest-framework/` without `tests/`, `docs/`, and `src/*/docs/`. It fails on any `Hard Limits? [0-9]+` match that the citation form doesn't wrap, and prints the file and line.
+- **Suite:** A new suite scans `planifest-framework/` without `tests/`, and also scans `docs/` and `src/*/docs/`. It fails on any `Hard Limits? [0-9]+` match that the citation form doesn't wrap, and prints the file and line.
 
 ## Alternatives Considered
 

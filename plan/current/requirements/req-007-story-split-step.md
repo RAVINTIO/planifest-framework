@@ -48,7 +48,8 @@ As the human on the loop, I see an agent ask whether a requirement holds two con
 
 - `planifest-framework/hooks/enforcement/ratchet-check.mjs` guards each `- [ ]` line under `## Acceptance Criteria` in a `plan/current/` Markdown file. It does so while any `plan/current/loop-state-*.md` file holds `status: active`.
 - The hook compares one file at a time (`ratchet-check.mjs:238-248`). A criterion moved to another file therefore counts as removed, and the write exits 2.
-- Only a human-written `plan/current/.ratchet-approve` line lets such a removal through. Agents never write that marker.
+- Only a `plan/current/.ratchet-approve` line lets such a removal through. An agent never writes the marker on its own initiative. It writes the line only when the human on the loop gives an explicit instruction in the moment, as 0000017 ADR 001 and ADR-011 allow. In `autonomous`, no one gives that instruction, so every deferred move waits for the loop to end.
+- The boot file forbids any agent write of the marker. Backlog 0000167 tracks that conflict with 0000017 ADR 001. The skills P3 writes state the rule above, and 0000167 settles the wider question.
 - The step avoids the block because it fires before the agent writes the fourth criterion. A yes answer only adds files and lines, and the ratchet passes additions.
 - A follow-up move of an existing criterion waits until one of these holds:
   - no loop-state file holds `status: active`

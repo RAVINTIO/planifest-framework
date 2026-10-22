@@ -24,14 +24,14 @@ As the human on the loop, I see every hard-limit citation name its rule, so that
 - Several files keep their own numbered Hard Limits list. Two lists both hold a Hard Limit 8:
   - The orchestrator skill (`planifest-framework/skills/planifest-orchestrator/SKILL.md:27`) numbers the build-log rule as Hard Limit 8.
   - The boot templates (`planifest-framework/templates/standard-boot.md:14`, `cursor-boot.md:20`) number the Write-or-Edit rule as Hard Limit 8.
-- The ship agent, the migrator, and the loop runner keep their own lists too. A bare "Hard Limit 3" can point at any of them.
+- Nine skills hold a `## Hard Limits` list: the orchestrator, ship agent, migrator, loop runner, implementer, refactor, test writer, optimise agent, and build assessment agent. A bare "Hard Limit 3" can point at any of them.
 - `planifest-framework/standards/agent-dispatch-standards.md` doesn't state the Write-or-Edit rule. A subagent with no boot file can miss it.
 
 ### Citation form
 
 - Every citation names the rule, then its source list and number in brackets. The form is `the {name} rule ({source} Hard Limit {N})`.
 - Two limits from one list take the plural form `the {name} and {name} rules ({source} Hard Limits {N} and {M})`.
-- `{source}` is one of `orchestrator`, `boot`, `ship agent`, `migrator`, or `loop runner`. A citation inside the same file still names its source.
+- `{source}` is the boot file or the skill that owns the list. A skill takes its frontmatter name without the `planifest-` prefix, so `planifest-codegen-agent` reads "codegen agent". The set is open. Today's cited sources are `orchestrator`, `boot`, `ship agent`, `migrator`, and `loop runner`. A citation inside the same file still names its source.
 - Headings follow the same form, for example `## Commit cadence: the commit-cadence rule (orchestrator Hard Limit 7)`.
 - The form keeps the text `Hard Limit {N}`. Existing suites that assert a substring such as `Hard Limit 6` or `Hard Limit 11` keep passing.
 - No list is renumbered, and no limit's text changes.
@@ -83,7 +83,7 @@ These stay as they are:
 
 ### Suite
 
-- A new suite, `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh`, scans `planifest-framework/` without `tests/`, `docs/`, and `src/*/docs/`.
+- A new suite, `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh`, scans `planifest-framework/` without `tests/`, and also scans `docs/` and `src/*/docs/`.
 - It finds each `Hard Limits? [0-9]+` match. It fails on any match that the citation form doesn't wrap, and prints the file and line.
 - The numbered list items that define each limit don't hold the text `Hard Limit`, so the scan doesn't see them.
 - It also asserts that both dispatch prompts and the self-contained prompt rule hold the Write-or-Edit sentence.
