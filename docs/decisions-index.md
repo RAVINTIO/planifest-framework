@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000035-write-gate-scope-and-path-hardening (22 Oct 2026). Adds 16 ADRs for the write gates, the P7 `product.yml` step, sanctioned scripts, and migration run records. ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
+Last updated: 0000036-pipeline-friction-and-gate-fixes (23 Oct 2026). Adds 12 ADRs for the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, the run-mode anchor, the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -28,7 +28,7 @@ Last updated: 0000035-write-gate-scope-and-path-hardening (22 Oct 2026). Adds 16
 | ADR-002 | Common envelope shape | active | All adapters translate to `{ session_id, cwd, tool_input, event }` before delegating to enforcement |
 | ADR-003 | Flag-file deduplication | active | `.orchestrator-active` sentinel prevents duplicate orchestrator activation per session |
 | ADR-004 | Two-check gate model | active | gate-write performs (1) sentinel check, (2) component-path allowlist (in order) |
-| ADR-005 | Exit-zero failure mode | active | Hooks never exit non-zero on unexpected errors; session must never be blocked by a hook bug |
+| ADR-005 | Exit-zero failure mode | narrowed by 0000036 ADR-002 | Hooks never exit non-zero on unexpected errors; session must never be blocked by a hook bug. **Narrowed:** 0000036-ADR-002 stops the `design.md` step of the write gate failing open on a non-regular, swapped, or oversize file. Only `EACCES` and `EPERM` still fail open there. |
 | ADR-006 | Copy-then-delete archive | superseded by 0000033 ADR-010 | Archive uses explicit copy then delete, not atomic move, to survive partial failures. **Superseded:** 0000033-ADR-010 moves each item with `git mv` through `archive-current.mjs` and deletes only explicit paths, never a glob. |
 | ADR-007 | Px prefix convention | active | Every phase response begins with its phase prefix (P0:, P1:, ...) for instant human orientation |
 | ADR-008 | Advisory commit-msg hook | active | commit-msg hook rejects AI attribution and >72-char subjects; exit 1 on violation |
@@ -312,7 +312,7 @@ ADR files: [plan/_archive/0000033-human-on-the-loop-run-mode-2026-10-19/adr/](..
 | ADR-001 | Stack unchanged, new detail in standards files | accepted | The declared stack of Markdown skills and Node `.mjs` scripts stays. New autonomous, sizing, and dispatch detail goes into standards files that the skills link to. |
 | ADR-002 | Autonomous as a third run-mode value | accepted | `plan/.run-mode` gains `autonomous`, which sets both `continuous_run` and `autonomous_run`. Unknown values still read as `interactive`. P0 also writes a build-log Run mode row. Amends 0000012-ADR-005. |
 | ADR-003 | Declared exception list | accepted | In `autonomous`, only six declared items wait for the human on the loop. Every other question becomes a recorded decision. A product can add items in `planifest-overrides/exception-list.yml` but can't remove any. Amends 0000016-ADR-005. |
-| ADR-004 | Gates as loops with fresh checkers | accepted | In `autonomous`, every P1 to P6 gate runs as a loop under `planifest-loop-runner` with a named checker. Five toggle keys read as `on` when absent. Amends 0000016-ADR-003. |
+| ADR-004 | Gates as loops with fresh checkers | amended by 0000036 ADR-009 | In `autonomous`, every P1 to P6 gate runs as a loop under `planifest-loop-runner` with a named checker. Five toggle keys read as `on` when absent. Amends 0000016-ADR-003. **Amended:** 0000036-ADR-009 reads an absent `design_critic` key as `report-only` outside `autonomous`. The `autonomous` default of `on` is unchanged. |
 | ADR-005 | Approach budget per loop instance | accepted | A loop that hits its cap or the no-progress rule starts a new approach. Each loop instance allows 3 approaches, and a fourth becomes an exhausted-budget exception. The reversal budget stays at 2. |
 | ADR-006 | Ship without asking in autonomous | accepted | In `autonomous`, P7 to P9 ask nothing. P9 always raises the PR, as a draft when an exception waits. Merging stays human-only. Amends 0000012-ADR-004 and 0000004-ADR-003. |
 | ADR-007 | P0 real forks and one confirmation turn | accepted | P0 asks only real forks. The design, the Scope Lock batch, and the run mode confirm in one turn, which is the second named exception to 0000014-ADR-008. |
@@ -347,6 +347,25 @@ ADR files: [plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22
 | ADR-017 | Migration records owned by the migrator | accepted | `planifest-migrator` is the only writer of `plan/_migrations/`. Orchestrator resume detection reads the records and never writes them. |
 | ADR-018 | Pending means no readable record | accepted | A migration is pending when its record is missing or can't be read. Resume detection reads only top-level migration files and ignores orphan records. |
 | ADR-019 | Records come from scans, never seeded | accepted | No record is seeded from the old completed-migrations folder. Each record comes from a scan. A scan with findings writes no record until the human on the loop answers every batch. |
+
+### Feature 0000036: pipeline-friction-and-gate-fixes
+
+ADR files: [plan/current/adr/](../plan/current/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged, gate and hook output code on Node built-ins with no spawn | accepted | No new language, runtime, or library. The new gate rules live in `path-rules.mjs` on `node:fs` and `node:path`. The changed hooks add no spawn, and `ratchet-check.mjs` keeps its one `git` spawn. A suite checks the source of the five files. |
+| ADR-002 | A non-regular design.md reads as no design | accepted | `evaluateWrite` calls `lstatSync` on `design.md` before any read. A folder, FIFO, link, other non-regular file, swapped file, or file over 1 MiB reads as no design. Only `EACCES` and `EPERM` fail open. Narrows 0000003-ADR-005 for this step only. |
+| ADR-003 | The always-permitted file-name shortcut skips enforcement paths | accepted | The file-name shortcut applies only when `isEnforcementPath(relPath)` is false. A permitted name inside an enforcement path goes to the `design.md` step. The `plan/` and `docs/` prefix shortcut is unchanged. Extends 0000033-ADR-009. |
+| ADR-004 | shown() cuts at whole units, and two more hook outputs use it | accepted | `shown(p, max)` builds its output from whole units, so a cut never ends inside an escape or a surrogate pair. `ratchet-check.mjs` and `em-dash-guard.mjs` quote their targets through it at a cap of 200. Extends 0000032-ADR-004. |
+| ADR-005 | Drift check is a warn-only Node script | accepted | `scripts/skill-drift-check.mjs` compares `SKILL.md` text only, after it applies setup's four path rewrites. It finds the active tool from the setup marker. It exits 0, 1, or 2, writes nothing, and never blocks. |
+| ADR-006 | Setup-delivered files follow what setup copies | accepted | A setup-delivered file is one that `setup.sh` or `setup.ps1` copies or writes. The definition follows setup, copy-all fallback included. A release that changes one ships a re-run-setup migration. |
+| ADR-007 | The 0.34.0 migration targets the framework source too | accepted | `migrate-0.34.0-rerun-setup.md` names every project with an installed setup, this repo included. P6 re-runs setup here after the last change and then writes the `applied` record. **Departs from** the 0.31.0 migration, whose `**Target:**` line names a downstream project only. |
+| ADR-008 | Run-mode anchor as a bare line or one list item | accepted | An anchor matches `^(- )?Run mode confirmed: autonomous (<UTC timestamp>)$` as a whole line. Every other prefix or trailing text is no anchor. The one-commit rule, the removal rule, and the read cap stay strict. |
+| ADR-009 | Design critic reads as report-only by default | accepted | Outside `autonomous`, an absent `design_critic` key or an absent `loop-toggles.yml` reads as `report-only`. `autonomous` keeps `on`. An explicit value wins. Amends 0000016-ADR-003 and 0000033-ADR-004. |
+| ADR-010 | Hard limits cited by name and source | accepted | Every citation reads `the {name} rule ({source} Hard Limit {N})`. No list renumbers. Headings and the dispatch template use the same form. A suite fails on a bare citation. |
+| ADR-011 | Split step before a fourth criterion | accepted | Before an agent adds a fourth criterion, it asks whether the requirement holds two concerns. Yes means a split by addition only. An existing criterion moves only when no loop is active or the human on the loop gives an approve line. Extends 0000035-ADR-012. |
+| ADR-012 | Commit subjects without placeholders | accepted | No commit subject template holds `{`, `}`, `<`, or `>`. The P7 archive, P9 marker, and P9 final report subjects name the phase and action. The feature ID moves to a second `-m` message. |
 
 ---
 
