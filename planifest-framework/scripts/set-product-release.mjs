@@ -36,6 +36,8 @@
  *     in place. A failure removes the temp file.
  *   - Each components[].path read from product.yml meets the --component
  *     path rules.
+ *   - Each component.yml is opened once with O_NOFOLLOW and read through
+ *     that descriptor. fstat must show a regular file with one link (P-N1).
  *   - An unexpected file-system error exits 2 and names only the operation
  *     and the error code.
  *
@@ -197,7 +199,10 @@ function checkComponents(root, values) {
 }
 
 // The component path rules, shared by --component and by each
-// components[].path read from product.yml (P-S08). Returns the real path.
+// components[].path read from product.yml (P-S08). The file is opened once
+// with O_NOFOLLOW and read through that descriptor. fstat must show a
+// regular file with one link, so a hard link to a file outside the root
+// fails (P-N1). Returns the file text.
 function checkComponentPath(root, label, path) {
   if (path.length > COMPONENT_PATH.max) fail(2, `${label}: path longer than ${COMPONENT_PATH.max} characters`);
   if (!COMPONENT_PATH.re.test(path)) fail(2, `${label}: path does not match ^[A-Za-z0-9._/-]+$`);
@@ -215,8 +220,21 @@ function checkComponentPath(root, label, path) {
     fail(2, `${label}: path names no existing file`);
   }
   if (!insideRoot(root, real)) fail(2, `${label}: path resolves outside the root`);
-  if (!fsCall(`${label}: stat`, () => statSync(real)).isFile()) fail(2, `${label}: path is not a file`);
-  return real;
+  let fd;
+  try {
+    fd = openSync(real, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  } catch (err) {
+    if (err && err.code === "ELOOP") fail(2, `${label}: path is a link that resolves to another path`);
+    return fsFail(`${label}: open`, err);
+  }
+  try {
+    const fst = fsCall(`${label}: stat`, () => fstatSync(fd));
+    if (!fst.isFile()) fail(2, `${label}: path is not a file`);
+    if (fst.nlink !== 1) fail(2, `${label}: path has more than one hard link`);
+    return fsCall(`${label}: read`, () => readFileSync(fd, "utf-8"));
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function validate(argv) {
@@ -345,9 +363,8 @@ function deriveVersion(root, components) {
   for (const c of components) {
     const label = `component ${clean(c.id ?? "(unnamed)")}`;
     if (!c.path) fail(2, `${label}: components[] entry has no path`);
-    const real = checkComponentPath(root, label, c.path);
+    const text = checkComponentPath(root, label, c.path);
     let version = null;
-    const text = fsCall(`${label}: read`, () => readFileSync(real, "utf-8"));
     for (const raw of text.split(/\r?\n/)) {
       const m = raw.replace(/#.*$/, "").trimEnd().match(/^version:\s*(.+)$/);
       if (m) { version = unquote(m[1]); break; }

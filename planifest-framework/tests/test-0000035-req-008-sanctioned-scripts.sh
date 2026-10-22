@@ -318,6 +318,43 @@ manifest_path_case "that starts with /" "$SCRATCH/evil/component.yml" abs
 manifest_path_case "through a link outside the root" "src/evil-link/component.yml" link
 manifest_path_case "that is not component.yml" "src/widget/other.yml" name
 
+# P-N1: a component.yml hard-linked to a file outside the root passes the
+# real-path check, so the script must check the link count it reads through.
+HC="$SCRATCH/hardcomp"
+make_root "$HC"
+mkdir -p "$HC/src/hl"
+if ln "$SCRATCH/evil/component.yml" "$HC/src/hl/component.yml" 2>/dev/null; then
+  cat > "$HC/product.yml" <<'YAML'
+id: "demo"
+name: "Demo Product"
+version: "0.30.0"
+feature: "0000031-ci-test-and-powershell-coverage"
+versionPolicy: "max-component-version"
+
+components:
+  - id: "planifest-framework"
+    path: "planifest-framework/component.yml"
+  - id: "hl"
+    path: "src/hl/component.yml"
+YAML
+  cp "$HC/product.yml" "$SCRATCH/hc-before.yml"
+  ERR=$(cd "$HC" && env -u CLAUDE_PROJECT_DIR node "$SET" --feature-id "$ID" --version "9.9.9" 2>&1 >/dev/null)
+  assert_equals "2" "$?" "req-008: a hard-linked manifest component.yml exits 2"
+  assert_contains "component hl" "$ERR" "req-008: the hard-linked component case names the component"
+  lacks "src/hl" "$ERR" "req-008: the hard-linked component case never echoes the path"
+  assert_equals "same" "$(same "$SCRATCH/hc-before.yml" "$HC/product.yml")" \
+    "req-008: the hard-linked component case leaves product.yml unchanged"
+  ERR=$(cd "$HC" && env -u CLAUDE_PROJECT_DIR node "$SET" --feature-id "$ID" --version "0.33.0" \
+    --component "planifest-framework=planifest-framework/component.yml" --component "hl=src/hl/component.yml" 2>&1 >/dev/null)
+  assert_equals "2" "$?" "req-008: a hard-linked --component path exits 2"
+  assert_contains "--component 2" "$ERR" "req-008: the hard-linked --component case names the argument"
+  lacks "src/hl" "$ERR" "req-008: the hard-linked --component case never echoes the path"
+  assert_equals "same" "$(same "$SCRATCH/hc-before.yml" "$HC/product.yml")" \
+    "req-008: the hard-linked --component case leaves product.yml unchanged"
+fi
+SRC=$(cat "$SET")
+lacks "readFileSync(real" "$SRC" "req-008: the script never reads a component.yml by path after the check"
+
 # P-S03: CLAUDE_PROJECT_DIR never moves the write to another root.
 P="$SCRATCH/projroot"
 O="$SCRATCH/otherroot"

@@ -48,6 +48,7 @@ The boot files are build outputs. On every setup run, `write_boot_file` in `setu
   - It opens `product.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2.
   - It writes to a temp file in the root and renames it over `product.yml`. A failure removes the temp file and leaves `product.yml` unchanged.
   - It applies the `--component` path rules to each `components[].path` it reads from `product.yml`.
+  - It opens each `component.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2 (P-N1).
   - An unexpected file-system error exits 2. The reason names the operation and error code only, with no path or stack trace.
 - **Limits on `promote-to-regression.sh`:** The source must be a `test-*.sh` regular file with one link, directly inside `planifest-framework/tests/`. The destination is always `planifest-framework/tests/regression/`, and neither that folder nor the destination file may be a link. The script refuses a `PLANIFEST_REGRESSION_DIR` that names any other folder (P5 finding P-S09).
 - **Input Validation:** The script treats every argument as untrusted and runs every rule before it reads `product.yml`. Each pattern must match the whole value:
