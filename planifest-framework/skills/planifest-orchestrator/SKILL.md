@@ -62,7 +62,12 @@ Standard formats:
 
 On every session start, before taking any action:
 
-1. **Scan for pending migrations**: check `planifest-framework/migrations/` for any `.md` files not in `_done/`. If found, invoke the `planifest-migrator` skill for each pending migration before any other phase work. Migrations take priority.
+1. **Scan for pending migrations**: list each top-level `*.md` file in `planifest-framework/migrations/`. A file in a subfolder is never a migration, and helper scripts are not migrations. A migration is pending when it has no readable record at `plan/_migrations/{stem}.md`. `{stem}` is the file name without `.md`.
+   - A record holds YAML frontmatter. Its `outcome` is `applied`, `not applicable`, or `skipped`, and each counts as a record.
+   - A record can't be read when the frontmatter is missing or doesn't parse. It also can't be read when `migration` isn't `{stem}.md`, `outcome` isn't one of the three values, or `date` isn't `YYYY-MM-DD`.
+   - If a record can't be read, this step names the record file and treats the migration as pending. It ignores a record with no matching migration file.
+   - Invoke the `planifest-migrator` skill for each pending migration in file-name order, before any other phase work. Migrations take priority.
+   - This step reads records and never writes them. The migrator owns `plan/_migrations/` and states the full record format.
 
 1a. **Detect a `planifest-framework/` dependency update** (ADR-002): before any other phase work, check for a version mismatch between the installed `planifest-framework/component.yml` version and the previously recorded value, or the arrival of framework files declaring a version newer than what this repo last ran a pipeline against. Full detection signal and confirmation gate: `planifest-framework/standards/framework-update-policy.md`.
 

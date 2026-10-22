@@ -62,7 +62,7 @@
 
 import { homedir } from "node:os";
 import { basename, isAbsolute, resolve } from "node:path";
-import { evaluateWrite, resolveRoot, toRootRelative, unjudgeable } from "./path-rules.mjs";
+import { evaluateWrite, hookCwd, resolveRoot, resolveTarget, shown, unjudgeable } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const PREFIX = "[Planifest]";
@@ -661,8 +661,9 @@ function reachAll(start, cds) {
 function judgeCommand(cwd, command) {
   const blocks = [];
   const warnings = [];
+  const notices = []; // writes the Fast Path scope record admits (0000035 ADR-002)
   const root = resolveRoot(cwd);
-  if (!root) return { blocks, warnings };
+  if (!root) return { blocks, warnings, notices };
 
   let items;
   try {
@@ -671,7 +672,7 @@ function judgeCommand(cwd, command) {
     if (!(err instanceof ParseError) && !(err instanceof RangeError)) throw err;
     const why = err instanceof RangeError ? "nesting too deep" : err.message;
     warnings.push(`${PREFIX} Warning: shell-write-guard could not parse the command (${why}). Command allowed.\n`);
-    return { blocks, warnings };
+    return { blocks, warnings, notices };
   }
 
   // judge: the block reason for literal from base, or null when it passes.
@@ -688,14 +689,21 @@ function judgeCommand(cwd, command) {
       warnings.push(tooLong.replace("Write allowed.", "Command allowed."));
       return null;
     }
-    const relPath = toRootRelative(root, base, literal);
-    if (relPath === null) return null; // outside the repository root
+    const placed = resolveTarget(root, base, literal);
+    if (placed.status === "outside") return null; // outside the repository root
+    if (placed.status === "unresolvable") {
+      // A resolution error inside the root blocks (0000035 ADR-005).
+      const reason = placed.reason.replace(/^\[Planifest\]\s*/, "").replace("Write blocked", "Command blocked").trim();
+      return `${PREFIX} Shell write blocked: '${writer}' writes '${shown(literal, 80)}'. ${reason}\n`;
+    }
+    const { relPath } = placed;
     const result = evaluateWrite(root, relPath);
     if (result.warning) warnings.push(result.warning);
+    if (result.notice) notices.push(result.notice);
     if (result.allowed) return null;
     const reason = result.reason.replace(/^\[Planifest\]\s*/, "").trim();
     return (
-      `${PREFIX} Shell write blocked: '${writer}' writes '${relPath || "."}'. ${reason} ` +
+      `${PREFIX} Shell write blocked: '${writer}' writes '${shown(relPath || ".", 80)}'. ${reason} ` +
       "Make the change through the Write or Edit tool once the design covers the path.\n"
     );
   };
@@ -736,12 +744,12 @@ function judgeCommand(cwd, command) {
       if (word.v === "") continue;
       const literal = expandTilde(word, word.dyn >= 0 ? word.v.slice(0, word.dyn) : word.v);
       if (!literal) {
-        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' (no literal prefix). Command allowed.\n`);
+        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${shown(word.v, 80)}' (no literal prefix). Command allowed.\n`);
         continue;
       }
       if (overflow && !isAbsolute(literal)) {
         blocks.push(
-          `${PREFIX} Shell write blocked: '${writer}' writes '${word.v}', and the command may run in more than ` +
+          `${PREFIX} Shell write blocked: '${writer}' writes '${shown(word.v, 80)}', and the command may run in more than ` +
           `${MAX_BASES} folders, too many to judge. Use an absolute path, or fewer cd steps that may fail.\n`,
         );
         continue;
@@ -757,7 +765,7 @@ function judgeCommand(cwd, command) {
         if (reason) { blocks.push(reason); blocked = true; }
       }
       if (!blocked && from.includes(null)) {
-        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${word.v}' after a cd it can't follow. Command allowed.\n`);
+        warnings.push(`${PREFIX} Warning: shell-write-guard could not judge '${shown(word.v, 80)}' after a cd it can't follow. Command allowed.\n`);
       }
     }
 
@@ -789,7 +797,7 @@ function judgeCommand(cwd, command) {
       }
     }
   }
-  return { blocks, warnings };
+  return { blocks, warnings, notices };
 }
 
 // At most this many distinct reasons, and the same number of warnings, reach
@@ -814,10 +822,13 @@ try {
   const input = JSON.parse(await readStdin());
   const command = input?.tool_input?.command;
   if (typeof command !== "string" || !command) process.exit(0);
-  const cwd = typeof input?.cwd === "string" && input.cwd ? input.cwd : process.cwd();
+  // The stdin cwd, then process.cwd(), then CLAUDE_PROJECT_DIR (0000035 ADR-006).
+  const cwd = hookCwd(input);
+  if (cwd === null) process.exit(0);
 
-  const { blocks, warnings } = judgeCommand(cwd, command);
+  const { blocks, warnings, notices } = judgeCommand(cwd, command);
   process.stderr.write(capped(warnings, "warnings"));
+  process.stderr.write(capped(notices, "admitted writes"));
   if (blocks.length) {
     process.stderr.write(capped(blocks, "blocked writes"));
     process.exit(2);

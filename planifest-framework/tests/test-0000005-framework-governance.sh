@@ -159,13 +159,14 @@ assert_contains "Verbosity"                     "$FMT" "req-013: verbosity stand
 echo ""
 echo "=== req-014: migration infrastructure ==="
 
-assert_file_exists "$MIGRATIONS/_done/0001-date-format.md"   "req-014: 0001-date-format.md"
-assert_file_exists "$MIGRATIONS/_done/0002-british-english.md" "req-014: 0002-british-english.md"
-assert_file_exists "$MIGRATIONS/_done/.gitkeep"              "req-014: _done/ archive dir"
+assert_file_exists "$MIGRATIONS/0001-date-format.md"         "req-014: 0001-date-format.md"
+assert_file_exists "$MIGRATIONS/0002-british-english.md"     "req-014: 0002-british-english.md"
+# 0000035 req-007: migration files never move, so the archive folder is gone.
+assert_equals "absent" "$([ -e "$MIGRATIONS/_done" ] && echo present || echo absent)" "req-014: no archive subfolder (0000035 req-007)"
 assert_file_exists "$SKILLS/planifest-migrator/SKILL.md"     "req-014: planifest-migrator skill"
 MIGRATOR=$(cat "$SKILLS/planifest-migrator/SKILL.md")
 assert_contains "batch"                         "$MIGRATOR" "req-014: migrator uses batched presentation"
-assert_contains "_done"                         "$MIGRATOR" "req-014: migrator archives to _done/"
+assert_contains "plan/_migrations/"             "$MIGRATOR" "req-014: migrator records runs in plan/_migrations/ (0000035 req-007)"
 
 # -----------------------------------------------------------------------
 

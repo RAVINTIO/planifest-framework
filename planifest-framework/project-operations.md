@@ -26,7 +26,7 @@ When Phase 0 starts, the orchestrator writes `plan/.orchestrator-active` contain
 
 | Hook | What it does |
 |------|-------------|
-| **gate-write** (PreToolUse) | Blocks writes outside always-permitted paths unless `plan/current/design.md` exists and the target path is a declared component |
+| **gate-write** (PreToolUse) | Blocks writes outside always-permitted paths unless `plan/current/design.md` exists and the target path is a declared component. With no design, a current Fast Path scope record at `plan/.fast-path-scope` admits the paths it lists |
 | **check-orchestrator-presence** (UserPromptSubmit) | Injects a reminder banner on every prompt while a pipeline is active, so the orchestrator skill reloads after context compaction or session resume |
 | **check-design** (UserPromptSubmit) | Injects a hard STOP message if neither the sentinel nor a `feature-brief.md` is present |
 
@@ -86,7 +86,7 @@ After pulling new files into `planifest-framework/`, re-run the setup script to 
 .\planifest-framework\setup.ps1 claude-code
 ```
 
-After updating, check `planifest-framework/migrations/` for any pending `.md` files — the orchestrator will handle them automatically at next session start.
+After updating, check for pending migrations. A pending migration is a top-level `.md` file in `planifest-framework/migrations/` with no record in `plan/_migrations/`. The orchestrator runs each one at the next session start.
 
 → [Full update protocol and migration handling](pipeline-reference.md#updating-the-framework)
 

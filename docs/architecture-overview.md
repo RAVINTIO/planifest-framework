@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026)
+Last updated: 0000035-write-gate-scope-and-path-hardening (22 Oct 2026)
 
 ---
 
@@ -41,9 +41,9 @@ flowchart TD
     subgraph Enforcement["Enforcement Scripts (hooks/enforcement/)"]
         GW["gate-write.mjs\n(path allowlist + sentinel check,\nreason on stderr, 0000032)"]
         SWG["shell-write-guard.mjs\n(Bash shell writers judged by\nthe same rules, Claude Code only, 0000032)"]
-        PR["path-rules.mjs\n(shared gated-path rules and\nrepository root, 0000032)"]
+        PR["path-rules.mjs\n(shared gated-path rules, repository root,\nlink resolution, scope record, 0000032/0000035)"]
         CD["check-design.mjs\n(scope injection)"]
-        RC["ratchet-check.mjs\n(criteria/scope weakening block,\narmed while a loop is active)"]
+        RC["ratchet-check.mjs\n(criteria/scope weakening block,\narmed while a loop is active,\nshared root rules, 0000035)"]
         ED["em-dash-guard.mjs\n(U+2014 rejected in Planifest prose,\nsentinel bypass, 0000028)"]
         SHE["read-stdin.mjs\n(shared module, always installed)"]
     end
@@ -52,6 +52,7 @@ flowchart TD
         ARC["archive-current.mjs\n(P7 archive by explicit path)"]
         SRC["stream-reconcile.mjs\n(join reconciliation)"]
         RMD["run-mode.mjs\n(effective run mode)"]
+        SPR["set-product-release.mjs\n(P7 product.yml update, 0000035)"]
     end
 
     subgraph Setup["Setup (planifest-framework/)"]
@@ -94,6 +95,8 @@ flowchart TD
     SWG -->|"exit 0 (pass) / exit 2 (block, reason on stderr)"| HookRunner
     GW -.->|"imports"| PR
     SWG -.->|"imports"| PR
+    RC -.->|"imports"| PR
+    SPR -.->|"imports resolveRoot"| PR
     SWG -.->|"imports"| SHE
     GW -.->|"imports"| SHE
     CD -.->|"imports"| SHE
@@ -107,6 +110,7 @@ flowchart TD
     ORCH -.->|"calls"| RMD
     SHIP -.->|"calls"| ARC
     SHIP -.->|"calls"| RMD
+    SHIP -.->|"calls at P7"| SPR
 
     ORCH --> SPEC --> ADR --> CG --> VAL --> SEC --> DOCS --> SHIP
 ```
@@ -187,6 +191,8 @@ The module finds the repository root with a marker walk that spawns no process:
 3. A marked folder inside `plan/` or `docs/` of a higher marked folder is never the root.
 4. With no marker found, the root is `cwd`.
 
+Feature 0000035 hardens these rules. The section on [write gate path hardening](#write-gate-path-hardening-0000035) describes the changes.
+
 The module looks up the sentinel and `plan/current/design.md` from the root. A target outside the root passes with no output. A target too long to judge, over 4096 characters or 256 segments, passes with a warning on stderr.
 
 ### Block reasons on stderr
@@ -203,7 +209,7 @@ Every enforcement hook that exits 2 writes a plain-text reason to stderr, where 
 - the destination of `cp`, `mv`, `install`, and `ln`
 - every argument of `rm`, `touch`, and `mkdir`
 
-It judges each target with `toRootRelative` and `evaluateWrite` from `path-rules.mjs`. It tracks the folders each command may run in after `cd`, `pushd`, and `popd`, and judges a relative target against each one. If it can't parse a command or a target, it writes a warning to stderr and allows it. It ignores `git` and can't see writes made inside scripts or interpreters. A boot-file Hard Limit in `standard-boot.md` and `cursor-boot.md` covers those gaps: code changes go through **Write** or **Edit**, never Bash.
+It judges each target with `resolveTarget` and `evaluateWrite` from `path-rules.mjs`. It tracks the folders each command may run in after `cd`, `pushd`, and `popd`, and judges a relative target against each one. If it can't parse a command or a target, it writes a warning to stderr and allows it. It ignores `git` and can't see writes made inside scripts or interpreters. A boot-file Hard Limit in `standard-boot.md` and `cursor-boot.md` covers those gaps: code changes go through **Write** or **Edit**, never Bash.
 
 `setup.sh` and `setup.ps1` register the guard on a `Bash` PreToolUse matcher for Claude Code only. Each removes any earlier `shell-write-guard` group before it adds one, so a re-run leaves exactly one. Other tools rely on the boot-file rule alone. The 0.31.0 migration tells downstream projects to re-run setup.
 
@@ -248,11 +254,83 @@ Parallel dispatch is the default in every phase (`standards/agent-dispatch-stand
 
 ---
 
+## Write gate path hardening (0000035)
+
+### Real targets, two ways
+
+`path-rules.mjs` now judges where a write lands, not the text of the path (0000035-ADR-005). `resolveTarget` walks the target one segment at a time through symbolic links. A `..` moves to the real parent of the path resolved so far. The walk follows at most 40 links.
+
+The **Write** and **Edit** tools collapse `..` as text before the system follows links, so the two methods can land on different files. `resolveTargetBoth` returns both placements:
+
+- the physical placement, which matches how the kernel resolves a shell path
+- the text placement, with `..` collapsed against `cwd` first
+
+`gate-write.mjs` and `ratchet-check.mjs` judge both placements and block if either one blocks. `shell-write-guard.mjs` keeps the physical walk only.
+
+A link loop, a chain past 40 links, or a resolution error blocks with exit 2 when the path lies inside the root. Errors outside path resolution still fail open (0000003-ADR-005).
+
+### Root lookup without a cwd
+
+`resolveRoot` no longer needs the working folder to exist (0000035-ADR-006). It checks `CLAUDE_PROJECT_DIR` first. It then walks up from the nearest existing parent of `cwd`. Each hook takes the stdin `cwd`, then `process.cwd()`, then `CLAUDE_PROJECT_DIR`.
+
+### Planted markers
+
+`markedRoot` distrusts a `.git` or `planifest-framework` marker that sits below an always-permitted name, such as `plan/w/.git` (0000035-ADR-008). The walk goes on to the next trusted marker above, so a moved folder can't become a new root.
+
+### Fast Path scope record
+
+A Fast Path change lists its target paths in `plan/.fast-path-scope` (0000035-ADR-002). Both write gates accept a valid, current record when `design.md` is absent. The record stores the branch and `HEAD` it was written at. The gate reads both from `.git` files with no spawn, and ignores a stale record (0000035-ADR-003).
+
+The record is self-authorisation, so the gates add two controls:
+
+- Each admitted write prints one stderr notice that names the record and the path.
+- The Fast Path changelog entry lists every record path.
+
+`FAST_PATH_ENFORCEMENT_PATHS` lists the paths a record never admits (0000035-ADR-004). The list covers hook folders, hook wiring, tool-local settings, setup scripts, the CI workflow, and `.git/`. `fast-path.md` names the same entries, and a suite checks both lists match. Fast Path removes the record before its commit, and `.gitignore` lists it.
+
+### ratchet-check shares the root rules
+
+`ratchet-check.mjs` imports `resolveRoot` and `resolveTargetBoth` from `path-rules.mjs` (0000035-ADR-007). It finds `plan/current/` from any subfolder. It passes an unresolvable target, because `gate-write.mjs` already blocks it.
+
+### product.yml at P7
+
+The ship agent sets `product.yml` `version` and `feature` in P7, after Step 5 and before Step 6 archives `design.md` (0000035-ADR-010). It runs `scripts/set-product-release.mjs`, which applies each `versionPolicy`. The script exits 0, 2, 4, or 5. It writes only `{root}/product.yml`, through a temp file and a rename. It imports `resolveRoot` from `path-rules.mjs` and clears `CLAUDE_PROJECT_DIR` for that call.
+
+### Hard Limit 8 sanctioned scripts
+
+Hard Limit 8 now names the fixed framework scripts that skill steps run to write files (0000035-ADR-011). Both `standard-boot.md` and `cursor-boot.md` carry one `Sanctioned scripts:` sentence. It names seven scripts:
+
+- `archive-current.mjs`
+- `set-product-release.mjs`
+- `promote-to-regression.sh`
+- `refresh-delete-boot-files.sh` and `refresh-delete-boot-files.ps1`
+- `setup.sh` and `setup.ps1`
+
+Each script counts only with the arguments its skill step shows. No other script counts.
+
+### Migration run state
+
+Migration files never move (0000035-ADR-015). Every migration sits at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder is gone. Each project records each run at `plan/_migrations/{stem}.md` (0000035-ADR-016). A record holds one outcome: `applied`, `not applicable`, or `skipped`.
+
+A migration is pending when its record is missing or can't be read (0000035-ADR-018). Orchestrator resume detection reads the records, and the migrator is their only writer (0000035-ADR-017). Each record comes from a scan, never from seeding (0000035-ADR-019).
+
+### Acceptance-criteria limit
+
+`consistency-check.mjs` allows up to 10 acceptance criteria per requirement (0000035-ADR-012). From 4 to 10 it prints a warning and exits 0.
+
+---
+
 ## Data Ownership
 
 No components own persistent data. Planifest operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.planifest-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `planifest-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `planifest-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
 
 Clarified in 0000033: `planifest-framework` owns `plan/.run-mode`, `plan/current/`, and `plan/current/streams/`. The human on the loop owns `planifest-overrides/` (exception list, release budget, doc checks), and the framework only reads it (0000033-ADR-015).
+
+New in 0000035 (plain Markdown and text):
+
+- `plan/_migrations/` run records: owned by `planifest-migrator`, read by orchestrator resume detection, git-tracked, never archived (0000035-ADR-017).
+- `plan/.fast-path-scope`: owned by the Fast Path workflow, read by `gate-write.mjs` and the shell-write guard, gitignored and removed before each Fast Path commit.
+- `product.yml`: the ship agent owns it and writes it only through `set-product-release.mjs`. `product-version.mjs` reads it.
 
 Clarified in 0000032: `planifest-framework` owns the three committed session markers, `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`. The orchestrator writes them at P0, and the ship skill deletes them in the P9 marker step. Hooks read them only.
 
@@ -262,7 +340,7 @@ Clarified in 0000032: `planifest-framework` owns the three committed session mar
 
 | Dependency | Type | Components That Use It |
 |-----------|------|----------------------|
-| Node.js (built-ins only: fs, path, child_process, os, url) | Runtime | All hook adapters and enforcement scripts |
+| Node.js (built-ins only: fs, path, child_process, os, url, crypto) | Runtime | All hook adapters, enforcement scripts, and `scripts/` (`crypto` in `set-product-release.mjs` only, 0000035) |
 | Bash | Runtime | setup.sh, test scripts, hook install scripts |
 | PowerShell 7+ | Runtime | setup.ps1, test_setup.ps1, PowerShell hook scripts |
 | GitHub Actions hosted runners | CI | `ubuntu-latest`, `macos-latest`, and `windows-latest` jobs in `.github/workflows/planifest.yml` (0000031) |
@@ -310,6 +388,16 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-010 (0000033):** `archive-current.mjs` replaces the glob delete in the P7 archive.
 - **ADR-013 (0000033):** Parallel streams use a `parallel_streams` toggle and per-stream state files.
 - **ADR-014 (0000033):** The orchestrator owns joins and runs `stream-reconcile.mjs` after each.
+- **ADR-002 (0000035):** A Fast Path scope record at `plan/.fast-path-scope` stands in for `design.md`, with a stderr notice on each admitted write.
+- **ADR-004 (0000035):** A scope record never admits a path in `FAST_PATH_ENFORCEMENT_PATHS`.
+- **ADR-005 (0000035):** The gates resolve links segment by segment and judge both placements. A resolution error inside the root fails closed.
+- **ADR-006 (0000035):** The root lookup works when `cwd` no longer exists.
+- **ADR-007 (0000035):** `ratchet-check.mjs` uses the shared root and target rules.
+- **ADR-008 (0000035):** Root markers under always-permitted names are not trusted.
+- **ADR-010 (0000035):** `set-product-release.mjs` sets `product.yml` at P7.
+- **ADR-011 (0000035):** Hard Limit 8 names seven sanctioned scripts.
+- **ADR-015 (0000035):** Migration files never move. Supersedes the archive step of **ADR-005 (0000005)**.
+- **ADR-016 (0000035):** Each project records migration runs in `plan/_migrations/`.
 
 ---
 

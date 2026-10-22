@@ -225,6 +225,20 @@
       "promotionDate": "2026-10-19",
       "promotedBy": "human",
       "filePath": "tests/regression/test-0000033-req-017-join-owner-and-reconciliation.sh"
+    },
+    {
+      "name": "test-0000035-req-002-product-yml-in-p7.sh",
+      "sourceFeature": "0000035-write-gate-scope-and-path-hardening",
+      "promotionDate": "2026-10-22",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000035-req-002-product-yml-in-p7.sh"
+    },
+    {
+      "name": "test-0000035-req-008-sanctioned-scripts.sh",
+      "sourceFeature": "0000035-write-gate-scope-and-path-hardening",
+      "promotionDate": "2026-10-22",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000035-req-008-sanctioned-scripts.sh"
     }
   ]
 }

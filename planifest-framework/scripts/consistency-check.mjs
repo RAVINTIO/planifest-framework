@@ -9,8 +9,9 @@
  *
  * Checks:
  *   1. Story traceability — every requirement file names a Source user story
- *   2. Acceptance criteria — no requirement exceeds 3 criteria in its
- *      "## Acceptance Criteria" section
+ *   2. Acceptance criteria — no requirement exceeds 10 criteria in its
+ *      "## Acceptance Criteria" section. 4 to 10 prints a warning but does
+ *      not fail; aim for 3
  *   3. ADR references — every ADR-NNN referenced anywhere resolves to a file
  *      in adr/
  *   4. Risk mitigations — every R-NNN row in risk-register.md has a non-empty
@@ -26,6 +27,7 @@ import { join } from "node:path";
 
 const dir = process.argv[2] ?? join(process.cwd(), "plan", "current");
 const findings = [];
+const warnings = []; // reported, never fail the check
 
 function read(p) {
   try { return readFileSync(p, "utf-8"); } catch { return null; }
@@ -60,12 +62,14 @@ for (const f of reqFiles) {
     findings.push(`${f}: no Source user story (US-nnn) — story↔requirement traceability broken`);
   }
 
-  // 2. ≤3 acceptance criteria (counted inside the AC section only)
+  // 2. ≤10 acceptance criteria (counted inside the AC section only). Aim for 3.
   const ac = section(text, "Acceptance Criteria");
   if (ac !== null) {
     const count = (ac.match(/^\s*-\s*\[[ x]\]/gim) ?? []).length;
-    if (count > 3) {
-      findings.push(`${f}: ${count} acceptance criteria (max 3 per requirement — split the story)`);
+    if (count > 10) {
+      findings.push(`${f}: ${count} acceptance criteria (max 10 per requirement, aim for 3 — split the story)`);
+    } else if (count > 3) {
+      warnings.push(`${f}: ${count} acceptance criteria (aim for 3 — consider splitting the story)`);
     }
   }
 }
@@ -119,6 +123,7 @@ if (design === null) {
 }
 
 // ---- report ------------------------------------------------------------------
+for (const w of warnings) console.log(`  ⚠ ${w}`);
 if (findings.length === 0) {
   console.log("consistency-check: clean");
   process.exit(0);

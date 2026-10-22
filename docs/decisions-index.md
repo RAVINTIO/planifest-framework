@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026). Adds an `autonomous` run mode and amends or supersedes seven earlier ADRs.
+Last updated: 0000035-write-gate-scope-and-path-hardening (22 Oct 2026). Adds 16 ADRs for the write gates, the P7 `product.yml` step, sanctioned scripts, and migration run records. ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -51,7 +51,7 @@ Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026). Adds an `autonom
 | ADR-002 | planifest-overrides sibling directory | active | Project-level overrides live in `planifest-overrides/` (sibling to `planifest-framework/`), never inside the framework |
 | ADR-003 | Sentinel-file orchestrator enforcement | active | `plan/.orchestrator-active` sentinel gates all writes to `plan/current/` |
 | ADR-004 | Repo instructions via design.md | active | Per-repo instructions (e.g. local-git-only) are embedded in `design.md` Engineering Layer |
-| ADR-005 | Markdown migration files | active | Migrations are documented in `.md` files under `planifest-framework/migrations/`; applied migrations archived to `_done/` |
+| ADR-005 | Markdown migration files | partly superseded by 0000035 ADR-015 | Migrations are documented in `.md` files under `planifest-framework/migrations/`. Its archive-to-folder mechanism is superseded by 0000035 ADR-015: migration files never move, and each project records its runs in `plan/_migrations/` |
 | ADR-006 | Two-registry capability skills | active | Capability skills exist in two registries: `planifest-framework/skills-inbox/` (framework) and `planifest-overrides/capability-skills/` (project) |
 
 ### Feature 0000006: build-assessment-phase
@@ -299,7 +299,7 @@ ADR files: [plan/_archive/0000032-governance-continuity-and-write-gate-scope-202
 | ADR-001 | Stack and enforcement approach | accepted | Hooks stay dependency-free Node ES modules that read stdin through `read-stdin.mjs` and fail open. Setup stays in Bash and PowerShell, and tests stay in Bash suites. |
 | ADR-002 | Session markers cleared in P9 before the tag | amended by 0000033 ADR-011 | The three session markers stay committed. A P9 step deletes and commits them with the archive after P8 and before the Step 9 tag. Resume Detection steps 2a and 2b resume an interrupted close-out from archive evidence. Supersedes 0000015-ADR-001 and amends 0000015-ADR-004. **Amended:** 0000033-ADR-011 makes that marker-step commit the run's closing archive commit, which must carry the P8 `build-report.md`. |
 | ADR-003 | Blocking context clear after P9 | accepted | Ship Step 12 asks for `/clear` or a new session and refuses new work in the same session. The auto-trigger hook says no run is active and requires triage. Handover notes route every next step through a track. Supersedes 0000015-ADR-002. |
-| ADR-004 | Shared path rules and repository root | accepted | `path-rules.mjs` holds the gated-path rules for `gate-write.mjs` and the shell guard. The root is the nearest `planifest-framework/` folder, else the nearest `.git`, found by a walk from `CLAUDE_PROJECT_DIR` or `cwd`. Targets outside the root pass. |
+| ADR-004 | Shared path rules and repository root | extended by 0000035 ADR-005 to ADR-008 | `path-rules.mjs` holds the gated-path rules for `gate-write.mjs` and the shell guard. The root is the nearest `planifest-framework/` folder, else the nearest `.git`, found by a walk from `CLAUDE_PROJECT_DIR` or `cwd`. Targets outside the root pass. **Extended:** 0000035 adds link resolution, the lookup for a deleted `cwd`, `ratchet-check.mjs` as a third importer, and distrust of planted markers. |
 | ADR-005 | Block reasons on stderr | accepted | Every enforcement hook that exits 2 writes a plain-text reason to stderr, where Claude Code reads it. Existing stdout stays byte for byte for the adapters. |
 | ADR-006 | Heuristic Bash shell-write guard | accepted | `shell-write-guard.mjs` runs on Claude Code's Bash PreToolUse event. It finds common shell writers, judges their targets with `path-rules.mjs`, and fails open on anything it can't parse. A boot-file Hard Limit covers its gaps. |
 
@@ -317,13 +317,36 @@ ADR files: [plan/_archive/0000033-human-on-the-loop-run-mode-2026-10-19/adr/](..
 | ADR-006 | Ship without asking in autonomous | accepted | In `autonomous`, P7 to P9 ask nothing. P9 always raises the PR, as a draft when an exception waits. Merging stays human-only. Amends 0000012-ADR-004 and 0000004-ADR-003. |
 | ADR-007 | P0 real forks and one confirmation turn | accepted | P0 asks only real forks. The design, the Scope Lock batch, and the run mode confirm in one turn, which is the second named exception to 0000014-ADR-008. |
 | ADR-008 | Release budget in size points | accepted | A product sets a target and a ceiling in size points in `planifest-overrides/release-budget.yml`. P0 sizes each candidate and recommends a fill. An absent or invalid file keeps the three-story rule. |
-| ADR-009 | Fast Path admits no-src changes | accepted | Fast Path's prerequisite relaxes to admit a change with no `src/` target. Its four criteria stay word for word. |
+| ADR-009 | Fast Path admits no-src changes | extended by 0000035 ADR-004 | Fast Path's prerequisite relaxes to admit a change with no `src/` target. Its four criteria stay word for word. **Extended:** 0000035-ADR-004 makes the enforcement path rule a concrete list in code. |
 | ADR-010 | Archive script replaces glob delete | accepted | P7 Step 6 runs `archive-current.mjs`, which moves each item with `git mv` and deletes only four sentinels by explicit path. `plan/current/.archive-target` lets a stopped archive resume. Supersedes 0000003-ADR-006. |
 | ADR-011 | Close-out commit and leftovers | accepted | The P8 build report reaches git in the 0000032 P9 marker-step commit. P8 and P9 each end with a scoped clean-tree check. Leftovers are committed by explicit path in `autonomous`. Amends 0000032-ADR-002. |
 | ADR-012 | Revalidate after P6 | accepted | After its last P6 edit, the docs agent reruns the P4 check set or a smaller command declared in `planifest-overrides/doc-checks.yml`. A failure enters a loop capped at 5 that fixes the doc edit, never the check. |
 | ADR-013 | Parallel streams toggle and state | accepted | A `parallel_streams` loop toggle, on by default in `autonomous`, moves independent requirements through P1 to P4 as separate streams. Each stream keeps a committed state file. |
 | ADR-014 | Orchestrator owns joins and a reconcile script | accepted | The orchestrator owns every join between streams or batches. It runs `scripts/stream-reconcile.mjs` after each join and before the gate check. A finding blocks the gate and enters a fix loop capped at 3. |
 | ADR-015 | Data ownership of run state and overrides | accepted | `planifest-framework` owns `plan/.run-mode`, `plan/current/` with its `streams/` folder, and `plan/current/.archive-target`. The human on the loop owns the `planifest-overrides/` files, which the framework only reads. |
+
+### Feature 0000035: write-gate-scope-and-path-hardening
+
+ADR files: [plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22/adr/](../plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged, gate code on Node built-ins with no spawn | accepted | Every new gate rule lives in `path-rules.mjs` on `node:fs` and `node:path` only. The module imports no `node:child_process`, and a suite source check asserts it. |
+| ADR-002 | Fast Path scope record as self-authorisation | accepted | A Fast Path change lists its targets in `plan/.fast-path-scope`. Both write gates accept a valid, current record when `design.md` is absent. Each admitted write prints a stderr notice, and the changelog lists every path. |
+| ADR-003 | Scope record staleness from git files | accepted | The record stores its branch and `HEAD`. The gate reads both from `.git` files with no spawn. It ignores the record when either differs or git state can't be read. |
+| ADR-004 | Fast Path enforcement path list | accepted | `FAST_PATH_ENFORCEMENT_PATHS` covers hook folders, hook wiring, tool-local settings, setup scripts, the CI workflow, and `.git/`. A scope record never admits a match. Matching folds case and NFKC lookalikes. Extends 0000033-ADR-009. |
+| ADR-005 | Links resolved segment by segment, fail closed | accepted | `resolveTarget` walks each segment through links, with a 40-hop limit. `resolveTargetBoth` also judges the placement with `..` collapsed as text. A resolution error inside the root blocks with exit 2. |
+| ADR-006 | Root lookup when `cwd` is deleted | accepted | `resolveRoot` checks `CLAUDE_PROJECT_DIR` first, then walks from the nearest existing parent of `cwd`. Hooks fall back from stdin `cwd` to `process.cwd()` to `CLAUDE_PROJECT_DIR`. |
+| ADR-007 | ratchet-check uses the shared path rules | accepted | `ratchet-check.mjs` imports `resolveRoot` and `resolveTargetBoth` from `path-rules.mjs`, so it finds `plan/current/` from any subfolder. It passes an unresolvable target and leaves that block to `gate-write.mjs`. |
+| ADR-008 | Distrust markers under always-permitted names | accepted | `markedRoot` ignores a `.git` or `planifest-framework` marker below an always-permitted name. The walk goes on to the next trusted marker. |
+| ADR-010 | `product.yml` set in P7 by a script | accepted | The ship agent runs `set-product-release.mjs` after P7 Step 5 and before Step 6. The script applies each `versionPolicy` and exits 0, 2, 4, or 5. The ship agent owns `product.yml`. |
+| ADR-011 | Hard Limit 8 sanctioned scripts | accepted | Both boot templates carry one `Sanctioned scripts:` sentence that names seven fixed framework scripts. Each counts only with the arguments its skill step shows. No other script counts. |
+| ADR-012 | Acceptance-criteria limit and warning | accepted | `consistency-check.mjs` allows up to 10 criteria per requirement. From 4 to 10 it warns and exits 0. Above 10 it reports a finding. The brief template still asks for 3. |
+| ADR-015 | Migration files never move | accepted | Every migration stays at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder goes away. Supersedes the archive step of 0000005-ADR-005. |
+| ADR-016 | Per-project migration run records | accepted | Each project records each run at `plan/_migrations/{stem}.md`. The frontmatter holds six fields and one outcome: `applied`, `not applicable`, or `skipped`. |
+| ADR-017 | Migration records owned by the migrator | accepted | `planifest-migrator` is the only writer of `plan/_migrations/`. Orchestrator resume detection reads the records and never writes them. |
+| ADR-018 | Pending means no readable record | accepted | A migration is pending when its record is missing or can't be read. Resume detection reads only top-level migration files and ignores orphan records. |
+| ADR-019 | Records come from scans, never seeded | accepted | No record is seeded from the old completed-migrations folder. Each record comes from a scan. A scan with findings writes no record until the human on the loop answers every batch. |
 
 ---
 
