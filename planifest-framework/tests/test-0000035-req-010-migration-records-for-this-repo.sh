@@ -20,10 +20,13 @@ REPO="$(cd "$FRAMEWORK/.." && pwd)"
 MIGRATIONS="$FRAMEWORK/migrations"
 RECORDS="$REPO/plan/_migrations"
 
+# The markers keep the 0000030 residue check off this migration file name.
+# BEGIN retired-integrations
 DOWNSTREAM_ONLY=(
   migrate-0.31.0-rerun-setup-for-shell-write-guard.md
   migrate-remove-context-mode-and-telemetry.md
 )
+# END retired-integrations
 
 # The build log moves to plan/_archive/ at P7, so read whichever exists.
 BUILD_LOGS=()

@@ -25,6 +25,8 @@ ORCH_FILE="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
 GATE_WRITE="$FRAMEWORK/hooks/enforcement/gate-write.mjs"
 SELF="$(basename "$0")"
 
+# The markers keep the 0000030 residue check off this migration file name.
+# BEGIN retired-integrations
 EIGHT=(
   0001-date-format.md
   0002-british-english.md
@@ -35,6 +37,7 @@ EIGHT=(
   migrate-remove-context-mode-and-telemetry.md
   retroactive-release-tags.md
 )
+# END retired-integrations
 
 WORK="$(mktemp -d -t planifest_0000035_req007_XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
