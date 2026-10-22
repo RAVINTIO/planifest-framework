@@ -2,9 +2,7 @@
 title: "Migration: retroactive-release-tags"
 type: "git-operation"
 description: "Tag historical commits with their release version tags."
-status: "complete"
 created: "2026-05-18"
-completed: "2026-05-18"
 feature: "0000012-docs-restructure-commit-directives"
 ---
 # Migration: retroactive-release-tags

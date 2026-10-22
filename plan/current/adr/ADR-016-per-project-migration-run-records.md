@@ -48,6 +48,7 @@ The migrator has three end states today. It completes after confirmed batches, i
 5. Every outcome counts as a record. No outcome means "findings waiting". ADR-019 covers that case.
 6. The migrator replaces its Archive step with a Record step that writes through **Write**. It creates `plan/_migrations/` on its first record.
 7. `plan/_migrations/` stays under the always-permitted `plan/` prefix. Stream-01 keeps it admitted with no sentinel and no design.
+8. A migration file holds no run state. Its frontmatter carries no `status` or `completed` field, so the record is the only answer to whether a migration ran.
 
 ## Alternatives Considered
 
