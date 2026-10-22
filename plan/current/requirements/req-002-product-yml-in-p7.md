@@ -59,7 +59,6 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - With no `product.yml`, the script exits 4 and writes nothing.
   - With no `product.yml` and `--create` with two components, the script creates the file under `max-component-version` with both `components[]` entries.
   - With `--component` arguments, `components[]` holds exactly those entries. Without them, `components[]` stays byte-identical.
-  - With `product.yml` a link to a file outside `{root}`, the script exits 2, writes nothing, and leaves the link target unchanged.
 - [ ] The suite checks the ship skill source text. The `product.yml` step comes before Step 6. Step 7 stages `product.yml`. Step 9 holds no instruction to edit `product.yml`.
 - [ ] `product.yml` reads `0.33.0` and `0000035-write-gate-scope-and-path-hardening` at P9.
 
@@ -68,5 +67,5 @@ As the human on the loop, I see `product.yml` name the released version and feat
 - `planifest-framework/scripts/product-version.mjs` and its exit codes (0, 2, 4, 5), unchanged.
 - `planifest-framework/skills/planifest-ship-agent/SKILL.md` Step 6, Step 7, and Step 9 (0000016 ADR 002, 0000033 ADR 010).
 - `planifest-framework/component.yml` carries `0.33.0` before P7 runs. It is a design-confirmed precondition and not part of this requirement.
-- [Req-008](req-008-sanctioned-scripts.md) constrains the script this requirement adds. It sets the carve-out limits, the real-path check on `{root}/product.yml`, and every argument rule. The link case in the close-out suite above relies on that real-path check.
-- No dependency on req-001 or req-003 to req-007.
+- [Req-008](req-008-sanctioned-scripts.md) constrains the script this requirement adds. It sets the carve-out limits, the real-path check on `{root}/product.yml`, and every argument rule. The req-008 suite owns the link case for that real-path check.
+- No dependency on req-001, req-003 to req-007, req-009, or req-010.

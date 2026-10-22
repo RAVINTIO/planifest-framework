@@ -4,10 +4,10 @@ kind: stream
 start-commit: "2baa848"
 status: at-join
 phase: P2
-requirements: [req-001, req-003, req-004, req-005, req-006]
-stories: [US-001, US-003, US-004, US-005, US-006]
-id-blocks: "req-001, req-003 to req-006, ADR-001 to ADR-009, backlog 0000128 to 0000132"
-updated: "2026-10-22T05:53:11Z"
+requirements: [req-001, req-003, req-004, req-005, req-006, req-009]
+stories: [US-001, US-003, US-004, US-005, US-006, US-009]
+id-blocks: "req-001, req-003 to req-006, req-009, ADR-001 to ADR-009, backlog 0000128 to 0000132"
+updated: "2026-10-22T06:05:41Z"
 ---
 # Stream State: stream-01-gate-rules
 
@@ -25,6 +25,7 @@ updated: "2026-10-22T05:53:11Z"
 - `plan/current/requirements/req-004-root-when-cwd-deleted.md`
 - `plan/current/requirements/req-005-ratchet-check-shared-root.md`
 - `plan/current/requirements/req-006-no-planted-root-marker.md`
+- `plan/current/requirements/req-009-fast-path-enforcement-paths.md`
 - `plan/backlog/0000128-ratchet-check-spawns-git/entry.md`
 - `plan/current/adr/ADR-001-stack-unchanged-node-built-ins-no-spawn.md`
 - `plan/current/adr/ADR-002-fast-path-scope-record-self-authorisation.md`
@@ -49,4 +50,4 @@ None. Every artifact this stream makes has its consumer inside this stream: `pat
 
 ## Next step
 
-Wait for the P2 join. Then P3. Build order at P3: one agent builds all five in sequence because each changes `path-rules.mjs`. req-003 and req-004 come before req-005.
+Wait for the P2 join. Then P3. Build order at P3: one agent builds all six in sequence because each changes `path-rules.mjs`. The order is req-006, req-004, req-003, req-005, req-001, then req-009. req-003 and req-004 come before req-005.

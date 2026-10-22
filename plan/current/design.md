@@ -16,8 +16,10 @@
   - US-005: As the human on the loop, I rely on `ratchet-check` to find the active loop from any subfolder, so that a weakening write is blocked wherever the agent runs it. (0000109)
   - US-006: As the human on the loop, I rely on the gates to ignore a `.git` marker planted under an always-permitted name, so that a moved folder can't become a new root. (0000114)
   - US-007: As the human on the loop, I see every migration stay in `planifest-framework/migrations/` with its run state recorded in `plan/_migrations/`, so that the framework repo and each downstream project track their own runs. (0000126)
-  - US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script. (0000124)
-- Acceptance criteria confirmed: 15 (see `feature-brief.md`)
+  - US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script, and each named script writes only its own file. (0000124)
+  - US-009: As the human on the loop, I rely on Fast Path never admitting a write to an enforcement path, so that a scope record can't unwire or change the gates. (0000081, 0000125, 0000062)
+  - US-010: As the human on the loop, I see this repo hold a run record for each of its eight migrations, from a scan run here, so that the framework repo shows its own migration state. (0000126)
+- Acceptance criteria confirmed: 17 (see `feature-brief.md`)
 - Constraints:
   - 0000032 ADR 004: hooks use Node built-ins only, with no process spawn.
   - 0000033 ADR 009: Fast Path never admits an enforcement path.
@@ -75,7 +77,7 @@
   - A hook that enforces the post-P9 refusal (0000112).
   - Running the two downstream-only migrations in this repo.
 - Deferred: nothing deferred.
-- Release size: three-story rule (no `release-budget.yml`). Eight stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2.
+- Release size: three-story rule (no `release-budget.yml`). Ten stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2. US-009 came from the req-001 split, and US-010 from the req-007 split.
 
 ## Assumptions
 - Claude Code passes `CLAUDE_PROJECT_DIR` to hooks - impact if wrong: the deleted-cwd fix falls back to the nearest existing parent only. 0000118 has not checked this live.
@@ -86,7 +88,7 @@
 - Resolving each path segment through links adds file-system calls to every hook call. Likelihood medium, impact low. The latency NFR and the existing length limits bound it.
 - A scope record left after an interrupted Fast Path keeps admitting writes to its paths. Likelihood medium, impact medium. The requirement must bound its life, for example by checking it against the branch or a timestamp.
 - A downstream project sees six old migrations as pending after refresh. Likelihood high, impact low. Each scan finds nothing on a compliant project.
-- Eight stories in one run exceed the three-story rule. Likelihood medium, impact medium. The run uses parallel work by file ownership.
+- Ten stories in one run exceed the three-story rule. Likelihood medium, impact medium. The run uses parallel work by file ownership.
 
 ## Dependencies
 - Upstream: 0000032 `path-rules.mjs` and the shell-write guard. 0000033 Fast Path admission.
@@ -104,8 +106,10 @@ None
 | REQ-004 - root-when-cwd-deleted | planifest-codegen-agent | `resolveRoot` change, test first |
 | REQ-005 - ratchet-check-shared-root | planifest-codegen-agent | `ratchet-check.mjs` imports the shared rules |
 | REQ-006 - no-planted-root-marker | planifest-codegen-agent | `markedRoot` trust rule, test first |
-| REQ-007 - migration-run-state | planifest-codegen-agent | Migrator and orchestrator text, file moves, records, suites |
+| REQ-007 - migration-run-state | planifest-codegen-agent | Migrator and orchestrator text, file moves, record format, suites |
 | REQ-008 - sanctioned-scripts | planifest-codegen-agent | Boot template sentence plus argument validation, test first |
+| REQ-009 - fast-path-enforcement-paths | planifest-codegen-agent | `FAST_PATH_ENFORCEMENT_PATHS` constant plus `fast-path.md` parity, test first |
+| REQ-010 - migration-records-for-this-repo | planifest-codegen-agent | Scans and records in this repo, with the exception flow for findings |
 
 ## Repo Instructions
 - `custom-001-local-git-only.md`: fetch, pull, push, and `gh pr create` without asking. Work on a `feat/` branch. Committing to `main` and merging PRs stay human-only. Commit after every meaningful artifact write.

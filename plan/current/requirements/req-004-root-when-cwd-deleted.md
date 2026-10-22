@@ -72,7 +72,7 @@ As the human on the loop, I rely on the gates to find the repository root when t
 
 ## Dependencies
 
-- All five requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
+- All six requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
 - req-005 consumes `path-rules-resolveRoot-deleted-cwd` in `ratchet-check.mjs`. Build req-004 before req-005.
 - req-006 changes `markedRoot`, which `resolveRoot` calls. The two changes touch different functions and can land in either order.
 - `planifest-framework/tests/test-0000032-req-006-outside-repository-pass.sh` (one assertion changes).

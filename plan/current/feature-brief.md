@@ -25,13 +25,15 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 | Ratchet check from any folder (0000109) | US-005: As the human on the loop, I rely on `ratchet-check` to find the active loop from any subfolder, so that a weakening write is blocked wherever the agent runs it. | must-have | 1 |
 | No planted root under a permitted name (0000114) | US-006: As the human on the loop, I rely on the gates to ignore a `.git` marker planted under an always-permitted name, so that a moved folder can't become a new root. | must-have | 1 |
 | Migration run state per project (0000126) | US-007: As the human on the loop, I see every migration stay in `planifest-framework/migrations/` with its run state recorded in `plan/_migrations/`, so that the framework repo and each downstream project track their own runs. | must-have | 1 |
-| Sanctioned scripts in Hard Limit 8 (0000124) | US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script. | must-have | 1 |
+| Sanctioned scripts in Hard Limit 8 (0000124) | US-008: As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script, and each named script writes only its own file. | must-have | 1 |
+| Fast Path enforcement paths (0000081, 0000125, 0000062) | US-009: As the human on the loop, I rely on Fast Path never admitting a write to an enforcement path, so that a scope record can't unwire or change the gates. | must-have | 1 |
+| Migration records for this repo (0000126) | US-010: As the human on the loop, I see this repo hold a run record for each of its eight migrations, from a scan run here, so that the framework repo shows its own migration state. | must-have | 1 |
 
 ## Waves
 
 | Wave | Features Included | Ships When |
 |------|-------------------|------------|
-| 1 | All eight | Every acceptance criterion passes and the full suite passes on CI |
+| 1 | All ten | Every acceptance criterion passes and the full suite passes on CI |
 
 ## Target Architecture
 
@@ -128,7 +130,7 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 ## Acceptance Criteria
 
 - [ ] US-001: With a scope record listing `planifest-overrides/instructions/x.md`, a **Write** to that path passes and a **Write** to an unlisted path is blocked.
-- [ ] US-001: A scope record that lists an enforcement path, such as `planifest-framework/hooks/`, never admits a write there.
+- [ ] US-009: A scope record that lists an enforcement path, such as `planifest-framework/hooks/`, never admits a write there.
 - [ ] US-001: `workflows/fast-path.md` writes the record before the change and deletes it in the Fast Path commit.
 - [ ] US-002: A suite runs the close-out order and checks that `product.yml` `version` and `feature` match the tag and feature.
 - [ ] US-002: `product.yml` reads `0.33.0` and `0000035-write-gate-scope-and-path-hardening` at P9.
@@ -139,6 +141,8 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 - [ ] US-006: After `mkdir -p plan/w/.git && mv plan/w src/claude.md`, a write from `src/claude.md` to `../other/x.js` is blocked.
 - [ ] US-007: No migration file moves when it runs, and `_done/` no longer exists.
 - [ ] US-007: Resume detection lists as pending only migrations with no record in `plan/_migrations/`.
-- [ ] US-007: This repo holds a record for each of the eight migrations, from a scan run here.
+- [ ] US-010: This repo holds a record for each of the eight migrations, from a scan run here.
 - [ ] US-008: `standard-boot.md` and `cursor-boot.md` each hold one `Sanctioned scripts:` sentence in Hard Limit 8, and both name the same seven scripts.
 - [ ] US-008: `set-product-release.mjs` exits 2 and writes nothing when any argument breaks its Input Validation rules.
+- [ ] US-009: The enforcement list in `workflows/fast-path.md` matches `FAST_PATH_ENFORCEMENT_PATHS`.
+- [ ] US-010: The two downstream-only migrations hold `not applicable` records that name this repo as the framework source.

@@ -55,7 +55,7 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 
 - Consumes `path-rules-resolveRoot-deleted-cwd` from req-004. Build req-004 first.
 - Consumes `path-rules-resolveTarget-links` from req-003. Build req-003 first.
-- All five requirements in this stream change or import `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
+- All six requirements in this stream change or import `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
 - `setup.sh` and `setup.ps1` already copy every `*.mjs` in `hooks/enforcement/`, so the import resolves in every install (0000028 ADR 002).
 
 ## Input Validation

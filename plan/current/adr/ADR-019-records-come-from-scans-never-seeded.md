@@ -27,7 +27,7 @@ This run is `autonomous`. The migrator's Hard Limit 3 needs a human answer for e
 2. In this repo, P3 runs the scans of the six returning migrations and writes each record from the result. A clean scan gets `applied` with both counts at `0`.
 3. P3 writes `not applicable` records for the two downstream-only migrations without running them. Each body names the reason: this repo is the framework source.
 4. A scan with findings writes no record until the human on the loop answers every batch. The migration stays pending until then.
-5. In an `autonomous` run, P3 logs one `Exception waiting (P3, human review): {migration}: {findings}` line per migration with findings. P4 reports AC-007.3 as open. No agent forces a record to close it.
+5. In an `autonomous` run, P3 logs one `Exception waiting (P3, human review): {migration}: {findings}` line per migration with findings. P4 reports req-010 AC-010.1 as open. No agent forces a record to close it.
 6. An apply answer gives `applied`. An answer of `none` gives `skipped`.
 7. A downstream project treats all eight migrations as applicable. Each scan decides its outcome.
 
@@ -36,7 +36,7 @@ This run is `autonomous`. The migrator's Hard Limit 3 needs a human answer for e
 | Alternative | Pros | Cons | Why Rejected |
 |-------------|------|------|-------------|
 | Seed `applied` records from `_done/` | No rescans, quiet first session | Records a claim no scan checked. Downstream, `_done/` reflects the framework repo, not the project. | A record must come from a scan run in that project. |
-| Write a record for a scan with findings, marked part-done | The run closes AC-007.3 alone | Needs a fourth outcome, which ADR-016 rejected. Hides findings the human on the loop never saw. | Breaks Hard Limit 3 of the migrator and the no-record-means-pending rule. |
+| Write a record for a scan with findings, marked part-done | The run closes AC-010.1 alone | Needs a fourth outcome, which ADR-016 rejected. Hides findings the human on the loop never saw. | Breaks Hard Limit 3 of the migrator and the no-record-means-pending rule. |
 | Run the downstream-only migrations here | Every record comes from a scan | Their scans look for setup state this repo doesn't carry. Findings would be false or confusing. | Scope rules them out. `not applicable` states the fact. |
 | Mark the downstream-only migrations `not applicable` everywhere | No scan downstream | The framework can't know which projects need them. | Each downstream scan decides. |
 
@@ -55,7 +55,7 @@ This run is `autonomous`. The migrator's Hard Limit 3 needs a human answer for e
 
 **Negative:**
 - Every downstream project rescans six older migrations after refresh (R-003).
-- AC-007.3 may stay open at the end of this autonomous run, waiting on the human on the loop.
+- AC-010.1 may stay open at the end of this autonomous run, waiting on the human on the loop.
 
 **Risks:**
 - An older scan may report false findings against today's layout (R-013, A-002). Those findings wait for the human on the loop, who can answer `none` to get a `skipped` record.

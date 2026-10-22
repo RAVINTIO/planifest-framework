@@ -20,7 +20,7 @@ Functional requirements are split into individual files, one user story per file
 
 | File | Stream | Requirement |
 |------|--------|-------------|
-| [req-001-fast-path-scope-record.md](requirements/req-001-fast-path-scope-record.md) | `stream-01-gate-rules` | `gate-write` and the shell guard accept `plan/.fast-path-scope` in place of `design.md`, check each write against it, and keep enforcement paths gated. Each admitted write prints a one-line stderr notice (US-001). |
+| [req-001-fast-path-scope-record.md](requirements/req-001-fast-path-scope-record.md) | `stream-01-gate-rules` | `gate-write` and the shell guard accept `plan/.fast-path-scope` in place of `design.md`, check each write against it, and ignore a stale record. Each admitted write prints a one-line stderr notice (US-001). |
 | [req-002-product-yml-in-p7.md](requirements/req-002-product-yml-in-p7.md) | `stream-02-release-manifest` | A new `set-product-release.mjs` step in P7, before the archive, sets `product.yml` `version` and `feature`, and creates `product.yml` from the template when it is missing. It is a fixed framework script under the narrow Hard Limit 8 carve-out in req-008 (US-002). |
 | [req-003-links-judged-by-real-target.md](requirements/req-003-links-judged-by-real-target.md) | `stream-01-gate-rules` | `path-rules.mjs` resolves each segment through links, with a 40-hop limit, before it judges the path (US-003). |
 | [req-004-root-when-cwd-deleted.md](requirements/req-004-root-when-cwd-deleted.md) | `stream-01-gate-rules` | `resolveRoot` uses `CLAUDE_PROJECT_DIR`, then the nearest existing parent, when cwd is gone (US-004). |
@@ -28,6 +28,8 @@ Functional requirements are split into individual files, one user story per file
 | [req-006-no-planted-root-marker.md](requirements/req-006-no-planted-root-marker.md) | `stream-01-gate-rules` | `markedRoot` ignores a marker below an always-permitted basename segment (US-006). |
 | [req-007-migration-run-state.md](requirements/req-007-migration-run-state.md) | `stream-03-migration-state` | Migration files stay in `planifest-framework/migrations/`, and each project records runs in `plan/_migrations/{stem}.md`. There are eight migrations, plus two helper scripts that belong to `0003-archive-dirname.md` (US-007). |
 | [req-008-sanctioned-scripts.md](requirements/req-008-sanctioned-scripts.md) | `stream-02-release-manifest` | Hard Limit 8 gains a narrow carve-out for fixed framework scripts. Both boot templates name the seven sanctioned scripts. `set-product-release.mjs` writes only `product.yml`, refuses any other path, and validates every argument (US-008). |
+| [req-009-fast-path-enforcement-paths.md](requirements/req-009-fast-path-enforcement-paths.md) | `stream-01-gate-rules` | `path-rules.mjs` exports `FAST_PATH_ENFORCEMENT_PATHS`, checks it before the scope record, and matches it case-insensitively. A record never admits a listed path, and `fast-path.md` names the same entries (US-009). |
+| [req-010-migration-records-for-this-repo.md](requirements/req-010-migration-records-for-this-repo.md) | `stream-03-migration-state` | In P3, this repo runs the scans of its six returning migrations and records each result. The two downstream-only migrations get `not applicable`. A scan with findings records nothing and logs an exception (US-010). |
 
 ## Non-Functional Requirements
 
@@ -46,7 +48,7 @@ Not applicable. The feature adds no network API. Its contracts are module export
 | Contract | Kind | Defined in |
 |----------|------|------------|
 | `resolveTarget(root, cwd, target)` | ES module export in `path-rules.mjs` | req-003 |
-| `FAST_PATH_ENFORCEMENT_PATHS` | ES module export in `path-rules.mjs` | req-001 |
+| `FAST_PATH_ENFORCEMENT_PATHS` | ES module export in `path-rules.mjs` | req-009 |
 | `plan/.fast-path-scope` | line-based text record | req-001 |
 | `set-product-release.mjs --feature-id --version [--create --product-id --product-name] [--component] [--root]` | CLI with exit codes 0, 2, 4, 5 | req-002, with argument rules in req-008 |
 | `plan/_migrations/{stem}.md` | Markdown with YAML frontmatter | req-007 |
@@ -77,7 +79,8 @@ flowchart LR
 
 ## Build order (P3)
 
-- `stream-01-gate-rules`: one agent builds all five requirements in sequence, because each changes `path-rules.mjs`. The order is req-006, req-004, req-003, req-005, then req-001.
+- `stream-01-gate-rules`: one agent builds all six requirements in sequence, because each changes `path-rules.mjs`. The order is req-006, req-004, req-003, req-005, req-001, then req-009.
+- `stream-03-migration-state`: one agent builds req-007, then req-010. Req-010 writes this repo's records through the Record step that req-007 adds.
 - `stream-02-release-manifest` and `stream-03-migration-state` run in parallel with stream 01.
 - Stream 02 owns the Hard Limit 8 sentence in `standard-boot.md` and `cursor-boot.md`. No other stream edits those templates.
 - Shared files: stream 01 and stream 03 may both edit `planifest-framework/skills/planifest-orchestrator/SKILL.md` and `planifest-framework/pipeline-reference.md`. The orchestrator orders those edits at P3. Stream 03 edits only its named sections.
@@ -85,16 +88,16 @@ flowchart LR
 
 ## Decisions recorded at P1
 
-- Migration findings in `autonomous`: if a scan in this repo finds content to correct, P3 writes no record for that migration. The migration stays pending, and an `Exception waiting (P3, human review)` line lists the findings for the final report. This follows the confirmed rule that a scan with findings records nothing until the human on the loop confirms the fix. AC-007.3 then stays open for the human on the loop, and P4 reports it as blocked on that review.
+- Migration findings in `autonomous`: if a scan in this repo finds content to correct, P3 writes no record for that migration. The migration stays pending, and an `Exception waiting (P3, human review)` line lists the findings for the final report. This follows the confirmed rule that a scan with findings records nothing until the human on the loop confirms the fix. AC-010.1 then stays open for the human on the loop, and P4 reports it as blocked on that review (req-010).
 - The scope record never enters a commit. Fast Path step 6 removes it before `git commit`. This sharpens the brief's "deletes it in the Fast Path commit" criterion.
 - The scope record is self-authorisation. The human on the loop accepted this at P0 over a wider allowlist. Each write admitted through the record prints a one-line stderr notice. The branch and `HEAD` binding bounds staleness only and is not a security control (R-005).
-- `FAST_PATH_ENFORCEMENT_PATHS` makes the `fast-path.md` list concrete and adds the hook wiring files that setup writes, such as `.claude/settings.json`, and `.git/`. The same change updates `fast-path.md`. No path leaves the list.
+- `FAST_PATH_ENFORCEMENT_PATHS` makes the `fast-path.md` list concrete and adds the hook wiring files that setup writes, such as `.claude/settings.json`, and `.git/`. The same change updates `fast-path.md`. No path leaves the list (req-009).
 - Hop limit is 40. A link loop, a chain past 40 hops, or a resolution error inside the root blocks with exit 2. The scope record is removed before the Fast Path commit and never enters a commit.
 - `set-product-release.mjs` writes `product.yml` through Node and creates it from the template when needed. P2 records the script as an ADR, as 0000033 ADR 010 did for `archive-current.mjs`.
 - The script falls under a narrow Hard Limit 8 carve-out. It has fixed behaviour and its own suite, and the agent passes it arguments, never content. No write gate judges its write, which is acceptable because the script writes only the named `product.yml` fields and refuses any other path. The P2 ADR records the carve-out and its limits (req-008).
 - The carve-out is a standing framework rule. Stream 02 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `planifest-framework/templates/standard-boot.md` and `cursor-boot.md`. The sentence names the seven scripts that skill text runs to write files (req-008).
 - The req-008 Input Validation section treats every script argument as untrusted. `--root` must match the folder that `resolveRoot` returns. A rule break writes nothing and exits 2 (R-020).
-- `FAST_PATH_ENFORCEMENT_PATHS` also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json`, and `planifest-framework/setup/`. The `fast-path.md` list changes in step.
+- `FAST_PATH_ENFORCEMENT_PATHS` also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json`, and `planifest-framework/setup/`. The `fast-path.md` list changes in step (req-009).
 - The stderr notice reaches the agent and the session transcript, not the main view of the human on the loop. The Fast Path step 5 changelog entry lists every record path, so the human on the loop sees each admitted path there.
 - A missing cwd now blocks a write into `src/`. This supersedes the 0000032 suite assertion at `test-0000032-req-006-outside-repository-pass.sh` lines 364 to 366.
 

@@ -15,7 +15,7 @@ version: "0.1.0"
 
 > One requirement doc = one user story.
 
-As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script.
+As the human on the loop, I rely on Hard Limit 8 to name every framework script that may write files, so that an agent never writes past the gates through any other script, and each named script writes only its own file.
 
 ## Functional Requirements
 
@@ -32,7 +32,7 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
   - It changes only the `version`, `feature`, and `components[]` fields, plus the `--create` fields `id`, `name`, and `versionPolicy`.
   - It refuses any other path.
 - The P2 ADR records this carve-out and its limits. It also states that the carve-out covers no other script.
-- The script resolves its target as `{root}/product.yml` and checks the resolved real path before it writes. If the target resolves to any other path, for example through a link, the script writes nothing and exits 2 with the reason on stderr.
+- The script resolves its target as `{root}/product.yml` and checks the resolved real path before it writes. If the target resolves to any other path, for example through a link, the script writes nothing and exits 2 with the reason on stderr. This requirement's suite owns the link case for this check.
 - `{root}` is never a free choice. The `--root` rule in Input Validation binds it to the folder that `resolveRoot` returns. That folder can be a nested folder that holds its own `planifest-framework/`. The write then lands only where `gate-write` already resolves the root.
 - The script runs every Input Validation rule before it reads `product.yml`. A rule break exits 2 before the req-002 `versionPolicy` table or the exit 4 check applies.
 - The script writes each value only as a double-quoted YAML scalar, after validation. No allowed character can end the scalar or start a new line, so no argument can add a key.
@@ -61,6 +61,7 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
 ## Acceptance Criteria
 
 - [ ] The suite `planifest-framework/tests/test-0000035-req-008-sanctioned-scripts.sh` runs one case for each rule in the Input Validation section. Each case expects exit 2, a stderr reason that names the argument, no raw value on stderr, and a byte-identical `product.yml`.
+  - The suite also runs a link case. With `product.yml` a link to a file outside `{root}`, the script exits 2, writes nothing, and leaves the link target unchanged.
 - [ ] A suite case passes a `--feature-id` that holds a newline followed by `versionPolicy: "explicit"`. The script exits 2, and `product.yml` stays byte-identical.
 - [ ] A suite source check asserts that `standard-boot.md` and `cursor-boot.md` each hold one `Sanctioned scripts:` sentence inside Hard Limit 8. Both sentences name the same scripts, and that set equals the seven in the sanctioned list.
 
@@ -68,7 +69,7 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
 
 - [req-002](req-002-product-yml-in-p7.md) adds `set-product-release.mjs`. Stream 02 builds req-002 and this requirement together, because both change the same script.
 - `resolveRoot` in `planifest-framework/hooks/enforcement/path-rules.mjs`, which the `--root` rule calls. Req-004 and req-006 change how it treats a deleted cwd and a planted marker. Neither change alters its result for a script run inside the repo, so the build order stays as it is.
-- No dependency on req-001, req-003, or req-005 to req-007.
+- No dependency on req-001, req-003, req-005 to req-007, req-009, or req-010.
 
 ## Input Validation
 

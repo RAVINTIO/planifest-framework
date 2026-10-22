@@ -22,7 +22,7 @@ The design declares this stack:
 
 The design states "Stack unchanged". It declares no database, ORM, IaC, cloud, or compute.
 
-Stream 01 changes the write gates in five ways (req-001 and req-003 to req-006). Each change touches `planifest-framework/hooks/enforcement/path-rules.mjs`. That module is the shared home for path and root rules (0000032 ADR 004). `gate-write.mjs` and `shell-write-guard.mjs` already import it. req-005 adds `ratchet-check.mjs` as a third importer.
+Stream 01 changes the write gates in six ways (req-001, req-003 to req-006, and req-009). Each change touches `planifest-framework/hooks/enforcement/path-rules.mjs`. That module is the shared home for path and root rules (0000032 ADR 004). `gate-write.mjs` and `shell-write-guard.mjs` already import it. req-005 adds `ratchet-check.mjs` as a third importer.
 
 Two of the new rules read state that git tools usually report:
 

@@ -70,9 +70,9 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 
 ## Dependencies
 
-- All five requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
+- All six requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
 - req-005 consumes `path-rules-resolveTarget-links` in `ratchet-check.mjs`. Build req-003 before req-005.
-- req-001 judges the `relPath` this requirement returns. It needs no other artifact from req-003.
+- req-001 and req-009 judge the `relPath` this requirement returns. They need no other artifact from req-003.
 - `shell-write-guard.mjs` `judgeOnce` changes to call `resolveTarget` and to block on `unresolvable`.
 
 ## Input Validation

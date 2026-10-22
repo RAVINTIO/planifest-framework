@@ -26,7 +26,7 @@ Without these entries, a self-written record could unwire `gate-write` itself. T
 
 ## Decision
 
-- **Constant:** `path-rules.mjs` exports `FAST_PATH_ENFORCEMENT_PATHS`, artifact `path-rules-fast-path-enforcement-paths`. req-001 lists every entry. The groups are:
+- **Constant:** `path-rules.mjs` exports `FAST_PATH_ENFORCEMENT_PATHS`, artifact `path-rules-fast-path-enforcement-paths`. req-009 lists every entry. The groups are:
   - framework enforcement folders: `planifest-framework/hooks/`, `planifest-framework/scripts/`, `planifest-framework/setup/`, and `planifest-framework/standards/autonomous-run-standards.md`
   - any path whose last segment is `setup.sh` or `setup.ps1`
   - any path that holds the segment pair `hooks/enforcement/` or `hooks/adapters/`, which covers every installed copy
@@ -50,7 +50,7 @@ Without these entries, a self-written record could unwire `gate-write` itself. T
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | `path-rules.mjs` gains the constant and the precedence check. `workflows/fast-path.md` lists the same entries. The req-001 suite covers wiring files, a tool-local settings file, a setup script, and a mixed-case hook path. |
+| planifest-framework | `path-rules.mjs` gains the constant and the precedence check. `workflows/fast-path.md` lists the same entries. The req-009 suite covers wiring files, a tool-local settings file, a setup script, and a mixed-case hook path. |
 | setup-hook-integration | No change. Its docs name the wiring files the list now covers. |
 
 ## Consequences

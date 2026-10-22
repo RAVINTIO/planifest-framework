@@ -50,7 +50,7 @@ As the human on the loop, I rely on the gates to ignore a `.git` marker planted 
 
 ## Dependencies
 
-- All five requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
+- All six requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence.
 - req-004 changes `resolveRoot`, which calls `markedRoot`. The two changes touch different functions and can land in either order.
 - req-005 gains this rule through `resolveRoot` with no extra work.
 - `ALWAYS_PERMITTED_FILES` in `path-rules.mjs` defines the basenames. A later change to that list changes this rule too.

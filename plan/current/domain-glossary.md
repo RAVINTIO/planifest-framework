@@ -18,7 +18,7 @@ version: "0.1.0"
 |------|-----------|---------|---------|
 | Scope record | The file `plan/.fast-path-scope`. It lists the target paths of one Fast Path change. The gate accepts it in place of `design.md`. It also stores the branch and `HEAD` commit it was written at, which bound staleness only. The record is self-authorisation, and each admitted write prints a stderr notice. Fast Path removes it before the commit. | Fast Path scope record | planifest-framework |
 | Fast Path | The route for a trivial change with no feature brief, execution plan, or ADR. Since 0000033 ADR 009 it admits changes with no `src/` target and never an enforcement path. | | planifest-framework |
-| Enforcement path | A path the framework gates whatever the scope record lists, such as `planifest-framework/hooks/`. `FAST_PATH_ENFORCEMENT_PATHS` lists them, including hook wiring files and `.git/`. Matching is case-insensitive through `norm`. Fast Path never admits one. | gated path | planifest-framework |
+| Enforcement path | A path the framework gates whatever the scope record lists, such as `planifest-framework/hooks/`. `FAST_PATH_ENFORCEMENT_PATHS` lists them, including hook wiring files and `.git/`. Matching is case-insensitive through `norm`. Fast Path never admits one (req-009). | gated path | planifest-framework |
 | Always-permitted path | A path the gate never blocks for lack of a design. It is a prefix in `ALWAYS_PERMITTED_PREFIXES` (`plan/`, `docs/`) or a file in `ALWAYS_PERMITTED_FILES`, such as `claude.md`. | always-permitted prefix, always-permitted file | planifest-framework |
 | Root marker | A folder whose presence marks a repository root. The markers are `planifest-framework` and `.git`, checked in that order. | `ROOT_MARKERS` | planifest-framework |
 | Sanctioned script | A fixed framework script that a skill step runs to write files. Hard Limit 8 allows it, because the agent passes it arguments and never content. The `Sanctioned scripts:` sentence in both boot templates names all seven (req-008). | | planifest-framework |
@@ -40,7 +40,7 @@ version: "0.1.0"
 | Migration record | The file in `plan/_migrations/` that shows a migration ran in this project. There is one record per migration. | run record | planifest-framework |
 | `not applicable` record | A migration record that states the migration does not apply here. It counts as a record. | | planifest-framework |
 | Pending migration | A migration with no readable record in `plan/_migrations/`. An unreadable record also counts as pending. | | planifest-framework |
-| Downstream-only migration | A migration that applies to projects that consume the framework and not to this repo. Two exist. This repo records them as `not applicable`. | | planifest-framework |
+| Downstream-only migration | A migration that applies to projects that consume the framework and not to this repo. Two exist. This repo records them as `not applicable` (req-010). | | planifest-framework |
 | Migrator | The `planifest-migrator` skill. It runs one pending migration with the human on the loop and writes the record. | | planifest-framework |
 | Scan | The check a migration runs to find what needs changing. A compliant project gets a clean result and a record. | | planifest-framework |
 | Resume detection | The orchestrator step that lists pending migrations at session start. | | planifest-framework |

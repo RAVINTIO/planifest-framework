@@ -10,7 +10,7 @@ version: "0.1.0"
 **Feature:** 0000035-write-gate-scope-and-path-hardening
 **Version:** 0.33.0
 
-> Release size follows the three-story rule, with no `release-budget.yml`. This run carries eight stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2.
+> Release size follows the three-story rule, with no `release-budget.yml`. This run carries ten stories in one wave, by the choice of the human on the loop. US-008 came from the req-002 split at P2. US-009 came from the req-001 split, and US-010 from the req-007 split.
 
 ## In Scope
 
@@ -18,9 +18,9 @@ version: "0.1.0"
 - A Fast Path scope record at `plan/.fast-path-scope` (US-001):
   - It lists the target paths of one Fast Path change.
   - `gate-write` and the shell-write guard accept it in place of `plan/current/design.md` and match each write against the listed paths.
-  - It never admits an enforcement path, whatever it lists.
   - It stores the branch and `HEAD` commit it was written at, and the gate ignores it once either changes.
   - `planifest-framework/workflows/fast-path.md` writes it before the change and deletes it in the Fast Path commit.
+- Fast Path enforcement paths (US-009): a scope record never admits an enforcement path, whatever it lists (req-009).
 - A `product.yml` update in P7 (US-002):
   - The ship agent sets `version` and `feature` before Step 6 archives `design.md`.
   - It commits the update with the archive.
@@ -42,19 +42,19 @@ version: "0.1.0"
   - The `_done/` folder goes away and its six files return beside the others.
   - The migrator skill and orchestrator resume detection read and write the records.
 - Sanctioned scripts in Hard Limit 8 (US-008): both boot templates name the seven framework scripts that may write files, and `set-product-release.mjs` validates every argument (req-008).
-- A `plan/_migrations/` record for each of the eight existing migrations in this repo, written from a scan run here in P3. The two downstream-only migrations get a `not applicable` record.
+- A `plan/_migrations/` record for each of the eight existing migrations in this repo, written from a scan run here in P3 (US-010, req-010). The two downstream-only migrations get a `not applicable` record.
 - Tests for each story under `planifest-framework/tests/`, run through `run-tests.sh`.
 - Version `0.32.0` to `0.33.0` in `planifest-framework/component.yml`.
 - Setup integration docs under `src/setup-hook-integration/`, only if setup behaviour changes.
 - Clarifications that refine the lines above without replacing them:
-  - The enforcement list `FAST_PATH_ENFORCEMENT_PATHS` concretises the list in `planifest-framework/workflows/fast-path.md` and adds the hook wiring files that setup writes, such as `.claude/settings.json`, and `.git/`. The same change updates `fast-path.md`. No path leaves the list.
+  - The enforcement list `FAST_PATH_ENFORCEMENT_PATHS` concretises the list in `planifest-framework/workflows/fast-path.md` and adds the hook wiring files that setup writes, such as `.claude/settings.json`, and `.git/`. The same change updates `fast-path.md`. No path leaves the list (req-009).
   - Fast Path step 6 removes the scope record before `git commit`, so no commit holds it. This sharpens the "deletes it in the Fast Path commit" line.
   - Each write admitted through the scope record prints a one-line stderr notice.
   - A new `set-product-release.mjs` script writes `product.yml` through Node, so no write gate judges it. It also creates `product.yml` from the template when needed.
-  - In an autonomous run, a migration whose scan has findings stays pending and appears as an exception waiting for human review. AC-007.3 stays open for the human on the loop.
+  - In an autonomous run, a migration whose scan has findings stays pending and appears as an exception waiting for human review. AC-010.1 stays open for the human on the loop.
   - The hop limit is 40. A link loop, a chain past 40 hops, or a resolution error inside the root blocks with exit 2.
   - There are eight migrations, which are the top-level `*.md` files once `_done/` returns. Two helper scripts belong to `0003-archive-dirname.md`.
-  - The enforcement list also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json` and `opencode.jsonc`. It also holds the per-tool setup scripts folder `planifest-framework/setup/`. The `fast-path.md` list changes in step (req-001).
+  - The enforcement list also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json` and `opencode.jsonc`. It also holds the per-tool setup scripts folder `planifest-framework/setup/`. The `fast-path.md` list changes in step (req-009).
   - The stderr notice reaches the agent and the session transcript, not the main view of the human on the loop. The Fast Path changelog entry lists every path from the scope record, so the human on the loop sees each admitted path there.
   - `set-product-release.mjs` falls under a narrow Hard Limit 8 carve-out, which the P2 ADR records. It is a fixed framework script with its own suite, as `archive-current.mjs` is (0000033 ADR 010). The agent passes it arguments, never content. It writes only the named fields of `product.yml` and refuses any other path (req-008).
   - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-008).
@@ -69,7 +69,7 @@ version: "0.1.0"
 - Seeding migration records from the old `_done/` folder. Each record comes from a scan.
 - Changes to the gate rule for root files. `product.yml` is handled by moving the ship agent step, not by relaxing the gate.
 - Any change to the always-permitted path list.
-- Removing a path from the enforcement set. `FAST_PATH_ENFORCEMENT_PATHS` is made concrete and extended to hook wiring files, tool-local settings files, `planifest-framework/setup/`, and `.git/` (US-001), and no path leaves it.
+- Removing a path from the enforcement set. `FAST_PATH_ENFORCEMENT_PATHS` is made concrete and extended to hook wiring files, tool-local settings files, `planifest-framework/setup/`, and `.git/` (US-009), and no path leaves it.
 - New run modes, release budgets, or changes to the three-story rule.
 
 ## Deferred
