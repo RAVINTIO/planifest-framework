@@ -350,6 +350,121 @@ assert_equals "2" "$CODE" "req-002: --root with no value exits 2"
 
 # =============================================================================
 echo ""
+echo "=== req-002: links, FIFOs, and oversize files (S-3, S-4) ==="
+
+# run_drift_limited [args...]: run_drift under a 5-second limit. A run that the
+# limit stops exits 142.
+run_drift_limited() {
+  perl -e 'alarm shift; exec @ARGV' 5 node "$DRIFT" "$@" >"$WORK/stdout.txt" 2>"$WORK/stderr.txt"
+  CODE=$?
+  OUT=$(cat "$WORK/stdout.txt")
+  ERR=$(cat "$WORK/stderr.txt")
+}
+
+# make_matching <name>: a fixture whose claude-code copy of demo matches source.
+make_matching() {
+  local fx
+  fx="$(make_fixture "$1")"
+  add_source "$fx" demo "$SOURCE_TEXT"
+  add_installed "$fx" .claude/skills demo "$INSTALLED_TEXT"
+  add_marker "$fx" .claude claude-code
+  printf '%s' "$fx"
+}
+
+CAP=1048576
+
+if [ -z "${WINDIR:-}" ] && command -v mkfifo >/dev/null 2>&1 && command -v perl >/dev/null 2>&1; then
+  FX="$(make_matching fifo-copy)"
+  rm "$FX/.claude/skills/demo/SKILL.md"
+  mkfifo "$FX/.claude/skills/demo/SKILL.md"
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: a FIFO at an installed SKILL.md exits 1 within 5 s"
+  assert_contains "stale: claude-code: demo" "$ERR" "req-002: a FIFO at an installed SKILL.md is named stale"
+
+  FX="$(make_matching fifo-marker)"
+  rm "$FX/.claude/.planifest-setup-flags"
+  mkfifo "$FX/.claude/.planifest-setup-flags"
+  run_drift_limited --root "$FX"
+  assert_equals "0" "$CODE" "req-002: a FIFO marker is not valid, so the fallback check runs within 5 s"
+
+  FX="$(make_matching dev-zero)"
+  rm "$FX/.claude/skills/demo/SKILL.md"
+  ln -s /dev/zero "$FX/.claude/skills/demo/SKILL.md"
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: an installed SKILL.md linked to /dev/zero exits 1 within 5 s"
+  assert_contains "stale: claude-code: demo" "$ERR" "req-002: an installed SKILL.md linked to /dev/zero is named stale"
+
+  OUTSIDE="$WORK/outside"
+  mkdir -p "$OUTSIDE/skills/demo" "$OUTSIDE/source-skill"
+  printf '%s' "$INSTALLED_TEXT" > "$OUTSIDE/copy.md"
+  printf '%s' "$INSTALLED_TEXT" > "$OUTSIDE/skills/demo/SKILL.md"
+  printf '%s' "$SOURCE_TEXT" > "$OUTSIDE/source-skill/SKILL.md"
+
+  FX="$(make_matching link-copy-out)"
+  rm "$FX/.claude/skills/demo/SKILL.md"
+  ln -s "$OUTSIDE/copy.md" "$FX/.claude/skills/demo/SKILL.md"
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: an installed SKILL.md linked out of --root is stale, even with matching text"
+  assert_contains "stale: claude-code: demo" "$ERR" "req-002: the linked installed copy is named stale"
+
+  FX="$(make_matching link-folder-out)"
+  rm -rf "$FX/.claude/skills"
+  ln -s "$OUTSIDE/skills" "$FX/.claude/skills"
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: a skills folder linked out of --root is stale, even with matching text"
+  assert_contains "stale: claude-code: demo" "$ERR" "req-002: each skill under a linked skills folder is named stale"
+
+  FX="$(make_matching link-skill-out)"
+  rm -rf "$FX/.claude/skills/demo"
+  ln -s "$OUTSIDE/skills/demo" "$FX/.claude/skills/demo"
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: an installed skill folder linked out of --root is stale"
+
+  FX="$(make_matching link-source-out)"
+  ln -s "$OUTSIDE/source-skill" "$FX/planifest-framework/skills/linked"
+  run_drift_limited --root "$FX"
+  assert_equals "2" "$CODE" "req-002: a source skill folder that is a link can't compare"
+
+  FX="$(make_matching fifo-source)"
+  rm "$FX/planifest-framework/skills/demo/SKILL.md"
+  mkfifo "$FX/planifest-framework/skills/demo/SKILL.md"
+  run_drift_limited --root "$FX"
+  assert_equals "2" "$CODE" "req-002: a FIFO source SKILL.md can't compare within 5 s"
+else
+  echo "  SKIP: link and FIFO cases need POSIX mkfifo, ln -s, and perl"
+fi
+
+if command -v perl >/dev/null 2>&1; then
+  FX="$(make_fixture oversize-copy)"
+  add_source "$FX" demo "$SOURCE_TEXT"
+  mkdir -p "$FX/.claude/skills/demo"
+  head -c $((CAP + 1)) /dev/zero > "$FX/.claude/skills/demo/SKILL.md"
+  add_marker "$FX" .claude claude-code
+  run_drift_limited --root "$FX"
+  assert_equals "1" "$CODE" "req-002: an installed copy over 1 MiB exits 1"
+  assert_contains "stale: claude-code: demo" "$ERR" "req-002: an installed copy over 1 MiB is named stale"
+
+  FX="$(make_fixture oversize-source)"
+  mkdir -p "$FX/planifest-framework/skills/demo" "$FX/.claude/skills/demo"
+  head -c $((CAP + 1)) /dev/zero > "$FX/planifest-framework/skills/demo/SKILL.md"
+  head -c $((CAP + 1)) /dev/zero > "$FX/.claude/skills/demo/SKILL.md"
+  add_marker "$FX" .claude claude-code
+  run_drift_limited --root "$FX"
+  assert_equals "2" "$CODE" "req-002: a source SKILL.md over 1 MiB can't compare, even when the copy is identical"
+
+  FX="$(make_fixture at-cap)"
+  mkdir -p "$FX/planifest-framework/skills/demo" "$FX/.claude/skills/demo"
+  head -c "$CAP" /dev/zero > "$FX/planifest-framework/skills/demo/SKILL.md"
+  head -c "$CAP" /dev/zero > "$FX/.claude/skills/demo/SKILL.md"
+  add_marker "$FX" .claude claude-code
+  run_drift_limited --root "$FX"
+  assert_equals "0" "$CODE" "req-002: a SKILL.md of exactly 1 MiB on both sides still matches"
+else
+  echo "  SKIP: oversize cases need perl for the time limit"
+fi
+
+# =============================================================================
+echo ""
 echo "=== req-002: escaped names ==="
 
 FX="$(make_fixture escape)"
@@ -447,5 +562,7 @@ echo "=== req-002: orchestrator Resume Detection runs the check ==="
 RESUME="$(awk '/^## Resume Detection/{f=1; next} f&&/^## /{exit} f' "$ORCH")"
 assert_contains "skill-drift-check.mjs" "$RESUME" "req-002: Resume Detection names the drift script"
 assert_contains "planifest-refresh-setup" "$RESUME" "req-002: Resume Detection recommends planifest-refresh-setup"
+assert_contains "If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, load no source copy and only report the drift." \
+  "$RESUME" "req-002: step 1b loads no source copy after an unconfirmed framework update (S-5)"
 
 print_summary

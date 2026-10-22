@@ -38,8 +38,13 @@ The check needs these properties:
    - `1`: a copy is stale or missing, or nothing is installed. Each finding goes to stderr.
    - `2`: the script can't compare, for example when the source skills folder is missing.
 5. The check warns and never blocks. It never runs setup, and no agent runs setup because of it without the human on the loop.
-6. The orchestrator runs the script in Resume Detection, after step 1a. On drift it names each skill, loads the source copy for the rest of the session, and recommends `planifest-refresh-setup`.
+6. The orchestrator runs the script in Resume Detection, after step 1a. On drift it names each skill, loads the source copy for the rest of the session, and recommends `planifest-refresh-setup`. If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, the orchestrator loads no source copy and only reports the drift (P5 S-5).
 7. After any setup run in the same session, the orchestrator runs the script again. A `planifest-refresh-setup` run or a re-run-setup migration counts.
+8. The script checks each path with `lstat` before it reads, and never follows a link (P5 S-3, S-4). It never opens a FIFO, a device, or any other non-regular file, and reads at most 1 MiB from any file.
+   - Setup copies and never links. So a link at an installed copy or skills folder makes the copy stale.
+   - A non-regular installed copy, or one over 1 MiB, is stale.
+   - A linked, non-regular, or oversize marker isn't valid.
+   - A linked, non-regular, or oversize source skill can't compare, so the script exits 2.
 
 ## Alternatives Considered
 

@@ -165,6 +165,20 @@ assert_contains "Node" "$INSTRUCTIONS" "req-001: step 6 reports missing Node"
 RECORD_SECTION="${SRC#*## Record}"
 assert_contains "plan/_migrations/$NAME" "$RECORD_SECTION" "req-001: the Record section names the record path"
 
+# S-6: a failed run never records, so the migration stays pending.
+assert_contains "A completed run meets every one of these conditions:" "$INSTRUCTIONS" \
+  "req-001: the Migrator Instructions define a completed run"
+assert_contains "Setup exits 0 for each tool." "$INSTRUCTIONS" "req-001: a completed run needs setup to exit 0"
+assert_contains "The drift check exits 0." "$INSTRUCTIONS" "req-001: a completed run needs the drift check to exit 0"
+assert_contains "Every installed enforcement hook matches its source." "$INSTRUCTIONS" \
+  "req-001: a completed run needs every installed hook to match its source"
+for text in "$INSTRUCTIONS" "$RECORD_SECTION"; do
+  assert_contains "On any other result, the migrator records nothing, so the migration stays pending." "$text" \
+    "req-001: any other result records nothing and leaves the migration pending"
+  assert_contains "It reports the failure to the human on the loop." "$text" \
+    "req-001: any other result reports the failure to the human on the loop"
+done
+
 # =============================================================================
 echo ""
 echo "=== req-001 FR-001.6: the update policy defines setup-delivered files ==="

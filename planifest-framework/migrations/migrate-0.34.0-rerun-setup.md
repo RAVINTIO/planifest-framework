@@ -74,7 +74,11 @@ Setup is safe to re-run. A fresh 0.34.0 install still runs this migration, and t
 4. Check that each installed `enforcement/*.mjs` file matches its source in `planifest-framework/hooks/enforcement/`. For Claude Code, the installed copies sit in `.claude/hooks/enforcement/`.
 5. Check that the boot file holds the sanctioned-scripts sentence. Also check that it names the Write-or-Edit rule.
 6. If setup reported malformed settings JSON, report it as left for a person to fix. If setup warned that Node is missing, report that the same way.
-7. Record the outcome at `plan/_migrations/migrate-0.34.0-rerun-setup.md`, and only once the run completes.
+7. Decide whether the run completed. A completed run meets every one of these conditions:
+   - Setup exits 0 for each tool.
+   - The drift check exits 0.
+   - Every installed enforcement hook matches its source.
+8. If the run completed, record the outcome at `plan/_migrations/migrate-0.34.0-rerun-setup.md`. On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop.
 
 ---
 
@@ -86,9 +90,10 @@ Report to the human on the loop:
 - each installed enforcement hook that still differs from its source
 - whether the boot file holds the sanctioned-scripts sentence and names the Write-or-Edit rule
 - anything left for a person to fix, such as malformed JSON or missing Node
+- whether the run completed, as step 7 of the Migrator Instructions defines it
 
 ---
 
 ## Record
 
-Once the human on the loop confirms the findings, the migrator records the outcome at `plan/_migrations/migrate-0.34.0-rerun-setup.md`. The migrator writes the record only when the run completes. This file stays where it is.
+Once the human on the loop confirms the findings, the migrator records the outcome at `plan/_migrations/migrate-0.34.0-rerun-setup.md`. The migrator writes the record only after a completed run, as step 7 of the Migrator Instructions defines it. On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop. This file stays where it is.

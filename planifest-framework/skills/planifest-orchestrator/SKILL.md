@@ -79,7 +79,7 @@ On every session start, before taking any action:
 
 1b. **Check installed skills for drift** (0000036 ADR-005): run `node planifest-framework/scripts/skill-drift-check.mjs`. It compares each source `SKILL.md` with the active tool's installed copy. The check warns and never blocks. Never run setup yourself because of it.
    - **Exit 0:** report nothing and go on.
-   - **Exit 1 with `stale:` or `missing:` lines:** name each stale or missing skill to the human on the loop. For the rest of the session, load each one from its source copy at `planifest-framework/skills/{skill}/SKILL.md`, not from the installed copy. Recommend a `planifest-refresh-setup` run.
+   - **Exit 1 with `stale:` or `missing:` lines:** name each stale or missing skill to the human on the loop, and recommend a `planifest-refresh-setup` run. If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, load no source copy and only report the drift. Otherwise, for the rest of the session, load each one from its source copy at `planifest-framework/skills/{skill}/SKILL.md`, not from the installed copy.
    - **Exit 1 with `not installed`:** recommend a run of `setup.sh` or `setup.ps1`.
    - **Exit 2:** report that the check couldn't compare, give its reason, and go on.
    - **After any setup run in this session:** run the check again. A `planifest-refresh-setup` run counts, and so does a re-run-setup migration such as `migrate-0.34.0-rerun-setup.md`.

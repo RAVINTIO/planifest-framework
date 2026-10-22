@@ -73,6 +73,11 @@ As the human on the loop, I see which installed skills differ from source when a
 
 - On exit 1 with stale or missing copies, the last stderr line recommends `planifest-refresh-setup`.
 - The script can't compare when `planifest-framework/skills/` is missing or unreadable. It also can't compare when a read fails with any error other than "no such file".
+- The script checks each installed `SKILL.md`, each marker, and each skills folder with `lstat` before it reads (P5 S-3, S-4). It never follows a link and never opens a FIFO, a device, or any other non-regular file. It reads at most 1 MiB from any file.
+  - Setup copies and never links. So a link at an installed copy, its skill folder, or the tool's skills folder makes that copy stale.
+  - A FIFO, a device, or any other non-regular file at an installed copy is stale. So is a copy over 1 MiB.
+  - A marker that is a link, a non-regular file, or over 1 MiB isn't valid.
+  - The source side follows the same rules. A linked source skill folder, or a source `SKILL.md` that is a link, a non-regular file, or over 1 MiB, can't compare. The script exits 2.
 - Each skill name and path in the output passes through the same escaping as hook output, so a crafted folder name can't forge a line.
 
 ### FR-002.5 Orchestrator resume detection
@@ -83,6 +88,7 @@ As the human on the loop, I see which installed skills differ from source when a
   1. names each stale or missing skill to the human on the loop
   2. loads the source copy from `planifest-framework/skills/{skill}/SKILL.md` in place of the installed copy for the rest of the session
   3. recommends a `planifest-refresh-setup` run
+- If step 1a found a framework update that the human on the loop rejected or hasn't confirmed, the orchestrator loads no source copy. It only reports the drift (P5 S-5). An unconfirmed update is untrusted, so its source skills never replace the installed ones.
 - On `not installed`, the orchestrator recommends a run of `setup.sh` or `setup.ps1`.
 - On exit 2, the orchestrator reports that the check couldn't compare, with its reason, and goes on.
 - The check warns and never blocks. The orchestrator never runs setup itself.
@@ -113,6 +119,16 @@ A new suite `planifest-framework/tests/test-0000036-req-002-skill-drift-check.sh
 - a rewrite-list check: the suite reads the four path rewrites from the `sed` expressions in `setup.sh` `copy_skills()` and from the `-replace` calls in `setup.ps1` `Copy-PlanifestSkills`. It compares the from-and-to pairs as a set and asserts that the script's set matches each script's set (R-012). The two scripts apply the two `standards` rewrites in opposite orders, so an ordered compare can't match both.
 - the tool map: each entry matches `TOOL_SKILLS_DIR` in its `setup/{tool}.sh`
 - the orchestrator Resume Detection text names the script and `planifest-refresh-setup`
+- the Resume Detection text holds the sentence that loads no source copy after a rejected or unconfirmed framework update
+- unsafe files, each run under a 5-second limit:
+  - a FIFO at an installed `SKILL.md`: exit 1, stale
+  - a FIFO marker: the marker isn't valid, and the fallback check exits 0
+  - an installed `SKILL.md` linked to `/dev/zero`: exit 1, stale
+  - an installed copy, a skill folder, or a skills folder linked out of `--root`, with matching text: exit 1, stale
+  - a linked source skill folder, or a FIFO source `SKILL.md`: exit 2
+  - an installed copy over 1 MiB: exit 1, stale
+  - a source `SKILL.md` over 1 MiB: exit 2
+  - a `SKILL.md` of exactly 1 MiB on both sides: exit 0
 
 ## Acceptance Criteria
 

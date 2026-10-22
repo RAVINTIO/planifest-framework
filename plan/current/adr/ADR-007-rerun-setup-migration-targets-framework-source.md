@@ -27,7 +27,12 @@ ADR-006 decides that one migration covers 0.33.0 and 0.34.0. This ADR decides wh
 2. The migrator's target check therefore passes in this repo, and the Migrator Instructions run here.
 3. P3 builds `migrate-0.34.0-rerun-setup.md` but doesn't run it in this repo.
 4. At the end of P6, after the last change to any setup-delivered file, the agent first repeats the ADR-006 diff check. It then re-runs `planifest-framework/setup.sh claude-code --strict-orchestrator` with the flags in `.claude/.planifest-setup-flags`.
-5. Only after setup completes does the agent write `plan/_migrations/migrate-0.34.0-rerun-setup.md` through **Write**. The record holds `outcome: "applied"` and `framework-version: "0.34.0"`.
+5. Only after a completed run does the agent write `plan/_migrations/migrate-0.34.0-rerun-setup.md` through **Write**. The record holds `outcome: "applied"` and `framework-version: "0.34.0"`. The migration defines a completed run (P5 S-6):
+   - Setup exits 0 for each tool.
+   - The drift check exits 0.
+   - Every installed enforcement hook matches its source.
+
+   On any other result, the migrator records nothing, so the migration stays pending. It reports the failure to the human on the loop.
 6. The agent commits the record with the tracked `planifest-overrides/setup-config/claude-code.md` change that setup writes.
 7. If P7, P8, or P9 changes a setup-delivered file, the agent repeats the diff check and the setup run before the P9 push. The record stays as written, because it still describes a completed run.
 
