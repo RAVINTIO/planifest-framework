@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p1"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic-p1
 
@@ -18,8 +18,8 @@ status: "active"
 | Iteration | `1` of cap `3` |
 | Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `change-approach` |
-| Last updated | `2026-10-22T01:15:00Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-22T02:10:00Z` |
 
 ---
 
@@ -50,6 +50,8 @@ status: "active"
 - **Observation:** every change applied. The agent also added three `- [ ]` lines to req-002, which now has six acceptance criteria, so `consistency-check.mjs` exits 1. The dispatch prompt left out the three-criteria limit. The ratchet blocks folding the lines back without a human `.ratchet-approve` line.
 - **Decision:** waiting for the human on the loop: the approval line is a human-only control.
 - **Resolution (2026-10-22):** the human on the loop raised the limit to 10 criteria, with 3 preferred. req-002 keeps six criteria, and `consistency-check.mjs` reports clean. A fresh critic instance now reviews approach 2.
+- **Verdict (approach 2 critic):** APPROVE, 0 critical, 0 major, 5 minor, in `plan/current/design-critic-p1-approach-2.md`. The orchestrator fixed all five minors in req-002, the risk register, `design.md`, and the glossary. `consistency-check.mjs` reports clean.
+- **Decision:** done: the P1 gate passes.
 
 ---
 

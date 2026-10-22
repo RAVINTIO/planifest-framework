@@ -71,14 +71,14 @@ Run mode confirmed: autonomous (2026-10-21T23:37:01Z)
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-21T23:39:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T02:10:00Z` |
+| Wall-clock | `9060` |
 | Streams | `3` |
 | Model tier | primary (stream 01), cheaper (streams 02 and 03, shared artifacts) |
-| Skills loaded | planifest-spec-agent |
-| Agents spawned | `pending` |
+| Skills loaded | planifest-spec-agent, planifest-loop-runner |
+| Agents spawned | `13` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `2` |
 | Notes | Run mode from `run-mode.mjs`: autonomous. P1 checker re-check: no `loop-toggles.yml`, so no checker key is off. |
 
 Toggle record (P1, binding for the run):
@@ -124,3 +124,6 @@ Streams formed (dependency test: stories that change the same file share a strea
 - P1 exchange (acceptance-criteria limit): Q: write the `.ratchet-approve` line to fold req-002 back to three criteria? / A: "Change to allow 10 acceptance criteria but favour 3."
 - Decision (P1): `consistency-check.mjs` allows up to 10 acceptance criteria per requirement, and the feature brief template asks for 3 / reason: instruction from the human on the loop. req-002 keeps its six criteria, so no fold and no `.ratchet-approve` line are needed.
 - Human touchpoint (P1) resolved: `consistency-check.mjs` exits 0 on `plan/current`. Governance suite and its regression copy pass, 95 tests each.
+- P1 gate loop, approach 2 iteration 1: design critic APPROVE (0 critical, 0 major, 5 minor). The orchestrator fixed all five minors. `design.md` gains a "Decisions added at P1" section for the carve-out and the criteria limit. Loop state set to `done`.
+- Gate (P1): passed. `consistency-check.mjs` clean, run mode still `autonomous`.
+- Progress: P1 done at 2026-10-22T02:10:00Z: seven requirements in three streams, critic approved on approach 2

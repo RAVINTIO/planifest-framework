@@ -35,6 +35,10 @@
 - Idempotence: a migration re-run and the P7 `product.yml` update each give the same result when run twice. A stale `product.yml` stays as it is until the next P7 corrects it.
 - Run mode: `autonomous`.
 
+## Decisions added at P1
+- Hard Limit 8 carve-out: `set-product-release.mjs` writes `product.yml` as a sanctioned script. Both boot templates gain a `Sanctioned scripts:` sentence that names seven framework scripts (req-002). A P2 ADR records the rule.
+- Acceptance-criteria limit: `consistency-check.mjs` allows up to 10 criteria per requirement, and the feature brief template asks for 3. The human on the loop set this on 2026-10-22.
+
 ## Architecture Layer
 - Latency target: each hook call stays under 500 ms on a 10-hop link chain
 - Availability target: not applicable (local hooks)

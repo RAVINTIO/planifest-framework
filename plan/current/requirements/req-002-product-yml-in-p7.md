@@ -32,7 +32,7 @@ As the human on the loop, I see `product.yml` name the released version and feat
 
   | versionPolicy | Behaviour |
   |---|---|
-  | `max-component-version` | Run `product-version.mjs`. If its output differs from `--version`, exit 2 with the reason on stderr and write nothing. If it matches, write `version` and `feature`. |
+  | `max-component-version` | Derive the version with the `product-version.mjs` rule, applied to the content the script is about to write. With `--create` or `--component`, that content holds the new `components[]` list, so the script never reads a missing or old file. If the result differs from `--version`, exit 2 with the reason on stderr and write nothing. If it matches, write `version` and `feature`. |
   | `explicit` | Write `--version` and `feature`. `--version` must be valid `MAJOR.MINOR.PATCH`, otherwise exit 2 and write nothing. |
   | `external` | Write `feature` only and leave `version` as it is. Exit 5, so the ship agent knows Step 9 must consult the external anchor or the human on the loop. |
 
@@ -59,14 +59,14 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - It refuses any other path.
 - The P2 ADR records this carve-out and its limits. It also states that the carve-out covers no other script.
 - The script resolves its target as `{root}/product.yml` and checks the resolved real path before it writes. If the target resolves to any other path, for example through a link, the script writes nothing and exits 2 with the reason on stderr.
-- `{root}` is never a free choice. The `--root` rule in Input Validation binds it to the repository root.
+- `{root}` is never a free choice. The `--root` rule in Input Validation binds it to the folder that `resolveRoot` returns. That folder can be a nested folder that holds its own `planifest-framework/`. The write then lands only where `gate-write` already resolves the root.
 - The script runs every Input Validation rule before it reads `product.yml`. A rule break exits 2 before the `versionPolicy` table or the exit 4 check applies.
 - The script writes each value only as a double-quoted YAML scalar, after validation. No allowed character can end the scalar or start a new line, so no argument can add a key.
 
 ### Hard Limit 8 text in the boot templates
 
 - P3 adds one sentence to Hard Limit 8 in `planifest-framework/templates/standard-boot.md` (line 14) and `planifest-framework/templates/cursor-boot.md` (line 20).
-- The sentence starts with `Sanctioned scripts:`. It names each framework script that skill text runs to write files, and it says no other script counts.
+- The sentence starts with `Sanctioned scripts:`. It names each framework script that skill text runs to write files, and it says no other script counts. A named script counts only when a skill step runs it.
 - Both templates carry the same sentence, so every tool's boot file names the same list.
 - A check of `planifest-framework/skills/` on 2026-10-22 found the scripts that skill text runs to write files. The sanctioned list is exactly these seven:
   - `planifest-framework/scripts/archive-current.mjs`, which the ship skill runs at P7.
@@ -81,6 +81,7 @@ As the human on the loop, I see `product.yml` name the released version and feat
 - The boot files are build outputs. On every setup run, `write_boot_file` in `planifest-framework/setup.sh` rewrites each tool's boot file from its template (0000029 ADR 001). `Write-PlanifestBootFile` in `setup.ps1` does the same.
 - The root `CLAUDE.md` comes from `standard-boot.md` through `planifest-framework/setup/claude-code.sh`. The root `AGENTS.md` comes from the same template through `planifest-framework/setup/codex.sh`.
 - The root `.gitignore` lists `CLAUDE.md` and `AGENTS.md`, so P3 edits only the two templates. The next setup run in any project carries the sentence into its boot file.
+- This repo's own `CLAUDE.md` keeps the old Hard Limit 8 text until setup runs again. Nothing in this feature reruns setup before P7. At P7, the ship agent runs `set-product-release.mjs` on the same footing as `archive-current.mjs` (0000033 ADR 010), and the P2 ADR records the rule.
 - The P2 ADR names the sanctioned list and points to this sentence.
 
 ## Acceptance Criteria
