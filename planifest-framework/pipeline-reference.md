@@ -131,12 +131,12 @@ If **any** criterion fails, the orchestrator routes to the Change Pipeline inste
 
 ### Execution
 
-1. Write the scope record — list every target path in `plan/.fast-path-scope` with **Write**
-2. Implement the fix directly — no Feature Brief, Execution Plan, or ADR
-3. Validate — lint, typecheck, test, build
-4. Update `component.yml` — patch version bump, updated `metadata.updatedAt`
-5. Log — append an entry to `plan/changelog/{feature-id}-{YYYY-MM-DD}.md` that lists every record path
-6. Commit — remove the record with `rm -f plan/.fast-path-scope`, then commit `fix(fast-path): {description}`
+1. Write the scope record. List every target path in `plan/.fast-path-scope` with **Write**.
+2. Implement the fix directly. It needs no Feature Brief, Execution Plan, or ADR.
+3. Validate: lint, typecheck, test, and build.
+4. Update `component.yml`: bump the patch version and update `metadata.updatedAt`.
+5. Log the change. Append an entry to `plan/changelog/{feature-id}-{YYYY-MM-DD}.md` that lists every record path.
+6. Commit. Remove the record with `rm -f plan/.fast-path-scope`, then commit `fix(fast-path): {description}`.
 
 The pre-push hook and CI workflow recognise the `fix(fast-path):` prefix and relax the documentation check: only `component.yml` or a changelog update required (not full `plan/` or `docs/` changes).
 
