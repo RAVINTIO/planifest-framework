@@ -110,7 +110,7 @@ Recent runs each paid for the same workarounds. A long feature ID breaks the P9 
 - Every change goes through **Write** or **Edit**.
 
 ### Assumptions
-- Setup copies each `SKILL.md` byte for byte, so a byte compare finds drift.
+- Setup copies each `SKILL.md` with four relative-path rewrites, and PowerShell 5 adds a byte order mark. The drift check reproduces both. (Corrected at P1. P0 assumed a byte-for-byte copy.)
 - `autonomous` keeps `design_critic` at `on`. Only the default outside `autonomous` changes.
 
 ## Scenario Paths
@@ -166,6 +166,8 @@ Recent runs each paid for the same workarounds. A long feature ID breaks the P9 
 - [ ] `run-tests.sh` clears `CLAUDE_PROJECT_DIR` before it runs any suite.
 - [ ] The four gate-related suites that lack it clear the variable for a standalone run.
 - [ ] A suite checks both.
+
+> P1 note: req-010 widens the four suites to every suite that names an enforcement hook. Seven files need the change today.
 
 **US-011 (0000149)**
 - [ ] `ratchet-check.mjs` and `em-dash-guard.mjs` print quoted text through `shown()`.

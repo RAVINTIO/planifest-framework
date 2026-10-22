@@ -47,6 +47,7 @@ version: "0.1.0"
   - An ADR narrows 0000003 ADR 005 for the non-regular case only.
 - Permitted names in enforcement paths (US-009): the always-permitted shortcut skips paths inside the enforcement list. Those paths take the normal route through the design scope or the Fast Path scope verdict. A suite covers both cases with and without `design.md`.
 - Test runner (US-010): `run-tests.sh` clears `CLAUDE_PROJECT_DIR` before any suite. The four gate-related suites that lack it clear the variable for a standalone run. A suite checks both.
+  - req-010 widens the four suites to a rule: every suite that names an enforcement hook clears the variable. Seven files break that rule today, and the four are among them.
 - Escaped hook output (US-011): `ratchet-check.mjs` and `em-dash-guard.mjs` print quoted text through `shown()`. `shown()` never cuts an escape sequence in half at its length cap. Suite cases cover a control character, U+202E, and an over-long value.
 - Tests for each story under `planifest-framework/tests/`, run through `run-tests.sh`.
 - Version `0.33.0` to `0.34.0` in `planifest-framework/component.yml`. `product.yml` is set to match at P7.

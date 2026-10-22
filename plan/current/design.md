@@ -20,7 +20,7 @@
   - US-009: As the human on the loop, I rely on the write gate to judge a permitted file name inside an enforcement folder like any other path, so that the name can't bypass the enforcement list. (0000159)
   - US-010: As the human on the loop, I see `run-tests.sh` clear `CLAUDE_PROJECT_DIR` before any suite, so that a suite run inside Claude Code tests its fixture and not the real repo. (0000155)
   - US-011: As the human on the loop, I see every hook message escape the text it quotes, so that a crafted criterion or path can't forge or hide hook output. (0000149)
-- Acceptance criteria confirmed: 30 (see `feature-brief.md`)
+- Acceptance criteria confirmed: 31 (see `feature-brief.md`)
 - Constraints:
   - 0000035 ADR 001 and 0000032 ADR 004: hooks use Node built-ins only, with no process spawn.
   - 0000003 ADR 005: hooks fail open on unexpected errors. US-008 narrows it for a non-regular `design.md` only.
@@ -31,7 +31,7 @@
 ## Decisions confirmed at P0
 - Run mode: `autonomous`.
 - Re-run-setup migration (US-001): one migration, `migrate-0.34.0-rerun-setup.md`, covers the setup-delivered changes in both 0.33.0 and 0.34.0. It follows the 0.31.0 migration's sections. This repo records it `applied` after P3 re-runs setup here.
-- Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` text only, source against the active tool's installed copy. It first applies setup's four path rewrites to the source and strips one leading byte order mark from the installed copy (P1 deviation, see the build log). It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
+- Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` text only, source against the active tool's installed copy. It first applies setup's four path rewrites to the source and strips one leading byte order mark from both copies (P1 deviation, see the build log). It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
 - Ship subjects (US-003): every skill commit subject keeps placeholders out. Subjects name the phase and action only, as in `plan(p9): clear session markers`. The feature ID goes in the body.
 - Run-mode anchor (US-004): `run-mode.mjs` accepts the bare line or one leading `- `. It keeps the one-commit rule and the design Confirmation check unchanged. The skill and template show the bare line in a code block as the preferred form.
 - Hard-limit citations (US-005): cite by name and source, for example "the build-log rule (orchestrator Hard Limit 8)" and "the Write-or-Edit rule (boot Hard Limit 8)". No renumbering.

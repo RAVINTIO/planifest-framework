@@ -118,4 +118,7 @@ Streams (start commit `8375ca7`):
 - Decision (P1): a symbolic link at `design.md` counts as non-regular / reason: the design says anything other than a regular file, and a link can point at a FIFO.
 - Decision (P1): req-010 replaces the brief's four named suites with a rule for every suite that names an enforcement hook / reason: the count of four didn't reproduce, and seven files break the rule today.
 - Decision (P1): `shown()` cuts at whole units at a 200-character cap for both new outputs / reason: matches the 0000035 Fast Path notice cap and never splits a surrogate pair.
+- Design critic P1 iteration 1: REJECT (1 critical, 2 major, 8 minor). Mechanical check clean.
+- Deviation (P1, unclassified): the source orchestrator `SKILL.md` holds a byte order mark, so the drift check strips one from both copies, not only the installed copy. `design.md` now says so.
+- Backlog filed (P1): 0000170 (orchestrator skill byte order mark breaks the setup frontmatter parse).
 - Shared files for P3, updated: the orchestrator skill (req-002 to req-006), the ship agent skill (req-003, req-005), `autonomous-run-standards.md` (req-005, req-006), the loop runner skill (req-006, req-007), and the spec agent skill (req-005, req-007).
