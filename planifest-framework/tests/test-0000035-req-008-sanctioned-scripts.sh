@@ -430,6 +430,11 @@ for T in "$STANDARD_BOOT" "$CURSOR_BOOT"; do
   # P-S10: setup counts only with a tool name and the two refresh flags.
   assert_contains "--include-full-skill-library" "$HL8" "req-008: $NAME names the setup flags it sanctions"
   assert_contains "--strict-orchestrator" "$HL8" "req-008: $NAME names --strict-orchestrator"
+  # P-N4: the sentence names the whole valid set, not exactly one flag.
+  assert_contains 'one tool name that they accept, including `all`' "$HL8" \
+    "req-008: $NAME says setup takes one tool name, including all"
+  assert_contains "none, either, or both of" "$HL8" "req-008: $NAME says setup takes none, either, or both flags"
+  lacks "a tool name plus" "$HL8" "req-008: $NAME no longer reads as exactly one flag"
   assert_contains '`add-skill` and every other subcommand or flag are not sanctioned' "$HL8" \
     "req-008: $NAME says add-skill and any other subcommand are not sanctioned"
   lacks "with arguments to write files" "$HL8" "req-008: $NAME no longer sanctions any arguments"

@@ -28,7 +28,7 @@ The boot files are build outputs. On every setup run, `write_boot_file` in `setu
   - `planifest-framework/templates/standard-boot.md`
   - `planifest-framework/templates/cursor-boot.md`
 
-  Both templates carry the same sentence. It names each sanctioned script and says no other script counts. Each script counts only with the arguments its skill step shows. `setup.sh` and `setup.ps1` count only as a tool name plus `--include-full-skill-library` or `--strict-orchestrator`. The sentence says that `add-skill` and every other subcommand or flag are not sanctioned, because `add-skill` fetches remote content (P5 finding P-S10).
+  Both templates carry the same sentence. It names each sanctioned script and says no other script counts. Each script counts only with the arguments its skill step shows. `setup.sh` and `setup.ps1` count only with one tool name that they accept, including `all`. The call may add none, either, or both of `--include-full-skill-library` and `--strict-orchestrator` (P-N4). The sentence says that `add-skill` and every other subcommand or flag are not sanctioned, because `add-skill` fetches remote content (P5 finding P-S10).
 - **Sanctioned list:** The list holds exactly these seven scripts:
   1. `planifest-framework/scripts/archive-current.mjs`
   2. `planifest-framework/scripts/set-product-release.mjs`
