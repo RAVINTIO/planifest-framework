@@ -30,6 +30,7 @@ As the human on the loop, I see `product.yml` name the released version and feat
 - The script rewrites the two lines and leaves every other line as it is. It never appends a line. Running it twice with the same arguments gives a byte-identical file.
 - The script writes the result to a temp file in the root, then renames it over `product.yml`. A failed write never leaves a truncated file. [Req-008](req-008-sanctioned-scripts.md) holds the rules for this write.
 - An unexpected file-system error, such as `EACCES`, exits 2 with nothing written. The stderr reason names the operation and the error code only.
+- Malformed `product.yml` content, such as a lone CR or U+2028 in a top-level key line, exits 2 with nothing written. Any error that no rule catches also exits 2 with a fixed message. Every exit is 0, 2, 4, or 5 (P5 re-review finding P-N2).
 - The script handles each `versionPolicy` as follows:
 
   | versionPolicy | Behaviour |

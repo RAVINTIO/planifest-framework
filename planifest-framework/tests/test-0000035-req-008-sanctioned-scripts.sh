@@ -355,6 +355,39 @@ fi
 SRC=$(cat "$SET")
 lacks "readFileSync(real" "$SRC" "req-008: the script never reads a component.yml by path after the check"
 
+# P-N2: malformed product.yml content exits 2 with a fixed message. It never
+# crashes with exit 1 and a stack trace that holds the absolute path.
+malformed_case() {
+  local label="$1" key="$2" line="$3" m="$SCRATCH/mf-$4"
+  make_root "$m"
+  node -e '
+    const fs = require("fs");
+    const [file, key, line] = process.argv.slice(1);
+    const text = fs.readFileSync(file, "utf8").split("\n")
+      .map((l) => (l.startsWith(key + ":") ? JSON.parse(line) : l)).join("\n");
+    fs.writeFileSync(file, text);
+  ' "$m/product.yml" "$key" "$line"
+  cp "$m/product.yml" "$SCRATCH/mf-before.yml"
+  ERR=$(cd "$m" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" 2>&1 >/dev/null)
+  assert_equals "2" "$?" "req-008: $label exits 2"
+  assert_contains "product.yml" "$ERR" "req-008: $label names product.yml"
+  lacks "$m" "$ERR" "req-008: $label never prints a path"
+  lacks "$FRAMEWORK" "$ERR" "req-008: $label never prints the script path"
+  lacks "    at " "$ERR" "req-008: $label prints no stack trace"
+  assert_equals "same" "$(same "$SCRATCH/mf-before.yml" "$m/product.yml")" \
+    "req-008: $label leaves product.yml unchanged"
+}
+malformed_case "a lone CR in the version line" "version" '"version: \"0.30.0\"\r# note"' cr
+malformed_case "a U+2028 in the feature line" "feature" '"feature: \"0000031-x\" # a b"' ls
+
+# P-N2: a top-level key that shares a name with an Object.prototype member
+# is an ordinary key, not a repeat.
+PK="$SCRATCH/protokey"
+make_root "$PK"
+printf 'constructor: "x"\ntoString: "y"\n' >> "$PK/product.yml"
+(cd "$PK" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" >/dev/null 2>&1)
+assert_equals "0" "$?" "req-008: a top-level constructor or toString key exits 0"
+
 # P-S03: CLAUDE_PROJECT_DIR never moves the write to another root.
 P="$SCRATCH/projroot"
 O="$SCRATCH/otherroot"

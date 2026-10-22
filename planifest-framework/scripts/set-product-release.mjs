@@ -40,6 +40,8 @@
  *     that descriptor. fstat must show a regular file with one link (P-N1).
  *   - An unexpected file-system error exits 2 and names only the operation
  *     and the error code.
+ *   - A top-level key line the script can't rewrite exits 2. Any error that
+ *     no rule catches exits 2 with a fixed message (P-N2).
  *
  * Exit codes:
  *   0 - product.yml written, or it already held the same values
@@ -295,22 +297,26 @@ function unquote(v) {
 }
 
 // Index of each top-level key line. A key that appears twice is invalid.
+// The map has no prototype, so a key such as constructor is an ordinary key.
 function topLevelLines(lines) {
-  const found = {};
+  const found = Object.create(null);
   lines.forEach((line, i) => {
     const m = line.match(/^([A-Za-z][A-Za-z0-9_-]*):/);
     if (!m) return;
-    if (found[m[1]] !== undefined) fail(2, `product.yml: top-level ${m[1]} appears more than once`);
+    if (found[m[1]] !== undefined) fail(2, `product.yml: top-level ${clean(m[1])} appears more than once`);
     found[m[1]] = i;
   });
   return found;
 }
 
-// Rewrite one top-level scalar in place, keeping any trailing comment.
+// Rewrite one top-level scalar in place, keeping any trailing comment. A line
+// that holds a line terminator, such as a lone CR or U+2028, fails the match
+// and exits 2 (P-N2).
 function setScalar(lines, keys, key, value) {
   const i = keys[key];
   if (i === undefined) fail(2, `product.yml: no top-level ${key} line to rewrite`);
   const m = lines[i].match(/^([A-Za-z][A-Za-z0-9_-]*:[ \t]*)("[^"]*"|'[^']*'|[^\s#]*)(.*)$/);
+  if (!m) fail(2, `product.yml: the top-level ${key} line holds a character the script can't rewrite`);
   lines[i] = `${m[1]}"${value}"${m[3]}`;
 }
 
@@ -414,45 +420,55 @@ function writeTarget(target, content, create, mode) {
   }
 }
 
-const { args, root, components } = validate(process.argv.slice(2));
-const featureId = args["--feature-id"];
-const version = args["--version"];
-const target = join(root, "product.yml");
-const current = readTarget(target);
-const exists = current !== null;
+function main() {
+  const { args, root, components } = validate(process.argv.slice(2));
+  const featureId = args["--feature-id"];
+  const version = args["--version"];
+  const target = join(root, "product.yml");
+  const current = readTarget(target);
+  const exists = current !== null;
 
-if (!exists && !args.create) fail(4, "no product.yml at the root and no --create");
+  if (!exists && !args.create) fail(4, "no product.yml at the root and no --create");
 
-const original = exists ? current.text : fsCall("product template: read", () => readFileSync(TEMPLATE, "utf-8"));
-const eol = original.includes("\r\n") ? "\r\n" : "\n";
-const lines = original.split(eol);
-const keys = topLevelLines(lines);
+  const original = exists ? current.text : fsCall("product template: read", () => readFileSync(TEMPLATE, "utf-8"));
+  const eol = original.includes("\r\n") ? "\r\n" : "\n";
+  const lines = original.split(eol);
+  const keys = topLevelLines(lines);
 
-if (!exists) {
-  setScalar(lines, keys, "id", args["--product-id"]);
-  setScalar(lines, keys, "name", args["--product-name"]);
-  setScalar(lines, keys, "versionPolicy", "max-component-version");
-}
-if (components.length > 0) setComponents(lines, keys, components);
-
-const policy = parseManifest(lines).versionPolicy;
-if (!POLICIES.includes(policy)) fail(2, `product.yml: unknown versionPolicy (expected ${POLICIES.join(" | ")})`);
-
-if (policy === "max-component-version") {
-  const derived = deriveVersion(root, parseManifest(lines).components);
-  if (semverCompare(derived, version) !== 0) {
-    fail(2, `--version: ${version} differs from the derived version ${derived}`);
+  if (!exists) {
+    setScalar(lines, keys, "id", args["--product-id"]);
+    setScalar(lines, keys, "name", args["--product-name"]);
+    setScalar(lines, keys, "versionPolicy", "max-component-version");
   }
-}
-if (policy !== "external") setScalar(lines, keys, "version", version);
-setScalar(lines, keys, "feature", featureId);
+  if (components.length > 0) setComponents(lines, keys, components);
 
-const updated = lines.join(eol);
-if (updated !== original || !exists) writeTarget(target, updated, !exists, exists ? current.mode : 0o644);
+  const policy = parseManifest(lines).versionPolicy;
+  if (!POLICIES.includes(policy)) fail(2, `product.yml: unknown versionPolicy (expected ${POLICIES.join(" | ")})`);
 
-if (policy === "external") {
-  process.stdout.write(`product.yml: feature "${featureId}" (versionPolicy external, version unchanged)\n`);
-  process.exit(5);
+  if (policy === "max-component-version") {
+    const derived = deriveVersion(root, parseManifest(lines).components);
+    if (semverCompare(derived, version) !== 0) {
+      fail(2, `--version: ${version} differs from the derived version ${derived}`);
+    }
+  }
+  if (policy !== "external") setScalar(lines, keys, "version", version);
+  setScalar(lines, keys, "feature", featureId);
+
+  const updated = lines.join(eol);
+  if (updated !== original || !exists) writeTarget(target, updated, !exists, exists ? current.mode : 0o644);
+
+  if (policy === "external") {
+    process.stdout.write(`product.yml: feature "${featureId}" (versionPolicy external, version unchanged)\n`);
+    process.exit(5);
+  }
+  process.stdout.write(`product.yml: version "${version}", feature "${featureId}"\n`);
+  process.exit(0);
 }
-process.stdout.write(`product.yml: version "${version}", feature "${featureId}"\n`);
-process.exit(0);
+
+// Every exit is 0, 2, 4, or 5 (ship skill Step 5b). An error that no rule
+// caught exits 2 with a fixed message, never a stack trace or a path (P-N2).
+try {
+  main();
+} catch (err) {
+  fsFail("unexpected error", err);
+}

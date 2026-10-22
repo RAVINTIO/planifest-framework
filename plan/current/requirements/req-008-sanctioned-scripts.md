@@ -38,6 +38,7 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
 - The script opens `product.yml` once with `O_NOFOLLOW` and reads it through that descriptor. `fstat` on the descriptor must show a regular file with exactly one link. A hard link at `product.yml` exits 2 and writes nothing (P-S04, P-S05).
 - The script writes the new content to a temp file in the root, flushes it, then renames it over `product.yml`. The temp file has a random name, an exclusive create, and the mode of the old file. A failure removes the temp file and leaves `product.yml` unchanged (P-S06).
 - An unexpected file-system error, such as `EACCES` or `EISDIR`, exits 2. The stderr reason names the operation and the error code. It never prints a path or a stack trace (P-S07).
+- A top-level key line that the script can't rewrite, such as one that holds a lone CR or U+2028, exits 2 with a fixed message. An error that no rule catches exits 2 the same way, with no path or stack trace (P-N2).
 - Each `components[].path` that the script reads from an existing `product.yml` meets the same path rules as `--component` (P-S08).
 - The script opens each `component.yml` once with `O_NOFOLLOW` and reads it through that descriptor. `fstat` must show a regular file with exactly one link. A hard link exits 2, names the component, and never prints the path (P5 re-review finding P-N1).
 - The script runs every Input Validation rule before it reads `product.yml`. A rule break exits 2 before the req-002 `versionPolicy` table or the exit 4 check applies.
