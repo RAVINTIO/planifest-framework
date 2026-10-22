@@ -23,6 +23,9 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - If `cwd` is not a folder, `resolveRoot` walks up from `cwd` with `dirname` to the nearest existing folder. It starts the marker walk from the real path of that folder.
 - If that walk finds no marker, the root is the real path of the nearest existing folder. This keeps the 0000032 rule that the root is cwd when no marker exists.
 - `resolveRoot` returns `null` only when `cwd` is not a non-empty string. It never throws.
+- The walk decides whether a folder exists with `statSync`, not `existsSync`. Only `ENOENT` and `ENOTDIR` count as missing, so the walk steps up past them.
+- Any other `statSync` error, such as `EACCES`, stops the walk at that path. The caller then calls `realpathSync` on that path.
+- The same walk serves `resolveRoot` and the relative-target rule below.
 - If `realpathSync` fails on the nearest existing folder, for example with `EACCES`, the hook treats it as a resolution error.
 - That resolution error blocks the write with exit 2 when the target lies inside the root that `CLAUDE_PROJECT_DIR` gives. The reason names the error code and goes to stderr.
 - If `CLAUDE_PROJECT_DIR` is unset or gives no root, or the target lies outside that root, the hook fails open with exit 0 as before (0000003 ADR 005). This follows the fail-closed line in design.md.
@@ -45,7 +48,14 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - The suite runs `gate-write.mjs` and `shell-write-guard.mjs` with `CLAUDE_PROJECT_DIR` set to the fixture, and again with it unset.
 - With the variable unset, the deleted folder sits inside the fixture, so the nearest existing parent finds the fixture's marker.
 - The suite also covers a deleted `cwd` with no marker above it, where the root is the nearest existing folder.
-- The suite covers a nearest existing folder that `realpathSync` can't read, made with `chmod 000` on its parent. With `CLAUDE_PROJECT_DIR` set to the fixture, a write to `src/x.js` exits 2. The suite skips this case when it runs as root, since `chmod` then doesn't block.
+- The suite covers a walk that stops at a path `realpathSync` can't resolve. It builds this case as follows:
+  1. Create `locked/inner/` in the fixture and pass the `cwd` `locked/inner/gone`, which doesn't exist.
+  2. Remove search permission on `locked/` with `chmod 000`. `statSync` on `locked/inner/gone` then fails with `EACCES`, not `ENOENT`, so the walk stops there.
+  3. `realpathSync` on that path also fails with `EACCES`, which is the resolution error this case targets.
+  4. With `CLAUDE_PROJECT_DIR` set to the fixture, a write to the relative target `src/x.js` exits 2. The hook resolves that target against the `cwd` text through the same walk, so it reaches the `realpathSync` failure.
+  5. The suite asserts that stderr names `EACCES`. The no-design block also exits 2, so the error code is what shows the case reached the failure.
+  6. A `trap` restores the permission on `locked/` so that cleanup can remove the fixture.
+- The suite skips this case when it runs as root, since `chmod` then doesn't block.
 
 ### Non-functional
 

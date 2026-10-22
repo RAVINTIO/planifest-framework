@@ -54,20 +54,27 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - `path-rules.mjs` exports a constant, `FAST_PATH_ENFORCEMENT_PATHS`, as artifact `path-rules-fast-path-enforcement-paths`. It lists these entries:
   - `planifest-framework/hooks/`
   - `planifest-framework/scripts/`
+  - `planifest-framework/setup/`, the per-tool setup scripts such as `claude-code.sh` and `windsurf.sh`
   - `planifest-framework/standards/autonomous-run-standards.md`
   - any path whose last segment is `setup.sh` or `setup.ps1`
   - any path that holds the segment pair `hooks/enforcement/`, which covers every installed hook folder such as `.claude/hooks/enforcement/`
   - `.git/` and everything below it
   - any path that holds the segment pair `hooks/adapters/`, which covers every installed Tier 1 adapter such as `.cursor/hooks/adapters/cursor.mjs`
   - the hook wiring files that `setup.sh` and `setup.ps1` write, listed below
+  - the tool-local settings files that a supported tool loads hooks from, listed below
 - The hook wiring files are the tool settings and config files that register the hooks. `setup.sh` and `setup.ps1` write these:
   - `.claude/settings.json` (Claude Code)
   - `.cursor/settings.json` (Cursor)
   - `.clinerules/hooks.json` (Cline)
   - `.windsurf/hooks.json` (Windsurf)
-  - `.github/hooks/planifest.json` (Copilot)
+  - `.github/hooks/` (Copilot). The whole folder is listed, because setup writes `planifest.json` there and Copilot may load every file in it.
   - `.codex/config.toml` (Codex CLI)
   - `opencode.json` and `.opencode/plugins/@planifest/opencode-hooks/` (OpenCode)
+- The tool-local settings files are files that setup doesn't write but a tool still loads hooks from. They are usually git-ignored, so a PR wouldn't show a change to them. The list holds these:
+  - `.claude/settings.local.json` (Claude Code). It can register hooks, and its `disableAllHooks` key turns every hook off.
+  - `opencode.jsonc` (OpenCode), which OpenCode reads in place of `opencode.json`.
+- The setup scripts name no other local variant. The other supported tools load hooks only from the wiring files above.
+- `planifest-framework/setup/` is on the list because its scripts set the wiring file paths and write their content. A Fast Path edit there would unwire the hooks at the next setup run.
 - Without these entries, a record could list a wiring file and let a Fast Path change unwire `gate-write` itself.
 - Enforcement matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)`, using the existing `norm` export (0000009 ADR 005 normalisation). On a case-insensitive volume, `Planifest-Framework/Hooks/x.mjs` therefore matches `planifest-framework/hooks/`.
 - The same change updates the enforcement list in the `planifest-framework/workflows/fast-path.md` prerequisites to name every entry above. The constant and the doc stay in step, and the suite parity check enforces it.
@@ -79,7 +86,10 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - The human on the loop accepted this residual risk at P0, when they chose the scope record over a wider allowlist (design.md, "Decisions confirmed at P0", Fast Path authorisation).
 - The branch and `HEAD` binding bounds staleness only. It is not a security control, because the agent that writes the record also reads both values.
 - Each write the gate admits through the record writes one line to stderr and still exits 0. The line names `plan/.fast-path-scope` and the root-relative path, for example `[planifest] gate-write: admitted src/x.js through plan/.fast-path-scope`.
-- `gate-write.mjs` and `shell-write-guard.mjs` both write this notice, so every admitted Fast Path write shows in the hook output the human on the loop sees.
+- `gate-write.mjs` and `shell-write-guard.mjs` both write this notice for every admitted Fast Path write.
+- The notice reaches the agent and the session transcript. Claude Code keeps exit-0 hook output out of the main view, so the human on the loop doesn't see it there.
+- The notice stays the control for the agent and the transcript. The human on the loop sees the admitted paths in the Fast Path changelog entry, which lists the record's paths.
+- Fast Path step 5 (Log the change) writes a changelog entry that lists every path from the scope record. The `fast-path.md` changelog template gains a field for those paths.
 - The notice prints the resolved `relPath`, cut to its first 200 characters. It never prints raw record text.
 - The shell-write guard honours the record through `evaluateWrite`, with no copy of the rules. A shell write to a listed path passes, and a shell write to an unlisted or enforcement path blocks.
 
@@ -107,10 +117,13 @@ As the human on the loop, I see a Fast Path change written through **Write** and
   - a ref held only in `packed-refs`
   - each invalid-record case in the Input Validation section
   - a record that lists `.claude/settings.json`, where the write exits 2
+  - a record that lists `.claude/settings.local.json`, where the write exits 2
+  - a record that lists `planifest-framework/setup/claude-code.sh`, where the write exits 2
   - a mixed-case target `Planifest-Framework/Hooks/x.mjs`, where the write exits 2
   - an admitted write, where stderr holds the notice that names the record and the path
 - A source check asserts that every enforcement path in the `fast-path.md` prerequisites appears in `FAST_PATH_ENFORCEMENT_PATHS`.
 - A source check asserts that the root `.gitignore` holds a `plan/.fast-path-scope` line.
+- A source check asserts that the `fast-path.md` step 5 changelog template holds the field for the record's paths.
 
 ### Non-functional
 

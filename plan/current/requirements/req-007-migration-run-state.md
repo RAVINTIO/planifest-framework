@@ -28,6 +28,11 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   - `migrate-product-yml-component-paths.md`
   - `retroactive-release-tags.md`
 - P3 deletes `planifest-framework/migrations/_done/.gitkeep`, so `_done/` no longer exists.
+- P3 makes the six moves and the delete within Hard Limit 8, through these steps:
+  1. For each of the six files, P3 reads the old file and writes its exact content at the new path with the **Write** tool.
+  2. P3 checks that each new file is byte-identical to the old one, with `cmp` or `git diff --no-index`.
+  3. P3 removes each old file, and `_done/.gitkeep`, with `git rm`.
+- P3 never uses `mv` or `rm` for these files.
 - The helper scripts `migrate-archive-dirname.sh` and `migrate-archive-dirname.ps1` stay where they are. They now sit beside `0003-archive-dirname.md`.
 - A migration is any top-level `*.md` file in `planifest-framework/migrations/`. Helper scripts and subfolders, such as `_progress/` or a leftover `_done/`, are not migrations.
 - `planifest-framework/component.yml` keeps `migrationPath: "planifest-framework/migrations/"`.
@@ -116,14 +121,6 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   - `migrate-remove-context-mode-and-telemetry.md`
 - The record body for each of the two names the reason: this repo is the framework source.
 
-### FR-007.11 Judging AC-007.3 in this repo
-
-- In this repo, AC-007.3 passes only once every one of the six scans is clean, or the human on the loop has answered each finding. The two downstream-only migrations count through their `not applicable` records.
-- An answer of apply gives an `applied` record. An answer of `none` gives a `skipped` record.
-- If any scan has findings in an `autonomous` run, that migration stays pending and gets no record. P3 writes one build-log line in the form `Exception waiting (P3, human review): {migration}: {findings}` for each such migration.
-- While an `Exception waiting` line stands for a migration, P4 reports AC-007.3 as open and waiting on the human on the loop. No agent forces a record to close it.
-- AC-007.3 closes once the human on the loop answers the findings and the migrator writes the record.
-
 ### FR-007.10 Documentation and tests
 
 - `planifest-framework/pipeline-reference.md` "Check for pending migrations" describes the record rule. It drops the `grep -v _done` and `-notmatch '_done'` commands.
@@ -134,6 +131,14 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   - `planifest-framework/tests/test-0000005-framework-governance.sh` and `planifest-framework/tests/regression/test-0000005-framework-governance.sh` (req-014 block)
   - `planifest-framework/tests/test-0000032-req-011-rerun-setup-migration.sh` (the `DONE_COPY` check, the `## Archive` section, and the `_done/` text check)
 - A new suite `planifest-framework/tests/test-0000035-req-007-migration-run-state.sh` checks AC-007.1 to AC-007.3.
+
+### FR-007.11 Judging AC-007.3 in this repo
+
+- In this repo, AC-007.3 passes only once every one of the six scans is clean, or the human on the loop has answered each finding. The two downstream-only migrations count through their `not applicable` records.
+- An answer of apply gives an `applied` record. An answer of `none` gives a `skipped` record.
+- If any scan has findings in an `autonomous` run, that migration stays pending and gets no record. P3 writes one build-log line in the form `Exception waiting (P3, human review): {migration}: {findings}` for each such migration.
+- While an `Exception waiting` line stands for a migration, P4 reports AC-007.3 as open and waiting on the human on the loop. No agent forces a record to close it.
+- AC-007.3 closes once the human on the loop answers the findings and the migrator writes the record.
 
 ## Acceptance Criteria
 

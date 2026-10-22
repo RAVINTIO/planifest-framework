@@ -61,7 +61,7 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 | Concern | Decision |
 |---------|----------|
 | Language | JavaScript (ES modules), Bash, PowerShell, Markdown |
-| Runtime | Node.js built-ins only for hooks (0000032 ADR-004) |
+| Runtime | Node.js built-ins only for hooks (0000032 ADR 004) |
 | Framework | none |
 | Frontend | none |
 | Database | none |
@@ -99,8 +99,8 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 ## Constraints and Assumptions
 
 ### Constraints
-- 0000032 ADR-004 path-rules constraints hold.
-- 0000033 ADR-009: Fast Path never admits an enforcement path.
+- 0000032 ADR 004 path-rules constraints hold.
+- 0000033 ADR 009: Fast Path never admits an enforcement path.
 - Hard Limit 8: changes go through **Write** or **Edit**.
 
 ### Assumptions

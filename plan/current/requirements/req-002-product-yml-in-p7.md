@@ -1,6 +1,6 @@
 ---
 title: "Requirement: req-002 - product-yml-in-p7"
-summary: "The ship agent sets product.yml version and feature in P7, before the archive step, through a Node script that no write gate judges."
+summary: "The ship agent sets product.yml version and feature in P7, before the archive step, through a fixed framework script under a narrow Hard Limit 8 carve-out."
 status: "draft"
 version: "0.1.0"
 ---
@@ -20,11 +20,13 @@ As the human on the loop, I see `product.yml` name the released version and feat
 ## Functional Requirements
 
 - The ship skill source `planifest-framework/skills/planifest-ship-agent/SKILL.md` gains a step that updates `product.yml` in P7. The step sits after Step 5 and before Step 6, which archives `design.md`. The gate stays unchanged for root files.
-- `set-product-release.mjs` writes `product.yml` through Node, so no write-gate hook judges the write. This holds in this repo and downstream, whatever paths a design lists. The ship agent never changes `product.yml` through **Write** or **Edit**.
+- `set-product-release.mjs` writes `product.yml` through Node, and the ship agent never changes `product.yml` through **Write** or **Edit**.
+- No write-gate hook judges the script's write. That is acceptable because the script's own rules replace the gate's judgement. The script has fixed behaviour, writes one file, and changes only the named fields. Its suite tests each rule.
+- The script exists because a **Write** to `product.yml` downstream meets `gate-write` unless a design lists the root file. The script avoids that without relaxing the gate for root files.
 - The update sets the top-level `version` and `feature` lines of `product.yml`. It changes `components[]` only when the ship agent passes `--component` arguments.
 - The ship agent owns every `components[]` edit. If a component was added or removed in this feature, it passes one `--component "{id}={path}"` argument for each component in the design. The script then replaces the whole `components[]` list with those entries. Without `--component`, the script leaves `components[]` byte-identical.
 - A new script `planifest-framework/scripts/set-product-release.mjs` makes the update. It follows the precedent of `archive-current.mjs` (0000033 ADR 010). The call is `node planifest-framework/scripts/set-product-release.mjs --feature-id "{feature-id}" --version "{version}" [--create --product-id "{id}" --product-name "{name}"] [--component "{id}={path}" ...] [--root <dir>]`. The ship agent takes `{version}` from the version the human on the loop confirmed in `design.md` at P0.
-- The new script is an architectural choice beyond the P0 text, so a P2 ADR records it.
+- The new script is an architectural choice beyond the P0 text, so a P2 ADR records it, with the Hard Limit 8 carve-out above.
 - The script rewrites the two lines in place. It never appends a line. Running it twice with the same arguments gives a byte-identical file.
 - The script handles each `versionPolicy` as follows:
 
@@ -40,11 +42,23 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - With two or more components, it reruns the script with `--create`, `--product-id`, `--product-name`, and one `--component` for each component. This moves Step 9 case 3 into P7.
 - With `--create` and no `product.yml`, the script builds the file from `planifest-framework/templates/product.template.yml`. It sets `id`, `name`, `version`, and `feature` from its arguments. It sets `versionPolicy: max-component-version` and writes `components[]` from the `--component` arguments. It then applies the `max-component-version` row above.
 - `--create` needs `--product-id`, `--product-name`, and at least two `--component` arguments. If one is missing, the script writes nothing and exits 2. If `product.yml` already exists, `--create` has no effect.
-- The ship agent never creates `product.yml` through **Write**. Downstream, a **Write** to a root file the design doesn't list would meet `gate-write`.
+- The ship agent never creates `product.yml` through **Write**. Downstream, a **Write** to a root file the design doesn't list would meet `gate-write`. The script's fixed rules and the carve-out limits above govern the create instead.
 - A stale `product.yml` stays as it is until the next P7 corrects it. No later step repairs it, and the ship agent does not edit it at Step 9 or Step 10b.
 - Step 7 stages `product.yml` with the archive, changelog, and `docs/about.md`, in the same commit.
 - Step 9 only reads the version through `product-version.mjs` and validates it. Step 9 no longer contains an instruction to update `product.yml`. If the derived version differs from the tag's expected version, Step 9 stops and reports, and it does not edit the file.
 - The installed copy under `.claude/skills/` stays a copy of the source and is not edited by hand.
+
+### Hard Limit 8 carve-out
+
+- Hard Limit 8 bars an agent from changing code and project files through the shell. It targets content the agent composes and writes past the gates.
+- A fixed framework script that skill text calls is a sanctioned tool, as `archive-current.mjs` is (0000033 ADR 010). The script has fixed behaviour and its own suite.
+- The agent never passes content to the script. It passes only `--feature-id`, `--version`, `--create`, `--product-id`, `--product-name`, `--component`, and `--root`.
+- The carve-out has these limits:
+  - The script writes only `{root}/product.yml`.
+  - It changes only the `version`, `feature`, and `components[]` fields, plus the `--create` fields `id`, `name`, and `versionPolicy`.
+  - It refuses any other path.
+- The P2 ADR records this carve-out and its limits. It also states that the carve-out covers no other script.
+- The script resolves its target as `{root}/product.yml` and checks the resolved real path before it writes. If the target resolves to any other path, for example through a link, the script writes nothing and exits 2 with the reason on stderr.
 
 ## Acceptance Criteria
 
@@ -57,6 +71,7 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - With no `product.yml`, the script exits 4 and writes nothing.
   - With no `product.yml` and `--create` with two components, the script creates the file under `max-component-version` with both `components[]` entries.
   - With `--component` arguments, `components[]` holds exactly those entries. Without them, `components[]` stays byte-identical.
+  - With `product.yml` a link to a file outside `{root}`, the script exits 2, writes nothing, and leaves the link target unchanged.
 - [ ] The suite checks the ship skill source text. The `product.yml` step comes before Step 6. Step 7 stages `product.yml`. Step 9 holds no instruction to edit `product.yml`.
 - [ ] `product.yml` reads `0.33.0` and `0000035-write-gate-scope-and-path-hardening` at P9.
 
