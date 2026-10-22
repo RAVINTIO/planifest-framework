@@ -17,8 +17,12 @@
  *      `Run mode` row of the build log.
  *   2. `continuous` and `interactive` print as read. An unknown or missing
  *      value prints `interactive`.
- *   3. `autonomous` prints only when git history anchors it. Exactly one
- *      commit added a line starting `Run mode confirmed: autonomous` to the
+ *   3. `autonomous` prints only when git history anchors it. An anchor line
+ *      starts at column 1 in one of two forms, bare or as one list item:
+ *        `Run mode confirmed: autonomous`
+ *        `- Run mode confirmed: autonomous`
+ *      Every other form, such as an indented line or another prefix, is no
+ *      anchor. Exactly one commit added an anchor line to the
  *      build log, and no commit removed one. That same commit changed
  *      plan/current/design.md so its Confirmation line reads `yes`. The
  *      working-tree build log holds that line once, unchanged. Otherwise the
@@ -58,6 +62,9 @@ const DEFAULT_LOG = "plan/current/build-log.md";
 const DESIGN = "plan/current/design.md";
 const RUN_MODE_FILE = "plan/.run-mode";
 const LINE_PREFIX = "Run mode confirmed: autonomous";
+// The two accepted anchor forms (0000036 req-004, ADR-008): bare, or one "- ".
+const ANCHOR_FORMS = [LINE_PREFIX, `- ${LINE_PREFIX}`];
+const isAnchor = (line) => ANCHOR_FORMS.some((f) => line.startsWith(f));
 const CONFIRM_RE = /^\+Human confirmed this design before proceeding:\s*yes\b/i;
 const MAX_BYTES = 1024 * 1024;
 // A clean copy of the environment with every inherited GIT_* variable removed.
@@ -131,8 +138,10 @@ function rowValue(text) {
 
 // Returns null when anchored, else a reason string.
 function checkAnchor(root, logRel, logText) {
-  const lines = logText.split("\n").filter((l) => l.startsWith(LINE_PREFIX));
-  if (lines.length !== 1) return `expected one "${LINE_PREFIX}" line in the build log, found ${lines.length}`;
+  const lines = logText.split("\n").filter(isAnchor);
+  if (lines.length !== 1) {
+    return `expected one "${LINE_PREFIX}" line, bare or as one "- " list item, in the build log, found ${lines.length}`;
+  }
   // Rule 5: refuse when a merge brought any change to the build log.
   for (const p of new Set([logRel, DEFAULT_LOG])) {
     const merges = git(root, ["log", "--merges", "--full-history", "--format=%H", "--", p]);
@@ -151,8 +160,8 @@ function checkAnchor(root, logRel, logText) {
   for (const l of out.split("\n")) {
     if (l.startsWith("commit ")) { sha = l.slice(7).trim(); continue; }
     if (l.startsWith("+++") || l.startsWith("---")) continue;
-    if (l.startsWith(`-${LINE_PREFIX}`)) return "a commit removed or edited the confirmation line";
-    if (l.startsWith(`+${LINE_PREFIX}`)) adders.push({ sha, line: l.slice(1) });
+    if (l.startsWith("-") && isAnchor(l.slice(1))) return "a commit removed or edited the confirmation line";
+    if (l.startsWith("+") && isAnchor(l.slice(1))) adders.push({ sha, line: l.slice(1) });
   }
   if (adders.length !== 1) return `expected one commit adding the confirmation line, found ${adders.length}`;
   const [{ sha: anchor, line }] = adders;

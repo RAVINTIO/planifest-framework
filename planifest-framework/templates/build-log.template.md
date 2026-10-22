@@ -40,6 +40,12 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Stack unchanged | `{{yes or no}}` |
 | Notes | `{{free text or "none"}}` |
 
+Run-mode anchor, `autonomous` only. Only the orchestrator writes this line, in the commit that confirms the design. Write it at column 1 in this bare form:
+
+```
+Run mode confirmed: autonomous ({ISO-8601 timestamp})
+```
+
 ---
 
 <!-- Copy and fill in this block at each phase boundary:
