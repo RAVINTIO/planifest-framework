@@ -36,6 +36,13 @@ status: "active"
 - **Action:** three fix agents in parallel, one per file group. The requirement files, the shared artifacts, and the design's cross-feature ADR references were rewritten. A fresh critic instance then reviews the fixed set.
 - **Observation:** `consistency-check.mjs` reports clean. The shared-artifact fix agent edited its four files through a Python script, so `ratchet-check` never ran on them. The orchestrator checked the diff: the only removed list line is one Out of Scope line, and no In Scope or acceptance-criteria line changed.
 - **Decision:** continue: verdict pending from the fresh critic.
+- **Verdict (iteration 2 critic):** REJECT, 0 critical, 2 major, 5 minor, in `plan/current/design-critic-p1-iteration-2.md`. Twelve of the fourteen iteration 1 findings are resolved. M1: the enforcement list misses `.claude/settings.local.json` and `planifest-framework/setup/`. M2: `set-product-release.mjs` writes outside the gate, which conflicts with Hard Limit 8.
+
+### Iteration 3 (2026-10-22T00:55:00Z)
+- **Approach:** 1
+- **Action:** one fix agent addresses all seven iteration 2 findings. Orchestrator decision on M2: a narrow Hard Limit 8 carve-out for the fixed script, recorded in a P2 ADR, with the script refusing every path except `product.yml`.
+- **Observation:** pending.
+- **Decision:** pending.
 
 ---
 
