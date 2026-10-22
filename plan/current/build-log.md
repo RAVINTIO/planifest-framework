@@ -16,7 +16,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
 | Run mode | `autonomous` |
-| Parallel streams | `pending` (resolved at P1 start) |
+| Parallel streams | `on` (autonomous default, resolved at P1 start, three streams) |
 
 ---
 
@@ -67,3 +67,40 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 Run mode confirmed: autonomous (2026-10-22T21:33:13Z)
 
 - Progress: P0 done at 2026-10-22T21:33:13Z: design confirmed, eleven backlog entries in one wave, autonomous run
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T21:33:56Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` |
+| Model tier | primary (streams 01 to 03), cheaper (shared artifacts) |
+| Skills loaded | planifest-spec-agent, planifest-loop-runner |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. P1 checker re-check: no `loop-toggles.yml`, so no checker key is off. |
+
+Toggle record (P1, binding for the run):
+
+| Toggle | Value | Source |
+|--------|-------|--------|
+| `design_critic` | `on` | autonomous default |
+| `verify_by_execution` | `on` | autonomous default |
+| `cross_model_review` | `on` | autonomous default |
+| `reversal_protocol` | `on` | autonomous default |
+| `parallel_streams` | `on` | autonomous default |
+| `p0_completeness` | `off` | absent default |
+
+Streams (start commit `8375ca7`):
+
+| Stream | Stories | Requirements | ADR block | Backlog block |
+|--------|---------|--------------|-----------|---------------|
+| `stream-01-gate-and-tests` | US-008 to US-011 | req-008 to req-011 | ADR-001 to ADR-004 | 0000161 to 0000163 |
+| `stream-02-setup-and-drift` | US-001, US-002 | req-001, req-002 | ADR-005 to ADR-007 | 0000164 to 0000166 |
+| `stream-03-skill-text` | US-003 to US-007 | req-003 to req-007 | ADR-008 to ADR-012 | 0000167 to 0000169 |
+
+- Shared artifacts (scope, risk register, domain glossary) go to one cheaper-tier agent in the same batch, backlog ID 0000170.
+- Shared files for P3: `skills/planifest-orchestrator/SKILL.md` (req-002, req-004, req-005, req-006) and `skills/planifest-loop-runner/SKILL.md` (req-006, req-007). The orchestrator orders those edits at P3.
