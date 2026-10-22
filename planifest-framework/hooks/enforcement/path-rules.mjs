@@ -42,6 +42,7 @@
  *   judgeWrite(cwd, target)          resolveRoot, resolveTarget, and evaluateWrite in one call
  *   unjudgeable(base, target)        a warning when the path is too long to judge, or null
  *   norm(p)                          the shared comparison normalisation
+ *   shown(p, max)                    p with control characters escaped, cut to max, for a reason (G-S11)
  *   parseScopeRecord(text)           the Fast Path scope record fields, or { error }
  *   readGitState(root)               { branch, head } read from .git files, or { error }
  *   isEnforcementPath(relPath)       whether FAST_PATH_ENFORCEMENT_PATHS covers relPath
@@ -98,7 +99,7 @@ export function unjudgeable(base, target) {
   const resolved = typeof base === "string" ? resolve(base, target) : normalize(target);
   if (!tooLong(resolved)) return null;
   return (
-    `[Planifest] Warning: the path '${target.slice(0, 80)}...' is too long to judge ` +
+    `[Planifest] Warning: the path '${shown(target, 80)}...' is too long to judge ` +
     `(over ${MAX_PATH_CHARS} characters or ${MAX_PATH_SEGMENTS} segments). Write allowed.\n`
   );
 }
@@ -393,7 +394,7 @@ function placeTarget(root, cwd, target, textual) {
     return {
       status: "unresolvable",
       reason:
-        `[Planifest] Can't resolve the path '${target.slice(0, 80)}' inside the repository root ` +
+        `[Planifest] Can't resolve the path '${shown(target, 80)}' inside the repository root ` +
         `(${err.code}). Write blocked, because the gate can't judge where it lands.\n`,
     };
   }
@@ -718,7 +719,7 @@ function scopeVerdict(root, relPath) {
     return {
       allowed: false,
       reason:
-        `[Planifest] Path '${relPath.slice(0, 200)}' is an enforcement path, so Fast Path never admits it, ` +
+        `[Planifest] Path '${shown(relPath, 200)}' is an enforcement path, so Fast Path never admits it, ` +
         `whatever ${FAST_PATH_SCOPE_FILE} lists (0000033 ADR 009). Use the Change or Feature Pipeline.\n`,
     };
   }
@@ -741,13 +742,13 @@ function scopeVerdict(root, relPath) {
   if (matchesComponentPath(relPath, scope.paths.map((p) => p.replace(/\/$/, "")))) {
     return {
       allowed: true,
-      notice: `[Planifest] Fast Path: admitted '${relPath.slice(0, 200)}' through ${FAST_PATH_SCOPE_FILE}.\n`,
+      notice: `[Planifest] Fast Path: admitted '${shown(relPath, 200)}' through ${FAST_PATH_SCOPE_FILE}.\n`,
     };
   }
   return {
     allowed: false,
     reason:
-      `[Planifest] Path '${relPath}' is not listed in the Fast Path scope record ${FAST_PATH_SCOPE_FILE}. ` +
+      `[Planifest] Path '${shown(relPath, 80)}' is not listed in the Fast Path scope record ${FAST_PATH_SCOPE_FILE}. ` +
       "Add it to the record, or take the Change Pipeline.\n",
   };
 }
@@ -799,7 +800,7 @@ export function evaluateWrite(root, relPath) {
     return {
       allowed: false,
       reason:
-        `[Planifest] Path '${relPath}' is not covered by the confirmed design. ` +
+        `[Planifest] Path '${shown(relPath, 80)}' is not covered by the confirmed design. ` +
         "Add it to the '## Component Paths' section of plan/current/design.md first.\n",
     };
   }

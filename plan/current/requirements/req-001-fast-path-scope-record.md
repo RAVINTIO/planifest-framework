@@ -64,6 +64,8 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - The notice stays the control for the agent and the transcript. The human on the loop sees the admitted paths in the Fast Path changelog entry, which lists the record's paths.
 - Fast Path step 5 (Log the change) writes a changelog entry that lists every path from the scope record. The `fast-path.md` changelog template gains a field for those paths.
 - The notice prints the resolved `relPath`, cut to its first 200 characters. It never prints raw record text.
+- Every reason and notice that prints a target path passes it through `shown` in `path-rules.mjs` (P5 finding G-S11). `shown` escapes each control character as `\n`, `\r`, `\t`, or `\xNN`, so a target that holds a newline can't forge a second line of hook output.
+- The "not listed in the Fast Path scope record" and "not covered by the confirmed design" reasons cut the escaped path to 80 characters, as the resolution reasons do.
 - The shell-write guard honours the record through `evaluateWrite`, with no copy of the rules. A shell write to a listed path passes, and a shell write to an unlisted or enforcement path blocks.
 
 ### Fast Path workflow text

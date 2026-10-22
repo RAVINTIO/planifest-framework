@@ -62,7 +62,7 @@
 
 import { homedir } from "node:os";
 import { basename, isAbsolute, resolve } from "node:path";
-import { evaluateWrite, hookCwd, resolveRoot, resolveTarget, unjudgeable } from "./path-rules.mjs";
+import { evaluateWrite, hookCwd, resolveRoot, resolveTarget, shown, unjudgeable } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const PREFIX = "[Planifest]";
@@ -694,7 +694,7 @@ function judgeCommand(cwd, command) {
     if (placed.status === "unresolvable") {
       // A resolution error inside the root blocks (0000035 ADR-005).
       const reason = placed.reason.replace(/^\[Planifest\]\s*/, "").replace("Write blocked", "Command blocked").trim();
-      return `${PREFIX} Shell write blocked: '${writer}' writes '${literal.slice(0, 80)}'. ${reason}\n`;
+      return `${PREFIX} Shell write blocked: '${writer}' writes '${shown(literal, 80)}'. ${reason}\n`;
     }
     const { relPath } = placed;
     const result = evaluateWrite(root, relPath);
