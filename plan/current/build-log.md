@@ -205,12 +205,19 @@ Dispatch plan by file ownership (start commit `e248df9`):
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T22:54:32Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T23:06:03Z` |
+| Wall-clock | `12` |
 | Streams | `3` (one joined validation) |
 | Model tier | cheaper (validate), primary (verify by execution) |
 | Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
-| Agents spawned | `pending` |
+| Agents spawned | `2` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Validate and verify-by-execution run in one batch. W8's full run at `5d9ce6a` already passed CI, so verify-by-execution doesn't wait. |
+
+- Validate: library audit, type-check, and build not applicable. Lint clean (`node --check` on 6 files, `bash -n` on 29). Full suite: 97 feature and 33 regression suites passed. One self-correct cycle added a missing req-006 assertion on `docs/architecture-overview.md` (`c486e9d`). Every criterion now has a covering test.
+- Verify by execution: 30 of 31 criteria verified. AC-001.1 failed because the migration's 0.34.0 file list missed six changed skills and named four unchanged files. The orchestrator rebuilt the list from `git diff --name-only main...HEAD` (`16df927`), and the req-001 suite passes. The applied-record part of AC-001.1 waits for the end-of-P6 setup run.
+- Backlog filed (P4): 0000177 (`em-dash-guard.mjs` lowercases the target path in its block message).
+- Decision (P4): the req-001 suite gains no branch-diff check / reason: CI clones may lack a `main` ref, and the end-of-P6 recheck covers the list.
+- Gate (P4): CI passes and every criterion verifies except the AC-001.1 record, which is scheduled for the end of P6.
+- Progress: P4 done at 2026-10-22T23:06:03Z: CI green, 30 of 31 criteria verified, file list fixed
