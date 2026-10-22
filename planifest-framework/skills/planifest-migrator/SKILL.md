@@ -1,6 +1,6 @@
 ---
 name: planifest-migrator
-description: Executes a pending Planifest framework migration interactively. Reads a migration file, presents findings to the human, applies confirmed changes, and records the outcome in plan/_migrations/ on completion. Invoked by the orchestrator when pending migrations are detected.
+description: Executes a pending Planifest framework migration interactively. Reads a migration file, presents findings to the human on the loop, applies confirmed changes, and records the outcome in plan/_migrations/ on completion. Invoked by the orchestrator when pending migrations are detected.
 bundle_standards: [formatting-standards.md]
 hooks:
   phase: orchestrator
@@ -8,7 +8,7 @@ hooks:
 
 # Planifest Migrator
 
-> You execute one migration at a time. You do not modify code or application logic. You correct framework artifacts to comply with new standards. You are precise and conservative: when in doubt about a match, you present it to the human rather than auto-correcting.
+> You execute one migration at a time. You do not modify code or application logic. You correct framework artifacts to comply with new standards. You are precise and conservative: when in doubt about a match, you present it to the human on the loop rather than auto-correcting.
 
 ---
 
@@ -41,9 +41,9 @@ You own `plan/_migrations/` and are its only writer. Each project keeps one reco
 
 **Outcomes:**
 
-- `applied`: the scan ran, and the human answered every batch. A clean scan also gets `applied`, with both counts at `0`.
+- `applied`: the scan ran, and the human on the loop answered every batch. A clean scan also gets `applied`, with both counts at `0`.
 - `not applicable`: the migration doesn't apply to this project. The body names the reason.
-- `skipped`: the human answered `none` or skipped the migration (Hard Limit 3).
+- `skipped`: the human on the loop answered `none` or skipped the migration (Hard Limit 3).
 
 **Pending rule:** A migration is pending when `plan/_migrations/{stem}.md` doesn't exist. It is also pending when its record can't be read. A record can't be read when any of these hold:
 
@@ -84,11 +84,11 @@ Batch 1 of {total_batches}:
 Apply all in this batch? (all / none / pick, enter numbers to apply selectively, e.g. "1 3 5")
 ```
 
-A scan with findings writes no record until the human answers every batch. Until then, the migration stays pending, and the next session runs it again.
+A scan with findings writes no record until the human on the loop answers every batch. Until then, the migration stays pending, and the next session runs it again.
 
 ### Step 4: Apply confirmed changes
 
-For each confirmed correction, apply the change using the Edit tool. Do not apply any change the human declined.
+For each confirmed correction, apply the change using the Edit tool. Do not apply any change the human on the loop declined.
 
 ### Step 5: Record
 
@@ -108,7 +108,7 @@ corrections-skipped: {skipped}
 
 Set `outcome` from the result, as `## Run records` describes.
 
-If a readable record already exists and its `outcome` equals the new outcome, leave the record file unchanged. Two runs leave one record with the same content. This applies when the human asks for a re-run.
+If a readable record already exists and its `outcome` equals the new outcome, leave the record file unchanged. Two runs leave one record with the same content. This applies when the human on the loop asks for a re-run.
 
 Then report:
 

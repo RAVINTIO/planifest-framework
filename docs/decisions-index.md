@@ -342,11 +342,11 @@ ADR files: [plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22
 | ADR-010 | `product.yml` set in P7 by a script | accepted | The ship agent runs `set-product-release.mjs` after P7 Step 5 and before Step 6. The script applies each `versionPolicy` and exits 0, 2, 4, or 5. The ship agent owns `product.yml`. |
 | ADR-011 | Hard Limit 8 sanctioned scripts | accepted | Both boot templates carry one `Sanctioned scripts:` sentence that names seven fixed framework scripts. Each counts only with the arguments its skill step shows. No other script counts. |
 | ADR-012 | Acceptance-criteria limit and warning | accepted | `consistency-check.mjs` allows up to 10 criteria per requirement. From 4 to 10 it warns and exits 0. Above 10 it reports a finding. The brief template still asks for 3. |
-| ADR-015 | Migration files never move | accepted | Every migration stays at the top level of `planifest-framework/migrations/`, and `_done/` goes away. Supersedes the archive-to-`_done/` part of 0000005-ADR-005. |
+| ADR-015 | Migration files never move | accepted | Every migration stays at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder goes away. Supersedes the archive step of 0000005-ADR-005. |
 | ADR-016 | Per-project migration run records | accepted | Each project records each run at `plan/_migrations/{stem}.md`. The frontmatter holds six fields and one outcome: `applied`, `not applicable`, or `skipped`. |
 | ADR-017 | Migration records owned by the migrator | accepted | `planifest-migrator` is the only writer of `plan/_migrations/`. Orchestrator resume detection reads the records and never writes them. |
 | ADR-018 | Pending means no readable record | accepted | A migration is pending when its record is missing or can't be read. Resume detection reads only top-level migration files and ignores orphan records. |
-| ADR-019 | Records come from scans, never seeded | accepted | No record comes from `_done/`. Each record comes from a scan. A scan with findings writes no record until the human on the loop answers every batch. |
+| ADR-019 | Records come from scans, never seeded | accepted | No record is seeded from the old completed-migrations folder. Each record comes from a scan. A scan with findings writes no record until the human on the loop answers every batch. |
 
 ---
 

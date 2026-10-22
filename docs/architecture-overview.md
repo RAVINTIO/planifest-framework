@@ -310,7 +310,7 @@ Each script counts only with the arguments its skill step shows. No other script
 
 ### Migration run state
 
-Migration files never move (0000035-ADR-015). Every migration sits at the top level of `planifest-framework/migrations/`, and the `_done/` folder is gone. Each project records each run at `plan/_migrations/{stem}.md` (0000035-ADR-016). A record holds one outcome: `applied`, `not applicable`, or `skipped`.
+Migration files never move (0000035-ADR-015). Every migration sits at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder is gone. Each project records each run at `plan/_migrations/{stem}.md` (0000035-ADR-016). A record holds one outcome: `applied`, `not applicable`, or `skipped`.
 
 A migration is pending when its record is missing or can't be read (0000035-ADR-018). Orchestrator resume detection reads the records, and the migrator is their only writer (0000035-ADR-017). Each record comes from a scan, never from seeding (0000035-ADR-019).
 
@@ -396,7 +396,7 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-008 (0000035):** Root markers under always-permitted names are not trusted.
 - **ADR-010 (0000035):** `set-product-release.mjs` sets `product.yml` at P7.
 - **ADR-011 (0000035):** Hard Limit 8 names seven sanctioned scripts.
-- **ADR-015 (0000035):** Migration files never move. Supersedes the `_done/` part of **ADR-005 (0000005)**.
+- **ADR-015 (0000035):** Migration files never move. Supersedes the archive step of **ADR-005 (0000005)**.
 - **ADR-016 (0000035):** Each project records migration runs in `plan/_migrations/`.
 
 ---
