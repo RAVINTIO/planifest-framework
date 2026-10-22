@@ -211,3 +211,20 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - P3 join: all three streams at-join. `planifest-framework/component.yml` set to `0.33.0` with feature `0000035-write-gate-scope-and-path-hardening`. `run-tests.sh` exits 0: 88 feature suites and 31 regression suites pass. `stream-reconcile.mjs` exits 0, and `consistency-check.mjs` reports clean.
 - Gate (P3): passed. Every requirement has a GREEN suite. Three exceptions wait for the human on the loop (req-010 migrations).
 - Progress: P3 done at 2026-10-22T06:50:13Z: ten requirements built test first, 88 feature suites green, three migration exceptions waiting
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T06:53:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined at P3) |
+| Model tier | primary |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | CI has no lint, typecheck, or build step. Its checks are code and doc parity, `self-description-check.mjs`, `run-tests.sh`, and `test_setup.ps1`. Locally, `self-description-check.mjs` passes and `run-tests.sh` exits 0. PowerShell isn't installed here, so `test_setup.ps1` runs on CI only. No stream changed a PowerShell file. |
+
+- Decision (P4): one agent checks semantic coverage for all ten requirements, and one agent verifies by execution, in one parallel batch / reason: CI already passes, and the two checks read different things.
