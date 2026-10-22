@@ -360,7 +360,7 @@ mkdir -p "$FX/.claude/skills"
 run_drift --root "$FX"
 assert_equals "1" "$CODE" "req-002: a crafted missing name exits 1"
 assert_contains 'evil\nstale' "$ERR" "req-002: the newline in a name prints escaped"
-if printf '%s\n' "$ERR" | grep -qx 'stale: claude-code: forged'; then
+if grep -qx 'stale: claude-code: forged' <<<"$ERR"; then
   FORGED=1
 else
   FORGED=0
