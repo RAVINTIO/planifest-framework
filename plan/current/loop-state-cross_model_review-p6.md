@@ -36,7 +36,8 @@ Append-only: one record per iteration. Never rewrite a prior record.
 ### Iteration 2 (2026-10-22T09:05:00Z)
 - **Approach:** 1
 - **Action:** fix agent, then a fresh reviewer instance on `claude-sonnet-5-5`.
-- **Observation:** pending.
+- **Observation (fixes):** M1 `47a5084` (mutation proved in the scratchpad), M2 `c824bbb`, M3 `fa9bd5c`, M5 `557f986`, M6 `01bd0e2`, M7 `f7b2f33`, and M8 `7f655f5`. `req-005:58` stays unchanged under the armed ratchet. A new prose line keeps it true. All three checks pass.
+- **Observation (verdict):** pending.
 - **Decision:** continue: verdict pending.
 
 ---

@@ -321,4 +321,7 @@ Exception waiting (P6, schema L190): five `plan/_migrations/` records in `afd237
 Exception waiting (P6, altering L191): the adoption-mode scan judged three archived designs compliant and recorded `applied` 0/0. Confirm the three designs are compliant, or withdraw that record.
 Exception waiting (P6, destructive L277): `7bce6e9` ran `git rm` on backlog entry 0000147, which P-N3 closes. Confirm the deletion.
 Exception waiting (P6, altering L201): `./README.md` joined the confirmed Component Paths at P3 without human confirmation. Confirm the addition.
+- Cross-model review iteration 1 (`claude-sonnet-5-5` reviewing `claude-opus-5-5`): REJECT, 0 critical, 0 major, 8 minor. Fixes for M1 to M3 and M5 to M8 in seven commits. M4 deferred to backlog 0000159.
+- Backlog filed (P6): 0000159 (an always-permitted basename is checked before the enforcement list).
+- Deviation (P6, additive): migrator Step 1b defines the framework source as a root `product.yml` with `id: "planifest-framework"`. Nothing defined it before. This repo matches, so the P3 records stand.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
