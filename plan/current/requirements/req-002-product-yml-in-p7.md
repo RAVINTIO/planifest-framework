@@ -44,7 +44,9 @@ As the human on the loop, I see `product.yml` name the released version and feat
   - With exactly one component, it does nothing. Step 9 reads that `component.yml`.
   - With two or more components, it reruns the script with `--create`, `--product-id`, `--product-name`, and one `--component` for each component. This moves Step 9 case 3 into P7.
 - With `--create` and no `product.yml`, the script builds the file from `planifest-framework/templates/product.template.yml`. It sets `id`, `name`, `version`, and `feature` from its arguments. It sets `versionPolicy: max-component-version` and writes `components[]` from the `--component` arguments. It then applies the `max-component-version` row above.
-- `--create` needs `--product-id`, `--product-name`, and at least two `--component` arguments. If one is missing, the script writes nothing and exits 2. If `product.yml` already exists, `--create` has no effect.
+- `--create` needs `--product-id`, `--product-name`, and at least two `--component` arguments. If one is missing, the script writes nothing and exits 2.
+- The script validates `--product-id` and `--product-name` whenever they appear. It also checks the `--create` arguments when `product.yml` already exists. If they pass, it leaves `id`, `name`, and `versionPolicy` as they are and makes the normal update (P3 deviation, build log).
+- `--create` copies the header comment of `product.template.yml` into each new `product.yml`. That comment names P7 and `set-product-release.mjs --create`, not the first multi-component P9 (P3 deviation, build log).
 - The ship agent never creates `product.yml` through **Write**. Downstream, a **Write** to a root file the design doesn't list would meet `gate-write`. The script's fixed rules and the carve-out limits in req-008 govern the create instead.
 - A stale `product.yml` stays as it is until the next P7 corrects it. No later step repairs it, and the ship agent does not edit it at Step 9 or Step 10b.
 - Step 7 stages `product.yml` with the archive, changelog, and `docs/about.md`, in the same commit.

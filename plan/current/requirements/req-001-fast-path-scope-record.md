@@ -58,7 +58,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - The scope record is self-authorisation. The agent that makes the change also writes the record, and no human step sits between the two.
 - The human on the loop accepted this residual risk at P0, when they chose the scope record over a wider allowlist (design.md, "Decisions confirmed at P0", Fast Path authorisation).
 - The branch and `HEAD` binding bounds staleness only. It is not a security control, because the agent that writes the record also reads both values.
-- Each write the gate admits through the record writes one line to stderr and still exits 0. The line names `plan/.fast-path-scope` and the root-relative path, for example `[planifest] gate-write: admitted src/x.js through plan/.fast-path-scope`.
+- Each write the gate admits through the record writes one line to stderr and still exits 0. The line names `plan/.fast-path-scope` and the root-relative path. Both hooks share one text, `[Planifest] Fast Path: admitted '<relPath>' through plan/.fast-path-scope.` (P3 deviation, build log).
 - `gate-write.mjs` and `shell-write-guard.mjs` both write this notice for every admitted Fast Path write.
 - The notice reaches the agent and the session transcript. Claude Code keeps exit-0 hook output out of the main view, so the human on the loop doesn't see it there.
 - The notice stays the control for the agent and the transcript. The human on the loop sees the admitted paths in the Fast Path changelog entry, which lists the record's paths.
@@ -76,7 +76,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 
 ### Fast Path workflow text
 
-- `planifest-framework/workflows/fast-path.md` adds a step before "Implement the fix directly". In that step, the agent writes `plan/.fast-path-scope` with **Write**.
+- `planifest-framework/workflows/fast-path.md` adds a named sub-step, **Write the scope record**, at the end of step 1, before "Implement the fix directly". In that sub-step, the agent writes `plan/.fast-path-scope` with **Write**. Steps 5 and 6 keep their numbers (P3 deviation, build log).
 - The agent fills `branch` from `git rev-parse --abbrev-ref HEAD`, writing `(detached)` when that prints `HEAD`. It fills `head` from `git rev-parse HEAD`.
 - The agent lists every path the change writes. That includes the `component.yml` that step 4 bumps, when one covers the change. `plan/changelog/` needs no entry, because `plan/` is always permitted.
 - The agent writes a new record over any record already there. A stale record from an interrupted Fast Path therefore never carries into a new change.

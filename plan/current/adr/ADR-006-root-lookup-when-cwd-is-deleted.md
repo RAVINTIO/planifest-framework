@@ -33,7 +33,7 @@ The nearest existing parent can sit above the repo root when the variable is uns
 - **Hook cwd:** Each hook uses the stdin `cwd` field first. If that is absent and `process.cwd()` throws, it uses `CLAUDE_PROJECT_DIR`. If that is unset too, it passes.
 - **Relative targets:** A relative target from a deleted `cwd` resolves against the `cwd` text through the same walk.
 - **Superseded case:** The 0000032 req-006 assertion for a missing `cwd` changes to expect exit 2 for `src/a.js`. The P3 agent logs this as a deliberate deviation.
-- **Contract:** `resolveRoot` returns `null` only for a `cwd` that is not a non-empty string, and never throws. The changed lookup is artifact `path-rules-resolveRoot-deleted-cwd`.
+- **Contract:** `resolveRoot` returns `null` for a `cwd` that is not a non-empty string, and never throws. It also returns `null` when the walk from `cwd` stops where `realpathSync` fails and `CLAUDE_PROJECT_DIR` gives no root. That keeps the fail-open exit 0 for this case (P3 deviation, build log). The changed lookup is artifact `path-rules-resolveRoot-deleted-cwd`.
 
 ## Alternatives Considered
 

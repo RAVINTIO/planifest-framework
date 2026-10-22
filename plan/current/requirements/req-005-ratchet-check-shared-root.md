@@ -41,6 +41,10 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 - The suite repeats the case from the root to show that the result matches.
 - The suite also checks that an approval line in `.ratchet-approve` still lets the write pass from the subfolder.
 - The existing ratchet suites still pass.
+- The ratchet now reads `CLAUDE_PROJECT_DIR`, so a Claude Code session can move its root. The existing ratchet suites therefore unset that variable (P3 deviation, build log). That covers these suites:
+  - `test-0000016-pipeline-governance.sh`
+  - `test-0000017-req-002-ratchet-approve.sh`
+  - the regression copy of each
 
 ### Non-functional
 

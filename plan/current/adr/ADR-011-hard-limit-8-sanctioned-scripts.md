@@ -42,13 +42,13 @@ The boot files are build outputs. On every setup run, `write_boot_file` in `setu
   - It accepts only `--feature-id`, `--version`, `--create`, `--product-id`, `--product-name`, `--component`, and `--root`.
   - It writes only `{root}/product.yml` and refuses any other path.
   - It changes only `version`, `feature`, and `components[]`, plus `id`, `name`, and `versionPolicy` under `--create`.
-  - It resolves the real path of the target before it writes. If a link points elsewhere, it writes nothing and exits 2.
+  - It resolves the real path of the target before it writes. It refuses any link at `product.yml`, a dangling link included, so it writes nothing and exits 2 (P3 deviation, build log).
   - It writes each value only as a double-quoted YAML scalar, after validation. No allowed character can end the scalar or start a line.
   - It takes the root from the working directory only and clears `CLAUDE_PROJECT_DIR` for its `resolveRoot` call.
   - It opens `product.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2.
   - It writes to a temp file in the root and renames it over `product.yml`. A failure removes the temp file and leaves `product.yml` unchanged.
   - It applies the `--component` path rules to each `components[].path` it reads from `product.yml`.
-  - It opens each `component.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2 (P-N1).
+  - It opens each `component.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2 (P-N1). The check covers `--component` paths as well as paths read from `product.yml` (P5 deviation, build log).
   - An unexpected file-system error exits 2. The reason names the operation and error code only, with no path or stack trace.
   - A key line it can't rewrite, or any error that no rule catches, exits 2 with a fixed message. Every exit is 0, 2, 4, or 5 (P-N2).
 - **Limits on `promote-to-regression.sh`:** The source must be a `test-*.sh` regular file with one link, directly inside `planifest-framework/tests/`. The destination is always `planifest-framework/tests/regression/`, and neither that folder nor the destination file may be a link. The script refuses a `PLANIFEST_REGRESSION_DIR` that names any other folder (P5 finding P-S09). It refuses a linked `tests/` folder, and a destination or manifest with more than one link. It writes each file through a fresh temp file and a rename (P-N3).
@@ -63,7 +63,7 @@ The boot files are build outputs. On every setup run, `write_boot_file` in `setu
   | `--product-name` | `^[A-Za-z0-9 .-]+$`, 1 to 80 characters. |
   | `--component` id | Split at the first `=`. The id matches `^[a-z0-9][a-z0-9-]*$`, at most 64 characters. |
   | `--component` path | `^[A-Za-z0-9._/-]+$`, 1 to 256 characters. It is `component.yml` or ends in `/component.yml`. It can't start with `/` or hold a `..` or empty segment. The file must exist, and its real path must lie inside the root. |
-  | Counts | At most 64 `--component` arguments, with no shared id. Every other argument appears at most once. An unknown argument fails. |
+  | Counts | At most 64 `--component` arguments, with no shared id. Every other argument appears at most once. An unknown argument fails, and the reason names it by position as `argument N` (P3 deviation, build log). |
 
   Any rule break writes nothing and exits 2. The script never truncates or strips a value to repair it. The stderr reason names the argument and the rule, and it never echoes the raw value.
 - **This repo's boot file:** This repo's own `CLAUDE.md` keeps the old Hard Limit 8 text until setup runs again. Nothing in this feature reruns setup before P7. At P7, the ship agent runs `set-product-release.mjs` on the same footing as `archive-current.mjs`, under this ADR.

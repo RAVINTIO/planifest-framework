@@ -22,7 +22,8 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - `resolveRoot(cwd)` checks `CLAUDE_PROJECT_DIR` before it checks whether `cwd` exists. If the variable names a folder and the walk from it finds a marker, that marked root wins, as today.
 - If `cwd` is not a folder, `resolveRoot` walks up from `cwd` with `dirname` to the nearest existing folder. It starts the marker walk from the real path of that folder.
 - If that walk finds no marker, the root is the real path of the nearest existing folder. This keeps the 0000032 rule that the root is cwd when no marker exists.
-- `resolveRoot` returns `null` only when `cwd` is not a non-empty string. It never throws.
+- `resolveRoot` returns `null` when `cwd` is not a non-empty string. It never throws.
+- `resolveRoot` also returns `null` when the walk from `cwd` stops at a path where `realpathSync` fails and `CLAUDE_PROJECT_DIR` gives no root. No root is then known, so the hook keeps the fail-open exit 0 below (P3 deviation, build log).
 - The walk decides whether a folder exists with `statSync`, not `existsSync`. Only `ENOENT` and `ENOTDIR` count as missing, so the walk steps up past them.
 - Any other `statSync` error, such as `EACCES`, stops the walk at that path. The caller then calls `realpathSync` on that path.
 - The same walk serves `resolveRoot` and the relative-target rule below.
