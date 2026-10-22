@@ -19,7 +19,7 @@ status: "done"
 | Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `done` |
-| Last updated | `2026-10-22T02:10:00Z` |
+| Last updated | `2026-10-22T05:49:00Z` |
 
 ---
 

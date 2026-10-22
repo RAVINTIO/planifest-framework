@@ -71,8 +71,8 @@ Run mode confirmed: autonomous (2026-10-21T23:37:01Z)
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-21T23:39:00Z` |
-| End | `2026-10-22T02:10:00Z` |
-| Wall-clock | `9060` |
+| End | `2026-10-22T05:49:00Z` |
+| Wall-clock | `22200` |
 | Streams | `3` |
 | Model tier | primary (stream 01), cheaper (streams 02 and 03, shared artifacts) |
 | Skills loaded | planifest-spec-agent, planifest-loop-runner |
@@ -126,4 +126,19 @@ Streams formed (dependency test: stories that change the same file share a strea
 - Human touchpoint (P1) resolved: `consistency-check.mjs` exits 0 on `plan/current`. Governance suite and its regression copy pass, 95 tests each.
 - P1 gate loop, approach 2 iteration 1: design critic APPROVE (0 critical, 0 major, 5 minor). The orchestrator fixed all five minors. `design.md` gains a "Decisions added at P1" section for the carve-out and the criteria limit. Loop state set to `done`.
 - Gate (P1): passed. `consistency-check.mjs` clean, run mode still `autonomous`.
-- Progress: P1 done at 2026-10-22T02:10:00Z: seven requirements in three streams, critic approved on approach 2
+- Progress: P1 done at 2026-10-22T05:49:00Z: seven requirements in three streams, critic approved on approach 2
+
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T05:50:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` |
+| Model tier | primary |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Skills inbox empty. One ADR agent per stream, in one parallel batch, each inside its own ADR block. |
