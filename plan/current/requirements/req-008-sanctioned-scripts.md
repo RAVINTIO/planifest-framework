@@ -47,6 +47,7 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
 - P3 adds one sentence to Hard Limit 8 in `planifest-framework/templates/standard-boot.md` (line 14) and `planifest-framework/templates/cursor-boot.md` (line 20).
 - The sentence starts with `Sanctioned scripts:`. It names each framework script that skill text runs to write files, and it says no other script counts. A named script counts only when a skill step runs it.
 - Both templates carry the same sentence, so every tool's boot file names the same list.
+- The sentence limits each script to the arguments its skill step shows (P5 finding P-S10). `setup.sh` and `setup.ps1` count only as a tool name plus `--include-full-skill-library` or `--strict-orchestrator`. Those are the invocations that the refresh-setup and orchestrator skills run. `add-skill` fetches remote content, so the sentence says that `add-skill` and every other subcommand or flag are not sanctioned.
 - A check of `planifest-framework/skills/` on 2026-10-22 found the scripts that skill text runs to write files. The sanctioned list is exactly these seven:
   - `planifest-framework/scripts/archive-current.mjs`, which the ship skill runs at P7.
   - `planifest-framework/scripts/set-product-release.mjs`, the new script in req-002.

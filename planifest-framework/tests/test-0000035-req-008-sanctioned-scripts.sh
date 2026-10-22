@@ -357,6 +357,12 @@ for T in "$STANDARD_BOOT" "$CURSOR_BOOT"; do
   assert_contains "no other script counts" "$HL8" "req-008: $NAME says no other script counts"
   assert_contains "skill step" "$HL8" "req-008: $NAME says a named script counts only when a skill step runs it"
   assert_equals "$EXPECTED" "$(sanctioned "$T")" "req-008: $NAME names exactly the seven sanctioned scripts"
+  # P-S10: setup counts only with a tool name and the two refresh flags.
+  assert_contains "--include-full-skill-library" "$HL8" "req-008: $NAME names the setup flags it sanctions"
+  assert_contains "--strict-orchestrator" "$HL8" "req-008: $NAME names --strict-orchestrator"
+  assert_contains '`add-skill` and every other subcommand or flag are not sanctioned' "$HL8" \
+    "req-008: $NAME says add-skill and any other subcommand are not sanctioned"
+  lacks "with arguments to write files" "$HL8" "req-008: $NAME no longer sanctions any arguments"
 done
 assert_equals "$(sanctioned "$STANDARD_BOOT")" "$(sanctioned "$CURSOR_BOOT")" \
   "req-008: both templates name the same scripts"
