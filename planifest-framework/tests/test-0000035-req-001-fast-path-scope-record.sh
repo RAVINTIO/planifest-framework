@@ -84,6 +84,7 @@ run_guard() {
 expect_ignored() {
   run_gate "$1" "planifest-overrides/instructions/x.md"
   assert_equals "2" "$CODE" "req-001: $2 admits nothing in gate-write"
+  assert_contains "No confirmed design" "$ERR" "req-001: $2 gets the no-record block"
   run_guard "$1" "touch planifest-overrides/instructions/x.md"
   assert_equals "2" "$CODE" "req-001: $2 admits nothing in the shell guard"
 }
@@ -200,6 +201,23 @@ assert_equals "0" "$CODE" "req-001: a ref held only in packed-refs is read"
 run_guard "$PK" "touch $X"
 assert_equals "0" "$CODE" "req-001: the shell guard reads packed-refs too"
 
+# A packed-refs file over 4 MiB makes the git state unreadable.
+node -e '
+const fs = require("fs");
+const file = process.argv[1];
+fs.writeFileSync(file, "# pad\n".repeat(800000) + fs.readFileSync(file, "utf-8"));
+' "$PK/.git/packed-refs"
+expect_ignored "$PK" "a record with packed-refs over 4 MiB"
+assert_contains "git state can't be read" "$ERR" "req-001: an oversized packed-refs makes the git state unreadable"
+
+# A worktree .git file over 4 KiB makes the git state unreadable.
+{ cat "$WT/.git"; head -c 5000 /dev/zero | tr '\0' ' '; printf '\n'; } > "$WORK/dotgit.big"
+cat "$WORK/dotgit.big" > "$WT/.git"
+write_current "$FX" "$X"
+write_record "$WT" "wt-branch" "$(head_of "$FX")" "$X"
+expect_ignored "$WT" "a record with a .git file over 4 KiB"
+assert_contains "git state can't be read" "$ERR" "req-001: an oversized .git file makes the git state unreadable"
+
 DT="$(make_fixture detached)"
 git -C "$DT" checkout -q --detach >/dev/null 2>&1
 write_record "$DT" "(detached)" "$(head_of "$DT")" "$X"
@@ -247,6 +265,16 @@ invalid "a path with a . segment" "branch: $B\nhead: $H\npaths:\n- ./src\n"
 invalid "a path with an empty segment" "branch: $B\nhead: $H\npaths:\n- a//b\n"
 invalid "a path with a drive letter" "branch: $B\nhead: $H\npaths:\n- C:/x\n"
 invalid "a path with a glob" "branch: $B\nhead: $H\npaths:\n- src/*\n"
+assert_equals "no" "$([[ "$ERR" == *"src/*"* ]] && echo yes || echo no)" "req-001: the reason never echoes a raw path"
+assert_contains "line 4" "$ERR" "req-001: the reason names the line of the broken path"
+invalid "a branch of 256 characters" "branch: $(printf 'b%.0s' $(seq 1 256))\nhead: $H\npaths:\n- $X\n"
+assert_contains "line 1" "$ERR" "req-001: a 256-character branch breaks the line 1 rule"
+printf 'branch: %s\nhead: %s\npaths:\n- %s\n' "$(printf 'b%.0s' $(seq 1 255))" "$H" "$X" > "$IV/plan/.fast-path-scope"
+run_gate "$IV" "$X"
+assert_contains "its branch differs" "$ERR" "req-001: a 255-character branch is valid and only stale"
+printf 'branch: %s\nhead: %s\npaths:\n- %s\n' "$B" "$(printf 'a%.0s' $(seq 1 64))" "$X" > "$IV/plan/.fast-path-scope"
+run_gate "$IV" "$X"
+assert_contains "its head differs" "$ERR" "req-001: a 64-character head is valid and only stale"
 invalid "a path over 512 characters" "branch: $B\nhead: $H\npaths:\n- $(printf 'a%.0s' $(seq 1 513))\n"
 invalid "a record with no paths" "branch: $B\nhead: $H\npaths:\n"
 invalid "lines in the wrong order" "head: $H\nbranch: $B\npaths:\n- $X\n"
@@ -256,6 +284,12 @@ invalid "a path line before paths:" "branch: $B\nhead: $H\n- $X\npaths:\n- $X\n"
 MANY="branch: $B\nhead: $H\npaths:\n"
 for i in $(seq 1 65); do MANY="$MANY- p$i\n"; done
 invalid "a record with 65 paths" "$MANY- $X\n"
+
+SIXTY_FOUR="branch: $B\nhead: $H\npaths:\n"
+for i in $(seq 1 63); do SIXTY_FOUR="$SIXTY_FOUR- p$i\n"; done
+printf '%b' "$SIXTY_FOUR- $X\n" > "$IV/plan/.fast-path-scope"
+run_gate "$IV" "$X"
+assert_equals "0" "$CODE" "req-001: a record with exactly 64 paths admits a listed path"
 
 { printf 'branch: %s\nhead: %s\npaths:\n- %s\n' "$B" "$H" "$X"; for i in $(seq 1 400); do printf '# %s\n' "$(printf 'c%.0s' $(seq 1 50))"; done; } > "$IV/plan/.fast-path-scope"
 expect_ignored "$IV" "a record over 16 KiB"
