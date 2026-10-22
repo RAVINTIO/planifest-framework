@@ -689,8 +689,8 @@ function judgeCommand(cwd, command) {
       return null;
     }
     const placed = resolveTarget(root, base, literal);
-    if (placed.kind === "outside") return null; // outside the repository root
-    if (placed.kind === "unresolvable") {
+    if (placed.status === "outside") return null; // outside the repository root
+    if (placed.status === "unresolvable") {
       // A resolution error inside the root blocks (0000035 ADR-005).
       const reason = placed.reason.replace(/^\[Planifest\]\s*/, "").replace("Write blocked", "Command blocked").trim();
       return `${PREFIX} Shell write blocked: '${writer}' writes '${literal.slice(0, 80)}'. ${reason}\n`;

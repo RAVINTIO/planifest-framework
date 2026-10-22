@@ -36,8 +36,8 @@
  *   norm(p)                          the shared comparison normalisation
  */
 
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { dirname, isAbsolute, join, normalize, relative, resolve } from "node:path";
+import { existsSync, lstatSync, readFileSync, readlinkSync, realpathSync, statSync } from "node:fs";
+import { dirname, isAbsolute, join, normalize, parse, relative, resolve, sep } from "node:path";
 
 // Always-permitted: planning and doc artefacts and Planifest internal files.
 export const ALWAYS_PERMITTED_PREFIXES = ["plan/", "docs/"];
@@ -137,33 +137,77 @@ function nearestExisting(p, wantFolder = false) {
   }
 }
 
-// realPathOf: the real path of p, or of its nearest existing parent with the
-// missing segments appended. p must be absolute. Throws a ResolutionError
-// when realpathSync fails where the walk stopped.
+// The most links one resolution follows, the Linux MAXSYMLINKS value
+// (0000035 ADR-005).
+export const MAX_LINK_HOPS = 40;
+
+const segmentsOf = (p) => p.split(/[\\/]+/).filter(Boolean);
+
+/**
+ * realPathOf: the real path the absolute path p names, found one segment at
+ * a time (0000035 ADR-005).
+ *   - lstatSync checks each existing segment. A link puts its text in place
+ *     of the segment. Relative text resolves against the link's real folder,
+ *     and absolute text restarts the walk at its own root.
+ *   - A .. moves to the real parent of the path resolved so far. It never
+ *     collapses as text before the segments to its left resolve.
+ *   - From the first ENOENT or ENOTDIR, the rest of the path appends as text,
+ *     with any .. among it collapsed. A dangling link resolves to its target.
+ * Throws a ResolutionError for a link loop, a chain past MAX_LINK_HOPS, a
+ * path past the length limits after a substitution, or any other error.
+ * p is never collapsed as text first, so it must not pass through resolve().
+ */
 function realPathOf(p) {
-  const { stop, missing } = nearestExisting(p);
-  try {
-    return join(realpathSync(stop), ...missing);
-  } catch (err) {
-    throw new ResolutionError(err?.code ?? "an unknown error", reachedBefore(stop, missing));
+  let resolved = parse(p).root;
+  let pending = segmentsOf(p.slice(resolved.length));
+  let hops = 0;
+  let chain = new Set(); // links followed since the last ordinary segment
+  const fail = (code, rest) => new ResolutionError(code, join(resolved, ...rest));
+
+  while (pending.length) {
+    const segment = pending.shift();
+    if (segment === ".") continue;
+    if (segment === "..") {
+      resolved = dirname(resolved); // resolved is real, so this is its real parent
+      continue;
+    }
+    const next = join(resolved, segment);
+    let stats;
+    try {
+      stats = lstatSync(next);
+    } catch (err) {
+      if (err?.code === "ENOENT" || err?.code === "ENOTDIR") return join(next, ...pending);
+      throw fail(err?.code ?? "an unknown error", [segment, ...pending]);
+    }
+    if (!stats.isSymbolicLink()) {
+      resolved = next;
+      chain = new Set();
+      continue;
+    }
+    if (chain.has(next)) throw fail("link loop", [segment, ...pending]);
+    chain.add(next);
+    hops += 1;
+    if (hops > MAX_LINK_HOPS) throw fail(`more than ${MAX_LINK_HOPS} links`, [segment, ...pending]);
+    let text;
+    try {
+      text = readlinkSync(next);
+    } catch (err) {
+      throw fail(err?.code ?? "an unknown error", [segment, ...pending]);
+    }
+    if (isAbsolute(text)) {
+      resolved = parse(resolve(text)).root;
+      pending = [...segmentsOf(text.slice(parse(text).root.length)), ...pending];
+    } else {
+      pending = [...segmentsOf(text), ...pending];
+    }
+    if (tooLong(join(resolved, ...pending))) throw fail("too long to judge after its links", pending);
   }
+  return resolved;
 }
 
-// reachedBefore: the real path of the nearest parent of stop that resolves,
-// with the rest of the path appended as text.
-function reachedBefore(stop, missing) {
-  const rest = [...missing];
-  let current = stop;
-  for (;;) {
-    const parent = dirname(current);
-    if (parent === current) return join(stop, ...missing);
-    rest.unshift(relative(parent, current));
-    current = parent;
-    try {
-      return join(realpathSync(current), ...rest);
-    } catch { /* keep climbing */ }
-  }
-}
+// absoluteText: target placed against the real folder base without
+// collapsing any .. as text, so realPathOf resolves it as the system would.
+const absoluteText = (base, target) => (isAbsolute(target) ? target : base + sep + target);
 
 // planted: whether the marked folder at rel, a path relative to a higher
 // marked folder, is distrusted. Its first segment is plan or docs (F1), or
@@ -254,36 +298,37 @@ function within(root, abs) {
 }
 
 /**
- * Resolves target from cwd and places it against root (0000035 ADR-005).
- * Returns one of:
- *   { kind: "inside", relPath }       relPath has forward slashes and its original case
- *   { kind: "outside" }               outside root, or too long to judge (F7)
- *   { kind: "unresolvable", reason }  a resolution error for a path inside root
- * Relative targets resolve against the real path of cwd, or of its nearest
- * existing parent with the missing segments appended. A resolution error
- * counts as unresolvable when the target as text, or the real path reached
- * before the error, lies inside root. Otherwise the target is outside.
+ * Resolves target from cwd through every link and places it against root
+ * (0000035 ADR-005). Returns one of:
+ *   { status: "inside", relPath }       relPath has forward slashes and its original case
+ *   { status: "outside" }               outside root, or too long to judge (F7)
+ *   { status: "unresolvable", reason }  a resolution error for a path inside root
+ * cwd goes through the same resolution, and a relative target resolves
+ * against its real path. A resolution error counts as unresolvable when the
+ * target as text, or the real path reached before the error, lies inside
+ * root. Otherwise the target is outside. The reason shows the first 80
+ * characters of target and never prints link text.
  */
 export function resolveTarget(root, cwd, target) {
-  if (typeof target !== "string" || !target || typeof cwd !== "string") return { kind: "outside" };
-  if (unjudgeable(cwd, target)) return { kind: "outside" }; // no slow file-system walk (F7)
-  const textAbs = isAbsolute(target) ? resolve(target) : resolve(cwd, target);
+  if (typeof target !== "string" || !target || typeof cwd !== "string") return { status: "outside" };
+  if (unjudgeable(cwd, target)) return { status: "outside" }; // no slow file-system walk (F7)
+  const textAbs = resolve(cwd, target);
   let abs;
   try {
-    const base = realPathOf(resolve(cwd));
-    abs = realPathOf(isAbsolute(target) ? resolve(target) : resolve(base, target));
+    const base = realPathOf(isAbsolute(cwd) ? cwd : resolve(cwd));
+    abs = realPathOf(absoluteText(base, target));
   } catch (err) {
     if (!(err instanceof ResolutionError)) throw err;
-    if (within(root, textAbs) === null && within(root, err.reached) === null) return { kind: "outside" };
+    if (within(root, textAbs) === null && within(root, err.reached) === null) return { status: "outside" };
     return {
-      kind: "unresolvable",
+      status: "unresolvable",
       reason:
         `[Planifest] Can't resolve the path '${target.slice(0, 80)}' inside the repository root ` +
         `(${err.code}). Write blocked, because the gate can't judge where it lands.\n`,
     };
   }
   const relPath = within(root, abs);
-  return relPath === null ? { kind: "outside" } : { kind: "inside", relPath };
+  return relPath === null ? { status: "outside" } : { status: "inside", relPath };
 }
 
 /**
@@ -294,7 +339,7 @@ export function resolveTarget(root, cwd, target) {
 export function toRootRelative(root, cwd, target) {
   try {
     const result = resolveTarget(root, cwd, target);
-    return result.kind === "inside" ? result.relPath : null;
+    return result.status === "inside" ? result.relPath : null;
   } catch {
     return null;
   }
@@ -414,8 +459,8 @@ export function judgeWrite(cwd, target) {
   const root = resolveRoot(cwd);
   if (!root) return { allowed: true, outside: true };
   const placed = resolveTarget(root, cwd, target);
-  if (placed.kind === "unresolvable") return { allowed: false, reason: placed.reason, root };
-  if (placed.kind === "outside") return { allowed: true, outside: true };
+  if (placed.status === "unresolvable") return { allowed: false, reason: placed.reason, root };
+  if (placed.status === "outside") return { allowed: true, outside: true };
   const { relPath } = placed;
   return { ...evaluateWrite(root, relPath), root, relPath };
 }
