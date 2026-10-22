@@ -31,7 +31,7 @@
 ## Decisions confirmed at P0
 - Run mode: `autonomous`.
 - Re-run-setup migration (US-001): one migration, `migrate-0.34.0-rerun-setup.md`, covers the setup-delivered changes in both 0.33.0 and 0.34.0. It follows the 0.31.0 migration's sections. This repo records it `applied` after P3 re-runs setup here.
-- Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` bytes only, source against the active tool's installed copy. It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
+- Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` text only, source against the active tool's installed copy. It first applies setup's four path rewrites to the source and strips one leading byte order mark from the installed copy (P1 deviation, see the build log). It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
 - Ship subjects (US-003): every skill commit subject keeps placeholders out. Subjects name the phase and action only, as in `plan(p9): clear session markers`. The feature ID goes in the body.
 - Run-mode anchor (US-004): `run-mode.mjs` accepts the bare line or one leading `- `. It keeps the one-commit rule and the design Confirmation check unchanged. The skill and template show the bare line in a code block as the preferred form.
 - Hard-limit citations (US-005): cite by name and source, for example "the build-log rule (orchestrator Hard Limit 8)" and "the Write-or-Edit rule (boot Hard Limit 8)". No renumbering.
@@ -85,7 +85,7 @@
 - Release size: three-story rule (no `release-budget.yml`). Eleven stories in one wave, by the choice of the human on the loop.
 
 ## Assumptions
-- Setup copies each `SKILL.md` byte for byte - impact if wrong: the drift check reports false drift for every skill.
+- Setup copies each `SKILL.md` with four relative-path rewrites (`setup.sh:80-85`, `setup.ps1:176-180`), and PowerShell 5 adds a byte order mark. The drift check reproduces both - impact if wrong: a future change to setup's rewrites makes the drift check report false drift. P1 corrected the P0 assumption that setup copies byte for byte.
 - The drift check can tell the active tool from its install marker, `.claude/.planifest-setup-flags` or the tool's equivalent - impact if wrong: the check falls back to checking every installed tool folder it finds.
 - No existing records: `discovery.md` `## Record Samples` reads None.
 

@@ -104,3 +104,8 @@ Streams (start commit `8375ca7`):
 
 - Shared artifacts (scope, risk register, domain glossary) go to one cheaper-tier agent in the same batch, backlog ID 0000170.
 - Shared files for P3: `skills/planifest-orchestrator/SKILL.md` (req-002, req-004, req-005, req-006) and `skills/planifest-loop-runner/SKILL.md` (req-006, req-007). The orchestrator orders those edits at P3.
+- Shared artifacts committed: `dee47b6` (scope, risk register, glossary). No backlog entry filed, so 0000170 stays unused.
+- Stream 02 returned req-001 and req-002, three criteria each.
+- Deviation (P1, unclassified): the design assumed setup copies `SKILL.md` byte for byte. Setup rewrites four relative paths, and PowerShell 5 adds a byte order mark. req-002 makes the drift check apply both before it compares. `design.md` now says so.
+- Decision (P1): the 0.34.0 migration targets every installed project, the framework source included / reason: the migrator's target check would otherwise record `not applicable` here, against the design's `applied`.
+- Decision (P1): P3 updates `test-0000035-req-007` and `test-0000035-req-010`, which hard-code eight migrations / reason: the new migration makes nine.
