@@ -4,6 +4,10 @@
 
 set -uo pipefail
 
+# A run inside Claude Code inherits CLAUDE_PROJECT_DIR. Hooks under test would
+# then resolve the real repo as their root instead of the suite fixture.
+unset CLAUDE_PROJECT_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 TOTAL_PASS=0

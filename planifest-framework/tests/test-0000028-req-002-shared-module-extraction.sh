@@ -12,6 +12,8 @@
 
 set -uo pipefail
 
+unset CLAUDE_PROJECT_DIR
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 
