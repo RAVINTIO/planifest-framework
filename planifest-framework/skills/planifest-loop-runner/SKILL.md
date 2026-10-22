@@ -72,6 +72,8 @@ while state.status == active:
 
 One iteration = one record. Doing three passes and logging one record is a defect.
 
+Split step: apply this rule to any ACT unit that is a fix. Before the fix adds a fourth acceptance criterion to a requirement, ask "Does this requirement hold two concerns?" If yes, split by addition only. Write the new concern's criteria into a new requirement file with the next free ID, and add a user story to the feature brief that splits the existing one. A split inside a loop never moves or removes an existing criterion line, because `ratchet-check.mjs` counts a move across files as a removal and exits 2. Cross-reference both files and defer the move until no loop-state file holds `status: active` or the human on the loop writes the `.ratchet-approve` line. In `autonomous`, log `Decision (P{N}): split step for req-NNN: move {criterion} to req-MMM deferred / reason: ratchet active`. If no, log `Decision (P{N}): split step for req-NNN: keep / reason: {one line}` and add a `Split step: keep` note to the requirement file.
+
 ## Stop Rules
 
 Armed on every loop, checked at every DECIDE:

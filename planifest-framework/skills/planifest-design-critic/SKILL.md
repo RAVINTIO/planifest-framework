@@ -44,6 +44,7 @@ For each item, cite the evidence (file + section) that satisfies it. **An item w
 | 6 | Risks are specific and mitigated | No generic risks; every mitigation is an action, not a hope |
 | 7 | NFRs are measurable | Each has a number or a deterministic check, not an adverb |
 | 8 | Internal consistency | No requirement contradicts an ADR; no ADR contradicts the design constraints |
+| 9 | Split step: a requirement holds one concern | A requirement with more than three criteria fails unless a recorded keep answer names one concern. Look for the `Split step: keep` note in the requirement file and the matching `Decision` line in the build log. A recorded pending move passes the row while a loop is active. Question: "Does this requirement hold two concerns?" Trigger: the fourth acceptance criterion. |
 
 ## Step 3: Verdict artifact
 
