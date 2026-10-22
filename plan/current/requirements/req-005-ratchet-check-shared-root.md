@@ -19,7 +19,8 @@ As the human on the loop, I rely on `ratchet-check` to find the active loop from
 
 ### Shared root and path
 
-- `planifest-framework/hooks/enforcement/ratchet-check.mjs` imports `resolveRoot` and `resolveTarget` from `path-rules.mjs`. It keeps no root or path logic of its own.
+- `planifest-framework/hooks/enforcement/ratchet-check.mjs` imports `resolveRoot` and `resolveTargetBoth` from `path-rules.mjs`. It keeps no root or path logic of its own.
+- `resolveTargetBoth` calls `resolveTarget` and adds the placement with `..` collapsed as text (P5 finding G-S01). The acceptance criterion below names `resolveTarget`, which the hook reaches through `resolveTargetBoth`.
 - The hook takes `cwd` from the stdin `cwd` field. It falls back to `process.cwd()`, then to `CLAUDE_PROJECT_DIR`, as `gate-write.mjs` does under req-004.
 - The hook finds `plan/current/`, `plan/current/.ratchet-approve`, and `plan/ratchet-audit-log.md` under the root from `resolveRoot`, not under `process.cwd()`.
 - The hook resolves `file_path` with `resolveTarget(root, cwd, file_path)`. A relative `file_path` resolves against `cwd`.

@@ -6,7 +6,7 @@
  * Same family as gate-write.mjs.
  *
  * Root and target (0000035 ADR-007): the hook finds the repository root with
- * resolveRoot and the target with resolveTarget from path-rules.mjs, so it
+ * resolveRoot and the target with resolveTargetBoth from path-rules.mjs, so it
  * guards plan/current/ from any subfolder. It keeps no path rules of its own.
  * It judges both placements from resolveTargetBoth, the physical one and the
  * one with .. collapsed as text, as the Write tool places it (G-S01).
