@@ -283,4 +283,25 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Backlog filed (P5): 0000149 (escape remaining hook output), 0000150 (`set-product-release.mjs` keeps other bytes), and 0000151 (promote script partial state and read race). 0000148 widened to cover a lone CR.
 - Gate (P5): passed. Overall risk after fixes Medium, down from High. Open Medium items each have an owner: G-S04 (0000144), G-S05 (0000146), G-S08 (accepted, R-005), G-S12 (0000143), and P-S13 (accepted, R-021, 0000141). G-S08 and P-S13 rest on accepted risk, so the PR names them for the human on the loop.
 - Progress: P5 done at 2026-10-22T08:15:36Z: two High bypasses closed, 19 findings fixed over two batches, risk Medium
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T08:20:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Gate A: `docs/` exists. |
+
+P6 Gate B: docs update assessment (continuous run, auto-accepted).
+This run changed the write gates, added `set-product-release.mjs`, moved migration state to `plan/_migrations/`, and added the sanctioned-scripts rule.
+Auto-accepted: updating `docs/decisions-index.md`, `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/dependency-graph.md`, the framework reference docs, and `src/setup-hook-integration/docs/` where setup behaviour changed.
+
+- Decision (P6): three docs agents in one parallel batch. Agent 1: living docs under `docs/` and the drift checks. Agent 2: framework reference docs and the requirement and ADR text that the P3 to P5 deviations left behind. Agent 3: `recommendations.md`, the iteration log, and backlog entries for its Deferred Items and Tech Debt rows / reason: the three sets share no file.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
