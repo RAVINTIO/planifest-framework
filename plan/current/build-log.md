@@ -274,4 +274,8 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Deviation (P5, unclassified): the ratchet caps printed paths at `MAX_PATH_CHARS`, not 80, so the `.ratchet-approve` hint line the human on the loop copies stays whole.
 - Deviation (P5, unclassified): `shown()` now prints U+2028 as `\u{2028}` instead of ` `, as part of escaping every format character.
 - Backlog filed (P5): 0000148 (the ratchet misses criteria that hold a line separator).
+- Scripts fix batch 2: P-N1 in `9d15070`, P-N2 in `ed7bfe4`, P-N3 in `7bce6e9`, and P-N4 in `157e760`, each RED first, then GREEN. `7bce6e9` also removes backlog 0000147, which P-N3 closes in this feature.
+- Deviation (P5, unclassified): the one-link `component.yml` check also covers `--component` paths, not only manifest paths.
+- Deviation (P5, unclassified): `promote-to-regression.sh` writes the destination and the manifest through a temp file and a Node `renameSync`, beyond the refusal checks. `mv` follows a link to a folder at the destination.
+- P5 batch 2 verified by the orchestrator: `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. `consistency-check.mjs` clean, run mode still `autonomous`.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
