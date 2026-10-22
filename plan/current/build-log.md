@@ -198,3 +198,5 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Deviation (P3, unclassified): `migrate-adoption-mode-and-about-md.md` and `migrate-product-yml-component-paths.md` said "archive it". Both now say "record the outcome", so no file tells an agent to move a migration (AC-007.1). req-007 doesn't list either file.
 - Deviation (P3, unclassified): both new stream 03 suites wrap migration name lists in `# BEGIN/END retired-integrations` markers, so the 0000030 residue check passes.
 - Deviation (P3, unclassified): stream 03 also edited `planifest-framework/project-operations.md`, which FR-007.10 requires.
+- Decision (P3): add `./README.md` to the `design.md` Component Paths, then make the FR-007.10 README edit and restore its suite check / reason: req-007 requires the README change, and the path list missed it. This resolves the README deviation above. The check failed first, then passed.
+- Exception waiting count after the stream 03 join: three. The req-010 suite now passes 45 of 45.

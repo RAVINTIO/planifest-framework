@@ -69,6 +69,7 @@
 - `.claude/skills/`
 - `.github/workflows/`
 - `./product.yml`
+- `./README.md` (added at P3 for req-007 FR-007.10)
 
 ## Scope
 - In: backlog entries 0000062, 0000081, 0000106, 0000107, 0000109, 0000114, 0000117, 0000124, 0000125, and 0000126. Setting `product.yml` to the current release. A `plan/_migrations/` record for each of the eight existing migrations in this repo.

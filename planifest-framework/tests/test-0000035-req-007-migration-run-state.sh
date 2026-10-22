@@ -134,9 +134,8 @@ assert_equals "no" "$(yes_no grep -q '_done' <<< "$PIPE")" "req-007: pipeline-re
 OPS="$(cat "$FRAMEWORK/project-operations.md")"
 assert_contains "plan/_migrations/" "$OPS" "req-007: project-operations.md defines pending by plan/_migrations/"
 
-# FR-007.10 also asks README.md to name plan/_migrations/. gate-write blocks
-# that edit, because design.md doesn't cover README.md. The orchestrator holds
-# it as a deviation, so this suite doesn't check README.md yet.
+README_ROW="$(grep -E '^\| \[migrations/\]' "$REPO/README.md" || true)"
+assert_contains "plan/_migrations/" "$README_ROW" "req-007: README.md names plan/_migrations/ for run state"
 
 INDEX_ROW="$(grep -E '^\| ADR-005 \| Markdown migration files' "$REPO/docs/decisions-index.md" || true)"
 assert_equals "yes" "$(yes_no test -n "$INDEX_ROW")" "req-007: decisions-index.md keeps the 0000005 ADR-005 row"
