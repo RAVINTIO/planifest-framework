@@ -16,7 +16,7 @@ version: "0.1.0"
 
 | Term | Definition | Aliases | Used In |
 |------|-----------|---------|---------|
-| Drift check | The script `scripts/skill-drift-check.mjs`. It compares each source `SKILL.md` with its installed copy by bytes. It warns and never blocks. It exits 0 on a match, 1 on drift or a missing copy, and 2 when it can't compare (US-002). | skill drift check | planifest-framework |
+| Drift check | The script `scripts/skill-drift-check.mjs`. It compares each source `SKILL.md` with its installed copy after it reproduces setup's four path rewrites and strips one leading byte order mark from both copies. It warns and never blocks. It exits 0 on a match, 1 on drift or a missing copy, and 2 when it can't compare (US-002). | skill drift check | planifest-framework |
 | Drift | An installed `SKILL.md` that differs from its source copy. | stale copy | planifest-framework |
 | Installed copy | The copy of a framework file that a setup script writes into a tool folder, such as `.claude/skills/`. The drift check reads it and setup owns it. | | planifest-framework |
 | Source copy | The canonical file under `planifest-framework/`, such as `planifest-framework/skills/{name}/SKILL.md`. | source | planifest-framework |
@@ -52,7 +52,7 @@ version: "0.1.0"
 | Normal route | How the gate judges a path with no shortcut: through the design scope, or the Fast Path scope verdict. | | planifest-framework |
 | Fast Path | The route for a trivial change with no feature brief, execution plan, or ADR. | | planifest-framework |
 | Scope record | The file `plan/.fast-path-scope`. It lists the target paths of one Fast Path change. | Fast Path scope record | planifest-framework |
-| `path-rules.mjs` | The shared module that holds `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, and `shown`. `gate-write.mjs`, `ratchet-check.mjs`, and `em-dash-guard.mjs` import it. | | planifest-framework |
+| `path-rules.mjs` | The shared module that holds `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, and `shown`. Today `gate-write.mjs`, `shell-write-guard.mjs`, and `ratchet-check.mjs` import it. `em-dash-guard.mjs` imports `shown` from it only once req-011 lands. | | planifest-framework |
 | `shown()` | The function in `path-rules.mjs` that escapes quoted text for hook output and caps its length. It must not cut an escape sequence in half (US-011). | | planifest-framework |
 | `gate-write` | The PreToolUse hook on **Write** and **Edit**. It blocks writes to `src/` without a confirmed design or a matching scope record. | write gate | planifest-framework |
 | `ratchet-check` | The PreToolUse hook that blocks writes removing acceptance-criteria or in-scope lines while a loop is active. | ratchet | planifest-framework |
