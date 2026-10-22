@@ -121,4 +121,8 @@ Streams (start commit `8375ca7`):
 - Design critic P1 iteration 1: REJECT (1 critical, 2 major, 8 minor). Mechanical check clean.
 - Deviation (P1, unclassified): the source orchestrator `SKILL.md` holds a byte order mark, so the drift check strips one from both copies, not only the installed copy. `design.md` now says so.
 - Backlog filed (P1): 0000170 (orchestrator skill byte order mark breaks the setup frontmatter parse).
+- Design critic P1 iteration 2: REJECT (0 critical, 1 major, 9 minor). Ten iteration 1 findings resolved, two partly.
+- Decision (P1): a split under an active loop only adds files and lines, and any move of an existing criterion waits until no loop is active or a human writes the approve line / reason: `ratchet-check.mjs` blocks a moved criterion, and agents never write `.ratchet-approve`.
+- Decision (P1): the req-005 suite also scans `src/*/docs/` / reason: two bare citations sit in `src/setup-hook-integration/docs/`.
+- Decision (P1): one req-008 timed case measures NFR-001 for every hook change in this feature / reason: req-009 and req-011 add no timing of their own.
 - Shared files for P3, updated: the orchestrator skill (req-002 to req-006), the ship agent skill (req-003, req-005), `autonomous-run-standards.md` (req-005, req-006), the loop runner skill (req-006, req-007), and the spec agent skill (req-005, req-007).

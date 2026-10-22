@@ -22,7 +22,7 @@ As the human on the loop, I see which installed skills differ from source when a
 - The script sits at `planifest-framework/scripts/skill-drift-check.mjs`. It uses Node built-ins only and starts no process.
 - It reads files and never writes, moves, or deletes one.
 - The project root defaults to the folder that holds `planifest-framework/`, found from the script's own path. A `--root <dir>` argument overrides it, so suites can point it at a fixture.
-- It finishes in under 1 s on this repo (NFR-002). A timed case in FR-002.6 checks this.
+- It finishes in under 1 s on this repo (NFR-002). A timed case in FR-002.6 checks this against a full fixture install of every source skill.
 
 ### FR-002.2 Finding the active tool
 
@@ -96,7 +96,15 @@ A new suite `planifest-framework/tests/test-0000036-req-002-skill-drift-check.sh
 - a match, where the source `SKILL.md` starts with a BOM and the installed copy keeps it, as `setup.sh` leaves it: exit 0
 - a match, where the source `SKILL.md` starts with a BOM and the installed copy has none: exit 0
 - a match built from this repo's real `planifest-orchestrator/SKILL.md`, which holds a BOM. The suite copies it with `cp` and applies the `setup.sh` `sed` rewrites: exit 0
-- a timed case for NFR-002: the suite runs the script against this repo, with no `--root`. It asserts a run time under 1 s and exit 0 or 1, never 2. `.claude/` is git-ignored, so a fresh clone has no install and exits 1 with `not installed`. Step 3 of req-001 FR-001.5 checks for exit 0 after setup runs in this repo
+- a timed case for NFR-002, built as a full fixture install:
+  1. The suite copies every source skill's `SKILL.md` from `planifest-framework/skills/` into `{fixture}/.claude/skills/{skill}/SKILL.md`.
+  2. It applies setup's four path rewrites to each copy with the `setup.sh` `sed` expressions.
+  3. It writes a valid `claude-code` marker at `{fixture}/.claude/.planifest-setup-flags`.
+  4. It copies `planifest-framework/skills/` into the fixture as the source.
+  5. It runs the script with `--root {fixture}` and asserts exit 0 and a run time under 1 s.
+
+  The fixture holds every source skill, 21 today, so the timed case measures a full comparison on CI. `.claude/` is git-ignored, so a run against this repo on CI would compare nothing.
+- a run against this repo with no `--root`: exit 0 or 1, never 2. A fresh clone has no install and exits 1 with `not installed`. This case checks only the default root, and it isn't the NFR-002 measurement. Step 3 of req-001 FR-001.5 checks for exit 0 after setup runs in this repo
 - a stale copy: exit 1, and stderr names the skill
 - a missing copy: exit 1, and stderr names the skill
 - no installed copies: exit 1 with `not installed`

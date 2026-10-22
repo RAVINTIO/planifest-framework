@@ -23,13 +23,16 @@ As the human on the loop in a downstream project, I get a migration that re-runs
   - each `skills/*/SKILL.md`, with the `scripts/`, `assets/`, and `references/` folders that setup copies beside it
   - every file in `templates/`
   - every top-level file in `standards/`, but not `standards/reference/`
+  - each file below `standards/` that a `bundle_standards` entry names by sub-path, today only `standards/library-standards/_version-policy.md`
   - every file in `schemas/`
   - each `hooks/enforcement/*.mjs` file and each `hooks/adapters/` file
   - each `workflows/*.md` file
   - the hook wiring that setup writes into a tool's settings file
 - The template and standard rules follow what setup does, not what the manifests name. `copy_skills()` in `setup.sh` (lines 111-148) works like this:
   - If a skill's `bundle_templates` key is absent or empty, setup copies every file in `templates/` into that skill's `assets/templates/`. The same fallback applies to `bundle_standards` and the top-level standards.
-  - Six skills omit `bundle_templates`, and three set it to `[]`. Nine skills omit `bundle_standards`. So each install carries every template and every top-level standard.
+  - Six skills omit `bundle_templates`, and three set it to `[]`. So each install carries every template.
+  - Four skills omit `bundle_standards`: the implementer, refactor, refresh-setup, and test-writer skills. Five set it to `[]`: the build-assessment agent, design critic, loop runner, reversal assessor, and scope-lock agent. Both cases trigger the fallback, so each install carries every top-level standard.
+  - A selective `bundle_standards` list copies each named path from `standards/` into `references/`, sub-paths included. The codegen and validate agents name `library-standards/_version-policy.md`, so setup copies that file too. `setup.ps1` reads the orchestrator's list, which names the same file.
   - The orchestrator's `SKILL.md` starts with a UTF-8 byte order mark. The `awk '/^---$/'` parse never finds its frontmatter, so `setup.sh` ignores its `bundle_templates` key and copies every template. `setup.ps1` reads the key. Backlog 0000170 covers that defect.
 - A `bundle_templates` or `bundle_standards` list never narrows the set. The copy-all fallback reaches every file, so a change to any of them needs a re-run.
 - Git hooks in `hooks/` don't count. Git runs them in place through `core.hooksPath`, so they need no re-run.
@@ -100,6 +103,7 @@ A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and th
 - `planifest-framework/standards/framework-update-policy.md` gains a section on setup-delivered files. It defines them as FR-001.1 does:
   - each skill's `SKILL.md`, with its `scripts/`, `assets/`, and `references/` folders
   - every file in `templates/` and `schemas/`, and every top-level file in `standards/`
+  - each file below `standards/` that a `bundle_standards` entry names, such as `standards/library-standards/_version-policy.md`
   - each enforcement hook, hook adapter, and workflow file
   - the hook wiring that setup writes into a settings file
 - The section says that setup copies every template and top-level standard when a skill's `bundle_templates` or `bundle_standards` key is absent or empty. So a release can't treat a template or standard as safe because no manifest names it.
