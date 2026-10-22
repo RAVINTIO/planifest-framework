@@ -71,6 +71,7 @@ never_admits() {
   assert_contains "Change or Feature Pipeline" "$ERR" "req-009: the gate-write reason for $2 points to the Change or Feature Pipeline"
   run_guard "touch $2"
   assert_equals "2" "$CODE" "req-009: a record listing $1 never admits $2 in the shell guard"
+  assert_contains "0000033 ADR 009" "$ERR" "req-009: the shell guard reason for $2 names 0000033 ADR 009"
 }
 
 # =============================================================================
@@ -83,11 +84,14 @@ never_admits ".claude/settings.json" ".claude/settings.json"
 never_admits ".claude/settings.local.json" ".claude/settings.local.json"
 never_admits "planifest-framework/setup/claude-code.sh" "planifest-framework/setup/claude-code.sh"
 never_admits "Planifest-Framework/Hooks/x.mjs" "Planifest-Framework/Hooks/x.mjs"
+never_admits "planifest-framework/" "Planifest-Framework/Hooks/x.mjs"
 
 # Control: the same record still admits a path off the list.
 record "planifest-framework/"
 run_gate "planifest-framework/workflows/x.md"
 assert_equals "0" "$CODE" "req-009: a record listing planifest-framework/ still admits planifest-framework/workflows/x.md"
+run_guard "touch planifest-framework/workflows/x.md"
+assert_equals "0" "$CODE" "req-009: a record listing planifest-framework/ still admits planifest-framework/workflows/x.md in the shell guard"
 
 # =============================================================================
 echo ""

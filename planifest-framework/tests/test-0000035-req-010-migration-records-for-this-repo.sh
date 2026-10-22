@@ -111,6 +111,8 @@ for path in "$MIGRATIONS"/*.md; do
   else
     assert_contains "$exception_line" "$BUILD_LOG_TEXT" \
       "req-010: $name has no record, so the build log holds its Exception waiting line"
+    assert_equals "1" "$(grep -cF -- "$exception_line" <<< "$BUILD_LOG_TEXT")" \
+      "req-010: the build log holds exactly one Exception waiting line for $name"
   fi
 done
 assert_equals "8" "$COUNT" "req-010: the repo has eight migrations to account for"
