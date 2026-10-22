@@ -109,20 +109,24 @@ export function norm(p) {
 }
 
 /**
- * p as a block reason prints it: each control character escaped, as \n, \r,
- * \t, or \xNN, and the result cut to max characters. A target that holds a
- * newline can't then forge a second line of hook output (G-S11).
+ * p as a block reason prints it: each control or format character escaped,
+ * as \n, \r, \t, \xNN, or \u{XXXX}, and the result cut to max characters. A
+ * target that holds a newline can't then forge a second line of hook output
+ * (G-S11). A bidirectional control can't reorder the text on display (G-N3).
  */
-// C0 and C1 controls, DEL, and the Unicode line and paragraph separators.
-const CONTROL_RE = new RegExp(`[\\x00-\\x1f\\x7f-\\x9f${String.fromCharCode(0x2028, 0x2029)}]`, "g");
+// C0 and C1 controls with DEL (Cc), format characters such as the
+// bidirectional controls U+202A to U+202E and U+2066 to U+2069 (Cf), and the
+// Unicode line and paragraph separators (Zl, Zp).
+const CONTROL_RE = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu;
 
 export function shown(p, max = 80) {
   const escaped = String(p).replace(CONTROL_RE, (c) => {
     if (c === "\n") return "\\n";
     if (c === "\r") return "\\r";
     if (c === "\t") return "\\t";
-    const code = c.charCodeAt(0);
-    return code > 0xff ? `\\u${code.toString(16)}` : `\\x${code.toString(16).padStart(2, "0")}`;
+    const code = c.codePointAt(0);
+    const hex = code.toString(16).toUpperCase();
+    return code > 0xff ? `\\u{${hex.padStart(4, "0")}}` : `\\x${hex.toLowerCase().padStart(2, "0")}`;
   });
   return escaped.slice(0, max);
 }

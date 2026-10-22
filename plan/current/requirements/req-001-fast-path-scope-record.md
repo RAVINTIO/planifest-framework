@@ -65,6 +65,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - Fast Path step 5 (Log the change) writes a changelog entry that lists every path from the scope record. The `fast-path.md` changelog template gains a field for those paths.
 - The notice prints the resolved `relPath`, cut to its first 200 characters. It never prints raw record text.
 - Every reason and notice that prints a target path passes it through `shown` in `path-rules.mjs` (P5 finding G-S11). `shown` escapes each control character as `\n`, `\r`, `\t`, or `\xNN`, so a target that holds a newline can't forge a second line of hook output.
+- `shown` also escapes each Unicode format character and the line and paragraph separators U+2028 and U+2029 (P5 re-review finding G-N3). Format characters include the bidirectional controls U+202A to U+202E and U+2066 to U+2069. A character above U+00FF prints as `\u{XXXX}`, so it can't reorder or hide text on display.
 - The "not listed in the Fast Path scope record" and "not covered by the confirmed design" reasons cut the escaped path to 80 characters, as the resolution reasons do.
 - The shell-write guard's own lines pass each target and shell word through `shown` too, cut to 80 characters (P5 re-review finding G-N1). That covers these lines:
   - the "Shell write blocked" line
