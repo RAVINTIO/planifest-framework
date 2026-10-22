@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p1"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic-p1
 
@@ -18,8 +18,8 @@ status: "active"
 | Iteration | `1` of cap `3` |
 | Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `reopened` |
-| Last updated | `2026-10-22T06:02:00Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-22T06:08:00Z` |
 
 ---
 
@@ -56,7 +56,8 @@ status: "active"
 ### Re-run after the req-002 split (2026-10-22T06:02:00Z)
 - **Approach:** 2, iteration count reset for a re-run that the human on the loop requested.
 - **Action:** the human on the loop asked for req-002 to split into req-002 and req-008 (US-008), then for P1 and P2 to repeat by assessing the existing work. A fresh critic instance reviews the P1 artifacts after the split.
-- **Observation:** pending.
+- **Observation:** APPROVE, 0 critical, 0 major, 5 minor, in `plan/current/design-critic-p1-split.md`. No check was lost in the split. Minors 4 and 5 name req-001 and req-007 as split candidates.
+- **Decision:** done. The orchestrator splits req-001 and req-007 and fixes the other three minors with the loop closed, so the ratchet stays unarmed. The P2 critic then reviews the combined P1 and P2 set, splits included.
 
 ---
 
