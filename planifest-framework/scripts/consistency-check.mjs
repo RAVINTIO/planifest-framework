@@ -60,12 +60,12 @@ for (const f of reqFiles) {
     findings.push(`${f}: no Source user story (US-nnn) — story↔requirement traceability broken`);
   }
 
-  // 2. ≤3 acceptance criteria (counted inside the AC section only)
+  // 2. ≤10 acceptance criteria (counted inside the AC section only). Aim for 3.
   const ac = section(text, "Acceptance Criteria");
   if (ac !== null) {
     const count = (ac.match(/^\s*-\s*\[[ x]\]/gim) ?? []).length;
-    if (count > 3) {
-      findings.push(`${f}: ${count} acceptance criteria (max 3 per requirement — split the story)`);
+    if (count > 10) {
+      findings.push(`${f}: ${count} acceptance criteria (max 10 per requirement, aim for 3 — split the story)`);
     }
   }
 }

@@ -175,6 +175,14 @@ cat > "$CLEAN/requirements/req-001-demo.md" <<'MD'
 ## Acceptance Criteria
 - [ ] one
 - [ ] two
+- [ ] three
+- [ ] four
+- [ ] five
+- [ ] six
+- [ ] seven
+- [ ] eight
+- [ ] nine
+- [ ] ten
 ## Dependencies
 - None. See ADR-001.
 MD
@@ -195,7 +203,7 @@ BAD="$TMP/bad/plan/current"; mkdir -p "$BAD/requirements" "$BAD/adr"
 cat > "$BAD/design.md" <<'MD'
 # Design
 MD
-# defect 1: requirement with no Source story; defect 2: >3 acceptance criteria
+# defect 1: requirement with no Source story; defect 2: >10 acceptance criteria
 cat > "$BAD/requirements/req-001-orphan.md" <<'MD'
 # Requirement: REQ-001 - Orphan
 ## Acceptance Criteria
@@ -203,6 +211,13 @@ cat > "$BAD/requirements/req-001-orphan.md" <<'MD'
 - [ ] two
 - [ ] three
 - [ ] four
+- [ ] five
+- [ ] six
+- [ ] seven
+- [ ] eight
+- [ ] nine
+- [ ] ten
+- [ ] eleven
 ## Dependencies
 - References ADR-009 which does not exist.
 MD
@@ -216,7 +231,7 @@ MD
 OUT=$(node "$CC" "$BAD" 2>&1); RC=$?
 assert_equals "1" "$RC" "req-014: seeded-defect fixture exits non-zero"
 assert_contains "US"          "$OUT" "req-014: catches missing story traceability"
-assert_contains "acceptance"  "$OUT" "req-014: catches >3 acceptance criteria"
+assert_contains "acceptance"  "$OUT" "req-014: catches >10 acceptance criteria"
 assert_contains "ADR-009"     "$OUT" "req-014: catches orphaned ADR reference"
 assert_contains "mitigation"  "$OUT" "req-014: catches risk without mitigation"
 assert_contains "Scope"       "$OUT" "req-014: catches design without scope/component paths"

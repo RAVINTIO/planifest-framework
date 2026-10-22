@@ -24,7 +24,7 @@ Break the feature into discrete features. Each feature should be small enough th
 
 > **Rule of thumb:** If a feature has more than 3 user stories, it's too big. Split it further. Big features should have many small features, not a few large ones. If the repo has `planifest-overrides/release-budget.yml`, its size-point budget replaces this rule.
 >
-> **User story format:** Write each story as "As a [role], I [action], so that [outcome]." Each story becomes one requirement doc. If a story implies more than 3 acceptance criteria, split it into two stories.
+> **User story format:** Write each story as "As a [role], I [action], so that [outcome]." Each story becomes one requirement doc. Aim for 3 acceptance criteria per story. If a story needs more than 3, prefer splitting it into two stories. The consistency check allows at most 10.
 
 | Feature | User Stories | Priority | Wave |
 |---------|-------------|----------|------|

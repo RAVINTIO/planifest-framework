@@ -49,6 +49,7 @@ status: "active"
 - **Action:** one fix agent applies approach 2 and the three minors. A fresh critic then reviews.
 - **Observation:** every change applied. The agent also added three `- [ ]` lines to req-002, which now has six acceptance criteria, so `consistency-check.mjs` exits 1. The dispatch prompt left out the three-criteria limit. The ratchet blocks folding the lines back without a human `.ratchet-approve` line.
 - **Decision:** waiting for the human on the loop: the approval line is a human-only control.
+- **Resolution (2026-10-22):** the human on the loop raised the limit to 10 criteria, with 3 preferred. req-002 keeps six criteria, and `consistency-check.mjs` reports clean. A fresh critic instance now reviews approach 2.
 
 ---
 

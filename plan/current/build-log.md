@@ -121,3 +121,6 @@ Streams formed (dependency test: stories that change the same file share a strea
 - Decision (P1): sanctioned scripts for Hard Limit 8 are `archive-current.mjs`, `set-product-release.mjs`, `promote-to-regression.sh`, `refresh-delete-boot-files.sh` and `.ps1`, and `setup.sh` and `setup.ps1` / reason: these are the scripts skill text runs to write files.
 - Human touchpoint (P1): req-002 holds six acceptance criteria after an approach 2 fix, and folding three back needs a human `.ratchet-approve` line [outside list]
 - Backlog filed (P1): 0000129 (the ratchet blocks undoing an uncommitted acceptance-criteria addition).
+- P1 exchange (acceptance-criteria limit): Q: write the `.ratchet-approve` line to fold req-002 back to three criteria? / A: "Change to allow 10 acceptance criteria but favour 3."
+- Decision (P1): `consistency-check.mjs` allows up to 10 acceptance criteria per requirement, and the feature brief template asks for 3 / reason: instruction from the human on the loop. req-002 keeps its six criteria, so no fold and no `.ratchet-approve` line are needed.
+- Human touchpoint (P1) resolved: `consistency-check.mjs` exits 0 on `plan/current`. Governance suite and its regression copy pass, 95 tests each.
