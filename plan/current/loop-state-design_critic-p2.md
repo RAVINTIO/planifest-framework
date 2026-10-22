@@ -36,7 +36,7 @@ Append-only: one record per iteration. Never rewrite a prior record.
 ### Iteration 2 (2026-10-22T06:25:00Z)
 - **Approach:** 1
 - **Action:** one fix agent. M1: new ADR-012 records the limit change, and the build log records it as a P1 deviation the human on the loop directed. The minors get the fixes the verdict names. AC lines stay intact while the ratchet is armed.
-- **Observation:** pending.
+- **Observation:** all nine findings fixed, with no hook block and no `- [ ]` or In Scope line changed. ADR-012 added. `consistency-check.mjs` and `stream-reconcile.mjs` both exit 0. A fresh critic instance now reviews.
 - **Decision:** continue: verdict pending.
 
 ---
