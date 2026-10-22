@@ -109,3 +109,8 @@ Streams (start commit `8375ca7`):
 - Deviation (P1, unclassified): the design assumed setup copies `SKILL.md` byte for byte. Setup rewrites four relative paths, and PowerShell 5 adds a byte order mark. req-002 makes the drift check apply both before it compares. `design.md` now says so.
 - Decision (P1): the 0.34.0 migration targets every installed project, the framework source included / reason: the migrator's target check would otherwise record `not applicable` here, against the design's `applied`.
 - Decision (P1): P3 updates `test-0000035-req-007` and `test-0000035-req-010`, which hard-code eight migrations / reason: the new migration makes nine.
+- Stream 03 returned req-003 to req-007, with two or three criteria each and no split candidates.
+- Decision (P1): hard-limit citations take the form `the {name} rule ({source} Hard Limit N)` / reason: the form keeps the existing "Hard Limit N" text that suites assert.
+- Decision (P1): req-006 changes only the absent-key and absent-file default. An invalid `design_critic` value still reads as `off` / reason: the narrowest change that meets the confirmed design.
+- Decision (P1): cross-feature ADR citations use a space, as in `0000033 ADR 004` / reason: `consistency-check.mjs` reads `ADR-NNN` as a local ADR, which backlog 0000079 already covers.
+- Shared files for P3, updated: the orchestrator skill (req-002 to req-006), the ship agent skill (req-003, req-005), `autonomous-run-standards.md` (req-005, req-006), the loop runner skill (req-006, req-007), and the spec agent skill (req-005, req-007).

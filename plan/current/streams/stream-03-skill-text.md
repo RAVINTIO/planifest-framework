@@ -19,17 +19,23 @@ updated: "2026-10-22T21:33:56Z"
 
 ## Files changed
 
-- none yet
+- `plan/current/requirements/req-003-ship-commit-subjects.md`
+- `plan/current/requirements/req-004-run-mode-anchor-format.md`
+- `plan/current/requirements/req-005-hard-limits-cited-by-name.md`
+- `plan/current/requirements/req-006-design-critic-default.md`
+- `plan/current/requirements/req-007-story-split-step.md`
 
 ## Declares
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
+| `hard-limit-citation-form` | `plan/current/requirements/req-005-hard-limits-cited-by-name.md` | req-005 |
+| `split-step-marker` | `plan/current/requirements/req-007-story-split-step.md` | req-007 |
 
 ## Consumes
 
-- none
+- `migrate-0.34.0-rerun-setup.md` from req-001 (stream-02), which carries the boot template change into `CLAUDE.md`
 
 ## Next step
 
-P1: one primary-tier subagent writes req-003 to req-007 from US-003 to US-007 in `plan/current/feature-brief.md`.
+P1 join: wait for stream 01, then run the design critic over the joined P1 set.
