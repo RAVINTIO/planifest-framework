@@ -110,6 +110,7 @@ A new suite `planifest-framework/tests/test-0000036-req-002-skill-drift-check.sh
 - no installed copies: exit 1 with `not installed`
 - no valid marker: the script checks every skills folder it finds
 - a missing source skills folder: exit 2
+- a rewrite-list check: the suite reads the four path rewrites from the `sed` expressions in `setup.sh` `copy_skills()` and from the `-replace` calls in `setup.ps1` `Copy-PlanifestSkills`. It asserts that the script's list matches both (R-012).
 - the tool map: each entry matches `TOOL_SKILLS_DIR` in its `setup/{tool}.sh`
 - the orchestrator Resume Detection text names the script and `planifest-refresh-setup`
 

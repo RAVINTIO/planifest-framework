@@ -38,8 +38,8 @@ The design lists 0000035 ADR 001 and 0000032 ADR 004 as constraints: hooks use N
 - **Stack:** The stack stays as the design declares it. Stream 01 adds no language, runtime, library, or service.
 - **One module:** The req-008, req-009, and req-011 rules live in `path-rules.mjs`. The hooks call it and hold no copy of the rules.
 - **Node built-ins only:** The new code uses `node:fs` and `node:path`. The file-type check uses `lstatSync`, `openSync`, `fstatSync`, and `fs.constants` (ADR-002). The `shown()` cut uses plain string code (ADR-004).
-- **No new spawn:** This feature adds no process spawn and no new dependency (NFR-003). The changed hooks are `path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, and `em-dash-guard.mjs`. They import only `node:` modules and `./path-rules.mjs`.
-- **One kept spawn:** `ratchet-check.mjs` already imports `node:child_process` (`:53`) and spawns `git` (`:150`). This feature keeps that spawn and adds no other. It adds one import to that hook, `./path-rules.mjs`. Backlog 0000128 tracks removing the spawn.
+- **No new spawn:** This feature adds no process spawn and no new dependency (NFR-003). The changed hooks are `path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, and `em-dash-guard.mjs`. They import only `node:` modules, `./path-rules.mjs`, and `./read-stdin.mjs`, which four hooks already import.
+- **One kept spawn:** `ratchet-check.mjs` already imports `node:child_process` (`:53`) and spawns `git` (`:150`). This feature keeps that spawn and adds no other. The hook already imports `./path-rules.mjs` (`:60`), and this feature adds no import to it. Backlog 0000128 tracks removing the spawn.
 - **Source check:** The req-008 suite checks the source of those five files. It allows the one known `git` spawn in `ratchet-check.mjs` by name and fails on any other `node:child_process` import or spawn.
 - **Tests:** Each requirement gets a Bash suite under `planifest-framework/tests/`, run through `run-tests.sh` and the existing CI jobs. req-010 changes `run-tests.sh` itself with one Bash line.
 
@@ -62,7 +62,7 @@ The design lists 0000035 ADR 001 and 0000032 ADR 004 as constraints: hooks use N
 
 **Positive:**
 - All four enforcement hooks print and judge through the same code, so their output and verdicts match.
-- Hook latency stays bounded by file-system calls, with no process start.
+- Hook latency stays bounded by file-system calls, with no new process start. `ratchet-check.mjs` keeps its one `git` spawn.
 
 **Negative:**
 - A fault in `path-rules.mjs` now affects four hooks, not three. A syntax error there disables `em-dash-guard.mjs` too.

@@ -15,7 +15,7 @@ status: "active"
 | Loop id | `design_critic` |
 | Owning phase | `P2` |
 | Toggle level | `on` |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `continue` |
@@ -34,7 +34,13 @@ status: "active"
 ### Iteration 2 (2026-10-22T22:20:00Z)
 - **Approach:** 1
 - **Action:** three fix agents in parallel by ADR block, then a fresh critic instance.
-- **Observation:** fixes committed. Backlog 0000162 and 0000164 filed. The orchestrator aligned `design.md`, `scope.md`, R-012, and R-019 with the end-of-P6 setup run and the count of 14 double-encoded skills. Fresh critic verdict pending.
+- **Observation:** fixes committed. Backlog 0000162 and 0000164 filed. The orchestrator aligned `design.md`, `scope.md`, R-012, and R-019 with the end-of-P6 setup run and the count of 14 double-encoded skills. Fresh critic verdict: REJECT, 0 critical, 1 major, 4 minor, in `plan/current/design-critic-p2-iteration-2.md`. Twelve of thirteen iteration 1 findings resolved. Major: the NFR-003 import allowlist leaves out `./read-stdin.mjs`, which four hooks import today.
+- **Decision:** continue: the orchestrator fixes the major and all four minor findings itself, because each is a one-line change. A fresh critic instance then reviews.
+
+### Iteration 3 (2026-10-22T22:35:00Z)
+- **Approach:** 1
+- **Action:** orchestrator fixes to NFR-003, R-010, ADR-001, req-008, req-002, ADR-005, and ADR-007. Then a fresh critic instance.
+- **Observation:** pending
 - **Decision:** pending
 
 ---

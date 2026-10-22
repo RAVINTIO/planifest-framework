@@ -76,6 +76,7 @@ As the human on the loop, I rely on the write gate to treat a folder or FIFO at 
 - A timed case runs `gate-write.mjs` with a regular `design.md` and asserts it finishes under 500 ms (NFR-001).
 - A regular `design.md` with mode `000` exits 0, when the suite runs as a non-root account. The suite skips this case under root.
 - A source check asserts that `path-rules.mjs` still imports no `node:child_process` (0000035 ADR 001).
+- The same source check covers NFR-003 over five files: `path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, `em-dash-guard.mjs`, and `ratchet-check.mjs`. Each imports only `node:` modules, `./path-rules.mjs`, and `./read-stdin.mjs`. The one `git` spawn in `ratchet-check.mjs` passes by name (backlog 0000128), and any other `node:child_process` use fails.
 
 ### Non-functional
 

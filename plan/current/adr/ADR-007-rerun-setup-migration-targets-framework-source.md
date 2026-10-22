@@ -31,7 +31,7 @@ ADR-006 decides that one migration covers 0.33.0 and 0.34.0. This ADR decides wh
 6. The agent commits the record with the tracked `planifest-overrides/setup-config/claude-code.md` change that setup writes.
 7. If P7, P8, or P9 changes a setup-delivered file, the agent repeats the diff check and the setup run before the P9 push. The record stays as written, because it still describes a completed run.
 
-The run waits until the end of P6 because P4 to P6 can still change setup-delivered files. A P5 security fix to `path-rules.mjs` is one example. A P3 run would leave this repo's installed hooks stale under an `applied` record. A run after the last change makes the record match the install that ships.
+   The run waits until the end of P6 because P4 to P6 can still change setup-delivered files. A P5 security fix to `path-rules.mjs` is one example. A P3 run would leave this repo's installed hooks stale under an `applied` record. A run after the last change makes the record match the install that ships.
 8. The migration still applies on a fresh 0.34.0 install. Setup is safe to re-run.
 9. Future re-run-setup migrations follow this rule. The 0.31.0 migration keeps its downstream-only Target, because its record here already exists.
 
