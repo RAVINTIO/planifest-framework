@@ -16,6 +16,8 @@
  *     at cwd otherwise. With no marker, the root is cwd.
  *     A marker inside plan/ or docs/ of a higher marked folder never counts,
  *     because those prefixes are always permitted and anyone can plant one.
+ *     Nor does a marker with an always-permitted basename, such as
+ *     claude.md, in its path below a higher marked folder (0000035 ADR-008).
  *   - Both sides of the root comparison are real paths, with symbolic links
  *     resolved. A missing target resolves through its nearest existing parent.
  *   - plan/.orchestrator-active and plan/current/design.md are looked up from
@@ -113,12 +115,23 @@ function realPathOf(p) {
   return join(realpathSync(current), ...missing);
 }
 
+// planted: whether the marked folder at rel, a path relative to a higher
+// marked folder, is distrusted. Its first segment is plan or docs (F1), or
+// any of its segments, its own name included, is an always-permitted
+// basename such as claude.md (0000035 ADR-008). An agent can plant a marker
+// under plan/ and move the folder to src/claude.md, so neither may be a root.
+function plantedAt(rel) {
+  const segments = norm(rel).split("/");
+  if (ALWAYS_PERMITTED_PREFIXES.some((prefix) => prefix === segments[0] + "/")) return true;
+  return segments.some((segment) => ALWAYS_PERMITTED_FILES.includes(segment));
+}
+
 // markedRoot: the nearest trusted marked folder at or above start, a real
 // path, or null when no folder holds a marker. A folder holding
 // planifest-framework/ beats one holding only .git (a .git file counts, for
 // worktrees). A folder that sits inside plan/ or docs/ of a higher marked
-// folder is never a root. Those prefixes are always permitted, so a marker
-// planted there must not move the root (F1).
+// folder, or below an always-permitted basename, is never a root (F1,
+// 0000035 ADR-008). The walk goes on past a distrusted marker.
 function markedRoot(start) {
   // Every marked folder from start up to the file-system root, nearest first.
   const marked = [];
@@ -137,8 +150,7 @@ function markedRoot(start) {
       if (above === candidate.dir) return false;
       const rel = relative(above, candidate.dir);
       if (!rel || rel.startsWith("..") || isAbsolute(rel)) return false;
-      const first = norm(rel).split("/")[0];
-      return ALWAYS_PERMITTED_PREFIXES.some((prefix) => prefix === first + "/");
+      return plantedAt(rel);
     });
   const trusted = marked.filter((m) => !planted(m));
 
