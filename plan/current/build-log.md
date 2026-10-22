@@ -249,6 +249,9 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Fix round 2 committed (`3029a22`). Full suite green.
 - Fresh-context re-review round 2: Low. N-1 and N-4 fixed, N-2 and N-3 partly. New Low findings M-1 (an unwritable settings file still counts as a complete setup run) and M-2 (step 1b's first allowed state reads two ways). M-3 informational.
 - Backlog filed (P5): 0000181 (step 1a checks version strings only, pre-existing) and 0000182 (M-1, M-2, and M-3).
+- Deviation (P5, unclassified): the build-log template quotes the run-mode anchor inline in backticks, where req-004 AC 2 asked for a fenced code block. A note under AC 2 records the change (security finding S-1).
+- Deviation (P5, unclassified): the write gate fails open only on `EACCES` and `EPERM` from the open or `fstat` of a regular `design.md`. The confirmed design said any failed open or read of a regular file fails open. Every other error now reads as no design (security findings hooks 1 and N-1).
+- Deviation (P5, unclassified): a regular `design.md` over 1 MiB reads as no design. The confirmed design set no size limit (security finding hooks 2).
 - Decision (P5): stop the fix loop and defer M-1 to M-3 to backlog 0000182 / reason: each round found smaller Low edge cases, and the gate passes at Low with no Critical, High, or Medium finding.
 - Gate (P5): report produced with specific findings. Overall risk Low after two fix rounds, each confirmed by a fresh-context re-review.
 - Progress: P5 done at 2026-10-22T23:51:49Z: High risk fixed to Low in two rounds, five backlog entries filed
