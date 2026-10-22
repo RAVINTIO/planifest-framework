@@ -51,34 +51,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - A valid, current record blocks every other path with exit 2. The reason names the path and `plan/.fast-path-scope`, and says to add the path to the record or take the Change Pipeline.
 - When `plan/current/design.md` exists, the gate ignores the scope record and applies the design.
 - The `plan/current/**` sentinel check still runs first. A scope record never admits a `plan/current/` write without the sentinel.
-- `path-rules.mjs` exports a constant, `FAST_PATH_ENFORCEMENT_PATHS`, as artifact `path-rules-fast-path-enforcement-paths`. It lists these entries:
-  - `planifest-framework/hooks/`
-  - `planifest-framework/scripts/`
-  - `planifest-framework/setup/`, the per-tool setup scripts such as `claude-code.sh` and `windsurf.sh`
-  - `planifest-framework/standards/autonomous-run-standards.md`
-  - any path whose last segment is `setup.sh` or `setup.ps1`
-  - any path that holds the segment pair `hooks/enforcement/`, which covers every installed hook folder such as `.claude/hooks/enforcement/`
-  - `.git/` and everything below it
-  - any path that holds the segment pair `hooks/adapters/`, which covers every installed Tier 1 adapter such as `.cursor/hooks/adapters/cursor.mjs`
-  - the hook wiring files that `setup.sh` and `setup.ps1` write, listed below
-  - the tool-local settings files that a supported tool loads hooks from, listed below
-- The hook wiring files are the tool settings and config files that register the hooks. `setup.sh` and `setup.ps1` write these:
-  - `.claude/settings.json` (Claude Code)
-  - `.cursor/settings.json` (Cursor)
-  - `.clinerules/hooks.json` (Cline)
-  - `.windsurf/hooks.json` (Windsurf)
-  - `.github/hooks/` (Copilot). The whole folder is listed, because setup writes `planifest.json` there and Copilot may load every file in it.
-  - `.codex/config.toml` (Codex CLI)
-  - `opencode.json` and `.opencode/plugins/@planifest/opencode-hooks/` (OpenCode)
-- The tool-local settings files are files that setup doesn't write but a tool still loads hooks from. They are usually git-ignored, so a PR wouldn't show a change to them. The list holds these:
-  - `.claude/settings.local.json` (Claude Code). It can register hooks, and its `disableAllHooks` key turns every hook off.
-  - `opencode.jsonc` (OpenCode), which OpenCode reads in place of `opencode.json`.
-- The setup scripts name no other local variant. The other supported tools load hooks only from the wiring files above.
-- `planifest-framework/setup/` is on the list because its scripts set the wiring file paths and write their content. A Fast Path edit there would unwire the hooks at the next setup run.
-- Without these entries, a record could list a wiring file and let a Fast Path change unwire `gate-write` itself.
-- Enforcement matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)`, using the existing `norm` export (0000009 ADR 005 normalisation). On a case-insensitive volume, `Planifest-Framework/Hooks/x.mjs` therefore matches `planifest-framework/hooks/`.
-- The same change updates the enforcement list in the `planifest-framework/workflows/fast-path.md` prerequisites to name every entry above. The constant and the doc stay in step, and the suite parity check enforces it.
-- A scope record never admits a path that matches `FAST_PATH_ENFORCEMENT_PATHS`, whatever it lists. The gate blocks that write with exit 2. The reason names the path and 0000033 ADR 009, and says to use the Change or Feature Pipeline.
+- A scope record never admits an enforcement path. [Req-009](req-009-fast-path-enforcement-paths.md) owns `FAST_PATH_ENFORCEMENT_PATHS`, its matching, and the rule that the gate checks it before the record.
 
 ### Self-authorisation and visibility
 
@@ -100,7 +73,7 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 - The agent lists every path the change writes. That includes the `component.yml` that step 4 bumps, when one covers the change. `plan/changelog/` needs no entry, because `plan/` is always permitted.
 - The agent writes a new record over any record already there. A stale record from an interrupted Fast Path therefore never carries into a new change.
 - If the agent commits or switches branch mid-change, it rewrites the record before its next write.
-- If a target matches an enforcement path, the workflow stops and routes the change to the Change or Feature Pipeline. The prerequisites list and `FAST_PATH_ENFORCEMENT_PATHS` name the same entries.
+- Req-009 owns the workflow's enforcement-path stop and its prerequisites list.
 - Step 6 removes the record with `rm -f plan/.fast-path-scope` before `git commit`, as the ship agent removes `plan/.orchestrator-active`. No commit holds the record.
 - The "What is NOT touched" list stays as it is. Fast Path still admits changes with no `src/` target (0000033 ADR 009 and 0000062).
 - The root `.gitignore` gains a `plan/.fast-path-scope` line, so a mid-change `git add -A` can't commit the record. `.gitignore` is always permitted.
@@ -116,12 +89,8 @@ As the human on the loop, I see a Fast Path change written through **Write** and
   - a worktree whose `.git` is a file
   - a ref held only in `packed-refs`
   - each invalid-record case in the Input Validation section
-  - a record that lists `.claude/settings.json`, where the write exits 2
-  - a record that lists `.claude/settings.local.json`, where the write exits 2
-  - a record that lists `planifest-framework/setup/claude-code.sh`, where the write exits 2
-  - a mixed-case target `Planifest-Framework/Hooks/x.mjs`, where the write exits 2
   - an admitted write, where stderr holds the notice that names the record and the path
-- A source check asserts that every enforcement path in the `fast-path.md` prerequisites appears in `FAST_PATH_ENFORCEMENT_PATHS`.
+- The enforcement-path cases and the `fast-path.md` parity check live in the req-009 suite.
 - A source check asserts that the root `.gitignore` holds a `plan/.fast-path-scope` line.
 - A source check asserts that the `fast-path.md` step 5 changelog template holds the field for the record's paths.
 
@@ -134,16 +103,17 @@ As the human on the loop, I see a Fast Path change written through **Write** and
 ## Acceptance Criteria
 
 - [ ] With a current scope record listing `planifest-overrides/instructions/x.md` and no design, a **Write** to that path exits 0. A **Write** to `planifest-overrides/instructions/y.md` exits 2, and the shell-write guard gives the same two results.
-- [ ] A record that lists `planifest-framework/` or `planifest-framework/hooks/` never admits a write to `planifest-framework/hooks/enforcement/gate-write.mjs`, which exits 2. A record whose `branch` or `head` no longer matches admits nothing.
-- [ ] `workflows/fast-path.md` writes the record, with branch and `HEAD`, before the first change and removes it in step 6 before `git commit`. Its enforcement list matches `FAST_PATH_ENFORCEMENT_PATHS`.
+- [ ] A record whose `branch` or `head` no longer matches admits nothing.
+- [ ] `workflows/fast-path.md` writes the record, with branch and `HEAD`, before the first change and removes it in step 6 before `git commit`.
 
 ## Dependencies
 
-- All five requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence, so no two edit the file at once.
+- All six requirements in this stream change `planifest-framework/hooks/enforcement/path-rules.mjs`. One agent builds them in sequence, so no two edit the file at once.
+- [Req-009](req-009-fast-path-enforcement-paths.md) adds the enforcement check that runs before this record. Stream 01 builds it right after this requirement.
 - req-001 extends `evaluateWrite`. It works on the root-relative path that req-003 produces, so its link cases follow req-003's rules. It needs no other artifact from req-003.
 - req-001 reads the root from `resolveRoot`, which req-004 and req-006 change. Its tests use a fixture with a normal cwd, so they don't depend on those changes.
 - `planifest-framework/workflows/fast-path.md` (edited here).
-- 0000033 ADR 009 (enforcement paths) and 0000003 ADR 005 (fail-open on unexpected errors).
+- 0000033 ADR 009 (no `src/` target) and 0000003 ADR 005 (fail-open on unexpected errors).
 - The root `.gitignore` (one line added).
 
 ## Input Validation
