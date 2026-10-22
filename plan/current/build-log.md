@@ -242,14 +242,14 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T07:08:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T08:15:36Z` |
+| Wall-clock | `4056` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-security-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `11` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `5` |
 | Notes | No API, IaC, network surface, or new dependency. The review covers the write gates and the new script. |
 
 - Decision (P5): two reviewers in one parallel batch. One covers the gate hooks (`path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, `ratchet-check.mjs`, the scope record). The other covers `set-product-release.mjs`, the sanctioned-scripts carve-out, and migration records. The orchestrator writes `security-report.md` from both / reason: the two areas share no code path except `resolveRoot`.
@@ -278,4 +278,9 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Deviation (P5, unclassified): the one-link `component.yml` check also covers `--component` paths, not only manifest paths.
 - Deviation (P5, unclassified): `promote-to-regression.sh` writes the destination and the manifest through a temp file and a Node `renameSync`, beyond the refusal checks. `mv` follows a link to a folder at the destination.
 - P5 batch 2 verified by the orchestrator: `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. `consistency-check.mjs` clean, run mode still `autonomous`.
+- P5 re-review 2 (fresh context): G-N1, G-N2, G-N3, and P-N1 to P-N4 all resolved. No new fail-open, no exit code outside the allowed sets, and no regression in another hook. Seven Low or informational items in older or nearby code, none from a fix.
+- Decision (P5): send the seven round 2 items to backlog and stop the review rounds / reason: none is above Low, none comes from a fix, and the orchestrator set this stop rule before round 2.
+- Backlog filed (P5): 0000149 (escape remaining hook output), 0000150 (`set-product-release.mjs` keeps other bytes), and 0000151 (promote script partial state and read race). 0000148 widened to cover a lone CR.
+- Gate (P5): passed. Overall risk after fixes Medium, down from High. Open Medium items each have an owner: G-S04 (0000144), G-S05 (0000146), G-S08 (accepted, R-005), G-S12 (0000143), and P-S13 (accepted, R-021, 0000141). G-S08 and P-S13 rest on accepted risk, so the PR names them for the human on the loop.
+- Progress: P5 done at 2026-10-22T08:15:36Z: two High bypasses closed, 23 findings fixed over two batches, risk Medium
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.

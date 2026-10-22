@@ -100,4 +100,30 @@ Top actions before production:
 
 ## Fix Status
 
-Fixes are in progress in three parallel agents. A fresh-context re-review follows each fix before the P5 gate.
+Every "Fix in progress" row above is fixed. Two rounds of fresh-context re-review confirmed each fix.
+
+| ID | Fix commit | Re-review |
+|---|---|---|
+| G-S01 | `5a5ad24` | Resolved. 12 link variants block, including two links, a link in `plan/`, and a target holding `..`. A 40-link chain judges in 38 ms. |
+| G-S02 | `f82f12d` | Resolved. 149 lookalike probes across every enforcement entry block. A non-ASCII write with a design and no record is unchanged. |
+| G-S03 | `3d8cb71` | Resolved, including case variants and a link to the workflow. |
+| G-S11 | `f535ff2`, then `98cdb6b` (G-N1) and `06c53a8` (G-N3) | Resolved after batch 2. All gate, guard, and ratchet path output escapes control, line separator, bidirectional, and format characters. |
+| P-S03 to P-S07 | `a6b1cd1` | Resolved. |
+| P-S08 | `a6b1cd1`, then `9d15070` (P-N1) | Resolved after batch 2. Hard-linked `component.yml` refused. |
+| P-S09 | `eb09fc8`, then `7bce6e9` (P-N3) | Resolved after batch 2. Linked destinations, temp files, manifests, and `tests/` refused. |
+| P-S10 | `02ca3c2`, then `157e760` (P-N4) | Resolved. The sentence names one accepted tool, `all` included, with none, either, or both flags. |
+
+Re-review round 1 also found G-N2, a Fast Path write that lost its stderr notice. `62936f9` fixed it, and round 2 confirmed the fix. Round 2 found P-N2, a crash on a lone CR in `product.yml`. `ed7bfe4` fixed it.
+
+Round 2 found seven Low or informational items in older or nearby code. None comes from a fix. They sit in backlog 0000148 to 0000151.
+
+## Overall Risk After Fixes
+
+**Medium.** Both High findings are closed. These Medium items stay open, each with an owner:
+- G-S04: Windows path forms (backlog 0000144).
+- G-S05: a nearer root without `CLAUDE_PROJECT_DIR` (backlog 0000146).
+- G-S08: self-authorised scope record (accepted, R-005).
+- G-S12: `design.md` as a folder or FIFO (backlog 0000143).
+- P-S13: forged migration records (accepted, R-021, backlog 0000141).
+
+The human on the loop should review G-S08 and P-S13 at the PR, because both rest on accepted risk.
