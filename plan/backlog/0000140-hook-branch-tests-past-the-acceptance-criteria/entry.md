@@ -25,7 +25,6 @@ The P4 semantic check for 0000035 found every acceptance criterion and Input Val
 - `resolveTarget` (req-003):
   - an `EACCES` or `EIO` error during resolution inside the root
   - a link from outside the root into a loop inside it (`err.reached`)
-  - the `toRootRelative` contract
   - `relPath` keeping its original case
 - `resolveRoot` (req-004):
   - an `EACCES` stop with the target outside the `CLAUDE_PROJECT_DIR` root

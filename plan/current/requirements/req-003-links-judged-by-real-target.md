@@ -37,8 +37,8 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 - If `lstatSync` reports `ENOENT` or `ENOTDIR`, the segment and every segment after it are missing. `resolveTarget` appends the missing segments to the real path so far and collapses any `..` among them as text.
 - A dangling link resolves to its target path. The gate judges that target, not the link path.
 - The hop limit is 40 links per call, the Linux `MAXSYMLINKS` value. A link that leads back to a path already in its own chain counts as a loop.
-- `toRootRelative` keeps its signature and returns `relPath` for an `inside` result and `null` otherwise. Existing callers keep working.
-- `judgeWrite`, `gate-write.mjs`, and `shell-write-guard.mjs` call `resolveTarget` in place of `toRootRelative`.
+- `path-rules.mjs` no longer exports `toRootRelative`. Its last caller moved to `resolveTarget` in this feature, so the P6 cross-model review removed it (finding M2).
+- `judgeWrite`, and so `gate-write.mjs`, calls `resolveTargetBoth` in place of `toRootRelative`. `shell-write-guard.mjs` calls `resolveTarget`.
 - The existing too-long check still runs first. A path over `MAX_PATH_CHARS` or `MAX_PATH_SEGMENTS` keeps its warn-and-allow result (0000032 finding F7).
 
 ### Fail-closed line

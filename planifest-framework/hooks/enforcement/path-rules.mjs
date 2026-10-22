@@ -36,7 +36,6 @@
  *   resolveTarget(root, cwd, target) { status: inside | outside | unresolvable } for a target
  *   resolveTargetText(root, cwd, target) the same, with .. collapsed as text first (G-S01)
  *   resolveTargetBoth(root, cwd, target) the physical and text placements, deduplicated
- *   toRootRelative(root, cwd, target) root-relative path, or null when outside the root
  *   hookCwd(input)                   the folder a hook judges from, or null
  *   evaluateWrite(root, relPath)     { allowed, reason?, warning?, notice? } for a root-relative path
  *   judgeWrite(cwd, target)          resolveRoot, resolveTarget, and evaluateWrite in one call
@@ -404,20 +403,6 @@ function placeTarget(root, cwd, target, textual) {
   }
   const relPath = within(root, abs);
   return relPath === null ? { status: "outside" } : { status: "inside", relPath };
-}
-
-/**
- * The target's path relative to root, with forward slashes and its original
- * case. Returns null when the target is outside root or can't be resolved.
- * Kept for existing callers. The gates call resolveTarget.
- */
-export function toRootRelative(root, cwd, target) {
-  try {
-    const result = resolveTarget(root, cwd, target);
-    return result.status === "inside" ? result.relPath : null;
-  } catch {
-    return null;
-  }
 }
 
 /**

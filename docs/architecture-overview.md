@@ -209,7 +209,7 @@ Every enforcement hook that exits 2 writes a plain-text reason to stderr, where 
 - the destination of `cp`, `mv`, `install`, and `ln`
 - every argument of `rm`, `touch`, and `mkdir`
 
-It judges each target with `toRootRelative` and `evaluateWrite` from `path-rules.mjs`. It tracks the folders each command may run in after `cd`, `pushd`, and `popd`, and judges a relative target against each one. If it can't parse a command or a target, it writes a warning to stderr and allows it. It ignores `git` and can't see writes made inside scripts or interpreters. A boot-file Hard Limit in `standard-boot.md` and `cursor-boot.md` covers those gaps: code changes go through **Write** or **Edit**, never Bash.
+It judges each target with `resolveTarget` and `evaluateWrite` from `path-rules.mjs`. It tracks the folders each command may run in after `cd`, `pushd`, and `popd`, and judges a relative target against each one. If it can't parse a command or a target, it writes a warning to stderr and allows it. It ignores `git` and can't see writes made inside scripts or interpreters. A boot-file Hard Limit in `standard-boot.md` and `cursor-boot.md` covers those gaps: code changes go through **Write** or **Edit**, never Bash.
 
 `setup.sh` and `setup.ps1` register the guard on a `Bash` PreToolUse matcher for Claude Code only. Each removes any earlier `shell-write-guard` group before it adds one, so a re-run leaves exactly one. Other tools rely on the boot-file rule alone. The 0.31.0 migration tells downstream projects to re-run setup.
 

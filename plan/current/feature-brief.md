@@ -56,7 +56,7 @@ Two framework rules contradict the write gate. Fast Path writes no design, and P
 
 | From | To | Method | Contract |
 |------|-----|--------|----------|
-| `gate-write.mjs`, `shell-write-guard.mjs`, `ratchet-check.mjs` | `path-rules.mjs` | ES module import | `resolveRoot`, `toRootRelative`, `evaluateWrite`, `judgeWrite` |
+| `gate-write.mjs`, `shell-write-guard.mjs`, `ratchet-check.mjs` | `path-rules.mjs` | ES module import | `resolveRoot`, `resolveTarget`, `resolveTargetBoth`, `evaluateWrite`, `judgeWrite` |
 | Orchestrator resume detection | `plan/_migrations/` | file read | one record per migration |
 
 ## Stack
