@@ -83,6 +83,10 @@ echo "=== req-008: a valid call still passes ==="
 
 (cd "$R" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" --root "$R" >/dev/null 2>&1)
 assert_equals "0" "$?" "req-008: --root equal to the resolved root exits 0"
+if ln -s "$R" "$SCRATCH/rootlink" 2>/dev/null; then
+  (cd "$R" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" --root "$SCRATCH/rootlink" >/dev/null 2>&1)
+  assert_equals "0" "$?" "req-008: a --root link whose real path is the resolved root exits 0"
+fi
 cp "$R/product.yml" "$SCRATCH/before.yml"
 
 echo "=== req-008: --root ==="
