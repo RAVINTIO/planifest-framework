@@ -57,7 +57,7 @@ req-011 serves US-011. Risk R-003 records that a new cut can shift text that exi
 - Every enforcement hook escapes through one function, so a later fix lands in all of them.
 
 **Negative:**
-- `em-dash-guard.mjs` now fails to load if `path-rules.mjs` is missing or broken. A partial install that copies only `em-dash-guard.mjs` would then exit 0 on every call, so the guard does nothing (0000003 ADR 005).
+- `em-dash-guard.mjs` now fails to load if `path-rules.mjs` is missing or broken. A partial install that copies only `em-dash-guard.mjs` makes Node exit 1 on every call, not 0. Claude Code treats exit 1 as non-blocking, so the guard still does nothing.
 - A cut value can be a few characters shorter than before, so suites that assert a cut value need updating with the change (risk R-003).
 
 **Risks:**
@@ -68,7 +68,7 @@ req-011 serves US-011. Risk R-003 records that a new cut can shift text that exi
 
 - ADR-001 - depends-on. The new import keeps `em-dash-guard.mjs` on Node built-ins with no spawn.
 - 0000032 ADR 004 (shared path rules and repository root) - extends. `em-dash-guard.mjs` joins the importers.
-- 0000003 ADR 005 (exit zero failure mode) - related-to. A load failure of the new import still exits 0.
+- 0000003 ADR 005 (exit zero failure mode) - related-to. A load failure of the new import exits 1, which Claude Code treats as non-blocking.
 
 ## Supersedes
 

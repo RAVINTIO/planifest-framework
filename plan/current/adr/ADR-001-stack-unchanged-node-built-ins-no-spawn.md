@@ -1,6 +1,6 @@
 ---
 title: "ADR 001: Stack unchanged, gate and hook output code on Node built-ins with no spawn"
-summary: "0000036 keeps the declared stack. Every stream 01 change lands in path-rules.mjs, the hooks that import it, run-tests.sh, and Bash suites. The hook code uses Node built-ins only and spawns no process."
+summary: "0000036 keeps the declared stack. Every stream 01 change lands in path-rules.mjs, the hooks that import it, run-tests.sh, and Bash suites. The hook code adds no process spawn and no dependency. The existing git spawn in ratchet-check.mjs stays (backlog 0000128)."
 status: "accepted"
 version: "0.1.0"
 ---
@@ -38,7 +38,9 @@ The design lists 0000035 ADR 001 and 0000032 ADR 004 as constraints: hooks use N
 - **Stack:** The stack stays as the design declares it. Stream 01 adds no language, runtime, library, or service.
 - **One module:** The req-008, req-009, and req-011 rules live in `path-rules.mjs`. The hooks call it and hold no copy of the rules.
 - **Node built-ins only:** The new code uses `node:fs` and `node:path`. The file-type check uses `lstatSync`, `openSync`, `fstatSync`, and `fs.constants` (ADR-002). The `shown()` cut uses plain string code (ADR-004).
-- **No spawn:** `path-rules.mjs` and `em-dash-guard.mjs` import no `node:child_process`. The req-008 suite asserts this for `path-rules.mjs`.
+- **No new spawn:** This feature adds no process spawn and no new dependency (NFR-003). The changed hooks are `path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, and `em-dash-guard.mjs`. They import only `node:` modules and `./path-rules.mjs`.
+- **One kept spawn:** `ratchet-check.mjs` already imports `node:child_process` (`:53`) and spawns `git` (`:150`). This feature keeps that spawn and adds no other. It adds one import to that hook, `./path-rules.mjs`. Backlog 0000128 tracks removing the spawn.
+- **Source check:** The req-008 suite checks the source of those five files. It allows the one known `git` spawn in `ratchet-check.mjs` by name and fails on any other `node:child_process` import or spawn.
 - **Tests:** Each requirement gets a Bash suite under `planifest-framework/tests/`, run through `run-tests.sh` and the existing CI jobs. req-010 changes `run-tests.sh` itself with one Bash line.
 
 ## Alternatives Considered
@@ -68,6 +70,7 @@ The design lists 0000035 ADR 001 and 0000032 ADR 004 as constraints: hooks use N
 
 **Risks:**
 - A future change adds a spawn to `path-rules.mjs` for convenience (risk R-010). The source check on `node:child_process` catches it.
+- The kept `git` spawn in `ratchet-check.mjs` still adds process-start latency and a failure path to that hook. This feature doesn't remove it, and backlog 0000128 tracks the removal.
 
 ## Related ADRs
 

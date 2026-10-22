@@ -40,6 +40,7 @@ req-008 serves US-008. It requires this ADR to narrow 0000003 ADR 005 and to rec
 - **Open guard:** The gate opens a regular `design.md` once, with `O_RDONLY | O_NONBLOCK | O_NOFOLLOW`, using each flag only where `fs.constants` defines it. It calls `fstatSync` on the descriptor before it reads. If the descriptor isn't a regular file, the route is "any other type". This closes the window between `lstatSync` and the open, where another process could swap the file for a FIFO or a link. `O_NONBLOCK` stops the open waiting on a FIFO. `O_NOFOLLOW` makes the open fail on a swapped-in link.
 - **Fail-open line:** If the open, `fstatSync`, or read of a file that `lstatSync` showed as regular throws, the write passes, as 0000003 ADR 005 requires. An `ELOOP` from `O_NOFOLLOW` falls on this side, so a swap after `lstatSync` passes. That mirrors today's behaviour for any read error.
 - **Narrowing:** This ADR narrows 0000003 ADR 005 for the `design.md` step of `evaluateWrite` only. Every other unexpected error in the hooks still exits 0. `check-design.mjs` and `ratchet-check.mjs` keep their reads, and backlog 0000161 tracks them.
+- **Kept bypass:** An agent can run `chmod 000 plan/current/design.md`. The guarded open then throws `EACCES` on a file that `lstatSync` showed as regular, and the gate fails open with no race. This feature keeps that bypass under 0000003 ADR 005. Backlog 0000162 tracks it.
 - **Reason text:** The added line reads `[Planifest] plan/current/design.md is not a regular file, so the gate treats it as no design.` and goes after the reason `scopeVerdict` returns. `scopeVerdict` stays unchanged, so the enforcement list still runs before the record (0000035 ADR 004).
 
 ## Alternatives Considered
@@ -69,6 +70,7 @@ req-008 serves US-008. It requires this ADR to narrow 0000003 ADR 005 and to rec
 - A gate decision now costs one `lstatSync`, one open, and one `fstatSync` before the read, against one `existsSync` and one read today (risk R-011).
 
 **Risks:**
+- A `chmod 000` on `design.md` turns the gate off for any agent that can run it, because the open throws `EACCES` and fails open. This needs no race. Backlog 0000162 tracks the fix.
 - A file swapped between `lstatSync` and the open still passes, because that open fails and fails open. The window is microseconds and needs a racing writer, but the gap stays.
 - On Windows, `fs.constants` lacks `O_NONBLOCK` and `O_NOFOLLOW`. The guard there rests on `lstatSync` and `fstatSync`, so a swap in the window proves less.
 - A future change treats the new branch as a general fail-closed rule and blocks on other read errors (risk R-005). The suite asserts the mode `000` case still exits 0.

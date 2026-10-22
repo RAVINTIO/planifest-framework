@@ -63,7 +63,7 @@ req-009 serves US-009. Risk R-007 records that the change blocks writes that pas
 
 **Risks:**
 - A future entry in `FAST_PATH_ENFORCEMENT_PATHS` that matches a common folder could block boot-file writes across a project. The suite for that list catches doc drift, not breadth.
-- An enforcement path below `plan/` or `docs/` still passes through the prefix shortcut. No entry matches there today, but a future `**/` entry could.
+- An enforcement path below `plan/` or `docs/` still passes through the prefix shortcut. This gap exists today. The entries `**/hooks/enforcement/` and `**/hooks/adapters/` already match below `plan/` and `docs/`, so a write to such a path passes at step 1. This feature leaves it open.
 
 ## Related ADRs
 
