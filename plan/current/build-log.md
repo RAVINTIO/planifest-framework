@@ -162,3 +162,22 @@ Streams formed (dependency test: stories that change the same file share a strea
 - P2 gate loop iteration 2: design critic APPROVE (0 critical, 0 major, 3 minor). The orchestrator fixed the three minors. Loop state set to `done`.
 - Gate (P2): passed. Ten requirements with 3 criteria each, 16 ADRs. `consistency-check.mjs` clean with no warnings, `stream-reconcile.mjs` exits 0, run mode still `autonomous`.
 - Progress: P2 done at 2026-10-22T06:16:07Z: 16 ADRs, three requirement splits, critic approved on iteration 2
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T06:20:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` |
+| Model tier | primary |
+| Skills loaded | planifest-codegen-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Skills inbox empty. Live hooks run from the git-ignored copies under `.claude/hooks/`, so source edits can't block this session. |
+
+- Decision (P3): one codegen agent per stream, in one parallel batch. Stream 01 builds req-006, req-004, req-003, req-005, req-001, then req-009 in sequence, because each changes `path-rules.mjs`. Stream 02 builds req-002, then req-008. Stream 03 builds req-007, then req-010 / reason: inside each stream, every requirement changes a file the one before it changes.
+- Decision (P3): shared files. Stream 02 owns the boot templates and the ship skill. Stream 03 edits only Resume Detection step 1 of the orchestrator skill and "Check for pending migrations" in `pipeline-reference.md`. Stream 01 edits only Fast Path text in the orchestrator skill. Each agent re-reads a shared file right before each **Edit**. The orchestrator bumps `planifest-framework/component.yml` to `0.33.0` at the join / reason: section ownership avoids lost writes.
+- Decision (P3): each agent commits only its own paths and retries on a git index lock. Build-log lines go back to the orchestrator, which writes them / reason: three agents share one working tree.
