@@ -327,4 +327,21 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 - Cross-model review iteration 2 (fresh `claude-sonnet-5-5`): APPROVE, 0 critical, 0 major, 2 minor. The orchestrator fixed both: `fast-path.md` and req-009 name the always-permitted exception (backlog 0000159), and `resolveTargetText` is internal now. Loop state set to `done`.
 - Gate (P6): passed. Living docs, reference docs, recommendations, iteration log, drift report, deviation review, and cross-model approval in place. `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. Self-description and consistency checks pass. Eleven exceptions wait for the human on the loop.
 - Progress: P6 done at 2026-10-22T09:11:31Z: docs complete, deviations classed, cross-model approved on iteration 2
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T09:14:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent (source copy at `planifest-framework/skills/planifest-ship-agent/SKILL.md`, per the P4 decision) |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. |
+
+- Decision (P7): the P6 docs agent wrote the iteration log at the Step 1 changelog path. The orchestrator moves it to `plan/current/iteration-log.md`, where the 0000033 run kept it, and marks P6 done in it. Step 1 then writes the changelog at its own path / reason: the two documents have different readers, and the archive carries the iteration log.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.

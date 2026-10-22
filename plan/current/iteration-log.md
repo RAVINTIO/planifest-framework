@@ -13,7 +13,7 @@ version: "0.1.0"
 **Wave:** 1 (single wave, by the choice of the human on the loop)
 
 **Feature:** Write gate scope and path hardening, version `0.32.0` to `0.33.0`
-**Pipeline run:** Feature Pipeline in `autonomous` mode. P0 to P6 are complete. P7 to P9 are pending.
+**Pipeline run:** Feature Pipeline in `autonomous` mode. P0 to P6 are complete. P7 to P9 run in the ship agent's close-out.
 
 ## What Was Built
 
@@ -33,7 +33,7 @@ The run folds in ten backlog entries: 0000062, 0000081, 0000106, 0000107, 000010
 | 3 - Code Generation | pass | Implementation complete: yes | 16 deviations. 88 feature and 31 regression suites pass. |
 | 4 - Validation | pass | CI clean: yes | 1 self-correct cycle. 69 of 71 criteria covered, 2 deferred. |
 | 5 - Security | pass | Critical findings: 0 | 2 High closed. 19 findings fixed in two batches. Risk Medium. |
-| 6 - Docs | in progress | All docs synced: pending | Three docs agents in one parallel batch. |
+| 6 - Docs | pass | All docs synced: yes | Three docs agents. Deviation review: 34 additive, 5 altering. Cross-model approved on iteration 2. |
 | 7 - Archive | pending | | |
 | 8 - Build assessment | pending | | |
 | 9 - Ship | pending | | |
@@ -53,8 +53,8 @@ Toggles: `design_critic`, `verify_by_execution`, `cross_model_review`, `reversal
 | Loop | Iteration | Verdict | Findings |
 |------|-----------|---------|----------|
 | P1 critic, approach 1 | 1 | REJECT | 1 critical, 4 major, 9 minor |
-| P1 critic, approach 1 | 2 | REJECT | Not counted in the build log |
-| P1 critic, approach 1 | 3 | REJECT | Cap of 3 reached |
+| P1 critic, approach 1 | 2 | REJECT | 0 critical, 2 major, 5 minor |
+| P1 critic, approach 1 | 3 | REJECT | 0 critical, 2 major, 3 minor. Cap of 3 reached |
 | P1 critic, approach 2 | 1 | APPROVE | 5 minor, fixed by the orchestrator |
 
 Approach 2 made the script carve-out a standing rule. The boot templates name the sanctioned scripts, and req-008 validates every script argument.
@@ -105,7 +105,11 @@ Two reviewers ran in parallel, one for the gates and one for the scripts. Overal
 
 ### P6: Docs
 
-Gate A passed, and Gate B auto-accepted updates to the living docs, the framework reference docs, and `src/setup-hook-integration/docs/`.
+- Gate A passed, and Gate B auto-accepted updates to the living docs, the framework reference docs, and `src/setup-hook-integration/docs/`.
+- Three docs agents ran in one batch: living docs and drift checks, reference docs and spec sync, and recommendations. The drift checks found three low domain-term items, which the orchestrator fixed.
+- The post-P6 revalidation passed: 88 feature and 31 regression suites, self-description, and consistency.
+- Deviation review: 39 rows, 34 additive, 5 altering, 1 schema, and 2 destructive. Eight items became exceptions.
+- Cross-model review (`claude-sonnet-5-5` reviewing `claude-opus-5-5`): iteration 1 REJECT with 8 minor findings, iteration 2 APPROVE with 2 minor findings. All were fixed or deferred to backlog 0000159.
 
 ## Requirement Changes During Run
 
@@ -116,20 +120,22 @@ Gate A passed, and Gate B auto-accepted updates to the living docs, the framewor
 | Split req-002: the P7 update stays, and req-008 (US-008) takes the sanctioned-scripts rule | 2 | additive | Directed by the human on the loop. P1 critic reran over the P1 artifacts. |
 | Split req-001: the scope record stays, and req-009 (US-009) takes the enforcement list | 2 | additive | Named by the critic. req-009 joined stream 01. |
 | Split req-007: run-state behaviour stays, and req-010 (US-010) takes the one-off run in this repo | 2 | additive | Named by the critic. req-010 joined stream 03. |
-| `./README.md` added to the `design.md` Component Paths | 3 | additive | `gate-write` blocked the FR-007.10 edit. The P3 decision added the path and restored the suite check. |
+| `./README.md` added to the `design.md` Component Paths | 3 | altering (deviation review) | `gate-write` blocked the FR-007.10 edit. The P3 decision added the path. It waits for the human on the loop. |
 
 ## Deviations
 
-The build log records 30 deviations: 4 at P1, 16 at P3, and 10 at P5. The P6 deviation review brings the requirement and ADR text in line with the code. These deviations carry the most weight:
+The build log records 31 deviations: 4 at P1, 16 at P3, 10 at P5, and 1 at P6. The P6 deviation review classed 3 of them altering. These deviations carry the most weight:
 
-- P1: a fix agent wrote four shared artifacts through a Python script, which breaks Hard Limit 8. The orchestrator checked the diff by hand, and no In Scope or criteria line changed.
+- P1 (altering): the scope record never enters a commit, where the brief says the Fast Path commit deletes it.
+- P1 (altering): a fix agent wrote four shared artifacts through a Python script, which breaks Hard Limit 8. The orchestrator checked the diff by hand, and no In Scope or criteria line changed.
 - P1: a missing cwd now blocks a write into `src/`. This supersedes the 0000032 req-006 assertion at lines 364 to 366.
-- P3: `resolveRoot` also returns `null` when the cwd walk stops at a `realpathSync` failure with no `CLAUDE_PROJECT_DIR`. ADR-006 named `null` for a non-string cwd only.
+- P3 (altering): `resolveRoot` also returns `null` when the cwd walk stops at a `realpathSync` failure with no `CLAUDE_PROJECT_DIR`. The gate then fails open.
 - P3: the ratchet suites and their regression copies gained `unset CLAUDE_PROJECT_DIR`, outside the req-005 file list.
-- P5: `test-regression-pack.sh` and its regression copy now use a fixture tree, because `PLANIFEST_REGRESSION_DIR` no longer redirects.
 - P5: `promote-to-regression.sh` writes through a temp file and a Node `renameSync`, beyond the refusal checks.
 
 ## Exceptions Waiting for the Human on the Loop
+
+Eleven exceptions wait. Three come from the P3 migration scans:
 
 | Migration | Scan result |
 |-----------|-------------|
@@ -137,13 +143,16 @@ The build log records 30 deviations: 4 at P1, 16 at P3, and 10 at P5. The P6 dev
 | `0002-british-english.md` | About 870 American spellings in 307 files. |
 | `retroactive-release-tags.md` | v0.14.0 at `6c145b5` and v0.15.0 at `928f1d4` have no tag. |
 
-Five migrations have records in `plan/_migrations/`. Three are `applied` with no findings, and two are `not applicable`. Backlog 0000153 tracks the three exceptions.
+Eight come from the P6 deviation review: build-log lines L111, L116, L189, L190, L191, L201, L205, and L277. `deviation-review.md` gives each one.
+
+Five migrations have records in `plan/_migrations/`. Three are `applied` with no findings, and two are `not applicable`. Backlog 0000153 tracks the three migration exceptions.
 
 ## Self-Correct Log
 
 - P1: approach 1 reached its cap of 3 critic iterations. Approach 2 then passed on its first iteration.
 - P4 cycle 1 of 5: the req-004 suite expected exit 0 for a cwd of `42`, `""`, and `null`, and got 2. The test was wrong, because a non-string cwd falls back to `process.cwd()`. A `resolveRoot` unit check and a shell-guard case replaced it, and the suite passed.
 - P5: two fix batches and two fresh-context re-review rounds. Every new case went RED first, then GREEN. `run-tests.sh` exited 0 after each batch.
+- P6: the cross-model loop took two iterations. Iteration 1 fixes passed every check.
 
 ## Backlog Filed
 
@@ -154,13 +163,14 @@ Five migrations have records in `plan/_migrations/`. Three are `applied` with no
 | P2 | 0000130, 0000139 |
 | P4 | 0000140 |
 | P5 | 0000141 to 0000146, 0000147 (closed in this run by P-N3), 0000148 to 0000151 |
-| P6 | 0000152 to 0000157, from the `recommendations.md` Deferred Items and Tech Debt tables |
+| P6 | 0000152 to 0000157 (from `recommendations.md`), 0000158, 0000159 |
 
 ## Quirks
 
 - Live hooks run from the git-ignored copies under `.claude/hooks/`, so source edits can't block this session.
 - The installed `.claude/skills/planifest-ship-agent/SKILL.md` has no Step 5b. A P4 decision has P7 read the source ship skill instead.
 - Three agents shared one working tree at P3. Each committed only its own paths and retried on a git index lock. The orchestrator wrote every build-log line.
+- The P6 docs agent wrote this log at the ship agent's changelog path. P7 moved it here.
 
 ## Recommended Improvements
 
