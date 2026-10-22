@@ -31,6 +31,7 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 - `path-rules.mjs` exports `resolveTargetText(root, cwd, target)`, which collapses `..` as text first and then resolves the result through links. It returns the same three results as `resolveTarget`.
 - `path-rules.mjs` exports `resolveTargetBoth(root, cwd, target)`. It returns the physical and the text placements, or one entry when both land on the same path.
 - `judgeWrite`, and so `gate-write.mjs`, judges each placement. It blocks if either verdict blocks.
+- If both placements pass, `judgeWrite` keeps the notice and the warning from each of them (P5 re-review finding G-N2). A placement the Fast Path scope record admits therefore prints its notice, even when the other placement is always permitted.
 - `shell-write-guard.mjs` keeps the physical walk only, because the kernel resolves a shell path physically.
 - If `lstatSync` reports `ENOENT` or `ENOTDIR`, the segment and every segment after it are missing. `resolveTarget` appends the missing segments to the real path so far and collapses any `..` among them as text.
 - A dangling link resolves to its target path. The gate judges that target, not the link path.

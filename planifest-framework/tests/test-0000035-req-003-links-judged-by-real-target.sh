@@ -238,6 +238,11 @@ assert_equals "2" "$CODE" "req-003: gate-write blocks docs/L/../../.claude/setti
 assert_contains "enforcement path" "$ERR" "req-003: gate-write judges docs/L/../../.claude/settings.json as .claude/settings.json"
 run_gate "$FXR" "src/a.js"
 assert_equals "0" "$CODE" "req-003: control, the record still admits src/a.js"
+# The physical placement plan/src/a.js is always permitted, and the text one
+# is src/a.js, which the record admits. The record's notice still prints (G-N2).
+run_gate "$FXR" "docs/L/../../src/a.js"
+assert_equals "0" "$CODE" "req-003: gate-write admits docs/L/../../src/a.js through the record"
+assert_contains "Fast Path: admitted 'src/a.js'" "$ERR" "req-003: the record's notice prints when another placement needs none"
 
 # =============================================================================
 echo ""

@@ -814,7 +814,8 @@ export function evaluateWrite(root, relPath) {
  * path too long to judge returns { allowed: true, warning } before any
  * file-system walk (F7). A target that can't be resolved inside the root
  * returns { allowed: false, reason } (0000035 ADR-005). Otherwise returns the
- * evaluateWrite result with the root and relPath added.
+ * evaluateWrite result with the root and relPath added. When both placements
+ * pass, it carries the notice and the warning of each one (G-N2).
  */
 export function judgeWrite(cwd, target) {
   const tooLongWarning = typeof cwd === "string" ? unjudgeable(cwd, target) : null;
@@ -830,7 +831,16 @@ export function judgeWrite(cwd, target) {
     const { relPath } = placed;
     const verdict = { ...evaluateWrite(root, relPath), root, relPath };
     if (!verdict.allowed) return verdict;
-    allowed ??= verdict;
+    if (!allowed) {
+      allowed = verdict;
+      continue;
+    }
+    // Every placement's notice and warning still print. A write the scope
+    // record admits must show its notice even when the other placement is
+    // always permitted (G-N2).
+    for (const key of ["notice", "warning"]) {
+      if (verdict[key] && !(allowed[key] ?? "").includes(verdict[key])) allowed[key] = (allowed[key] ?? "") + verdict[key];
+    }
   }
   return allowed ?? { allowed: true, outside: true };
 }

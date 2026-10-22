@@ -32,6 +32,7 @@ Hooks fail open on unexpected errors (0000003 ADR 005). A link loop would then p
 - **Two placements (P5 finding G-S01):** The physical walk matches the kernel, which resolves a shell path. The **Write** and **Edit** tools collapse `..` as text first, and the system then follows the links that remain. So the two can land on different files.
   - `resolveTargetText` collapses `..` as text against `cwd`, then resolves the result through links.
   - `resolveTargetBoth` returns both placements. `judgeWrite` and `ratchet-check` judge each one and block if either verdict blocks.
+  - If both placements pass, `judgeWrite` prints the notice and the warning from each one (P5 re-review finding G-N2). The scope record's notice therefore never drops out.
   - `shell-write-guard.mjs` keeps the physical walk only.
 - **Hop limit:** 40 links per call, the Linux `MAXSYMLINKS` value. A link that returns to a path in its own chain counts as a loop.
 - **Fail-closed line:** A loop, a chain past 40, or an error such as `EACCES`, `EIO`, or `ELOOP` gives `unresolvable` in two cases. Either the target as text lies inside the root, or the real path reached before the error does. Both gates block `unresolvable` with exit 2 and name the cause on stderr.
