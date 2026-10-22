@@ -16,10 +16,10 @@ status: "active"
 | Owning phase | `P1` |
 | Toggle level | `on` |
 | Iteration | `1` of cap `3` |
-| Approach | `1 of 3 (autonomous only)` |
+| Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
-| Last updated | `2026-10-22T00:20:00Z` |
+| Last decision | `change-approach` |
+| Last updated | `2026-10-22T01:15:00Z` |
 
 ---
 
@@ -41,6 +41,12 @@ status: "active"
 ### Iteration 3 (2026-10-22T00:55:00Z)
 - **Approach:** 1
 - **Action:** one fix agent addresses all seven iteration 2 findings. Orchestrator decision on M2: a narrow Hard Limit 8 carve-out for the fixed script, recorded in a P2 ADR, with the script refusing every path except `product.yml`.
+- **Observation:** REJECT, 0 critical, 2 major, 3 minor, in `plan/current/design-critic-p1-iteration-3.md`. Every iteration 2 finding is resolved except M2. M2 now shows two defects in the carve-out: `--root` and the free-text arguments are unbounded, and Hard Limit 8 in the boot templates still bans every script, so the carve-out lives only in archived artifacts.
+- **Decision:** change-approach: iteration cap reached on approach 1.
+
+### Iteration 1 of approach 2 (2026-10-22T01:15:00Z)
+- **Approach:** 2. Approach 1 treated each finding as a local fix to the requirement text. Approach 2 treats the script carve-out as a standing framework rule. The Hard Limit 8 text in the boot templates names the sanctioned scripts, and req-002 specifies every script input as untrusted, with patterns, limits, and suite cases.
+- **Action:** one fix agent applies approach 2 and the three minors. A fresh critic then reviews.
 - **Observation:** pending.
 - **Decision:** pending.
 
