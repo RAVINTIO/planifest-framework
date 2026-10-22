@@ -1,7 +1,7 @@
 ---
 title: "Feature Brief - pipeline friction and gate fixes"
 summary: "Removes recurring pipeline workarounds, keeps installed copies in step with source, and closes two gate bypasses and two hook output gaps."
-status: "draft"
+status: "approved"
 version: "0.1.0"
 ---
 # Feature Brief - pipeline friction and gate fixes

@@ -15,7 +15,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Tool | `Claude Code` |
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
-| Run mode | `pending` (set at the P0 confirmation turn) |
+| Run mode | `autonomous` |
 | Parallel streams | `pending` (resolved at P1 start) |
 
 ---
@@ -27,17 +27,17 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T20:52:01Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T21:33:13Z` |
+| Wall-clock | `41` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator, planifest-migrator |
-| Agents spawned | `3` |
+| Agents spawned | `7` |
 | MCP calls | `0` |
-| Parallel task batches | `1` |
-| P0 questions asked | `pending` |
-| Brief complete | `pending` |
-| Stack unchanged | `pending` |
+| Parallel task batches | `2` |
+| P0 questions asked | `5` |
+| Brief complete | `no` |
+| Stack unchanged | `yes` |
 | Notes | Fresh start after `/clear`. Resume detection found three migrations with no record. The human on the loop chose `skipped` for `0001-date-format` and `0002-british-english`, and `applied` for `retroactive-release-tags`. The agent tagged and pushed `v0.14.0` and `v0.15.0`. Those records merged with PR #61. Three read-only Explore agents (tier cheaper, `claude-sonnet-5-5`) checked the eleven pulled-in entries against the code in one parallel batch. |
 
 - P0 exchange (backlog recommendation): Q: which recent backlog entries are most impactful? / A (orchestrator): recommended 0000158 with 0000154, 0000160, 0000127, and 0000157, with 0000122 and 0000139 as fold-ins.
@@ -52,3 +52,18 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 - Scope Lock dispatch: four `planifest-scope-lock-agent` instances in one parallel batch, tier cheaper (`claude-sonnet-5-5`). All four returned drafts, and all four raised flags. The design draft answers the flags under `## Decisions proposed at P0`.
 - Strict-mode ack rewritten with the session ID the strict-mode hook supplied.
 - P0 exchange (combined confirmation turn): Q: confirm the design, accept / edit / reject each Scope Lock draft, and pick a run mode / A: "3" (Autonomous). Design and Scope Lock items not yet answered, so neither counts as confirmed. Run mode not yet recorded, because the `Run mode confirmed:` line must share the commit that confirms the design.
+- P0 exchange (confirmation follow-up): Q: confirm the design and accept / edit / reject each Scope Lock item / A: "Yes accept all". Read as an explicit yes to the design and an explicit accept for each of the four named items.
+- Scope Lock (happy path): after a framework update, the drift check lists stale skills, the migration refreshes hooks and the boot file, the critic reviews P1 and P2, `autonomous` restores whatever the anchor format, ship commits pass the hook, and the full suite passes on CI [source: agent-draft-accepted]
+- Scope Lock (first-run path): nothing fails and nothing is invented, so missing installs report "not installed", the migration shows as pending, a missing toggles file reads as a missing key, and a missing anchor reads as `interactive` [source: agent-draft-accepted]
+- Scope Lock (error path): a check that can't finish reports and the session continues, hooks fail open except for a non-regular `design.md`, a `report-only` false positive never stops a phase, and a forged anchor reads as `interactive` [source: agent-draft-accepted]
+- Scope Lock (cross-session continuity): the next session recovers from disk, setup is safe to re-run, the migration record lands only on completion, an uncommitted anchor reads as `interactive`, and drift is recomputed each session and after setup [source: agent-draft-accepted]
+- Scope Lock complete. All four scenario paths captured.
+- Adoption mode: standard-iterative, confirmed by human on 2026-10-22
+- Version confirmed: 0.34.0
+- P0 questions asked: 5
+- Brief complete: no
+- Stack unchanged: yes
+
+Run mode confirmed: autonomous (2026-10-22T21:33:13Z)
+
+- Progress: P0 done at 2026-10-22T21:33:13Z: design confirmed, eleven backlog entries in one wave, autonomous run

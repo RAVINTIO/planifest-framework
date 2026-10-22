@@ -28,7 +28,8 @@
   - Every change goes through **Write** or **Edit**.
 - Integrations: none
 
-## Decisions proposed at P0
+## Decisions confirmed at P0
+- Run mode: `autonomous`.
 - Re-run-setup migration (US-001): one migration, `migrate-0.34.0-rerun-setup.md`, covers the setup-delivered changes in both 0.33.0 and 0.34.0. It follows the 0.31.0 migration's sections. This repo records it `applied` after P3 re-runs setup here.
 - Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` bytes only, source against the active tool's installed copy. It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
 - Ship subjects (US-003): every skill commit subject keeps placeholders out. Subjects name the phase and action only, as in `plan(p9): clear session markers`. The feature ID goes in the body.
@@ -124,4 +125,4 @@ None
 - `custom-005-p9-push-and-raise-pr.md`: at P9, push the branch and tag and raise the PR without asking. Never merge, and never push to `main`.
 
 ## Confirmation
-Human confirmed this design before proceeding: no // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 22 Oct 2026 @ 10:33 p.m. BST
