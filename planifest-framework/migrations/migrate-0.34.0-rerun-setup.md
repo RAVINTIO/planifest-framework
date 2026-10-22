@@ -32,17 +32,23 @@ Setup copies every template and every top-level standard when a skill's `bundle_
 **0.34.0** (feature `0000036-pipeline-friction-and-gate-fixes`) changes these files:
 
 - `hooks/enforcement/path-rules.mjs`: a non-regular `design.md` reads as no design, permitted names skip enforcement paths, and hook output is escaped
-- `hooks/enforcement/gate-write.mjs`: follows the path rules change
 - `hooks/enforcement/ratchet-check.mjs`: escaped hook output
 - `hooks/enforcement/em-dash-guard.mjs`: escaped hook output
-- `templates/standard-boot.md` and `templates/cursor-boot.md`: hard limits cited by name and source
-- `skills/planifest-orchestrator/SKILL.md`, `skills/planifest-spec-agent/SKILL.md`, `skills/planifest-ship-agent/SKILL.md`, `skills/planifest-loop-runner/SKILL.md`, and `skills/planifest-design-critic/SKILL.md`: skill text changes
+- `templates/standard-boot.md`: hard limits cited by name and source
 - `templates/loop-toggles.template.yml`: the design critic default
 - `templates/build-log.template.md`: the run-mode anchor format
-- `templates/feature-brief.template.md`: the story split step
+- `skills/planifest-orchestrator/SKILL.md`: the drift check in Resume Detection, the anchor code block, the critic default, and hard-limit citations
+- `skills/planifest-ship-agent/SKILL.md`: commit subjects without placeholders, and hard-limit citations
+- `skills/planifest-loop-runner/SKILL.md`: the critic default and the split step
+- `skills/planifest-spec-agent/SKILL.md`: the split step and hard-limit citations
+- `skills/planifest-design-critic/SKILL.md`: the split-step rubric row
+- `skills/planifest-migrator/SKILL.md`: hard-limit citations
+- `skills/planifest-adr-agent/SKILL.md`, `skills/planifest-codegen-agent/SKILL.md`, `skills/planifest-docs-agent/SKILL.md`, `skills/planifest-security-agent/SKILL.md`, and `skills/planifest-validate-agent/SKILL.md`: the commit-cadence heading cites its rule by name
 - `standards/framework-update-policy.md`: the setup-delivered definition and the re-run-setup rule
-- `standards/autonomous-run-standards.md`, `standards/agent-dispatch-standards.md`, and `standards/commit-standards.md`: standard text changes
+- `standards/autonomous-run-standards.md` and `standards/agent-dispatch-standards.md`: hard-limit citations, the critic default, and the Write-or-Edit rule in the dispatch template
 - `workflows/fast-path.md`: hard limits cited by name and source
+
+The orchestrator rechecks this list against the branch diff at the end of P6, before setup re-runs here.
 
 ---
 
