@@ -217,14 +217,22 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T06:53:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T07:07:18Z` |
+| Wall-clock | `858` |
 | Streams | `n/a` (joined at P3) |
 | Model tier | primary |
 | Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
-| Agents spawned | `pending` |
+| Agents spawned | `2` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | CI has no lint, typecheck, or build step. Its checks are code and doc parity, `self-description-check.mjs`, `run-tests.sh`, and `test_setup.ps1`. Locally, `self-description-check.mjs` passes and `run-tests.sh` exits 0. PowerShell isn't installed here, so `test_setup.ps1` runs on CI only. No stream changed a PowerShell file. |
 
 - Decision (P4): one agent checks semantic coverage for all ten requirements, and one agent verifies by execution, in one parallel batch / reason: CI already passes, and the two checks read different things.
+- Verify by execution: 35 passed, 0 failed, 2 deferred, in `verification-report.md` (`788fdde`). Deferred: req-002 AC-3 to P7, and req-010 AC-010.1 to the human on the loop.
+- Semantic coverage: 69 of 71 criteria covered, in `validation-report.md` (`96b34d4`). The two open criteria are the same two deferred ones. 19 test gaps closed with new tests, and no production code changed.
+- P4 self-correct cycle 1 of 5: Check: req-004 suite. Error: `gate-write passes a cwd of 42 / "" / null` expected 0, got 2. Root cause: test bug, a non-string stdin cwd falls back to `process.cwd()`. Fix: a `resolveRoot` unit check and a shell-guard case. Result: pass.
+- Backlog filed (P4): 0000140 (hook branch tests past the acceptance criteria).
+- Decision (P4): at P7 the orchestrator reads the source ship skill at `planifest-framework/skills/planifest-ship-agent/SKILL.md`, not the installed copy / reason: the git-ignored copy under `.claude/skills/` predates req-002 and has no `set-product-release.mjs` step. Rerunning setup mid-run would rewrite this session's live hooks and skills.
+- Decision (P4): the `resolveRoot` contract mismatch between its doc comment and req-004 goes to the P6 deviation review / reason: the P3 deviation already records the extra `null` case, and P6 brings req-004 and ADR-006 into line with the code.
+- Gate (P4): passed. `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. No criterion failed. Two deferred criteria have named owners.
+- Progress: P4 done at 2026-10-22T07:07:18Z: 69 of 71 criteria covered, 35 verified by execution, two deferred
