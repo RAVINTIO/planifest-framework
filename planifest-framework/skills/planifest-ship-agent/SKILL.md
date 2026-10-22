@@ -99,6 +99,7 @@ Before archiving, present agent-tagged regression candidates to the human for cu
    bash planifest-framework/scripts/promote-to-regression.sh \
      "{test-file-path}" "{feature-id}" "human"
    ```
+   `{test-file-path}` must be a `test-*.sh` file directly inside `planifest-framework/tests/`. The script refuses any other source and exits 1.
 4. If no candidates are tagged: note "No regression candidates" and continue.
 5. In `autonomous`, skip the prompt. Decide each candidate yourself and write a `Decision` build-log line for it. For each promoted candidate, pass `"agent"` as the promoted-by argument in place of `"human"`. The final report lists each candidate and its decision.
 

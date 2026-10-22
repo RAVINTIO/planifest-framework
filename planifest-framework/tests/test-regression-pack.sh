@@ -12,18 +12,23 @@ TMPDIR_BASE="$(mktemp -d)"
 trap 'rm -rf "$TMPDIR_BASE"' EXIT
 
 # ── Test environment setup ────────────────────────────────────────────────────
-# Override PLANIFEST_REGRESSION_DIR so tests are isolated from the real pack.
+# Each env is a fixture framework tree: <dir>/scripts/ holds a copy of the
+# script, and <dir>/regression is <dir>/tests/regression. The script binds its
+# source to <dir>/tests/test-*.sh and its destination to <dir>/tests/regression/
+# (0000035 P-S09), so the fixture keeps the tests isolated from the real pack.
 # All node.js calls use (cd <dir> && node -e ...) to avoid POSIX/Windows path issues.
 
 make_env() {
   local dir="$1"
-  mkdir -p "$dir/regression"
-  printf '{"tests":[]}\n' > "$dir/regression/regression-manifest.json"
+  mkdir -p "$dir/scripts" "$dir/tests/regression"
+  cp "$PROMOTE" "$dir/scripts/promote-to-regression.sh"
+  ln -s tests/regression "$dir/regression"
+  printf '{"tests":[]}\n' > "$dir/tests/regression/regression-manifest.json"
 }
 
 run_promote() {
-  local regression_dir="$1"; shift
-  PLANIFEST_REGRESSION_DIR="$regression_dir" bash "$PROMOTE" "$@" 2>&1
+  local env_dir; env_dir="$(dirname "$1")"; shift
+  env -u PLANIFEST_REGRESSION_DIR bash "$env_dir/scripts/promote-to-regression.sh" "$@" 2>&1
   echo "EXIT:$?"
 }
 
@@ -54,7 +59,7 @@ echo "--- promote-to-regression.sh: happy path ---"
 ENV1="$TMPDIR_BASE/env1"
 make_env "$ENV1"
 
-TEST_SRC="$TMPDIR_BASE/my-test.sh"
+TEST_SRC="$ENV1/tests/test-my.sh"
 printf '#!/usr/bin/env bash\necho "test"\n' > "$TEST_SRC"
 
 full_out=$(run_promote "$ENV1/regression" "$TEST_SRC" "0000004-test" "human")
@@ -64,7 +69,7 @@ output=$(printf '%s' "$full_out" | sed '$d')
 assert_equals "0" "$code" "promote exits 0 on happy path"
 assert_contains "Promotion complete" "$output" "promote reports completion"
 
-if [ -f "$ENV1/regression/my-test.sh" ]; then
+if [ -f "$ENV1/regression/test-my.sh" ]; then
   echo "  PASS: test file copied to regression dir"
   ((PASS++)) || true
 else
@@ -76,7 +81,7 @@ manifest_count=$(read_manifest_count "$ENV1/regression")
 assert_equals "1" "$manifest_count" "manifest has 1 entry after promotion"
 
 manifest_name=$(read_manifest_field "$ENV1/regression" "name")
-assert_equals "my-test.sh" "$manifest_name" "manifest entry has correct name"
+assert_equals "test-my.sh" "$manifest_name" "manifest entry has correct name"
 
 manifest_promoted_by=$(read_manifest_field "$ENV1/regression" "promotedBy")
 assert_equals "human" "$manifest_promoted_by" "manifest entry has promotedBy=human"

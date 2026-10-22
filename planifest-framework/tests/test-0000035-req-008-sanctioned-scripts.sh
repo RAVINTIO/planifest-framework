@@ -366,6 +366,71 @@ for T in "$STANDARD_BOOT" "$CURSOR_BOOT"; do
 done
 assert_equals "$(sanctioned "$STANDARD_BOOT")" "$(sanctioned "$CURSOR_BOOT")" \
   "req-008: both templates name the same scripts"
+echo "=== req-008: promote-to-regression.sh binds its source and destination ==="
+
+# P-S09: a fixture framework tree that holds a copy of the script, so
+# SCRIPT_DIR-relative paths resolve inside the fixture.
+FX="$SCRATCH/promote"
+mkdir -p "$FX/planifest-framework/scripts" "$FX/planifest-framework/tests/regression" \
+  "$FX/planifest-framework/tests/helpers" "$FX/outside" "$FX/elsewhere"
+cp "$FRAMEWORK/scripts/promote-to-regression.sh" "$FX/planifest-framework/scripts/"
+PROMOTE_FX="$FX/planifest-framework/scripts/promote-to-regression.sh"
+FXT="$FX/planifest-framework/tests"
+printf '{"tests":[]}\n' > "$FXT/regression/regression-manifest.json"
+printf '{"tests":[]}\n' > "$FX/elsewhere/regression-manifest.json"
+printf 'secret\n' > "$FX/outside/test-secret.sh"
+printf '#!/usr/bin/env bash\necho ok\n' > "$FXT/test-ok.sh"
+cp "$FXT/test-ok.sh" "$FXT/test-ok2.sh"
+cp "$FXT/test-ok.sh" "$FXT/notatest.sh"
+cp "$FXT/test-ok.sh" "$FXT/helpers/test-helper.sh"
+ln -s "$FX/outside/test-secret.sh" "$FXT/test-link.sh"
+ln "$FX/outside/test-secret.sh" "$FXT/test-hard.sh" 2>/dev/null
+cp "$FX/outside/test-secret.sh" "$SCRATCH/secret-before.sh"
+
+# refuse_promote <label> <source>: exit 1 and no new file in regression/.
+refuse_promote() {
+  local before after
+  before=$(ls -A "$FXT/regression" | sort)
+  (cd "$FX" && env -u PLANIFEST_REGRESSION_DIR bash "$PROMOTE_FX" "$2" "0000035-x" "agent" >/dev/null 2>&1)
+  assert_equals "1" "$?" "req-008: promote refuses $1"
+  after=$(ls -A "$FXT/regression" | sort)
+  assert_equals "$before" "$after" "req-008: promote of $1 adds nothing to regression/"
+}
+
+refuse_promote "a source outside tests/" "$FX/outside/test-secret.sh"
+refuse_promote "a source that is not test-*.sh" "$FXT/notatest.sh"
+refuse_promote "a source in a tests/ subfolder" "$FXT/helpers/test-helper.sh"
+refuse_promote "a source that is a link" "$FXT/test-link.sh"
+[ -f "$FXT/test-hard.sh" ] && refuse_promote "a source with a second hard link" "$FXT/test-hard.sh"
+
+ERR=$(cd "$FX" && PLANIFEST_REGRESSION_DIR="$FX/elsewhere" bash "$PROMOTE_FX" "$FXT/test-ok.sh" "0000035-x" "agent" 2>&1)
+assert_equals "1" "$?" "req-008: promote refuses a PLANIFEST_REGRESSION_DIR outside tests/regression/"
+assert_equals "regression-manifest.json" "$(ls -A "$FX/elsewhere")" \
+  "req-008: the redirected destination stays unchanged"
+
+ln -s "$FX/outside/test-secret.sh" "$FXT/regression/test-ok2.sh"
+refuse_promote "a destination that is a link" "$FXT/test-ok2.sh"
+assert_equals "same" "$(same "$SCRATCH/secret-before.sh" "$FX/outside/test-secret.sh")" \
+  "req-008: the destination link target stays unchanged"
+rm "$FXT/regression/test-ok2.sh"
+
+(cd "$FX" && env -u PLANIFEST_REGRESSION_DIR bash "$PROMOTE_FX" "$FXT/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
+assert_equals "0" "$?" "req-008: promote of a test-*.sh in tests/ exits 0"
+assert_equals "present" "$([ -f "$FXT/regression/test-ok.sh" ] && echo present || echo absent)" \
+  "req-008: promote copies the test into regression/"
+
+FL="$SCRATCH/promote-linked"
+mkdir -p "$FL/planifest-framework/scripts" "$FL/planifest-framework/tests" "$FL/realreg"
+cp "$PROMOTE_FX" "$FL/planifest-framework/scripts/"
+printf '{"tests":[]}\n' > "$FL/realreg/regression-manifest.json"
+ln -s "$FL/realreg" "$FL/planifest-framework/tests/regression"
+cp "$FXT/test-ok.sh" "$FL/planifest-framework/tests/test-ok.sh"
+(cd "$FL" && env -u PLANIFEST_REGRESSION_DIR bash "$FL/planifest-framework/scripts/promote-to-regression.sh" \
+  "$FL/planifest-framework/tests/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
+assert_equals "1" "$?" "req-008: promote refuses a tests/regression/ that is a link"
+assert_equals "regression-manifest.json" "$(ls -A "$FL/realreg")" \
+  "req-008: the linked regression folder stays unchanged"
+
 SENT_STD=$(grep -o 'Sanctioned scripts:.*' "$STANDARD_BOOT")
 SENT_CUR=$(grep -o 'Sanctioned scripts:.*' "$CURSOR_BOOT")
 assert_equals "$SENT_STD" "$SENT_CUR" "req-008: both templates carry the same sentence"

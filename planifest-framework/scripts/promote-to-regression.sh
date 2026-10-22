@@ -5,11 +5,19 @@
 #   promote-to-regression.sh <test-file-path> <source-feature-id> <promoted-by>
 #
 # Arguments:
-#   test-file-path    — path to the test file to promote (must exist)
+#   test-file-path    — path to the test file to promote. It must be a
+#                       test-*.sh file directly inside planifest-framework/tests/.
 #   source-feature-id — feature ID the test originated from (e.g. 0000004-tdd-regression-test-quality)
 #   promoted-by       — "agent" or "human"
 #
 # Idempotent: running twice with the same test file produces no duplicate manifest entries.
+#
+# Hard Limit 8 sanctioned script (0000035 ADR-011, P5 finding P-S09):
+#   - The source must be a regular file named test-*.sh, with one link,
+#     whose real path lies directly inside {script dir}/../tests/.
+#   - The destination is always {script dir}/../tests/regression/. Neither
+#     that folder nor the destination file may be a link.
+#   - PLANIFEST_REGRESSION_DIR is refused unless it names that same folder.
 #
 # Exit codes:
 #   0 — success (or already promoted, idempotent)
@@ -17,9 +25,9 @@
 
 set -uo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-# Allow override for testing — defaults to canonical location relative to script
-REGRESSION_DIR="${PLANIFEST_REGRESSION_DIR:-$SCRIPT_DIR/../tests/regression}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+TESTS_DIR="$(cd "$SCRIPT_DIR/../tests" 2>/dev/null && pwd -P)" || { echo "ERROR: tests/ folder not found" >&2; exit 1; }
+REGRESSION_DIR="$TESTS_DIR/regression"
 MANIFEST="$REGRESSION_DIR/regression-manifest.json"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
@@ -39,14 +47,37 @@ case "$PROMOTED_BY" in
   *) die "promoted-by must be 'agent' or 'human', got: $PROMOTED_BY" ;;
 esac
 
+# ── Destination binding ───────────────────────────────────────────────────────
+
+[ -L "$REGRESSION_DIR" ] && die "tests/regression/ must not be a link"
+[ -d "$REGRESSION_DIR" ] || die "tests/regression/ folder not found"
+if [ -n "${PLANIFEST_REGRESSION_DIR:-}" ]; then
+  OVERRIDE_REAL="$(cd "$PLANIFEST_REGRESSION_DIR" 2>/dev/null && pwd -P)" || OVERRIDE_REAL=""
+  [ "$OVERRIDE_REAL" = "$REGRESSION_DIR" ] || die "PLANIFEST_REGRESSION_DIR must name planifest-framework/tests/regression/"
+fi
+
 [ -f "$MANIFEST" ] || die "Manifest not found: $MANIFEST"
+
+# ── Source binding ────────────────────────────────────────────────────────────
+# The source must be a test-*.sh regular file with one link, directly inside
+# tests/. Node checks it with lstat, so a link at the source never passes.
+
+BASENAME="$(basename "$TEST_FILE")"
+[[ "$BASENAME" =~ ^test-[A-Za-z0-9._-]+\.sh$ ]] || die "Test file must be named test-*.sh"
+SOURCE_DIR="$(cd "$(dirname "$TEST_FILE")" 2>/dev/null && pwd -P)" || die "Test file folder not found"
+[ "$SOURCE_DIR" = "$TESTS_DIR" ] || die "Test file must sit directly inside planifest-framework/tests/"
+( cd "$TESTS_DIR" && PLANIFEST_BASENAME="$BASENAME" node -e "
+const st = require('fs').lstatSync(process.env.PLANIFEST_BASENAME);
+process.exit(st.isFile() && !st.isSymbolicLink() && st.nlink === 1 ? 0 : 1);
+" 2>/dev/null ) || die "Test file must be a regular file with one link, not a link"
+TEST_FILE="$TESTS_DIR/$BASENAME"
 
 # ── Idempotency check ─────────────────────────────────────────────────────────
 # cd into REGRESSION_DIR so node.js uses relative paths — avoids POSIX/Windows
 # path translation issues on Windows hosts.
 
-BASENAME="$(basename "$TEST_FILE")"
 DEST="$REGRESSION_DIR/$BASENAME"
+[ -L "$DEST" ] && die "Destination must not be a link: tests/regression/$BASENAME"
 
 ALREADY_PROMOTED=false
 if ( cd "$REGRESSION_DIR" && PLANIFEST_BASENAME="$BASENAME" node -e "

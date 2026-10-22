@@ -56,6 +56,11 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
   - `planifest-framework/scripts/refresh-delete-boot-files.ps1`, the Windows form of the script above.
   - `planifest-framework/setup.sh`, which the refresh-setup skill reruns.
   - `planifest-framework/setup.ps1`, the Windows form of `setup.sh`.
+- `promote-to-regression.sh` binds its source and destination (P5 finding P-S09):
+  - The source must be a `test-*.sh` regular file with one link, directly inside `planifest-framework/tests/`.
+  - The destination is always `planifest-framework/tests/regression/`. Neither that folder nor the destination file may be a link.
+  - It refuses `PLANIFEST_REGRESSION_DIR` unless the variable names that same folder.
+  - A break exits 1 and copies nothing.
 - Skill text also runs scripts that write no file, such as `run-mode.mjs`, `product-version.mjs`, `consistency-check.mjs`, and `stream-reconcile.mjs`. They need no carve-out and stay off the list.
 - If a later feature adds a script that skill text runs to write files, that feature adds it to the sentence in both templates.
 - The boot files are build outputs. On every setup run, `write_boot_file` in `planifest-framework/setup.sh` rewrites each tool's boot file from its template (0000029 ADR 001). `Write-PlanifestBootFile` in `setup.ps1` does the same.
@@ -94,6 +99,7 @@ Every argument to `set-product-release.mjs` is untrusted. The agent composes eac
 - [ ] `components[].path` read from an existing `product.yml`: each value meets the two `--component` path rules above. A break exits 2, names the component, and writes nothing.
 - [ ] `CLAUDE_PROJECT_DIR`: the script ignores it when it resolves the root, so the variable can't move the write.
 - [ ] `product.yml` itself: a regular file with exactly one link, checked by `fstat` on the descriptor the script reads through. Anything else exits 2 and writes nothing.
+- [ ] `promote-to-regression.sh` source and destination: the suite runs one case for each binding rule in the Functional Requirements. Each case expects exit 1 and no new file in `tests/regression/`.
 - [ ] A call takes at most 64 `--component` arguments, and no two share an `{id}`. Every other argument appears at most once. An unknown argument exits 2.
 - [ ] maximum length: each cap above applies to the raw value. A longer value exits 2. The script never truncates a value.
 - [ ] Failure behaviour: any rule break writes nothing and exits 2. The script never strips characters to repair a value.
