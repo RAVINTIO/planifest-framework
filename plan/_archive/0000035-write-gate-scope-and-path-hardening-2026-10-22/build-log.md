@@ -270,6 +270,7 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - P5 fixes verified by the orchestrator: `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. `consistency-check.mjs` clean, run mode still `autonomous`.
 - P5 re-review 1 (gates, fresh context): G-S01, G-S02, and G-S03 resolved, G-S11 partly resolved. New: G-N1 (Low) the shell guard and the ratchet still print raw paths. G-N2 (Low) a Fast Path write loses its stderr notice when the physical placement is always permitted. G-N3 (informational) bidirectional overrides aren't escaped.
 - P5 re-review 1 (scripts, fresh context): P-S03 to P-S07 and P-S10 resolved, P-S08 and P-S09 partly resolved. New: P-N1 (Low) a hard-linked `component.yml` reads outside the root. P-N2 (Low) a lone CR in a `product.yml` key line crashes with exit 1 and a stack trace. P-N3 (Low) `promote-to-regression.sh` writes through a hard-linked destination, a linked temp file, and a linked manifest. P-N4 (informational) the `setup.sh` wording reads as exactly one flag and is silent on `all`.
+- Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
 - Gates fix batch 2: G-N1 in `98cdb6b`, G-N2 in `62936f9`, and G-N3 in `06c53a8`, each RED first, then GREEN.
 - Deviation (P5, additive): the ratchet caps printed paths at `MAX_PATH_CHARS`, not 80, so the `.ratchet-approve` hint line the human on the loop copies stays whole.
 - Deviation (P5, additive): `shown()` now prints U+2028 as `\u{2028}` instead of ` `, as part of escaping every format character.
@@ -348,4 +349,11 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 - Step 1: changelog written (`d34d8e1`). Step 2: no `.skips`. Step 3: `.feature-id` written.
 - Decision (P7): promote `test-0000035-req-002-product-yml-in-p7.sh` / reason: it builds its own fixture repos and asserts no state of this repo, so it stays valid after later releases. The regression copy passes 74 of 74.
 - Decision (P7): promote `test-0000035-req-008-sanctioned-scripts.sh` / reason: it guards the sanctioned-script list and the script's input rules, which later features must not weaken. The regression copy passes 293 of 293.
-- Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
+- Step 5: test report written (`c700a06`). `run-tests.sh` passes 88 feature suites and 33 regression suites.
+- Step 5b: `set-product-release.mjs --feature-id "0000035-write-gate-scope-and-path-hardening" --version "0.33.0"` exited 0 and printed `product.yml: version "0.33.0", feature "0000035-write-gate-scope-and-path-hardening"`. Only those two lines changed. req-002 AC-3 now holds.
+- Step 6: `archive-current.mjs --feature-id "0000035-write-gate-scope-and-path-hardening"` exited 0. It moved 31 items and removed `plan/current/.feature-id`. It printed `archive-dir: plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22`.
+- Step 6b: `docs/about.md` set to `0.33.0`, `0000035-write-gate-scope-and-path-hardening`, `22 Oct 2026`.
+- Decision (P7): move one P5 decision line back to its place in the P5 block / reason: later anchored edits had pushed the line to the end of the log.
+- Quirk (P7): line 276 holds a raw U+2028 character, which the **Edit** tool wrote when it decoded a ` ` escape at P5. An exact-match **Edit** can't target it, and Hard Limit 8 rules out a shell rewrite. It stays as it is. Readers that split on U+2028 see one extra line break there.
+- Gate (P7): passed. `plan/current/` is empty, and the archive, changelog, test report, `docs/about.md`, and `product.yml` go in one commit.
+- Progress: P7 done at 2026-10-22T09:20:11Z: archived to `plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22`, `product.yml` at 0.33.0
