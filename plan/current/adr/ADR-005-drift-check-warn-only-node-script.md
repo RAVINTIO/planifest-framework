@@ -17,17 +17,20 @@ Setup copies each source `SKILL.md` into a tool folder such as `.claude/skills/`
 
 Setup doesn't copy `SKILL.md` byte for byte. `copy_skills()` in `setup.sh` rewrites four relative paths with `sed`. `setup.ps1` does the same, and Windows PowerShell 5 adds a byte order mark. The source orchestrator skill also starts with a byte order mark, which `cp` keeps (backlog 0000170). P1 corrected the P0 assumption of a byte copy (R-012, A-001).
 
-0000006 ADR 003 keeps dispatch and behaviour in skill text. Scripts verify and report. 0000035 ADR 001 keeps framework scripts on Node built-ins with no child process.
+Windows PowerShell 5.1 also changes the text itself. `setup.ps1:175` reads each copied `SKILL.md` with `Get-Content -Raw` and no `-Encoding`. PowerShell 5.1 reads a file with no byte order mark in the ANSI code page. `setup.ps1:180` then writes the text back with `-Encoding UTF8`. On 2026-10-22, 15 source skills hold non-ASCII text. The orchestrator skill starts with a byte order mark, so PowerShell reads it correctly. The other 14 install as double-encoded text. PowerShell 7 reads files with no byte order mark as UTF-8, so it isn't affected. The fix belongs in `setup.ps1`, and no requirement in this feature changes that file (backlog 0000164).
+
+0000006 ADR 003 keeps dispatch and behaviour in skill text. Scripts verify and report. 0000035 ADR 001 keeps gate code in `path-rules.mjs` on Node built-ins with no child process. It doesn't bind every framework script. For example, `scripts/run-mode.mjs:52` spawns `git`. This ADR chooses built-ins and no child process for the drift check on its own grounds. The check runs at every session start, and a spawn would add start-up cost and a new failure route.
 
 The check needs these properties:
 
 - It runs at every session start, so it must be fast and must not fail the session.
 - It must work for every tool, not only tools with hook support.
 - It must not report false drift on a correct install.
+- It must report a copy whose text differs from source, even when setup itself caused the difference.
 
 ## Decision
 
-1. A new script at `planifest-framework/scripts/skill-drift-check.mjs` compares `SKILL.md` text only. It uses Node built-ins, reads files, and never writes.
+1. A new script at `planifest-framework/scripts/skill-drift-check.mjs` compares `SKILL.md` text only. It uses Node built-ins, starts no child process, reads files, and never writes.
 2. Before it compares, the script applies setup's four path rewrites to the source text, in `setup.sh` order. It then strips one leading UTF-8 byte order mark from the source and one from the installed copy, each only when present.
 3. The script finds the active tool from each tool's `.planifest-setup-flags` marker. If no marker is valid, it checks every installed skills folder it finds.
 4. The exit codes are fixed:
@@ -58,7 +61,7 @@ The check needs these properties:
 
 **Positive:**
 - Every tool gets the check, because the orchestrator runs it from skill text.
-- A correct install reports no drift, whether setup ran from `setup.sh` or `setup.ps1`.
+- A correct install reports no drift. That holds for `setup.sh` and for `setup.ps1` under PowerShell 7.
 - A stale skill no longer drives a phase. The orchestrator loads the source copy instead.
 - The human on the loop keeps control of every setup run.
 
@@ -66,6 +69,7 @@ The check needs these properties:
 - The script holds a second copy of setup's rewrite list. If setup gains a fifth rewrite and the script doesn't, every skill that holds that path reports false drift until someone fixes the script.
 - The check can't detect a stale `assets/`, `references/`, or `scripts/` file. A skill can pass the check and still bundle an old template.
 - A tool that doesn't run the orchestrator at session start gets no warning.
+- After `setup.ps1` runs under Windows PowerShell 5.1, the check reports the 14 double-encoded skills as stale. That report is correct, because the installed text differs from source. `planifest-refresh-setup` can't clear it, since each re-run double-encodes the copies again. The warning stays until backlog 0000164 fixes `setup.ps1`.
 
 **Risks:**
 - The rewrite list drifts from setup. The req-002 suite asserts that the script's list matches the `sed` expressions in `setup.sh` (R-012).
@@ -76,7 +80,7 @@ The check needs these properties:
 
 - ADR-006 - related-to: a re-run-setup migration fixes the drift that this check reports.
 - 0000006 ADR 003 - depends-on: behaviour stays in skill text, and scripts verify.
-- 0000035 ADR 001 - depends-on: Node built-ins only, with no child process.
+- 0000035 ADR 001 - related-to: keeps gate code in `path-rules.mjs` on Node built-ins with no child process. This ADR makes the same choice for the drift check, but 0000035 ADR 001 doesn't require it.
 
 ## Supersedes
 

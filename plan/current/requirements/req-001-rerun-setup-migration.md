@@ -72,7 +72,7 @@ The migration names the setup-delivered files that this release changes. The exp
 
 No skill names `build-log.template.md` in its `bundle_templates` list. It is setup-delivered because the copy-all fallback in FR-001.1 copies it. The same reasoning covers every other template and top-level standard.
 
-Before P3 closes, the agent compares this list with `git diff --name-only main` and adds any setup-delivered file it missed. It applies the FR-001.1 rules to each path in that diff. It never filters the diff by the `bundle_templates` or `bundle_standards` lists. New scripts in `planifest-framework/scripts/`, such as `skill-drift-check.mjs` (req-002), stay in place and aren't setup-delivered.
+Before P3 closes, the agent compares this list with `git diff --name-only main` and adds any setup-delivered file it missed. It repeats the comparison at the end of P6, after the last change to any setup-delivered file, and before the FR-001.7 setup run. It applies the FR-001.1 rules to each path in that diff. It never filters the diff by the `bundle_templates` or `bundle_standards` lists. New scripts in `planifest-framework/scripts/`, such as `skill-drift-check.mjs` (req-002), stay in place and aren't setup-delivered.
 
 ### FR-001.4 The migration file
 
@@ -113,9 +113,12 @@ A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and th
 ### FR-001.7 Record in this repo
 
 - This repo is the framework source. The migrator decides that from the root `product.yml` `id: "planifest-framework"`.
-- The Target line from FR-001.4 lets the migration apply here. P3 re-runs `planifest-framework/setup.sh claude-code --strict-orchestrator`, with the flags from `.claude/.planifest-setup-flags`.
-- P3 then writes `plan/_migrations/migrate-0.34.0-rerun-setup.md` through **Write**. The record holds `outcome: "applied"` and `framework-version: "0.34.0"`, with the record fields from 0000035 req-007.
-- The setup run rewrites the tracked `planifest-overrides/setup-config/claude-code.md`. P3 commits that change with the record.
+- The Target line from FR-001.4 lets the migration apply here. P3 builds the migration file but doesn't run it in this repo.
+- The run happens at the end of P6, after the last change to any setup-delivered file. P4 to P6 can still change such a file, so a P3 run would leave stale installed copies under an `applied` record (ADR-007).
+- At the end of P6, the agent repeats the FR-001.3 diff check. It then re-runs `planifest-framework/setup.sh claude-code --strict-orchestrator`, with the flags from `.claude/.planifest-setup-flags`.
+- The agent then writes `plan/_migrations/migrate-0.34.0-rerun-setup.md` through **Write**. The record holds `outcome: "applied"` and `framework-version: "0.34.0"`, with the record fields from 0000035 req-007.
+- The setup run rewrites the tracked `planifest-overrides/setup-config/claude-code.md`. The agent commits that change with the record.
+- If P7, P8, or P9 changes a setup-delivered file, the agent repeats the diff check and the setup run before the P9 push.
 
 ### FR-001.8 Tests
 
@@ -127,6 +130,7 @@ A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and th
   - the Target line names the framework source
   - the policy file holds the sentence from FR-001.6
   - this repo's record exists and holds `outcome: "applied"`
+- The record check prints a `SKIP` line and passes while the record is absent, because P4 runs the suite before the end-of-P6 setup run. Once the record exists, the check must find `outcome: "applied"`. The end-of-P6 step runs the suite again and confirms that the record check ran with no `SKIP` line.
 - `test-0000035-req-007-migration-run-state.sh` and `test-0000035-req-010-migration-records-for-this-repo.sh` expect eight migrations. Each changes its count to nine.
 
 ## Acceptance Criteria
@@ -138,5 +142,5 @@ A fresh 0.34.0 install still runs the migration. Setup is safe to re-run, and th
 ## Dependencies
 
 - [Req-002](req-002-skill-drift-check.md) supplies `skill-drift-check.mjs`, which step 3 of the Migrator Instructions runs.
-- The 0.34.0 file list depends on what stream-01 and stream-03 change. FR-001.3 checks it against the diff before P3 closes.
+- The 0.34.0 file list depends on what stream-01 and stream-03 change. FR-001.3 checks it against the diff before P3 closes and again at the end of P6.
 - 0000035 req-007 record format and the migrator's target check (Step 1b).

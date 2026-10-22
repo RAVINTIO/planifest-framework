@@ -20,6 +20,7 @@ version: "0.1.0"
   - It follows the sections of the 0.31.0 migration.
   - `standards/framework-update-policy.md` states that a release that changes a setup-delivered file ships such a migration.
   - This repo records it as `applied` after P3 re-runs setup here.
+  - P2 correction: the setup re-run and the record move to the end of P6, after the last change to a setup-delivered file (ADR-007).
 - A skill drift check, `scripts/skill-drift-check.mjs` (US-002):
   - It compares `SKILL.md` text only, source against the installed copy.
   - Before it compares, it applies setup's four path rewrites to the source and strips one leading byte order mark from both copies (P1 correction).

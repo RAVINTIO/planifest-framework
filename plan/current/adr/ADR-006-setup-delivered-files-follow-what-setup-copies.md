@@ -34,6 +34,10 @@ The rule needs a definition of a setup-delivered file. The skill manifests look 
 4. `standards/framework-update-policy.md` gains a section with this definition and this sentence: "A release that changes a setup-delivered file ships a re-run-setup migration."
 5. One re-run-setup migration may cover several releases when an earlier release shipped none. `migrate-0.34.0-rerun-setup.md` covers 0.33.0 and 0.34.0.
 6. The migration's file list comes from the git diff of each release, filtered by this definition. Before P3 closes, the agent checks the 0.34.0 list against `git diff --name-only main`.
+7. The agent repeats that diff check at the end of P6, after the last change to any setup-delivered file. It adds any file that P4, P5, or P6 changed to the Background list. This repo's setup re-run and `applied` record follow that check (ADR-007).
+8. If P7, P8, or P9 changes a setup-delivered file, the agent repeats the diff check and the setup run before the P9 push.
+
+The re-run comes at the end of P6, not in P3, because P4 to P6 can still change setup-delivered files. A P5 security fix to `path-rules.mjs` is one example. A P3 run would leave this repo's installed copies stale under an `applied` record, and the Background list incomplete.
 
 ## Alternatives Considered
 
@@ -62,9 +66,10 @@ The rule needs a definition of a setup-delivered file. The skill manifests look 
 - Almost every release changes a template, a standard, or a skill. So almost every release now ships a migration, and each project re-runs setup more often.
 - The definition copies setup's behaviour into prose. If setup's copy rules change, the policy text is wrong until someone updates it.
 - A migration that covers two releases has a longer Background. The human on the loop reads more to see what changed.
+- The Background list can change after P3 builds the migration file. The end-of-P6 diff check may edit a file that P4 already validated.
 
 **Risks:**
-- The 0.34.0 file list misses a file that other streams change (R-017). The FR-001.3 diff check before P3 closes catches it.
+- The 0.34.0 file list misses a file that other streams change (R-017). The FR-001.3 diff check before P3 closes catches it, and the repeat at the end of P6 catches later changes.
 - A future release forgets the rule anyway (R-016). The drift check in ADR-005 still warns on stale skills, but not on stale hooks or boot files.
 
 ## Related ADRs

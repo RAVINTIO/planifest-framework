@@ -34,7 +34,7 @@ status: "active"
 ### Iteration 2 (2026-10-22T22:20:00Z)
 - **Approach:** 1
 - **Action:** three fix agents in parallel by ADR block, then a fresh critic instance.
-- **Observation:** pending
+- **Observation:** fixes committed. Backlog 0000162 and 0000164 filed. The orchestrator aligned `design.md`, `scope.md`, R-012, and R-019 with the end-of-P6 setup run and the count of 14 double-encoded skills. Fresh critic verdict pending.
 - **Decision:** pending
 
 ---

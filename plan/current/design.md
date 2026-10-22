@@ -30,7 +30,7 @@
 
 ## Decisions confirmed at P0
 - Run mode: `autonomous`.
-- Re-run-setup migration (US-001): one migration, `migrate-0.34.0-rerun-setup.md`, covers the setup-delivered changes in both 0.33.0 and 0.34.0. It follows the 0.31.0 migration's sections. This repo records it `applied` after P3 re-runs setup here.
+- Re-run-setup migration (US-001): one migration, `migrate-0.34.0-rerun-setup.md`, covers the setup-delivered changes in both 0.33.0 and 0.34.0. It follows the 0.31.0 migration's sections. This repo records it `applied` after setup re-runs here at the end of P6 (moved from P3 at P2, see ADR-007).
 - Drift check (US-002): a new `scripts/skill-drift-check.mjs` compares `SKILL.md` text only, source against the active tool's installed copy. It first applies setup's four path rewrites to the source and strips one leading byte order mark from both copies (P1 deviation, see the build log). It warns and never blocks. On drift, the orchestrator loads the source copy and recommends `planifest-refresh-setup`. It never re-runs setup itself.
 - Ship subjects (US-003): every skill commit subject keeps placeholders out. Subjects name the phase and action only, as in `plan(p9): clear session markers`. The feature ID goes in the body.
 - Run-mode anchor (US-004): `run-mode.mjs` accepts the bare line or one leading `- `. It keeps the one-commit rule and the design Confirmation check unchanged. The skill and template show the bare line in a code block as the preferred form.
