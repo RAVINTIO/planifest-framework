@@ -361,9 +361,11 @@ run_gate_raw "{\"cwd\":\"$(native "$ROOT")\",\"tool_input\":{\"file_path\":42}}"
 assert_equals "0" "$CODE" "req-006: a non-string file_path exits 0"
 assert_equals "" "$OUT" "req-006: a non-string file_path prints no stdout"
 
+# Superseded by 0000035 req-004: a cwd that doesn't exist now finds its root
+# from the nearest existing parent, so src/a.js below it is gated.
 run_gate "$WORK/does-not-exist" "src/a.js"
-assert_equals "0" "$CODE" "req-006: a cwd that doesn't exist exits 0"
-assert_equals "" "$OUT" "req-006: a cwd that doesn't exist prints no stdout"
+assert_equals "2" "$CODE" "req-006: a cwd that doesn't exist gates src/a.js (0000035 req-004)"
+assert_contains "No confirmed design" "$OUT" "req-006: a cwd that doesn't exist gives the no-design reason (0000035 req-004)"
 
 run_gate_raw "{\"cwd\":\"$(native "$ROOT")\",\"path\":\"src/a.js\"}"
 assert_equals "2" "$CODE" "req-006: raw Claude Code input with a top-level path is still gated"

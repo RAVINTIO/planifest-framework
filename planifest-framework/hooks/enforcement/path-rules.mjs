@@ -27,7 +27,9 @@
  *
  * Exports:
  *   resolveRoot(cwd)                 real repository root, or null if cwd is unusable
+ *   resolveTarget(root, cwd, target)  { kind: inside | outside | unresolvable } for a target
  *   toRootRelative(root, cwd, target) root-relative path, or null when outside the root
+ *   hookCwd(input)                   the folder a hook judges from, or null
  *   evaluateWrite(root, relPath)     { allowed, reason?, warning? } for a root-relative path
  *   judgeWrite(cwd, target)          resolveRoot, toRootRelative, and evaluateWrite in one call
  *   unjudgeable(base, target)        a warning when the path is too long to judge, or null
@@ -101,18 +103,66 @@ function isDirectory(p) {
   }
 }
 
-// realPathOf: the real path of p, or of its nearest existing parent with the
-// missing segments appended. p must be absolute.
-function realPathOf(p) {
+// A path resolution error: realpathSync failed on a path the walk reached.
+// code is the error code, and reached is the real path the walk got to before
+// the error, with the rest of the path appended as text (0000035 ADR-005).
+class ResolutionError extends Error {
+  constructor(code, reached) {
+    super(code);
+    this.code = code;
+    this.reached = reached;
+  }
+}
+
+// nearestExisting: walks up from the absolute path p with statSync to the
+// nearest path that exists, or the nearest folder when wantFolder is set.
+// Only ENOENT and ENOTDIR count as missing. Any other error, such as EACCES,
+// stops the walk at that path, so a permission error can't move the result
+// (0000035 ADR-006). Returns { stop, missing }, where missing holds the
+// segments below stop, nearest first.
+function nearestExisting(p, wantFolder = false) {
   const missing = [];
   let current = p;
-  while (!existsSync(current)) {
+  for (;;) {
+    try {
+      const stats = statSync(current);
+      if (!wantFolder || stats.isDirectory()) return { stop: current, missing };
+    } catch (err) {
+      if (err?.code !== "ENOENT" && err?.code !== "ENOTDIR") return { stop: current, missing };
+    }
     const parent = dirname(current);
-    if (parent === current) return p;
+    if (parent === current) return { stop: current, missing };
     missing.unshift(relative(parent, current));
     current = parent;
   }
-  return join(realpathSync(current), ...missing);
+}
+
+// realPathOf: the real path of p, or of its nearest existing parent with the
+// missing segments appended. p must be absolute. Throws a ResolutionError
+// when realpathSync fails where the walk stopped.
+function realPathOf(p) {
+  const { stop, missing } = nearestExisting(p);
+  try {
+    return join(realpathSync(stop), ...missing);
+  } catch (err) {
+    throw new ResolutionError(err?.code ?? "an unknown error", reachedBefore(stop, missing));
+  }
+}
+
+// reachedBefore: the real path of the nearest parent of stop that resolves,
+// with the rest of the path appended as text.
+function reachedBefore(stop, missing) {
+  const rest = [...missing];
+  let current = stop;
+  for (;;) {
+    const parent = dirname(current);
+    if (parent === current) return join(stop, ...missing);
+    rest.unshift(relative(parent, current));
+    current = parent;
+    try {
+      return join(realpathSync(current), ...rest);
+    } catch { /* keep climbing */ }
+  }
 }
 
 // planted: whether the marked folder at rel, a path relative to a higher
@@ -168,48 +218,100 @@ function markedRoot(start) {
  *      starting point, never the root itself (N-4). It wins over cwd because
  *      an agent can change cwd with cd but can't change the hook's
  *      environment.
- *   2. The marked root found by walking up from cwd.
- *   3. The real path of cwd.
+ *   2. The marked root found by walking up from the nearest existing folder
+ *      at or above cwd. A cwd that no longer exists still finds its
+ *      repository this way (0000035 ADR-006).
+ *   3. The real path of that nearest existing folder.
  * Each walk takes the nearest folder holding planifest-framework/, then the
- * nearest holding .git (N-5). Returns null, and never throws, when cwd is
- * missing or unreadable.
+ * nearest holding .git (N-5). Returns null, and never throws, when cwd is not
+ * a non-empty string. It also returns null when the walk from cwd stops at a
+ * path whose real path can't be resolved, because no root is then known.
  */
 export function resolveRoot(cwd) {
   try {
-    if (typeof cwd !== "string" || !cwd || !isDirectory(cwd)) return null;
+    if (typeof cwd !== "string" || !cwd) return null;
     const projectDir = process.env.CLAUDE_PROJECT_DIR;
     if (projectDir && isDirectory(projectDir)) {
       const fromProject = markedRoot(realpathSync(projectDir));
       if (fromProject) return fromProject;
     }
-    const start = realpathSync(cwd);
+    const start = realpathSync(nearestExisting(resolve(cwd), true).stop);
     return markedRoot(start) ?? start;
   } catch {
     return null;
   }
 }
 
+// within: the path of abs relative to root, with forward slashes and its
+// original case, or null when abs is outside root. Matches whole segments.
+function within(root, abs) {
+  const normRoot = norm(root).replace(/\/$/, "");
+  const normAbs = norm(abs);
+  if (normAbs === normRoot) return "";
+  const rootPrefix = normRoot + "/";
+  if (!normAbs.startsWith(rootPrefix)) return null;
+  return abs.replace(/\\/g, "/").slice(rootPrefix.length);
+}
+
+/**
+ * Resolves target from cwd and places it against root (0000035 ADR-005).
+ * Returns one of:
+ *   { kind: "inside", relPath }       relPath has forward slashes and its original case
+ *   { kind: "outside" }               outside root, or too long to judge (F7)
+ *   { kind: "unresolvable", reason }  a resolution error for a path inside root
+ * Relative targets resolve against the real path of cwd, or of its nearest
+ * existing parent with the missing segments appended. A resolution error
+ * counts as unresolvable when the target as text, or the real path reached
+ * before the error, lies inside root. Otherwise the target is outside.
+ */
+export function resolveTarget(root, cwd, target) {
+  if (typeof target !== "string" || !target || typeof cwd !== "string") return { kind: "outside" };
+  if (unjudgeable(cwd, target)) return { kind: "outside" }; // no slow file-system walk (F7)
+  const textAbs = isAbsolute(target) ? resolve(target) : resolve(cwd, target);
+  let abs;
+  try {
+    const base = realPathOf(resolve(cwd));
+    abs = realPathOf(isAbsolute(target) ? resolve(target) : resolve(base, target));
+  } catch (err) {
+    if (!(err instanceof ResolutionError)) throw err;
+    if (within(root, textAbs) === null && within(root, err.reached) === null) return { kind: "outside" };
+    return {
+      kind: "unresolvable",
+      reason:
+        `[Planifest] Can't resolve the path '${target.slice(0, 80)}' inside the repository root ` +
+        `(${err.code}). Write blocked, because the gate can't judge where it lands.\n`,
+    };
+  }
+  const relPath = within(root, abs);
+  return relPath === null ? { kind: "outside" } : { kind: "inside", relPath };
+}
+
 /**
  * The target's path relative to root, with forward slashes and its original
  * case. Returns null when the target is outside root or can't be resolved.
- * Relative targets resolve against the real path of cwd. The comparison
- * resolves .. segments first and matches whole path segments.
+ * Kept for existing callers. The gates call resolveTarget.
  */
 export function toRootRelative(root, cwd, target) {
   try {
-    if (typeof target !== "string" || !target) return null;
-    if (unjudgeable(cwd, target)) return null; // no slow file-system walk (F7)
-    const base = realPathOf(resolve(cwd));
-    const abs = realPathOf(isAbsolute(target) ? resolve(target) : resolve(base, target));
-    const absSlashed = abs.replace(/\\/g, "/");
-    const normRoot = norm(root).replace(/\/$/, "");
-    const normAbs = norm(abs);
-    if (normAbs === normRoot) return "";
-    const rootPrefix = normRoot + "/";
-    if (!normAbs.startsWith(rootPrefix)) return null;
-    return absSlashed.slice(rootPrefix.length);
+    const result = resolveTarget(root, cwd, target);
+    return result.kind === "inside" ? result.relPath : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * The working folder a hook judges from (0000035 ADR-006): the stdin cwd
+ * field when it is a non-empty string, then process.cwd(), then
+ * CLAUDE_PROJECT_DIR. Returns null when none is usable, and the hook passes.
+ */
+export function hookCwd(input) {
+  if (typeof input?.cwd === "string" && input.cwd) return input.cwd;
+  try {
+    return process.cwd();
+  } catch {
+    const projectDir = process.env.CLAUDE_PROJECT_DIR;
+    return typeof projectDir === "string" && projectDir ? projectDir : null;
   }
 }
 
@@ -302,15 +404,18 @@ export function evaluateWrite(root, relPath) {
  * Judges a write to target from cwd. A target outside the repository root,
  * or a cwd that can't be used, returns { allowed: true, outside: true }. A
  * path too long to judge returns { allowed: true, warning } before any
- * file-system walk (F7). Otherwise returns the evaluateWrite result with the
- * root and relPath added.
+ * file-system walk (F7). A target that can't be resolved inside the root
+ * returns { allowed: false, reason } (0000035 ADR-005). Otherwise returns the
+ * evaluateWrite result with the root and relPath added.
  */
 export function judgeWrite(cwd, target) {
   const tooLongWarning = typeof cwd === "string" ? unjudgeable(cwd, target) : null;
   if (tooLongWarning) return { allowed: true, warning: tooLongWarning };
   const root = resolveRoot(cwd);
   if (!root) return { allowed: true, outside: true };
-  const relPath = toRootRelative(root, cwd, target);
-  if (relPath === null) return { allowed: true, outside: true };
+  const placed = resolveTarget(root, cwd, target);
+  if (placed.kind === "unresolvable") return { allowed: false, reason: placed.reason, root };
+  if (placed.kind === "outside") return { allowed: true, outside: true };
+  const { relPath } = placed;
   return { ...evaluateWrite(root, relPath), root, relPath };
 }

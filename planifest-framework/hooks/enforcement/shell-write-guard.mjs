@@ -62,7 +62,7 @@
 
 import { homedir } from "node:os";
 import { basename, isAbsolute, resolve } from "node:path";
-import { evaluateWrite, resolveRoot, toRootRelative, unjudgeable } from "./path-rules.mjs";
+import { evaluateWrite, hookCwd, resolveRoot, resolveTarget, unjudgeable } from "./path-rules.mjs";
 import { readStdin } from "./read-stdin.mjs";
 
 const PREFIX = "[Planifest]";
@@ -688,8 +688,14 @@ function judgeCommand(cwd, command) {
       warnings.push(tooLong.replace("Write allowed.", "Command allowed."));
       return null;
     }
-    const relPath = toRootRelative(root, base, literal);
-    if (relPath === null) return null; // outside the repository root
+    const placed = resolveTarget(root, base, literal);
+    if (placed.kind === "outside") return null; // outside the repository root
+    if (placed.kind === "unresolvable") {
+      // A resolution error inside the root blocks (0000035 ADR-005).
+      const reason = placed.reason.replace(/^\[Planifest\]\s*/, "").replace("Write blocked", "Command blocked").trim();
+      return `${PREFIX} Shell write blocked: '${writer}' writes '${literal.slice(0, 80)}'. ${reason}\n`;
+    }
+    const { relPath } = placed;
     const result = evaluateWrite(root, relPath);
     if (result.warning) warnings.push(result.warning);
     if (result.allowed) return null;
@@ -814,7 +820,9 @@ try {
   const input = JSON.parse(await readStdin());
   const command = input?.tool_input?.command;
   if (typeof command !== "string" || !command) process.exit(0);
-  const cwd = typeof input?.cwd === "string" && input.cwd ? input.cwd : process.cwd();
+  // The stdin cwd, then process.cwd(), then CLAUDE_PROJECT_DIR (0000035 ADR-006).
+  const cwd = hookCwd(input);
+  if (cwd === null) process.exit(0);
 
   const { blocks, warnings } = judgeCommand(cwd, command);
   process.stderr.write(capped(warnings, "warnings"));
