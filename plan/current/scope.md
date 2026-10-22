@@ -58,7 +58,7 @@ version: "0.1.0"
   - `set-product-release.mjs` falls under a narrow Hard Limit 8 carve-out, which the P2 ADR records. It is a fixed framework script with its own suite, as `archive-current.mjs` is (0000033 ADR 010). The agent passes it arguments, never content. It writes only the named fields of `product.yml` and refuses any other path (req-002).
   - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-002).
   - The req-002 Input Validation section treats every script argument as untrusted. It binds `--root` to the folder that `resolveRoot` returns, and gives each argument a pattern and a length cap.
-- The acceptance-criteria limit in `consistency-check.mjs` rises from 3 to 10 per requirement, at the instruction of the human on the loop on 2026-10-22. The feature brief template still asks for 3 and prefers a split above that. `test-0000016-pipeline-governance.sh` and its regression copy test 10 as a pass and 11 as a finding.
+- The acceptance-criteria limit in `consistency-check.mjs` rises from 3 to 10 per requirement, at the instruction of the human on the loop on 2026-10-22. The feature brief template still asks for 3 and prefers a split above that. From 4 to 10, the check prints a warning and still exits 0. `test-0000016-pipeline-governance.sh` and its regression copy test 10 as a pass with a warning and 11 as a finding.
 
 ## Out of Scope
 

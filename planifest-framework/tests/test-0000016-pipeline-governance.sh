@@ -197,6 +197,7 @@ cat > "$CLEAN/risk-register.md" <<'MD'
 MD
 OUT=$(node "$CC" "$CLEAN" 2>&1); RC=$?
 assert_exit_zero "$RC" "req-014: clean fixture exits 0"
+assert_contains "10 acceptance criteria (aim for 3" "$OUT" "req-014: warns on 4 to 10 acceptance criteria without failing"
 
 # seeded-defect fixture: 5 defect classes
 BAD="$TMP/bad/plan/current"; mkdir -p "$BAD/requirements" "$BAD/adr"

@@ -142,3 +142,6 @@ Streams formed (dependency test: stories that change the same file share a strea
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | Skills inbox empty. One ADR agent per stream, in one parallel batch, each inside its own ADR block. |
+
+- P2 exchange (acceptance-criteria warning): A: "There should still be a warning above 3 and less than 10 though for feedback. Just not a hard block."
+- Decision (P2): `consistency-check.mjs` prints a `⚠` warning for 4 to 10 criteria and still exits 0. Above 10 stays a finding / reason: instruction from the human on the loop. Both governance suite copies pass, 96 tests each.
