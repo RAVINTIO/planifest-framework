@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p2"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic-p2
 
@@ -18,8 +18,8 @@ status: "active"
 | Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
-| Last updated | `2026-10-22T22:06:10Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-22T22:22:12Z` |
 
 ---
 
@@ -40,8 +40,8 @@ status: "active"
 ### Iteration 3 (2026-10-22T22:35:00Z)
 - **Approach:** 1
 - **Action:** orchestrator fixes to NFR-003, R-010, ADR-001, req-008, req-002, ADR-005, and ADR-007. Then a fresh critic instance.
-- **Observation:** pending
-- **Decision:** pending
+- **Observation:** APPROVE, 0 critical, 0 major, 2 minor, in `plan/current/design-critic-p2-iteration-3.md`. All five iteration 2 findings resolved.
+- **Decision:** done: the pass condition holds. The orchestrator fixes the two minor findings after the loop disarms.
 
 ---
 

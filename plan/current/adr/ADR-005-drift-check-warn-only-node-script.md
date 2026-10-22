@@ -72,7 +72,7 @@ The check needs these properties:
 - After `setup.ps1` runs under Windows PowerShell 5.1, the check reports the 14 double-encoded skills as stale. That report is correct, because the installed text differs from source. `planifest-refresh-setup` can't clear it, since each re-run double-encodes the copies again. The warning stays until backlog 0000164 fixes `setup.ps1`.
 
 **Risks:**
-- The rewrite list drifts from setup. The req-002 suite asserts that the script's list matches the `sed` expressions in `setup.sh` and the `-replace` calls in `setup.ps1` (R-012).
+- The rewrite list drifts from setup. The req-002 suite asserts that the script's list matches the `sed` expressions in `setup.sh` and the `-replace` calls in `setup.ps1`, compared as a set of from-and-to pairs (R-012).
 - An agent ignores the warning and loads the installed copy anyway (R-014). The Resume Detection text names the source path to load.
 - The skill count grows and the check passes 1 s (R-015). The suite times a full fixture install.
 

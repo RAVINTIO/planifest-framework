@@ -49,7 +49,7 @@ req-009 serves US-009. Risk R-007 records that the change blocks writes that pas
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | Step 1 of `evaluateWrite` gains the `isEnforcementPath` condition. Both write gates inherit it. The req-009 suite covers three enforcement targets, a case variant, and one path outside the list, in four fixture states. |
+| planifest-framework | Step 1 of `evaluateWrite` gains the `isEnforcementPath` condition. Both write gates inherit it. The req-009 suite covers three enforcement targets, one of them the case variant `Claude.MD`, and one path outside the list, in four fixture states. |
 
 ## Consequences
 
