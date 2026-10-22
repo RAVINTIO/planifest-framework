@@ -252,3 +252,22 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Decision (P5): stop the fix loop and defer M-1 to M-3 to backlog 0000182 / reason: each round found smaller Low edge cases, and the gate passes at Low with no Critical, High, or Medium finding.
 - Gate (P5): report produced with specific findings. Overall risk Low after two fix rounds, each confirmed by a fresh-context re-review.
 - Progress: P5 done at 2026-10-22T23:51:49Z: High risk fixed to Low in two rounds, five backlog entries filed
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T23:51:49Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined set) |
+| Model tier | cheaper (docs agents) |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Gate A: `docs/` exists. |
+
+P6 Gate B: docs update assessment (continuous run, auto-accepted).
+This run adds a drift-check script, a 0.34.0 migration, twelve ADRs, and changes to the write gate, run-mode script, and several skills.
+Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, `docs/dependency-graph.md`, and the `src/setup-hook-integration/docs/` files only where this run changed their subject.
