@@ -79,6 +79,37 @@ mkdir -p "$WORK/elsewhere/gone" && rmdir "$WORK/elsewhere/gone"
 CLAUDE_PROJECT_DIR="$FX" run_gate "$WORK/elsewhere/gone" "$(native "$FX/src/x.js")"
 assert_equals "2" "$CODE" "req-004: CLAUDE_PROJECT_DIR is the root for a deleted cwd outside the project"
 
+# Logging policy: neither the cwd nor CLAUDE_PROJECT_DIR appears in hook output.
+for hook in gate guard; do
+  if [ "$hook" = "gate" ]; then
+    CLAUDE_PROJECT_DIR="$FX" run_gate "$WORK/elsewhere/gone" "src/x.js"
+  else
+    CLAUDE_PROJECT_DIR="$FX" run_guard "$WORK/elsewhere/gone" "touch src/x.js"
+  fi
+  assert_equals "no" "$([[ "$ERR" == *"elsewhere"* ]] && echo yes || echo no)" "req-004: the $hook output never prints the cwd"
+  assert_equals "no" "$([[ "$ERR" == *"$(native "$FX")"* ]] && echo yes || echo no)" \
+    "req-004: the $hook output never prints CLAUDE_PROJECT_DIR"
+done
+
+# A target past MAX_PATH_SEGMENTS keeps its warn-and-allow result from a deleted cwd.
+LONG_TARGET="src/$(printf 'd/%.0s' $(seq 1 300))x.js"
+CLAUDE_PROJECT_DIR="$FX" run_gate "$FX/gone" "$LONG_TARGET"
+assert_equals "0" "$CODE" "req-004: a too-long target from a deleted cwd keeps its warn-and-allow exit 0"
+assert_contains "Warning" "$ERR" "req-004: a too-long target from a deleted cwd keeps its warning"
+
+# A cwd that is not a non-empty string gives no root. A non-string stdin cwd
+# first falls back to process.cwd() (FR hookCwd), so the null case reaches a
+# hook only when no cwd is usable at all. Both hooks then pass with exit 0.
+NS="$WORK/nostring"
+mkdir -p "$NS"
+(cd "$NS" && rmdir "$NS" && node "$SHELL_GUARD" >/dev/null 2>&1 <<< '{"tool_name":"Bash","tool_input":{"command":"touch src/x.js"}}')
+assert_equals "0" "$?" "req-004: with no cwd and CLAUDE_PROJECT_DIR unset, the shell guard passes"
+RR=$(node --input-type=module -e "
+const { resolveRoot } = await import(process.argv[1]);
+process.stdout.write([resolveRoot(''), resolveRoot(42), resolveRoot(undefined)].map(String).join(','));
+" "$(native "$PATH_RULES")" 2>&1)
+assert_equals "null,null,null" "$RR" "req-004: resolveRoot returns null for a cwd that is not a non-empty string"
+
 # =============================================================================
 echo ""
 echo "=== req-004: a deleted cwd with CLAUDE_PROJECT_DIR unset ==="
