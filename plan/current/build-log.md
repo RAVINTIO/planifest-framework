@@ -304,4 +304,12 @@ This run changed the write gates, added `set-product-release.mjs`, moved migrati
 Auto-accepted: updating `docs/decisions-index.md`, `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/dependency-graph.md`, the framework reference docs, and `src/setup-hook-integration/docs/` where setup behaviour changed.
 
 - Decision (P6): three docs agents in one parallel batch. Agent 1: living docs under `docs/` and the drift checks. Agent 2: framework reference docs and the requirement and ADR text that the P3 to P5 deviations left behind. Agent 3: `recommendations.md`, the iteration log, and backlog entries for its Deferred Items and Tech Debt rows / reason: the three sets share no file.
+- Docs agent 1: living docs updated (`5807dca`, `c600fd7`, `aa7c994`), drift report (`c1c9d23`). Drift: three low domain-term items, no boundary, ADR, or dependency drift.
+- Docs agent 2: requirements and ADRs synced with the P3 and P5 deviations (`bf2bb01`), reference docs (`8ddf181`), setup integration docs (`6196aaa`).
+- Docs agent 3: `recommendations.md` with 11 recommendations, 12 deferred items, and 13 tech debt rows (`6131045`), iteration log (`13b3a6d`).
+- Backlog filed (P6): 0000152 to 0000157 (from `recommendations.md`) and 0000158 (no 0.33.0 migration tells downstream projects to rerun setup).
+- Decision (P6): the orchestrator fixed the three drift items. The glossary defines placement and unresolvable target, and states the `CLAUDE_PROJECT_DIR` order (`bebf0c8`). The migrator skill says "human on the loop" / reason: the glossary sets that term.
+- Decision (P6): four living-doc lines named `_done/`, which failed the req-007 suite's no-`_done/` check. The orchestrator reworded them as "the old completed-migrations folder" / reason: fix the doc, never the check.
+- Decision (P6): keep the 0.33.0 setup-rerun migration as backlog 0000158 / reason: a ninth migration breaks req-010's eight-record criteria. The final report flags it as the first follow-up, because downstream projects keep the old hooks until setup reruns.
+- Post-P6 revalidation: P4 check set (`run-tests.sh`, `self-description-check.mjs`, `consistency-check.mjs`). 88 feature suites and 31 regression suites pass, self-description passes, consistency clean.
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.
