@@ -236,3 +236,20 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 - Decision (P4): the `resolveRoot` contract mismatch between its doc comment and req-004 goes to the P6 deviation review / reason: the P3 deviation already records the extra `null` case, and P6 brings req-004 and ADR-006 into line with the code.
 - Gate (P4): passed. `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. No criterion failed. Two deferred criteria have named owners.
 - Progress: P4 done at 2026-10-22T07:07:18Z: 69 of 71 criteria covered, 35 verified by execution, two deferred
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T07:08:00Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | No API, IaC, network surface, or new dependency. The review covers the write gates and the new script. |
+
+- Decision (P5): two reviewers in one parallel batch. One covers the gate hooks (`path-rules.mjs`, `gate-write.mjs`, `shell-write-guard.mjs`, `ratchet-check.mjs`, the scope record). The other covers `set-product-release.mjs`, the sanctioned-scripts carve-out, and migration records. The orchestrator writes `security-report.md` from both / reason: the two areas share no code path except `resolveRoot`.
