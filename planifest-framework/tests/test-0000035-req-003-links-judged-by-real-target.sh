@@ -112,6 +112,32 @@ assert_equals "2" "$CODE" "req-003: shell guard blocks a write through a link lo
 assert_contains "link loop" "$ERR" "req-003: shell guard names the link loop"
 assert_equals "no" "$([[ "$ERR" == *"loop-b"* ]] && echo yes || echo no)" "req-003: the block reason never prints link text"
 
+# A loop whose link name runs past 80 characters and whose link text is distinctive.
+LONG_NAME="$(printf 'L%.0s' $(seq 1 100))"
+ln -s SECRETTEXT-loop "$FX/plan/$LONG_NAME"
+ln -s "$LONG_NAME" "$FX/plan/SECRETTEXT-loop"
+SHOWN="plan/$(printf 'L%.0s' $(seq 1 75))"
+for hook in gate guard; do
+  if [ "$hook" = "gate" ]; then run_gate "$FX" "plan/$LONG_NAME"; else run_guard "$FX" "touch plan/$LONG_NAME"; fi
+  assert_equals "2" "$CODE" "req-003: $hook blocks a loop with a long link name"
+  assert_contains "$SHOWN" "$ERR" "req-003: the $hook reason shows the first 80 characters of the target"
+  assert_equals "no" "$([[ "$ERR" == *"${SHOWN}L"* ]] && echo yes || echo no)" \
+    "req-003: the $hook reason shows no more than 80 characters of the target"
+  assert_equals "no" "$([[ "$ERR" == *"SECRETTEXT"* ]] && echo yes || echo no)" \
+    "req-003: the $hook reason never prints link text"
+done
+
+# =============================================================================
+echo ""
+echo "=== req-003: a path too long after a link substitution ==="
+
+ln -s "$(printf 'a/%.0s' $(seq 1 300))x" "$FX/plan/huge"
+run_gate "$FX" "plan/huge"
+assert_equals "2" "$CODE" "req-003: gate-write blocks a path past MAX_PATH_SEGMENTS after its link"
+assert_contains "too long to judge after its links" "$ERR" "req-003: gate-write names the length cause"
+run_guard "$FX" "touch plan/huge"
+assert_equals "2" "$CODE" "req-003: shell guard blocks a path past MAX_PATH_SEGMENTS after its link"
+
 # =============================================================================
 echo ""
 echo "=== req-003: a chain of 41 links ==="
