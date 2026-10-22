@@ -113,4 +113,9 @@ Streams (start commit `8375ca7`):
 - Decision (P1): hard-limit citations take the form `the {name} rule ({source} Hard Limit N)` / reason: the form keeps the existing "Hard Limit N" text that suites assert.
 - Decision (P1): req-006 changes only the absent-key and absent-file default. An invalid `design_critic` value still reads as `off` / reason: the narrowest change that meets the confirmed design.
 - Decision (P1): cross-feature ADR citations use a space, as in `0000033 ADR 004` / reason: `consistency-check.mjs` reads `ADR-NNN` as a local ADR, which backlog 0000079 already covers.
+- Stream 01 returned req-008 to req-011, three criteria each. It filed backlog 0000161 (FIFO reads in `check-design.mjs` and `ratchet-check.mjs`).
+- Deviation (P1, unclassified): the P0 Scope Lock answer made a throwing `lstat` fail open. Stream 01 found that this turns today's block into a pass, because `existsSync` returns false on `EACCES`. req-008 and `design.md` now read a throwing `lstat` as no design.
+- Decision (P1): a symbolic link at `design.md` counts as non-regular / reason: the design says anything other than a regular file, and a link can point at a FIFO.
+- Decision (P1): req-010 replaces the brief's four named suites with a rule for every suite that names an enforcement hook / reason: the count of four didn't reproduce, and seven files break the rule today.
+- Decision (P1): `shown()` cuts at whole units at a 200-character cap for both new outputs / reason: matches the 0000035 Fast Path notice cap and never splits a surrogate pair.
 - Shared files for P3, updated: the orchestrator skill (req-002 to req-006), the ship agent skill (req-003, req-005), `autonomous-run-standards.md` (req-005, req-006), the loop runner skill (req-006, req-007), and the spec agent skill (req-005, req-007).

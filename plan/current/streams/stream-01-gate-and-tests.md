@@ -19,12 +19,18 @@ updated: "2026-10-22T21:33:56Z"
 
 ## Files changed
 
-- none yet
+- `plan/current/requirements/req-008-non-regular-design-md.md`
+- `plan/current/requirements/req-009-permitted-names-in-enforcement-paths.md`
+- `plan/current/requirements/req-010-run-tests-clears-project-dir.md`
+- `plan/current/requirements/req-011-escaped-hook-output.md`
+- `plan/backlog/0000161-fifo-reads-in-check-design-and-ratchet/entry.md`
 
 ## Declares
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
+| `shown-whole-unit-cut` | `plan/current/requirements/req-011-escaped-hook-output.md` | req-002 |
+| `enforcement-suite-unset-rule` | `plan/current/requirements/req-010-run-tests-clears-project-dir.md` | req-008 |
 
 ## Consumes
 
@@ -32,4 +38,4 @@ updated: "2026-10-22T21:33:56Z"
 
 ## Next step
 
-P1: one primary-tier subagent writes req-008 to req-011 from US-008 to US-011 in `plan/current/feature-brief.md`.
+P1 join: run the design critic over the joined P1 set. At P3, one agent builds req-008, req-009, and req-011 in sequence, because all three edit `path-rules.mjs`.
