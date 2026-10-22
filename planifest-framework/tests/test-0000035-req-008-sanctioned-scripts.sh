@@ -171,6 +171,15 @@ reject "two --component arguments that share an id" "--component" "widget=" \
 reject "a repeated --version" "--version" "0.33.0" "${BASE[@]}" --version "0.33.0"
 reject "a repeated --feature-id" "--feature-id" "$ID" "${BASE[@]}" --feature-id "$ID"
 reject "a repeated --create" "--create" "zzz-none" "${BASE[@]}" "${CREATE[@]}" --create
+reject "a repeated --root" "--root" "$R" "${BASE[@]}" --root "$R" --root "$R"
+reject "a repeated --product-id" "--product-id" "demo-twice" \
+  "${BASE[@]}" --create --product-id "demo-twice" --product-id "demo-twice" --product-name "Demo"
+reject "a repeated --product-name" "--product-name" "Twice Name" \
+  "${BASE[@]}" --create --product-id "demo" --product-name "Twice Name" --product-name "Twice Name"
+reject "a missing --component value" "--component" "zzz-none" "${BASE[@]}" --component
+mkdir -p "$R/src/dir/component.yml"
+reject "a --component path that is a folder" "--component" "src/dir" \
+  "${BASE[@]}" --component "widget=src/dir/component.yml"
 reject "an unknown argument" "argument" "evil-flag" "${BASE[@]}" --evil-flag
 reject "a missing --version value" "--version" "zzz-none" --feature-id "$ID" --version
 reject "an absent --feature-id" "--feature-id" "zzz-none" --version "0.33.0"
