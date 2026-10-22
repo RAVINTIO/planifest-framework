@@ -1,6 +1,6 @@
 ---
 title: "Requirement: req-004 - run-mode-anchor-format"
-summary: "run-mode.mjs accepts the autonomous anchor as a bare line or as one list item that starts with a hyphen and a space. Every other anchor rule stays, and the orchestrator skill and build-log template show the exact line in a code block."
+summary: "run-mode.mjs accepts the autonomous anchor as a whole bare line or one list item that starts with a hyphen and a space, with a real UTC timestamp. Every other anchor rule stays. The orchestrator skill shows the exact line in a code block, and the build-log template quotes it inline."
 status: "draft"
 version: "0.1.0"
 ---
@@ -32,6 +32,10 @@ As the human on the loop, I see `autonomous` restore after P0 whether the anchor
   - `Run mode confirmed: autonomous`, the bare form.
   - `- Run mode confirmed: autonomous`, one hyphen and one space, then the bare form.
 - Every other form counts as no anchor line. That covers leading spaces or tabs, `* `, `+ `, `> `, `1. `, `-- `, `- - `, and a hyphen followed by two spaces or a tab.
+- The whole line must match, not only its start (P5 S-1, S-2). The pattern is `^(- )?Run mode confirmed: autonomous \((\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\)\r?$`.
+- The timestamp must be a real ISO-8601 UTC time to the second. The script rejects an impossible date, such as month 13.
+- A placeholder such as `{ISO-8601 timestamp}` never counts. Trailing text, such as `autonomous-NOT` or `autonomous (...) extra`, never counts.
+- The working-tree count and the history check both use this full-line rule.
 - The working-tree check counts lines of both forms together. Exactly one such line must exist, so one bare line plus one list line reads as two and fails.
 - The history check reads `+` or `-` followed by either form. A removal of either form still fails the check.
 - The line in the working tree must equal the line the anchor commit added, prefix included. A commit that turns a bare line into a list item removes one form and adds the other, so the removal rule rejects it.
@@ -53,7 +57,9 @@ As the human on the loop, I see `autonomous` restore after P0 whether the anchor
   ```
 
 - The paragraph calls the bare line the preferred form. It says the script also accepts the line as one `- ` list item.
-- `planifest-framework/templates/build-log.template.md` shows the same code block in its P0 section. A note says that only the orchestrator writes it, and only for `autonomous`, in the commit that confirms the design.
+- `planifest-framework/templates/build-log.template.md` shows the line in its P0 section. A note says that only the orchestrator writes it, and only for `autonomous`, in the commit that confirms the design.
+- P5 S-1 changed the template form. P0 copies the template into every build log, so a column-1 example line became an anchor in every run. The template now quotes the line inline in backticks within prose, with the `{ISO-8601 timestamp}` placeholder. It says the orchestrator writes the real line itself, bare at column 1, with the real timestamp. No template line starts like an anchor.
+- The orchestrator skill keeps its fenced code block. The skill is not a build log, so its example never reaches one.
 
 ### Suite
 
@@ -66,11 +72,19 @@ As the human on the loop, I see `autonomous` restore after P0 whether the anchor
   - A bare line plus a list-item line prints `interactive`.
   - A commit that turns a bare line into a list item prints `interactive`.
 - P3 adds the same cases to the suite's copy in `planifest-framework/tests/regression/`.
+- P5 S-1 and S-2 add these cases to both copies:
+  - A build log copied from the real template, plus a genuine anchor, prints `autonomous`.
+  - A build log copied from the template with no anchor prints `interactive`.
+  - A template build log that first lands in the design-confirm commit prints `interactive`.
+  - A placeholder timestamp, a missing timestamp, an impossible date, or a non-UTC time prints `interactive`.
+  - Trailing text after `autonomous` or after the closing bracket prints `interactive`.
+  - The template quotes the line inline, and no template line starts like an anchor.
 
 ## Acceptance Criteria
 
 - [ ] `run-mode.mjs` prints `autonomous` for an anchor written as a bare line or as one `- ` list item. It keeps the one-commit rule, the removal rule, and the design Confirmation check unchanged.
 - [ ] The orchestrator skill and `templates/build-log.template.md` each show the exact bare anchor line in a fenced code block.
+  - Note (P5 S-1): the template no longer uses a fenced code block. A column-1 line in the template became an anchor in every copied build log. The template now quotes the line inline in backticks. The orchestrator skill keeps its code block. See the Skill and template text section.
 - [ ] The suite prints `interactive` for an indented line, a line with another prefix, and a list-item line added in a later commit.
 
 ## Dependencies
@@ -85,6 +99,7 @@ The build log is text that any agent can write, so the script treats it as untru
 
 - [ ] Input source: `plan/current/build-log.md` in the working tree, or the archived path the ship agent passes, plus its git history.
 - [ ] Allowed character pattern: a line counts as an anchor only when it matches `^(- )?Run mode confirmed: autonomous` at column 1. Every other line is ignored for the anchor.
+  - Note (P5 S-1, S-2): the pattern now covers the whole line, with a real UTC timestamp. See the Accepted forms section.
 - [ ] maximum length: the existing 1 MB read cap per file. A larger file prints `interactive`.
 - [ ] Failure behaviour: any rule break prints `interactive`, writes one reason line to stderr, and exits 0.
 - [ ] Logging policy: the reason line goes through the existing `clean()` filter, so it holds no control characters and at most 200 characters.

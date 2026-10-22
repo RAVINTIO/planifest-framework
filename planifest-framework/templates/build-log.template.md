@@ -40,11 +40,9 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Stack unchanged | `{{yes or no}}` |
 | Notes | `{{free text or "none"}}` |
 
-Run-mode anchor, `autonomous` only. Only the orchestrator writes this line, in the commit that confirms the design. Write it at column 1 in this bare form:
+Run-mode anchor, `autonomous` only. Only the orchestrator writes the anchor line, in the commit that confirms the design. It writes the real line itself, bare at column 1, with the real UTC timestamp in place of the placeholder: `Run mode confirmed: autonomous ({ISO-8601 timestamp})`.
 
-```
-Run mode confirmed: autonomous ({ISO-8601 timestamp})
-```
+`run-mode.mjs` counts only a whole line with a real timestamp, such as `2026-10-23T09:30:00Z`. This template holds no such line, so a copied build log holds no anchor until the orchestrator writes one.
 
 ---
 

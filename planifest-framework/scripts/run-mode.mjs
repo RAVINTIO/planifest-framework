@@ -18,12 +18,14 @@
  *   2. `continuous` and `interactive` print as read. An unknown or missing
  *      value prints `interactive`.
  *   3. `autonomous` prints only when git history anchors it. An anchor line
- *      starts at column 1 in one of two forms, bare or as one list item:
- *        `Run mode confirmed: autonomous`
- *        `- Run mode confirmed: autonomous`
- *      Every other form, such as an indented line or another prefix, is no
- *      anchor. Exactly one commit added an anchor line to the
- *      build log, and no commit removed one. That same commit changed
+ *      is a whole line in one of two forms, bare or as one list item:
+ *        `Run mode confirmed: autonomous (2026-10-23T09:30:00Z)`
+ *        `- Run mode confirmed: autonomous (2026-10-23T09:30:00Z)`
+ *      The timestamp must be a real ISO-8601 UTC time to the second. Every
+ *      other form is no anchor. That covers an indented line, another prefix,
+ *      a placeholder timestamp, and trailing text. Both the working-tree count
+ *      and the history check use this rule. Exactly one commit added an
+ *      anchor line to the build log, and no commit removed one. That same commit changed
  *      plan/current/design.md so its Confirmation line reads `yes`. The
  *      working-tree build log holds that line once, unchanged. Otherwise the
  *      script prints `interactive` and writes one reason line to stderr.
@@ -63,8 +65,15 @@ const DESIGN = "plan/current/design.md";
 const RUN_MODE_FILE = "plan/.run-mode";
 const LINE_PREFIX = "Run mode confirmed: autonomous";
 // The two accepted anchor forms (0000036 req-004, ADR-008): bare, or one "- ".
-const ANCHOR_FORMS = [LINE_PREFIX, `- ${LINE_PREFIX}`];
-const isAnchor = (line) => ANCHOR_FORMS.some((f) => line.startsWith(f));
+// The whole line must match, with a real UTC timestamp (P5 S-1, S-2). A
+// placeholder such as {ISO-8601 timestamp}, or any trailing text, never counts.
+const ANCHOR_RE = /^(- )?Run mode confirmed: autonomous \((\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\)\r?$/;
+const isAnchor = (line) => {
+  const m = ANCHOR_RE.exec(line);
+  if (!m) return false;
+  const t = Date.parse(m[2]);
+  return Number.isFinite(t) && new Date(t).toISOString().replace(".000Z", "Z") === m[2];
+};
 const CONFIRM_RE = /^\+Human confirmed this design before proceeding:\s*yes\b/i;
 const MAX_BYTES = 1024 * 1024;
 // A clean copy of the environment with every inherited GIT_* variable removed.
@@ -140,7 +149,7 @@ function rowValue(text) {
 function checkAnchor(root, logRel, logText) {
   const lines = logText.split("\n").filter(isAnchor);
   if (lines.length !== 1) {
-    return `expected one "${LINE_PREFIX}" line, bare or as one "- " list item, in the build log, found ${lines.length}`;
+    return `expected one whole "${LINE_PREFIX} (<UTC timestamp>)" line, bare or as one "- " list item, in the build log, found ${lines.length}`;
   }
   // Rule 5: refuse when a merge brought any change to the build log.
   for (const p of new Set([logRel, DEFAULT_LOG])) {

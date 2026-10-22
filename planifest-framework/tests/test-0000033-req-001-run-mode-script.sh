@@ -443,8 +443,69 @@ assert_equals "interactive" "$(mode "$R19")" "req-004: a later commit that edits
 
 assert_contains "- Run mode confirmed: autonomous" "$HEAD_FLAT" "req-004: header rule 3 names the list-item form"
 
-TPL_BLOCK=$(awk 'prev ~ /^```/ && $0 == "Run mode confirmed: autonomous ({ISO-8601 timestamp})" { print "found" } { prev = $0 }' "$TPLB")
-assert_equals "found" "$TPL_BLOCK" "req-004: build-log template shows the bare anchor line in a fenced code block"
+TPL_INLINE=$(grep -cF '`Run mode confirmed: autonomous ({ISO-8601 timestamp})`' "$TPLB")
+assert_equals "yes" "$([ "$TPL_INLINE" -ge 1 ] && echo yes || echo no)" "req-004: build-log template quotes the anchor line inline in backticks (P5 S-1)"
+assert_equals "0" "$(grep -cE '^(- )?Run mode confirmed:' "$TPLB")" "req-004: no build-log template line starts like an anchor (P5 S-1)"
+assert_contains "column 1" "$(grep -F 'Run mode confirmed: autonomous' "$TPLB")" "req-004: build-log template says the orchestrator writes the line bare at column 1 (P5 S-1)"
+
+echo ""
+echo "=== 0000036 req-004: build log copied from the template (P5 S-1) ==="
+
+# make_tpl_repo <dir>: like make_repo, but the build log is a copy of the real template.
+make_tpl_repo() {
+  local r="$1"
+  make_repo "$r"
+  cp "$TPLB" "$r/plan/current/build-log.md"
+  set_row "$r" interactive
+  git -C "$r" add -A
+  git -C "$r" commit -q -m "plan(p0): build log from template"
+}
+
+R20="$SCRATCH/tpl-genuine"
+make_tpl_repo "$R20"
+anchor "$R20"
+assert_equals "autonomous" "$(mode "$R20")" "req-004: a template build log plus a genuine anchor prints autonomous (P5 S-1)"
+
+R21="$SCRATCH/tpl-no-anchor"
+make_tpl_repo "$R21"
+confirm_design "$R21"
+set_row "$R21" autonomous
+echo autonomous > "$R21/plan/.run-mode"
+git -C "$R21" add -A
+git -C "$R21" commit -q -m "plan(p0): confirm design"
+assert_equals "interactive" "$(mode "$R21")" "req-004: a template build log with no anchor prints interactive (P5 S-1)"
+
+R22="$SCRATCH/tpl-lands-at-confirm"
+make_repo "$R22"
+cp "$TPLB" "$R22/plan/current/build-log.md"
+confirm_design "$R22"
+git -C "$R22" add -A
+git -C "$R22" commit -q -m "plan(p0): confirm design"
+echo autonomous > "$R22/plan/.run-mode"
+assert_equals "interactive" "$(mode "$R22")" "req-004: a template build log that lands in the design-confirm commit prints interactive (P5 S-1)"
+
+echo ""
+echo "=== 0000036 req-004: full-line anchor with a real timestamp (P5 S-1, S-2) ==="
+
+N=0
+for BAD in \
+  "Run mode confirmed: autonomous ({ISO-8601 timestamp})" \
+  "- Run mode confirmed: autonomous ({ISO-8601 timestamp})" \
+  "Run mode confirmed: autonomous" \
+  "Run mode confirmed: autonomous-NOT" \
+  "- Run mode confirmed: autonomousNOT" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00Z) extra" \
+  "- Run mode confirmed: autonomous (2026-10-19T10:00:00Z) extra" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00Z)." \
+  "Run mode confirmed: autonomous (2026-10-19 10:00:00Z)" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00+01:00)" \
+  "Run mode confirmed: autonomous (2026-13-45T25:61:00Z)"; do
+  N=$((N + 1))
+  R="$SCRATCH/bad-line-$N"
+  make_repo "$R"
+  anchor_with "$R" "$BAD"
+  assert_equals "interactive" "$(mode "$R")" "req-004: anchor line [$BAD] prints interactive (P5 S-1, S-2)"
+done
 
 ORCH_BLOCK=$(awk 'prev ~ /^ *```/ && $0 ~ /^ *Run mode confirmed: autonomous \(\{ISO-8601 timestamp\}\)$/ { print "found" } { prev = $0 }' "$ORCH")
 assert_equals "found" "$ORCH_BLOCK" "req-004: orchestrator shows the bare anchor line in a fenced code block"

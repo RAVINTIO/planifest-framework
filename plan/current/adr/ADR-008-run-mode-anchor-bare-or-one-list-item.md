@@ -1,6 +1,6 @@
 ---
 title: "ADR 008: Run-mode anchor as a bare line or one list item"
-summary: "run-mode.mjs accepts the autonomous anchor as a bare line at column 1 or as one leading hyphen and space. Every other form counts as no anchor. The one-commit rule, the removal rule, and the design Confirmation check stay strict, so the wider match costs no integrity."
+summary: "run-mode.mjs accepts the autonomous anchor as a whole bare line at column 1 or with one leading hyphen and space, with a real UTC timestamp. Every other form counts as no anchor. The one-commit rule, the removal rule, and the design Confirmation check stay strict, so the wider match costs no integrity."
 status: "accepted"
 version: "0.1.0"
 ---
@@ -28,13 +28,15 @@ The anchor is an integrity control. Any agent can write the build log, so the sc
 ## Decision
 
 - **Two forms:** A line counts as an anchor only when it matches `^(- )?` followed by `LINE_PREFIX` at column 1. That means the bare form, or one hyphen and one space, then the bare form.
+- **Whole line, real timestamp (P5 S-1, S-2):** The whole line must match `^(- )?Run mode confirmed: autonomous \((\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ)\)\r?$`. The timestamp must be a real UTC time, so an impossible date fails. A placeholder such as `{ISO-8601 timestamp}` never counts. Trailing text never counts. The working-tree count and the history check both use this rule.
 - **Every other form is no anchor:** Leading spaces or tabs, `* `, `+ `, `> `, `1. `, `-- `, `- - `, and a hyphen with two spaces or a tab all count as no anchor line.
 - **One line in total:** The working-tree check counts both forms together. One bare line plus one list line reads as two, and the check fails.
 - **History reads both forms:** The history check reads `+` or `-` followed by either form. A removal of either form still fails.
 - **Exact match to the anchor commit:** The working-tree line must equal the line the anchor commit added, prefix included. A commit that turns a bare line into a list item removes one form and adds the other, so the removal rule rejects it.
 - **Rules that stay strict:** The one-commit rule, the removal rule, and `CONFIRM_RE` don't change. The merge rule, the rename rule, the symlink checks, and the 1 MB read cap don't change.
 - **Fallback:** A forged, uncommitted, or missing anchor prints `interactive` with one reason line on stderr, as today.
-- **Preferred form:** The orchestrator skill and `templates/build-log.template.md` show the bare line in a fenced code block. The skill calls it the preferred form and says the script also accepts one `- ` list item.
+- **Preferred form:** The orchestrator skill shows the bare line in a fenced code block. The skill calls it the preferred form and says the script also accepts one `- ` list item.
+- **Template form (P5 S-1):** P0 copies `templates/build-log.template.md` into every build log. So the template never holds a line that starts like an anchor. It quotes the line inline in backticks, with the `{ISO-8601 timestamp}` placeholder. It says the orchestrator writes the real line itself, bare at column 1, with the real timestamp. The first version showed the line at column 1 in a fenced block. Every copied build log then held an anchor, which broke genuine restores and let a run with no orchestrator anchor read as `autonomous`.
 
 ## Alternatives Considered
 
@@ -49,7 +51,7 @@ The anchor is an integrity control. Any agent can write the build log, so the sc
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | `scripts/run-mode.mjs` matches two forms in both checks and names them in its header rule 3. `skills/planifest-orchestrator/SKILL.md` and `templates/build-log.template.md` show the bare line in a code block. `tests/test-0000033-req-001-run-mode-script.sh` and its regression copy gain six fixture cases. |
+| planifest-framework | `scripts/run-mode.mjs` matches two whole-line forms with a real timestamp in both checks and names them in its header rule 3. `skills/planifest-orchestrator/SKILL.md` shows the bare line in a code block. `templates/build-log.template.md` quotes it inline. `tests/test-0000033-req-001-run-mode-script.sh` and its regression copy gain the req-004 fixture cases and the P5 S-1 and S-2 cases. |
 
 ## Consequences
 
