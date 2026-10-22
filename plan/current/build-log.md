@@ -199,3 +199,18 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Decision (P3): `planifest-framework/component.yml` moves to `0.34.0` and names this feature / reason: the codegen skill's framework close-out rule.
 - Gate (P3): every requirement reached GREEN in its own suite. In `autonomous`, the P4 CI run checks the P3 output.
 - Progress: P3 done at 2026-10-22T22:54:32Z: eleven requirements built in three batches, full suite green
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-22T22:54:32Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `3` (one joined validation) |
+| Model tier | cheaper (validate), primary (verify by execution) |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Validate and verify-by-execution run in one batch. W8's full run at `5d9ce6a` already passed CI, so verify-by-execution doesn't wait. |
