@@ -13,14 +13,30 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
   - an existing feature with code at `src/{component-id}/`
   - a change with no `src/` target, such as a change to documentation, governance, tooling, or framework text
 - The request meets **ALL** Fast Path criteria (verified by the orchestrator)
-- The change touches none of these enforcement paths:
+- The change touches none of these enforcement paths. `FAST_PATH_ENFORCEMENT_PATHS` in `planifest-framework/hooks/enforcement/path-rules.mjs` lists the same entries. The gate checks them, ignoring case, before any scope record, so a record never admits one. An entry ending in `/` covers everything below it, and a `**/` entry matches at any depth:
   - `planifest-framework/hooks/`
   - `planifest-framework/scripts/`
+  - `planifest-framework/setup/`, whose per-tool scripts write the hook wiring files
   - `planifest-framework/standards/autonomous-run-standards.md`, because it holds the exception list and standing rules
-  - `setup.sh` or `setup.ps1`
-  - any enforcement hook
+  - `**/setup.sh`, any `setup.sh` file
+  - `**/setup.ps1`, any `setup.ps1` file
+  - `**/hooks/enforcement/`, any installed enforcement hook folder, such as `.claude/hooks/enforcement/`
+  - `**/hooks/adapters/`, any installed hook adapter folder, such as `.cursor/hooks/adapters/`
+  - `.git/`, which holds git hooks and config
+  - The hook wiring files that `setup.sh` and `setup.ps1` write:
+    - `.claude/settings.json` (Claude Code)
+    - `.cursor/settings.json` (Cursor)
+    - `.clinerules/hooks.json` (Cline)
+    - `.windsurf/hooks.json` (Windsurf)
+    - `.github/hooks/` (Copilot), the whole folder, because Copilot may load every file in it
+    - `.codex/config.toml` (Codex CLI)
+    - `opencode.json` (OpenCode)
+    - `.opencode/plugins/@planifest/opencode-hooks/` (OpenCode)
+  - The tool-local settings files that a tool also loads hooks from. They are usually git-ignored, so a PR shows no change to them:
+    - `.claude/settings.local.json` (Claude Code), whose `disableAllHooks` key turns every hook off
+    - `opencode.jsonc` (OpenCode), which OpenCode reads in place of `opencode.json`
 
-  A change to any of them takes the Change or Feature Pipeline, even with no `src/` target.
+  A change to any of them takes the Change or Feature Pipeline, even with no `src/` target. If a target matches one, stop and route the change there.
 
 ## Fast Path Criteria
 

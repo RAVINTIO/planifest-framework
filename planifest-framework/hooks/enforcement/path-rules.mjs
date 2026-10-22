@@ -410,6 +410,58 @@ const SCOPE_PATH_RE = /^[A-Za-z0-9._@+ /-]{1,512}$/;
 const REF_RE = /^refs\/[A-Za-z0-9._/-]{1,255}$/;
 const DETACHED = "(detached)";
 
+// Paths a Fast Path scope record never admits (0000035 ADR-004, 0000033
+// ADR 009). workflows/fast-path.md names the same entries, and a suite
+// checks both directions. An entry ending in / covers that folder and
+// everything below it. Any other plain entry covers that file and anything
+// below it. An entry that starts with **/ matches at any depth: **/name
+// matches a last segment, and **/a/b/ matches a segment pair.
+export const FAST_PATH_ENFORCEMENT_PATHS = Object.freeze([
+  // Framework enforcement
+  "planifest-framework/hooks/",
+  "planifest-framework/scripts/",
+  "planifest-framework/setup/",
+  "planifest-framework/standards/autonomous-run-standards.md",
+  // Setup scripts and every installed hook or adapter folder
+  "**/setup.sh",
+  "**/setup.ps1",
+  "**/hooks/enforcement/",
+  "**/hooks/adapters/",
+  // Git hooks and config
+  ".git/",
+  // Hook wiring files that setup.sh and setup.ps1 write
+  ".claude/settings.json",
+  ".cursor/settings.json",
+  ".clinerules/hooks.json",
+  ".windsurf/hooks.json",
+  ".github/hooks/",
+  ".codex/config.toml",
+  "opencode.json",
+  ".opencode/plugins/@planifest/opencode-hooks/",
+  // Tool-local settings files that a tool also loads hooks from
+  ".claude/settings.local.json",
+  "opencode.jsonc",
+]);
+
+/**
+ * Whether relPath matches an entry in FAST_PATH_ENFORCEMENT_PATHS. Matching
+ * compares norm(relPath) with norm(entry), so it ignores case.
+ */
+export function isEnforcementPath(relPath) {
+  const target = norm(relPath || ".");
+  const segments = target.split("/");
+  return FAST_PATH_ENFORCEMENT_PATHS.some((raw) => {
+    const entry = norm(raw);
+    if (entry.startsWith("**/")) {
+      const rest = entry.slice(3);
+      if (!rest.endsWith("/")) return segments[segments.length - 1] === rest;
+      return `/${target}/`.includes(`/${rest}`);
+    }
+    const bare = entry.replace(/\/$/, "");
+    return target === bare || target.startsWith(bare + "/");
+  });
+}
+
 // readCapped: the UTF-8 text of file, or null when it is missing, larger than
 // max bytes, or unreadable. The size check runs before the read.
 function readCapped(file, max) {
@@ -579,6 +631,15 @@ function readScope(root) {
 function scopeVerdict(root, relPath) {
   const scope = loadScope(root);
   if (scope.status === "absent") return { allowed: false, reason: NO_DESIGN_REASON };
+  // The enforcement list runs before the record match (0000035 ADR-004).
+  if (isEnforcementPath(relPath)) {
+    return {
+      allowed: false,
+      reason:
+        `[Planifest] Path '${relPath.slice(0, 200)}' is an enforcement path, so Fast Path never admits it, ` +
+        `whatever ${FAST_PATH_SCOPE_FILE} lists (0000033 ADR 009). Use the Change or Feature Pipeline.\n`,
+    };
+  }
   if (scope.status === "ignored") {
     return {
       allowed: false,
@@ -606,7 +667,8 @@ function scopeVerdict(root, relPath) {
  *   1. always-permitted prefixes and basenames
  *   2. design.md existence. With no design.md, a current Fast Path scope
  *      record admits a listed path and blocks the rest (0000035 ADR-002).
- *      A stale or invalid record admits nothing.
+ *      A stale or invalid record admits nothing, and no record admits a
+ *      path in FAST_PATH_ENFORCEMENT_PATHS (0000035 ADR-004).
  *   3. the component-path check, which warns and allows when design.md has no
  *      parseable paths section
  * Returns { allowed: true }, { allowed: true, warning }, { allowed: true,
