@@ -27,7 +27,9 @@ As the human on the loop, I see `product.yml` name the released version and feat
 - The ship agent owns every `components[]` edit. If a component was added or removed in this feature, it passes one `--component "{id}={path}"` argument for each component in the design. The script then replaces the whole `components[]` list with those entries. Without `--component`, the script leaves `components[]` byte-identical.
 - A new script `planifest-framework/scripts/set-product-release.mjs` makes the update. It follows the precedent of `archive-current.mjs` (0000033 ADR 010). The call is `node planifest-framework/scripts/set-product-release.mjs --feature-id "{feature-id}" --version "{version}" [--create --product-id "{id}" --product-name "{name}"] [--component "{id}={path}" ...] [--root <dir>]`. The ship agent takes `{version}` from the version the human on the loop confirmed in `design.md` at P0.
 - The new script is an architectural choice beyond the P0 text, so a P2 ADR records it. [Req-008](req-008-sanctioned-scripts.md) holds the Hard Limit 8 carve-out it runs under, with its limits and argument rules.
-- The script rewrites the two lines in place. It never appends a line. Running it twice with the same arguments gives a byte-identical file.
+- The script rewrites the two lines and leaves every other line as it is. It never appends a line. Running it twice with the same arguments gives a byte-identical file.
+- The script writes the result to a temp file in the root, then renames it over `product.yml`. A failed write never leaves a truncated file. [Req-008](req-008-sanctioned-scripts.md) holds the rules for this write.
+- An unexpected file-system error, such as `EACCES`, exits 2 with nothing written. The stderr reason names the operation and the error code only.
 - The script handles each `versionPolicy` as follows:
 
   | versionPolicy | Behaviour |

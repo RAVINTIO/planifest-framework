@@ -123,7 +123,7 @@ Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `pro
    - Exit 0: `product.yml` names this release's `version` and `feature`. Continue.
    - Exit 5: the policy is `external`, and only `feature` changed. Step 9 consults the external anchor or the human on the loop.
    - Exit 4: no `product.yml` exists. With exactly one component, do nothing, because Step 9 reads that `component.yml`. With two or more components, rerun the call with `--create --product-id "{id}" --product-name "{name}"` and one `--component` for each component. Take `{id}` and `{name}` from the design.
-   - Exit 2: the script wrote nothing, and stderr names the reason. If an argument broke a rule, correct it and rerun. If the manifest is invalid or the derived version differs from `{version}`, stop and report the reason. Never tag a fabricated version.
+   - Exit 2: the script wrote nothing, and stderr names the reason. If an argument broke a rule, correct it and rerun. If the reason names a file-system error code, such as `EACCES`, fix the file or folder permission and rerun. If the manifest is invalid or the derived version differs from `{version}`, stop and report the reason. Never tag a fabricated version.
 4. Log the line the script printed in the P7 build-log block.
 
 ### Step 6: Archive plan/current/

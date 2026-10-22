@@ -44,6 +44,11 @@ The boot files are build outputs. On every setup run, `write_boot_file` in `setu
   - It changes only `version`, `feature`, and `components[]`, plus `id`, `name`, and `versionPolicy` under `--create`.
   - It resolves the real path of the target before it writes. If a link points elsewhere, it writes nothing and exits 2.
   - It writes each value only as a double-quoted YAML scalar, after validation. No allowed character can end the scalar or start a line.
+  - It takes the root from the working directory only and clears `CLAUDE_PROJECT_DIR` for its `resolveRoot` call.
+  - It opens `product.yml` once with `O_NOFOLLOW` and reads through that descriptor. The file must be regular with exactly one link, so a hard link exits 2.
+  - It writes to a temp file in the root and renames it over `product.yml`. A failure removes the temp file and leaves `product.yml` unchanged.
+  - It applies the `--component` path rules to each `components[].path` it reads from `product.yml`.
+  - An unexpected file-system error exits 2. The reason names the operation and error code only, with no path or stack trace.
 - **Input Validation:** The script treats every argument as untrusted and runs every rule before it reads `product.yml`. Each pattern must match the whole value:
 
   | Argument | Rule |

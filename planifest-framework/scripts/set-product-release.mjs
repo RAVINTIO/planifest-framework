@@ -16,8 +16,8 @@
  *   explicit - write version and feature.
  *   external - write feature only and exit 5.
  *
- * The script rewrites the top-level version and feature lines in place and
- * never appends a line. It replaces components[] only when --component is
+ * The script rewrites the top-level version and feature lines, leaves every
+ * other line as it is, and never appends a line. It replaces components[] only when --component is
  * given. With --create and no product.yml, it builds the file from
  * templates/product.template.yml under max-component-version.
  *
@@ -27,18 +27,32 @@
  * character can end the scalar or start a line. An error message names the
  * argument and the rule and never echoes the raw value.
  *
+ * File-system hardening (P5 findings P-S03 to P-S08):
+ *   - The root comes from the working directory only. CLAUDE_PROJECT_DIR is
+ *     cleared for the resolveRoot call.
+ *   - product.yml is opened once with O_NOFOLLOW and read through that
+ *     descriptor. fstat must show a regular file with one link.
+ *   - The new content goes to a temp file in the root, then a rename puts it
+ *     in place. A failure removes the temp file.
+ *   - Each components[].path read from product.yml meets the --component
+ *     path rules.
+ *   - An unexpected file-system error exits 2 and names only the operation
+ *     and the error code.
+ *
  * Exit codes:
  *   0 - product.yml written, or it already held the same values
- *   2 - a rule break, an invalid manifest, a version mismatch, or a target
- *       that resolves elsewhere; nothing written, reason on stderr
+ *   2 - a rule break, an invalid manifest, a version mismatch, a target
+ *       that resolves elsewhere or has more than one link, or a file-system
+ *       error; nothing written, reason on stderr
  *   4 - no product.yml and no --create; nothing written
  *   5 - versionPolicy is external; only feature changed
  */
 
 import {
-  closeSync, constants, existsSync, lstatSync, openSync, readFileSync, realpathSync,
-  statSync, writeSync,
+  closeSync, constants, fchmodSync, fstatSync, fsyncSync, linkSync, lstatSync, openSync,
+  readFileSync, realpathSync, renameSync, statSync, unlinkSync, writeFileSync,
 } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveRoot } from "../hooks/enforcement/path-rules.mjs";
@@ -67,6 +81,21 @@ const VALUE_FLAGS = ["--feature-id", "--version", "--product-id", "--product-nam
 function fail(code, message) {
   process.stderr.write(`set-product-release: ${message}\n`);
   process.exit(code);
+}
+
+// An unexpected file-system error exits 2. The message names the operation
+// and the error code, never a path or a stack trace (P-S07).
+function fsFail(operation, err) {
+  const code = err && typeof err.code === "string" && /^[A-Z0-9_]+$/.test(err.code) ? err.code : "unknown error";
+  fail(2, `${operation}: failed (${code})`);
+}
+
+function fsCall(operation, fn) {
+  try {
+    return fn();
+  } catch (err) {
+    return fsFail(operation, err);
+  }
 }
 
 // Printable ASCII only, for values read from files rather than arguments.
@@ -108,6 +137,19 @@ function insideRoot(root, real) {
   return real === root || real.startsWith(root.endsWith(sep) ? root : root + sep);
 }
 
+// The root comes from the working directory only. resolveRoot honours
+// CLAUDE_PROJECT_DIR, which a caller can set on the command line, so the
+// variable is cleared for this call (P-S03).
+function rootForCwd(cwd) {
+  const saved = process.env.CLAUDE_PROJECT_DIR;
+  delete process.env.CLAUDE_PROJECT_DIR;
+  try {
+    return resolveRoot(cwd);
+  } finally {
+    if (saved !== undefined) process.env.CLAUDE_PROJECT_DIR = saved;
+  }
+}
+
 function resolveRootArg(rootArg) {
   let cwd = "";
   try {
@@ -115,7 +157,7 @@ function resolveRootArg(rootArg) {
   } catch {
     // A deleted working directory leaves cwd empty, and resolveRoot returns null.
   }
-  const root = resolveRoot(cwd);
+  const root = rootForCwd(cwd);
   if (!root) fail(2, "--root: no repository root found for the working directory");
   if (rootArg !== undefined) {
     let real;
@@ -149,25 +191,32 @@ function checkComponents(root, values) {
     if (!COMPONENT_ID.re.test(id)) fail(2, `${label}: id does not match ^[a-z0-9][a-z0-9-]*$`);
     if (ids.has(id)) fail(2, `${label}: id repeats an earlier --component id`);
     ids.add(id);
-    if (path.length > COMPONENT_PATH.max) fail(2, `${label}: path longer than ${COMPONENT_PATH.max} characters`);
-    if (!COMPONENT_PATH.re.test(path)) fail(2, `${label}: path does not match ^[A-Za-z0-9._/-]+$`);
-    if (path !== "component.yml" && !path.endsWith("/component.yml")) {
-      fail(2, `${label}: path must be component.yml or end in /component.yml`);
-    }
-    if (path.startsWith("/")) fail(2, `${label}: path must not start with /`);
-    const segments = path.split("/");
-    if (segments.includes("..")) fail(2, `${label}: path must not hold a .. segment`);
-    if (segments.includes("")) fail(2, `${label}: path must not hold an empty segment`);
-    let real;
-    try {
-      real = realpathSync(join(root, path));
-    } catch {
-      fail(2, `${label}: path names no existing file`);
-    }
-    if (!insideRoot(root, real)) fail(2, `${label}: path resolves outside the root`);
-    if (!statSync(real).isFile()) fail(2, `${label}: path is not a file`);
+    checkComponentPath(root, label, path);
     return { id, path };
   });
+}
+
+// The component path rules, shared by --component and by each
+// components[].path read from product.yml (P-S08). Returns the real path.
+function checkComponentPath(root, label, path) {
+  if (path.length > COMPONENT_PATH.max) fail(2, `${label}: path longer than ${COMPONENT_PATH.max} characters`);
+  if (!COMPONENT_PATH.re.test(path)) fail(2, `${label}: path does not match ^[A-Za-z0-9._/-]+$`);
+  if (path !== "component.yml" && !path.endsWith("/component.yml")) {
+    fail(2, `${label}: path must be component.yml or end in /component.yml`);
+  }
+  if (path.startsWith("/")) fail(2, `${label}: path must not start with /`);
+  const segments = path.split("/");
+  if (segments.includes("..")) fail(2, `${label}: path must not hold a .. segment`);
+  if (segments.includes("")) fail(2, `${label}: path must not hold an empty segment`);
+  let real;
+  try {
+    real = realpathSync(join(root, path));
+  } catch {
+    fail(2, `${label}: path names no existing file`);
+  }
+  if (!insideRoot(root, real)) fail(2, `${label}: path resolves outside the root`);
+  if (!fsCall(`${label}: stat`, () => statSync(real)).isFile()) fail(2, `${label}: path is not a file`);
+  return real;
 }
 
 function validate(argv) {
@@ -190,18 +239,37 @@ function validate(argv) {
 }
 
 // The target must be {root}/product.yml itself. A link that resolves
-// anywhere else, or a target that is not a regular file, writes nothing.
-function checkTarget(target) {
+// anywhere else, a hard link (P-S04), or a target that is not a regular file
+// writes nothing. The file is opened once and read through that descriptor,
+// so the checked file is the read file (P-S05). Returns null when absent.
+function readTarget(target) {
   let st;
   try {
     st = lstatSync(target);
-  } catch {
-    return false; // absent
+  } catch (err) {
+    if (err && err.code === "ENOENT") return null;
+    return fsFail("product.yml: stat", err);
   }
   // The root is already a real path, so a link here always resolves elsewhere.
   if (st.isSymbolicLink()) fail(2, "product.yml: is a link that resolves to another path");
   if (!st.isFile()) fail(2, "product.yml: is not a regular file");
-  return true;
+  let fd;
+  try {
+    fd = openSync(target, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0));
+  } catch (err) {
+    if (err && err.code === "ELOOP") fail(2, "product.yml: is a link that resolves to another path");
+    return fsFail("product.yml: open", err);
+  }
+  try {
+    const fst = fsCall("product.yml: stat", () => fstatSync(fd));
+    if (!fst.isFile()) fail(2, "product.yml: is not a regular file");
+    if (fst.nlink !== 1) fail(2, "product.yml: has more than one hard link");
+    if (fst.dev !== st.dev || fst.ino !== st.ino) fail(2, "product.yml: changed while the script read it");
+    const text = fsCall("product.yml: read", () => readFileSync(fd, "utf-8"));
+    return { text, mode: fst.mode & 0o777 };
+  } finally {
+    closeSync(fd);
+  }
 }
 
 function unquote(v) {
@@ -277,10 +345,10 @@ function deriveVersion(root, components) {
   for (const c of components) {
     const label = `component ${clean(c.id ?? "(unnamed)")}`;
     if (!c.path) fail(2, `${label}: components[] entry has no path`);
-    const abs = join(root, c.path);
-    if (!existsSync(abs)) fail(2, `${label}: component.yml not found`);
+    const real = checkComponentPath(root, label, c.path);
     let version = null;
-    for (const raw of readFileSync(abs, "utf-8").split(/\r?\n/)) {
+    const text = fsCall(`${label}: read`, () => readFileSync(real, "utf-8"));
+    for (const raw of text.split(/\r?\n/)) {
       const m = raw.replace(/#.*$/, "").trimEnd().match(/^version:\s*(.+)$/);
       if (m) { version = unquote(m[1]); break; }
     }
@@ -291,15 +359,41 @@ function deriveVersion(root, components) {
   return max;
 }
 
-function writeTarget(target, content, create) {
-  const flags = create
-    ? constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL
-    : constants.O_WRONLY | constants.O_TRUNC | (constants.O_NOFOLLOW ?? 0);
-  const fd = openSync(target, flags, 0o644);
+// Write the content to a temp file in the root, flush it, then put it in
+// place (P-S06). The temp file has a random name and an exclusive create, so
+// a planted file or link at that name fails the write. An update renames over
+// product.yml. A create links the temp file to product.yml, which fails if a
+// file appeared there meanwhile. Any failure removes the temp file and
+// leaves product.yml as it was.
+function writeTarget(target, content, create, mode) {
+  const tmp = join(dirname(target), `.product.yml.planifest-tmp-${randomBytes(8).toString("hex")}`);
+  let created = false;
   try {
-    writeSync(fd, content);
-  } finally {
-    closeSync(fd);
+    const fd = openSync(tmp, "wx", mode);
+    created = true;
+    try {
+      fchmodSync(fd, mode);
+      writeFileSync(fd, content);
+      fsyncSync(fd);
+    } finally {
+      closeSync(fd);
+    }
+    if (create) {
+      linkSync(tmp, target);
+      unlinkSync(tmp);
+    } else {
+      renameSync(tmp, target);
+    }
+    created = false;
+  } catch (err) {
+    if (created) {
+      try {
+        unlinkSync(tmp);
+      } catch {
+        // The temp file is already gone.
+      }
+    }
+    fsFail("product.yml: write", err);
   }
 }
 
@@ -307,11 +401,12 @@ const { args, root, components } = validate(process.argv.slice(2));
 const featureId = args["--feature-id"];
 const version = args["--version"];
 const target = join(root, "product.yml");
-const exists = checkTarget(target);
+const current = readTarget(target);
+const exists = current !== null;
 
 if (!exists && !args.create) fail(4, "no product.yml at the root and no --create");
 
-const original = exists ? readFileSync(target, "utf-8") : readFileSync(TEMPLATE, "utf-8");
+const original = exists ? current.text : fsCall("product template: read", () => readFileSync(TEMPLATE, "utf-8"));
 const eol = original.includes("\r\n") ? "\r\n" : "\n";
 const lines = original.split(eol);
 const keys = topLevelLines(lines);
@@ -336,7 +431,7 @@ if (policy !== "external") setScalar(lines, keys, "version", version);
 setScalar(lines, keys, "feature", featureId);
 
 const updated = lines.join(eol);
-if (updated !== original || !exists) writeTarget(target, updated, !exists);
+if (updated !== original || !exists) writeTarget(target, updated, !exists, exists ? current.mode : 0o644);
 
 if (policy === "external") {
   process.stdout.write(`product.yml: feature "${featureId}" (versionPolicy external, version unchanged)\n`);

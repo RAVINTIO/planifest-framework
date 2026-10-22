@@ -34,6 +34,11 @@ As the human on the loop, I rely on Hard Limit 8 to name every framework script 
 - The P2 ADR records this carve-out and its limits. It also states that the carve-out covers no other script.
 - The script resolves its target as `{root}/product.yml` and checks the resolved real path before it writes. If the target resolves to any other path, for example through a link, the script writes nothing and exits 2 with the reason on stderr. This requirement's suite owns the link case for this check.
 - `{root}` is never a free choice. The `--root` rule in Input Validation binds it to the folder that `resolveRoot` returns. That folder can be a nested folder that holds its own `planifest-framework/`. The write then lands only where `gate-write` already resolves the root.
+- The root comes from the working directory only. The script clears `CLAUDE_PROJECT_DIR` for its `resolveRoot` call, so a caller can't set the variable to move the write (P5 finding P-S03).
+- The script opens `product.yml` once with `O_NOFOLLOW` and reads it through that descriptor. `fstat` on the descriptor must show a regular file with exactly one link. A hard link at `product.yml` exits 2 and writes nothing (P-S04, P-S05).
+- The script writes the new content to a temp file in the root, flushes it, then renames it over `product.yml`. The temp file has a random name, an exclusive create, and the mode of the old file. A failure removes the temp file and leaves `product.yml` unchanged (P-S06).
+- An unexpected file-system error, such as `EACCES` or `EISDIR`, exits 2. The stderr reason names the operation and the error code. It never prints a path or a stack trace (P-S07).
+- Each `components[].path` that the script reads from an existing `product.yml` meets the same path rules as `--component` (P-S08).
 - The script runs every Input Validation rule before it reads `product.yml`. A rule break exits 2 before the req-002 `versionPolicy` table or the exit 4 check applies.
 - The script writes each value only as a double-quoted YAML scalar, after validation. No allowed character can end the scalar or start a new line, so no argument can add a key.
 
@@ -85,6 +90,9 @@ Every argument to `set-product-release.mjs` is untrusted. The agent composes eac
 - [ ] `--component "{id}={path}"`: the script splits the value at the first `=`. `{id}` matches `^[a-z0-9][a-z0-9-]*$`, at most 64 characters.
 - [ ] `--component` path: `{path}` matches `^[A-Za-z0-9._/-]+$`, 1 to 256 characters. It is `component.yml` or ends in `/component.yml`.
 - [ ] `--component` path: `{path}` can't start with `/`, hold a `..` segment, or hold an empty segment. The file must exist, and its real path must lie inside the root.
+- [ ] `components[].path` read from an existing `product.yml`: each value meets the two `--component` path rules above. A break exits 2, names the component, and writes nothing.
+- [ ] `CLAUDE_PROJECT_DIR`: the script ignores it when it resolves the root, so the variable can't move the write.
+- [ ] `product.yml` itself: a regular file with exactly one link, checked by `fstat` on the descriptor the script reads through. Anything else exits 2 and writes nothing.
 - [ ] A call takes at most 64 `--component` arguments, and no two share an `{id}`. Every other argument appears at most once. An unknown argument exits 2.
 - [ ] maximum length: each cap above applies to the raw value. A longer value exits 2. The script never truncates a value.
 - [ ] Failure behaviour: any rule break writes nothing and exits 2. The script never strips characters to repair a value.

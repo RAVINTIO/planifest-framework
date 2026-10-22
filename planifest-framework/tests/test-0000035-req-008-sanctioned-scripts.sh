@@ -212,6 +212,125 @@ assert_equals "2" "$?" "req-008: a dangling product.yml link exits 2"
 assert_equals "absent" "$([ -e "$SCRATCH/outside/nothing.yml" ] && echo present || echo absent)" \
   "req-008: a dangling link creates no target"
 
+echo "=== req-008: P5 hardening of the product.yml write ==="
+
+# inode <file> and mode <file>: portable through Node, not stat(1).
+inode() { node -e 'console.log(require("fs").statSync(process.argv[1]).ino)' "$1"; }
+mode() { node -e 'console.log((require("fs").statSync(process.argv[1]).mode & 0o777).toString(8))' "$1"; }
+same() { cmp -s "$1" "$2" && echo same || echo differs; }
+
+# P-S04: a hard link at product.yml looks like a regular file to lstat.
+HL="$SCRATCH/hardroot"
+make_root "$HL"
+cp "$HL/product.yml" "$SCRATCH/outside/hard.yml"
+rm "$HL/product.yml"
+if ln "$SCRATCH/outside/hard.yml" "$HL/product.yml" 2>/dev/null; then
+  cp "$SCRATCH/outside/hard.yml" "$SCRATCH/hard-before.yml"
+  ERR=$(cd "$HL" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" 2>&1 >/dev/null)
+  assert_equals "2" "$?" "req-008: a hard-linked product.yml exits 2"
+  assert_contains "product.yml" "$ERR" "req-008: the hard-link case names product.yml"
+  assert_equals "same" "$(same "$SCRATCH/hard-before.yml" "$SCRATCH/outside/hard.yml")" \
+    "req-008: the hard-link case leaves the file outside the root unchanged"
+fi
+
+# P-S05: the script reads product.yml through the descriptor it checked.
+SRC=$(cat "$SET")
+lacks "readFileSync(target" "$SRC" "req-008: the script never reads product.yml by path after the check"
+assert_contains "fstatSync" "$SRC" "req-008: the script checks the open descriptor with fstat"
+
+# P-S06: the write goes to a temp file in the same folder, then a rename.
+A="$SCRATCH/atomroot"
+make_root "$A"
+chmod 600 "$A/product.yml"
+INODE_BEFORE=$(inode "$A/product.yml")
+(cd "$A" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" >/dev/null 2>&1)
+assert_equals "0" "$?" "req-008: the atomic-write case exits 0"
+assert_contains 'feature: "0000035-write-gate-scope-and-path-hardening"' "$(cat "$A/product.yml")" \
+  "req-008: the atomic write lands the new feature"
+assert_equals "differs" "$([ "$INODE_BEFORE" = "$(inode "$A/product.yml")" ] && echo same || echo differs)" \
+  "req-008: the write replaces product.yml by rename, not in place"
+assert_equals "600" "$(mode "$A/product.yml")" "req-008: the rename keeps the mode of the old product.yml"
+assert_equals "" "$(ls -A "$A" | grep -v -x -e planifest-framework -e src -e product.yml)" \
+  "req-008: no temp file stays after a write"
+
+# P-S06 and P-S07: a root folder the script can't write to.
+if [ "$(id -u)" != "0" ]; then
+  W="$SCRATCH/roroot"
+  make_root "$W"
+  cp "$W/product.yml" "$SCRATCH/ro-before.yml"
+  chmod 555 "$W"
+  ERR=$(cd "$W" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" 2>&1 >/dev/null)
+  CODE=$?
+  chmod 755 "$W"
+  assert_equals "2" "$CODE" "req-008: a root the script can't write to exits 2"
+  assert_contains "EACCES" "$ERR" "req-008: the write failure names the error code"
+  lacks "$W" "$ERR" "req-008: the write failure never prints a path"
+  lacks "    at " "$ERR" "req-008: the write failure prints no stack trace"
+  assert_equals "same" "$(same "$SCRATCH/ro-before.yml" "$W/product.yml")" \
+    "req-008: the write failure leaves product.yml unchanged"
+  assert_equals "" "$(ls -A "$W" | grep -v -x -e planifest-framework -e src -e product.yml)" \
+    "req-008: the write failure leaves no temp file"
+
+  # P-S07: a product.yml the script can't read.
+  U="$SCRATCH/unreadroot"
+  make_root "$U"
+  chmod 000 "$U/product.yml"
+  ERR=$(cd "$U" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" 2>&1 >/dev/null)
+  CODE=$?
+  chmod 644 "$U/product.yml"
+  assert_equals "2" "$CODE" "req-008: an unreadable product.yml exits 2"
+  assert_contains "EACCES" "$ERR" "req-008: the read failure names the error code"
+  lacks "$U" "$ERR" "req-008: the read failure never prints a path"
+  lacks "    at " "$ERR" "req-008: the read failure prints no stack trace"
+fi
+
+# P-S08: components[].path read from product.yml meets the --component rules.
+mkdir -p "$SCRATCH/evil"
+printf 'id: evil\nversion: "9.9.9"\n' > "$SCRATCH/evil/component.yml"
+manifest_path_case() {
+  local label="$1" path="$2" m="$SCRATCH/mp-$3"
+  make_root "$m"
+  mkdir -p "$m/src"
+  ln -s "$SCRATCH/evil" "$m/src/evil-link" 2>/dev/null
+  cat > "$m/product.yml" <<YAML
+id: "demo"
+name: "Demo Product"
+version: "0.30.0"
+feature: "0000031-ci-test-and-powershell-coverage"
+versionPolicy: "max-component-version"
+
+components:
+  - id: "planifest-framework"
+    path: "planifest-framework/component.yml"
+  - id: "evil"
+    path: "$path"
+YAML
+  cp "$m/product.yml" "$SCRATCH/mp-before.yml"
+  ERR=$(cd "$m" && env -u CLAUDE_PROJECT_DIR node "$SET" --feature-id "$ID" --version "9.9.9" 2>&1 >/dev/null)
+  assert_equals "2" "$?" "req-008: a manifest path $label exits 2"
+  assert_contains "component evil" "$ERR" "req-008: a manifest path $label names the component"
+  lacks "$path" "$ERR" "req-008: a manifest path $label never echoes the path"
+  assert_equals "same" "$(same "$SCRATCH/mp-before.yml" "$m/product.yml")" \
+    "req-008: a manifest path $label leaves product.yml unchanged"
+}
+manifest_path_case "with a .. segment" "../evil/component.yml" dotdot
+manifest_path_case "that starts with /" "$SCRATCH/evil/component.yml" abs
+manifest_path_case "through a link outside the root" "src/evil-link/component.yml" link
+manifest_path_case "that is not component.yml" "src/widget/other.yml" name
+
+# P-S03: CLAUDE_PROJECT_DIR never moves the write to another root.
+P="$SCRATCH/projroot"
+O="$SCRATCH/otherroot"
+make_root "$P"
+make_root "$O"
+cp "$O/product.yml" "$SCRATCH/other-before.yml"
+(cd "$P" && CLAUDE_PROJECT_DIR="$O" node "$SET" "${BASE[@]}" >/dev/null 2>&1)
+assert_equals "0" "$?" "req-008: a call with CLAUDE_PROJECT_DIR set elsewhere exits 0"
+assert_equals "same" "$(same "$SCRATCH/other-before.yml" "$O/product.yml")" \
+  "req-008: CLAUDE_PROJECT_DIR never redirects the write"
+assert_contains 'feature: "0000035-write-gate-scope-and-path-hardening"' "$(cat "$P/product.yml")" \
+  "req-008: the write lands in the root for the working directory"
+
 echo "=== req-008: Hard Limit 8 sanctioned scripts in both boot templates ==="
 
 EXPECTED=$(printf '%s\n' \
