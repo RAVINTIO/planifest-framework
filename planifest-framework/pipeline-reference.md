@@ -17,7 +17,7 @@ Every agent response begins with a phase prefix. You always know where you are.
 | `P4:` | Validate | Running CI checks; self-correcting |
 | `P5:` | Security | Security review; STRIDE threat model |
 | `P6:` | Docs | Documentation artifacts; drift checks |
-| `P7:` | Archive | Changelog, skips, archive plan/current/, regression confirmation, test report |
+| `P7:` | Archive | Changelog, skips, `product.yml` release fields, archive plan/current/, regression confirmation, test report |
 | `P8:` | Build Assessment | Efficiency audit: model routing, parallelism, self-corrections (sub-agent of ship-agent) |
 | `P9:` | Ship | Git tag, push/PR decision, PR raised or PR description output |
 | `PC:` | Change Pipeline | Change to an existing feature |
@@ -62,7 +62,9 @@ P8 runs automatically after P7 archives the plan. The ship-agent spawns the `pla
 
 ## Phase 9 — Ship
 
-P9 is the terminal phase. The ship-agent reads the version from `planifest-framework/component.yml`, creates a local git tag (`v{version}`), then asks the human whether to push and raise the PR or output a PR description for manual use. If `local-git-only` is active in `planifest-overrides/instructions/`, the agent skips the prompt and outputs a PR description directly.
+P9 is the terminal phase. The ship-agent reads the version, creates a local git tag (`v{version}`), then asks the human whether to push and raise the PR or output a PR description for manual use. If `local-git-only` is active in `planifest-overrides/instructions/`, the agent skips the prompt and outputs a PR description directly.
+
+P9 takes the version from `product.yml` through `product-version.mjs`. With no `product.yml` and one component, it reads that `component.yml` instead. P9 never edits `product.yml`. P7 sets its `version` and `feature` through `set-product-release.mjs`, a sanctioned script under Hard Limit 8. In a project with two or more components and no `product.yml`, P7 creates the file with `--create`.
 
 ### Build Log
 
@@ -129,13 +131,44 @@ If **any** criterion fails, the orchestrator routes to the Change Pipeline inste
 
 ### Execution
 
-1. Implement the fix directly — no Feature Brief, Execution Plan, or ADR
-2. Validate — lint, typecheck, test, build
-3. Update `component.yml` — patch version bump, updated `metadata.updatedAt`
-4. Log — append an entry to `plan/changelog/{feature-id}-{YYYY-MM-DD}.md`
-5. Commit — `fix(fast-path): {description}`
+1. Write the scope record — list every target path in `plan/.fast-path-scope` with **Write**
+2. Implement the fix directly — no Feature Brief, Execution Plan, or ADR
+3. Validate — lint, typecheck, test, build
+4. Update `component.yml` — patch version bump, updated `metadata.updatedAt`
+5. Log — append an entry to `plan/changelog/{feature-id}-{YYYY-MM-DD}.md` that lists every record path
+6. Commit — remove the record with `rm -f plan/.fast-path-scope`, then commit `fix(fast-path): {description}`
 
 The pre-push hook and CI workflow recognise the `fix(fast-path):` prefix and relax the documentation check: only `component.yml` or a changelog update required (not full `plan/` or `docs/` changes).
+
+### The scope record
+
+With no `plan/current/design.md`, the scope record is how a Fast Path change gets past `gate-write` and the shell-write guard. Both hooks admit a write to a listed path and block every other gated path with exit 2. A design always wins over a record. `workflows/fast-path.md` holds the full steps.
+
+The record has this format:
+
+```
+branch: feat/0000040-fix-typo
+head: 3f2a9c1d8e7b6a5f4e3d2c1b0a9f8e7d6c5b4a39
+paths:
+- planifest-overrides/instructions/review.md
+- docs-site/
+```
+
+- `branch` comes from `git rev-parse --abbrev-ref HEAD`, or is `(detached)` when that prints `HEAD`.
+- `head` comes from `git rev-parse HEAD`.
+- Each `- ` line names a root-relative file or folder. A trailing `/` names a folder. The record has no glob syntax.
+- An invalid record admits nothing. The gate never repairs one.
+
+The gate ignores a stale record. A record goes stale when its `branch` or `head` no longer matches the repository, for example after a commit. If you commit or switch branch mid-change, rewrite the record before the next write.
+
+The record never admits these targets:
+
+- An enforcement path, such as `planifest-framework/hooks/`, `planifest-framework/scripts/`, a hook wiring file, or `.git/`. `FAST_PATH_ENFORCEMENT_PATHS` in `path-rules.mjs` and the `fast-path.md` prerequisites list the same entries. The gate checks them before the record, ignoring case.
+- A path that holds a non-ASCII character. Some file systems fold a lookalike character onto a plain letter, so the gate can't judge one safely.
+
+The record is self-authorisation, because the agent that makes the change also writes it. Each admitted write prints one notice on stderr, such as `[Planifest] Fast Path: admitted 'docs-site/index.md' through plan/.fast-path-scope.` Claude Code keeps that output out of the main view. The human on the loop sees the admitted paths in the changelog entry instead.
+
+Step 6 removes the record before `git commit`, so no commit holds it. The root `.gitignore` also lists it.
 
 ---
 
@@ -215,7 +248,7 @@ P7 complete  → plan/.orchestrator-active deleted (final cleanup step)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
-| **gate-write** (PreToolUse: Write, Edit) | Every file write or edit | Blocks writes outside always-permitted paths (`plan/`, `docs/`, `planifest-framework/`) unless `plan/current/design.md` exists AND the target path matches a declared component in the design |
+| **gate-write** (PreToolUse: Write, Edit) | Every file write or edit | Blocks writes outside always-permitted paths (`plan/`, `docs/`, and named files such as `CLAUDE.md`) unless `plan/current/design.md` exists AND the target path matches a declared component in the design. With no design, a Fast Path scope record can admit listed paths instead |
 | **check-orchestrator-presence** (UserPromptSubmit) | Every user prompt while sentinel is present | Injects a reminder banner so the orchestrator skill reloads after context compaction or session resume. Advisory by default — see Strict Mode below |
 | **check-design** (UserPromptSubmit) | Every user prompt | If neither the sentinel nor a `feature-brief.md` is present, injects a hard STOP message before the agent can act. Prevents free-form changes outside the pipeline |
 
@@ -226,7 +259,17 @@ P7 complete  → plan/.orchestrator-active deleted (final cleanup step)
 1. `plan/current/design.md` must exist
 2. The target file path must be under a component directory declared in the design's `## Engineering Layer → Components` section
 
-Writes to `plan/`, `docs/`, `planifest-framework/`, and `planifest-overrides/` are always permitted. `gate-write` never blocks documentation or plan artifact writes.
+Writes to `plan/` and `docs/` are always permitted. So are named files such as `CLAUDE.md`, `AGENTS.md`, `.gitignore`, and `pause.md`, wherever they sit. `gate-write` never blocks documentation or plan artifact writes. Other paths, `planifest-framework/` and `planifest-overrides/` included, need a design that lists them, or a Fast Path scope record.
+
+### How the gates judge a path
+
+`gate-write`, the shell-write guard, and `ratchet-check` share the path rules in `hooks/enforcement/path-rules.mjs`.
+
+- **Links and `..`:** A gate follows each symbolic link to its real target and judges that target, not the link path. `gate-write` also judges `..` as text, as the **Write** tool places it, and blocks if either placement blocks. The shell-write guard judges the physical path only, as the kernel resolves it.
+- **Fail-closed line:** A link loop, a chain past 40 links, or another resolution error blocks with exit 2 when the target lies inside the root. The reason names the cause on stderr. A target outside the root passes.
+- **Deleted working folder:** If the working folder no longer exists, the gates find the root from `CLAUDE_PROJECT_DIR` first. Without it, they walk up to the nearest existing parent.
+- **Planted root markers:** A `.git` or `planifest-framework/` marker never makes a root when it sits below `plan/`, `docs/`, or an always-permitted name such as `claude.md`. The walk goes on to the next trusted marker above it.
+- **Subfolders:** `ratchet-check` uses the same root lookup, so it guards `plan/current/` artifacts from any project subfolder.
 
 ### Manual recovery
 
