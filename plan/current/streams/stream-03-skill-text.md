@@ -3,7 +3,7 @@ stream-id: "stream-03-skill-text"
 kind: stream
 start-commit: "8375ca7"
 status: active
-phase: P2
+phase: P3
 requirements: [req-003, req-004, req-005, req-006, req-007]
 stories: [US-003, US-004, US-005, US-006, US-007]
 id-blocks: "req-003 to req-007, ADR-008 to ADR-012, backlog 0000167 to 0000169"
@@ -16,7 +16,8 @@ updated: "2026-10-22T22:01:42Z"
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
 | P1 | 2026-10-22T21:33:56Z | 2026-10-22T22:01:42Z | 1 | at-join |
-| P2 | 2026-10-22T22:01:42Z | pending | 1 | pending |
+| P2 | 2026-10-22T22:01:42Z | 2026-10-22T22:22:12Z | 2 | at-join |
+| P3 | 2026-10-22T22:23:00Z | pending | 4 | pending |
 
 ## Files changed
 
@@ -37,4 +38,4 @@ updated: "2026-10-22T22:01:42Z"
 
 ## Next step
 
-P2: one primary-tier subagent writes ADR-008 to ADR-012 for req-003 to req-007.
+P3: batch 1 W5 (req-004 script) and W6 (req-007). Batch 2 W7 (req-006, req-003, orchestrator text). Batch 3 W8 (req-005).
