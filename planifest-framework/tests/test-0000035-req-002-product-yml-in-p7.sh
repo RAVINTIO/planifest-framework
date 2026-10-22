@@ -146,6 +146,11 @@ assert_equals "5" "$?" "req-002: external exits 5"
 P3=$(cat "$R3/product.yml")
 assert_contains 'version: "0.30.0"' "$P3" "req-002: external leaves version as it is"
 assert_contains "feature: \"$ID\"" "$P3" "req-002: external writes the feature ID"
+TAG3=$(close_out "$R3")
+assert_equals "5" "$?" "req-002: the external Step 9 derivation exits 5 for the human to supply the tag"
+assert_equals "" "$TAG3" "req-002: the external Step 9 derivation prints no version"
+assert_contains "feature: \"$ID\"" "$(git -C "$R3" show HEAD:product.yml)" \
+  "req-002: the external archive commit holds the new feature"
 
 echo "=== req-002: a version mismatch under max-component-version ==="
 
@@ -239,6 +244,9 @@ set_release "$R7" --feature-id "$ID" --version "0.33.0" \
   --component "planifest-framework=planifest-framework/component.yml" \
   --component "gadget=src/gadget/component.yml" >/dev/null 2>&1
 same_file "$SCRATCH/r7-first.yml" "$R7/product.yml" "req-002: a second --component run leaves product.yml byte-identical"
+assert_equals "0.33.0" "$(close_out "$R7")" "req-002: the --component Step 9 derivation matches the tag"
+assert_equals "2" "$(git -C "$R7" show HEAD:product.yml | grep -c '^  - id:')" \
+  "req-002: the --component archive commit holds exactly the --component entries"
 
 R8="$SCRATCH/r8"
 make_repo "$R8" "max-component-version"
