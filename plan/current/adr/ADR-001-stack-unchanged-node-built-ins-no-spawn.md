@@ -52,7 +52,7 @@ The design lists 0000032 ADR 004 as a constraint: hooks use Node built-ins only,
 
 | Component | Impact |
 |-----------|--------|
-| planifest-framework | `path-rules.mjs` grows. `gate-write.mjs`, `shell-write-guard.mjs`, and `ratchet-check.mjs` call the shared rules. Five new suites. |
+| planifest-framework | `path-rules.mjs` grows. `gate-write.mjs`, `shell-write-guard.mjs`, and `ratchet-check.mjs` call the shared rules. Six new suites. |
 | setup-hook-integration | No change. Setup already copies every `*.mjs` in `hooks/enforcement/` (0000028 ADR 002). |
 
 ## Consequences

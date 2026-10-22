@@ -1,7 +1,7 @@
 ---
 title: "ADR 016: Per-project migration run records"
 summary: "Each project records each migration run in its own file at plan/_migrations/{stem}.md. The record holds YAML frontmatter with six fields and one of three outcomes: applied, not applicable, or skipped. The record sits under plan/, outside plan/current/, so the write gate admits it before a feature exists and P7 never archives it."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-016 - Per-project migration run records

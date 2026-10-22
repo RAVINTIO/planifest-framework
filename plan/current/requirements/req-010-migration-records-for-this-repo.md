@@ -26,9 +26,11 @@ As the human on the loop, I see this repo hold a run record for each of its eigh
 
 - In P3, this repo runs the scans of the six migrations returning from `_done/` and writes each record from the result.
 - If a scan has findings, P3 brings them to the human on the loop in batches and writes the record after the answer. In `autonomous` mode, this follows the exception list in `planifest-framework/standards/autonomous-run-standards.md`.
-- P3 writes `not applicable` records for the two downstream-only migrations without running them:
+- P3 writes `not applicable` records for the two downstream-only migrations without running their Migrator Instructions:
   - `migrate-0.31.0-rerun-setup-for-shell-write-guard.md`
   - `migrate-remove-context-mode-and-telemetry.md`
+- For these two, the scan run here is the target check. P3 reads the `**Target:**` line at the top of each file. Both lines name a downstream project. This repo is the framework source, so the target check decides `not applicable`.
+- "From a scan run here" in the story and in AC-010.1 therefore covers all eight migrations. Six get a full scan, and two get the target check.
 - The record body for each of the two names the reason: this repo is the framework source.
 
 ### FR-010.2 Judging AC-010.1 in this repo

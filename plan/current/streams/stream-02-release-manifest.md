@@ -24,6 +24,7 @@ updated: "2026-10-22T06:05:41Z"
 - `plan/current/requirements/req-008-sanctioned-scripts.md`
 - `plan/current/adr/ADR-010-product-yml-set-in-p7-by-script.md`
 - `plan/current/adr/ADR-011-hard-limit-8-sanctioned-scripts.md`
+- `plan/current/adr/ADR-012-acceptance-criteria-limit-and-warning.md` (P2 critic fix M1. The ID comes from this stream's block.)
 
 ## Declares
 

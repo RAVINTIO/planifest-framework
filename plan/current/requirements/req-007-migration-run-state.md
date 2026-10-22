@@ -128,6 +128,7 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   - `planifest-framework/tests/test-0000005-framework-governance.sh` and `planifest-framework/tests/regression/test-0000005-framework-governance.sh` (req-014 block)
   - `planifest-framework/tests/test-0000032-req-011-rerun-setup-migration.sh` (the `DONE_COPY` check, the `## Archive` section, and the `_done/` text check)
 - A new suite `planifest-framework/tests/test-0000035-req-007-migration-run-state.sh` checks AC-007.1, AC-007.2, and AC-007.4. The req-010 suite checks this repo's records.
+- The req-007 suite also guards FR-007.8. It runs `gate-write.mjs` on a **Write** to `plan/_migrations/x.md` with no `plan/.orchestrator-active` and no `plan/current/design.md`. It expects exit 0.
 
 ### FR-007.11 Judging AC-007.3 in this repo
 

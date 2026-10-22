@@ -71,7 +71,7 @@ As the human on the loop, I rely on Fast Path never admitting a write to an enfo
   - a record that lists `.claude/settings.local.json`, where the write exits 2
   - a record that lists `planifest-framework/setup/claude-code.sh`, where the write exits 2
   - a mixed-case target `Planifest-Framework/Hooks/x.mjs`, where the write exits 2
-- A source check asserts that every enforcement path in the `fast-path.md` prerequisites appears in `FAST_PATH_ENFORCEMENT_PATHS`.
+- A source check asserts set equality in both directions. Every enforcement path in the `fast-path.md` prerequisites appears in `FAST_PATH_ENFORCEMENT_PATHS`, and every entry in `FAST_PATH_ENFORCEMENT_PATHS` appears in those prerequisites.
 
 ## Acceptance Criteria
 

@@ -40,7 +40,7 @@
 
 ## Decisions added at P1
 - Hard Limit 8 carve-out: `set-product-release.mjs` writes `product.yml` as a sanctioned script. Both boot templates gain a `Sanctioned scripts:` sentence that names seven framework scripts (req-008). A P2 ADR records the rule.
-- Acceptance-criteria limit: `consistency-check.mjs` allows up to 10 criteria per requirement, and the feature brief template asks for 3. From 4 to 10, the check prints a warning but doesn't fail. The human on the loop set this on 2026-10-22.
+- Acceptance-criteria limit: `consistency-check.mjs` allows up to 10 criteria per requirement, and the feature brief template asks for 3. From 4 to 10, the check prints a warning but doesn't fail. The human on the loop set this on 2026-10-22. ADR-012 records the decision, and the build log records it as a P1 deviation.
 
 ## Architecture Layer
 - Latency target: each hook call stays under 500 ms on a 10-hop link chain

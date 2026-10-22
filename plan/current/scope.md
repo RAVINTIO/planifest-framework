@@ -60,6 +60,7 @@ version: "0.1.0"
   - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-008).
   - The req-008 Input Validation section treats every script argument as untrusted. It binds `--root` to the folder that `resolveRoot` returns, and gives each argument a pattern and a length cap.
 - The acceptance-criteria limit in `consistency-check.mjs` rises from 3 to 10 per requirement, at the instruction of the human on the loop on 2026-10-22. The feature brief template still asks for 3 and prefers a split above that. From 4 to 10, the check prints a warning and still exits 0. `test-0000016-pipeline-governance.sh` and its regression copy test 10 as a pass with a warning and 11 as a finding.
+  - ADR-012 records this decision. No user story owns it. The build log records it as a P1 deviation that the human on the loop directed.
 
 ## Out of Scope
 

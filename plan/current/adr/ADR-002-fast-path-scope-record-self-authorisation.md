@@ -17,6 +17,8 @@ Fast Path is the route for a trivial change with no design (0000033 ADR 009). `g
 
 At P0 the human on the loop chose a declared scope record over a wider allowlist. The agent that makes the change also writes the record. No human step sits between the two. The P1 design critic asked for a real control or an accepted-risk entry, and the run took both (risk R-005 and R-006).
 
+req-001 holds the record format, staleness, and the workflow step.
+
 The design names data ownership: the Fast Path workflow owns `plan/.fast-path-scope`. `gate-write` and the shell-write guard read it.
 
 ## Decision

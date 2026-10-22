@@ -35,7 +35,7 @@ Without these entries, a self-written record could unwire `gate-write` itself. T
   - the tool-local settings files `.claude/settings.local.json` and `opencode.jsonc`
 - **Matching:** Matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)` (0000009 ADR 005), so a mixed-case path on a case-insensitive volume still matches.
 - **Precedence:** The enforcement check runs before the record match. A match blocks with exit 2 whatever the record lists. The reason names the path and 0000033 ADR 009, and points to the Change or Feature Pipeline.
-- **One list in two places:** `fast-path.md` names every entry in its prerequisites. A suite source check asserts that each doc entry appears in the constant. The workflow stops and reroutes when a target matches.
+- **One list in two places:** `fast-path.md` names every entry in its prerequisites. A suite source check asserts set equality in both directions. Each doc entry appears in the constant, and each constant entry appears in the doc. The workflow stops and reroutes when a target matches.
 
 ## Alternatives Considered
 

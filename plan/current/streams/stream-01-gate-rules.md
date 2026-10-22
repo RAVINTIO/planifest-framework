@@ -42,7 +42,7 @@ updated: "2026-10-22T06:05:41Z"
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
 
-None. Every artifact this stream makes has its consumer inside this stream: `path-rules-resolveTarget-links` and `path-rules-resolveRoot-deleted-cwd` feed req-005, and `path-rules-markedRoot-basename-distrust` feeds req-004.
+None. Every artifact this stream makes has its consumer inside this stream: `path-rules-resolveTarget-links` and `path-rules-resolveRoot-deleted-cwd` feed req-005, and `path-rules-markedRoot-basename-distrust` feeds req-005 through `resolveRoot`.
 
 ## Consumes
 

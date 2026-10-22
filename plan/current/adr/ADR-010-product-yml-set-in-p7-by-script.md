@@ -21,6 +21,8 @@ The P0 design moved the update into P7, before Step 6, and kept the gate unchang
 
 0000016 ADR 002 defines `product.yml`, its three version policies, and `product-version.mjs` with exit codes 0, 2, 4, and 5. This ADR keeps that script and those codes unchanged.
 
+req-002 holds the P7 step and the script behaviour. req-008 holds its argument rules.
+
 ## Decision
 
 - **Step placement:** The ship skill gains a `product.yml` step after Step 5 and before Step 6. Step 7 stages `product.yml` with the archive, the changelog, and `docs/about.md` in one commit.

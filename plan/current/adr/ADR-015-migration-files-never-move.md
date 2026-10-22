@@ -1,7 +1,7 @@
 ---
 title: "ADR 015: Migration files never move"
 summary: "Every migration file stays at the top level of planifest-framework/migrations/. The migrator never moves, renames, or deletes one, and the _done/ folder goes away. P3 returns the six files in _done/ by a Write copy, a cmp byte check, and git rm. This replaces the archive-to-_done part of 0000005 ADR 005."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-015 - Migration files never move

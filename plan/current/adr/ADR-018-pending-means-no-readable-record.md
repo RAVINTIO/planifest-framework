@@ -1,7 +1,7 @@
 ---
 title: "ADR 018: Pending means no readable record"
 summary: "A migration is pending when plan/_migrations/{stem}.md is missing or can't be read. A record can't be read when its frontmatter fails to parse or its migration, outcome, or date field is missing or wrong. Resume detection reads only top-level migration files, ignores subfolders and orphan records, and a re-run with the same outcome leaves the record unchanged."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-018 - Pending means no readable record

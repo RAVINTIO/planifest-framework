@@ -1,7 +1,7 @@
 ---
 title: "ADR 017: Migration records owned by the migrator"
 summary: "The planifest-migrator skill owns plan/_migrations/ and is its only writer. Orchestrator resume detection reads the records and never writes them. No other skill, script, or hook writes there."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-017 - Migration records owned by the migrator
@@ -16,6 +16,8 @@ version: "0.1.0"
 ADR-016 creates `plan/_migrations/` as new persistent data. The framework rule says one component owns each piece of data. Every data ownership mapping needs an ADR.
 
 Two skills touch the records. The migrator runs a migration and knows its outcome. Orchestrator resume detection lists pending migrations at session start. P3 of this feature also writes records for this repo, as ADR-019 describes.
+
+req-007 FR-007.4 holds the Record step, and req-010 writes this repo's records through it.
 
 ## Decision
 

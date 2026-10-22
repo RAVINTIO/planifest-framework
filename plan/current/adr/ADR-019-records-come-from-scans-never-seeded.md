@@ -1,7 +1,7 @@
 ---
 title: "ADR 019: Records come from scans, never seeded"
 summary: "No record comes from the old _done/ folder. In this repo, P3 runs the scans of the six returning migrations and records each result. The two downstream-only migrations get not applicable without a run. A scan with findings writes no record until the human on the loop answers, so in an autonomous run it stays pending as an exception waiting for review."
-status: "proposed"
+status: "accepted"
 version: "0.1.0"
 ---
 # ADR-019 - Records come from scans, never seeded
