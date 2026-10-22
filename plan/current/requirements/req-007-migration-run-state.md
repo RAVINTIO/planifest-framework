@@ -56,7 +56,7 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
 - The body after the frontmatter is one sentence that states the scan result. The orchestrator and migrator never read the body.
 - The migrator sets `outcome` from the scan result:
   - `applied`: the scan ran, and the human on the loop confirmed each batch. A clean scan with no findings also gets `applied`, with both counts at `0`.
-  - `not applicable`: the migration doesn't apply to this project. This repo uses it for the two downstream-only migrations.
+  - `not applicable`: the migration doesn't apply to this project. This repo uses it for the two downstream-only migrations (req-010).
   - `skipped`: the human on the loop answered `none` or skipped the migration. This matches the migrator's Hard Limit 3.
 - A `not applicable` record counts as a record, the same as the other two outcomes.
 
@@ -116,12 +116,7 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
 
 ### FR-007.9 Records in this repo
 
-- In P3, this repo runs the scans of the six migrations returning from `_done/` and writes each record from the result.
-- If a scan has findings, P3 brings them to the human on the loop in batches and writes the record after the answer. In `autonomous` mode, this follows the exception list in `planifest-framework/standards/autonomous-run-standards.md`.
-- P3 writes `not applicable` records for the two downstream-only migrations without running them:
-  - `migrate-0.31.0-rerun-setup-for-shell-write-guard.md`
-  - `migrate-remove-context-mode-and-telemetry.md`
-- The record body for each of the two names the reason: this repo is the framework source.
+- Moved to [req-010](req-010-migration-records-for-this-repo.md) as FR-010.1. Req-010 runs the scans in this repo and writes its eight records under the rules above.
 
 ### FR-007.10 Documentation and tests
 
@@ -132,24 +127,22 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
 - These suites drop their `_done/` expectations and check the new layout:
   - `planifest-framework/tests/test-0000005-framework-governance.sh` and `planifest-framework/tests/regression/test-0000005-framework-governance.sh` (req-014 block)
   - `planifest-framework/tests/test-0000032-req-011-rerun-setup-migration.sh` (the `DONE_COPY` check, the `## Archive` section, and the `_done/` text check)
-- A new suite `planifest-framework/tests/test-0000035-req-007-migration-run-state.sh` checks AC-007.1 to AC-007.3.
+- A new suite `planifest-framework/tests/test-0000035-req-007-migration-run-state.sh` checks AC-007.1, AC-007.2, and AC-007.4. The req-010 suite checks this repo's records.
 
 ### FR-007.11 Judging AC-007.3 in this repo
 
-- In this repo, AC-007.3 passes only once every one of the six scans is clean, or the human on the loop has answered each finding. The two downstream-only migrations count through their `not applicable` records.
-- An answer of apply gives an `applied` record. An answer of `none` gives a `skipped` record.
-- If any scan has findings in an `autonomous` run, that migration stays pending and gets no record. P3 writes one build-log line in the form `Exception waiting (P3, human review): {migration}: {findings}` for each such migration.
-- While an `Exception waiting` line stands for a migration, P4 reports AC-007.3 as open and waiting on the human on the loop. No agent forces a record to close it.
-- AC-007.3 closes once the human on the loop answers the findings and the migrator writes the record.
+- Moved to [req-010](req-010-migration-records-for-this-repo.md) as FR-010.2. AC-007.3 is now AC-010.1.
 
 ## Acceptance Criteria
 
 - [ ] AC-007.1: No migration file moves when it runs, and `_done/` no longer exists. All eight migration files sit at the top level of `planifest-framework/migrations/`, and no skill, migration, test, or doc tells an agent to move one.
 - [ ] AC-007.2: Resume detection lists as pending only migrations with no readable record in `plan/_migrations/`. The orchestrator and migrator skills state the record format, the three outcomes, and the unreadable-record rule.
-- [ ] AC-007.3: This repo holds a record for each of the eight migrations, from a scan run here. Each record passes the FR-007.3 checks, and the two downstream-only migrations hold `not applicable`.
+- [ ] AC-007.4: The migrator's Record step writes `plan/_migrations/{stem}.md` through **Write** and creates `plan/_migrations/` on its first record. A re-run with the same outcome leaves the record byte-identical.
+
+AC-007.3 moved to req-010 as AC-010.1. The ID isn't reused.
 
 ## Dependencies
 
-- `path-rules.mjs` always-permitted `plan/` prefix (stream-01 changes this file in req-001 and req-003 to req-006). Stream-01 must keep `plan/_migrations/` admitted without a sentinel or design.
-- `planifest-framework/standards/autonomous-run-standards.md` exception list, for P3 findings in this repo.
+- `path-rules.mjs` always-permitted `plan/` prefix (stream-01 changes this file in req-001, req-003 to req-006, and req-009). Stream-01 must keep `plan/_migrations/` admitted without a sentinel or design.
+- [Req-010](req-010-migration-records-for-this-repo.md) writes this repo's records through the Record step that this requirement adds. Stream 03 builds this requirement first.
 - Shares `planifest-framework/skills/planifest-orchestrator/SKILL.md` with stream-01, which may edit the Fast Path section. This requirement edits only Resume Detection step 1.
