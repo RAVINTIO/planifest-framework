@@ -189,3 +189,6 @@ Dispatch plan by file ownership (start commit `e248df9`):
 
 - Decision (P3): each worker runs red, green, and refactor itself and reports the RED and GREEN output / reason: the work is mostly skill text and small scripts, and nested TDD subagents would triple the dispatch count for no gain.
 - Decision (P3): batches 2 and 3 wait for batch 1 / reason: they share the orchestrator, loop runner, spec agent, and ship agent skills with batch 1 and with each other.
+- Baseline suite run (concurrent with batch 1): 85 feature suites and 31 regression suites passed, 3 and 2 failed. The three feature failures were batch 1 RED states. The two shell-guard regression failures pass on a clean `main` clone, so W1's in-progress `path-rules.mjs` edit caused them. The orchestrator rechecks them after W1.
+- Batch 1 returns: W6 req-007 (`3a7f736`), W2 req-010 (`5ace843`), W3 req-001 (`f2df647`), W4 req-002 script (`faa98b5`), W5 req-004 script (`ceb9bfb`).
+- Decision (P3): W7 starts while W1 still runs / reason: W7's files don't overlap W1's hooks and hook suites.
