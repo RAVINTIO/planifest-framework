@@ -148,3 +148,7 @@ Streams formed (dependency test: stories that change the same file share a strea
 - P2 exchange (story split): Q: why no story split before adding criteria? / A (orchestrator): the fold aimed at the count and skipped the split the brief template asks for. Offered a split of req-002 into req-002 (P7 update) and req-008 (sanctioned scripts). Awaiting the answer of the human on the loop.
 - P2 join: all three streams at-join with 15 ADRs (ADR-001 to ADR-008, ADR-010, ADR-011, ADR-015 to ADR-019). `stream-reconcile.mjs` exits 0. ADR-001 is the only stack ADR.
 - Backlog filed (P2): 0000130 (no check ties setup wiring files to the Fast Path enforcement list).
+- P2 exchange (story split) answered: "Yes split and repeat P1 and P2 assessing existing work. Put in a backlog item to always consider a split if acs grow."
+- Decision (P2): split US-002 and req-002. req-002 keeps the P7 `product.yml` update. New US-008 and req-008 take the Hard Limit 8 sanctioned-scripts rule and the script input validation. req-008 joins `stream-02-release-manifest`, because it changes the same script / reason: instruction from the human on the loop. The split runs while no loop is active, so the ratchet stays unarmed.
+- Decision (P2): after the split, the P1 critic loop reopens over the P1 artifacts. Then the P2 critic reviews the combined P1 and P2 set. Both assess the existing work, not a rewrite / reason: instruction from the human on the loop.
+- Backlog filed (P2): 0000139 (consider a story split whenever acceptance criteria grow).
