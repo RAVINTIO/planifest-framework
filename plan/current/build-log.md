@@ -243,3 +243,6 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Decision (P5): fix S-1 to S-6 and hooks findings 1 and 2 in this feature / reason: each sits in code or text this feature changed. Hooks finding 2 is pre-existing, but the fix is one size check in the same function, and it closes backlog 0000178.
 - Decision (P5): accept S-7 and hooks findings 3 to 7 / reason: each is Low and pre-existing or accepted in an ADR. Backlog 0000179 and 0000180 track two of them.
 - Three fix agents in one batch, by file group: gate (`path-rules.mjs`), run-mode (script, template, suite), and drift check plus orchestrator step plus migration.
+- Fixes committed: S-1 and S-2 (`26cc234`), hooks 1 and 2 (`ae3f552`, closes backlog 0000178), S-3 to S-6 (`1a60cdf`). Each fix agent reported a green full suite.
+- Fresh-context re-review (`801f61b`): the feature rates Low. Six fixes hold in full, and S-5 and S-6 partly. New Low findings: N-1 (a socket swapped in after `lstat` fails open), N-2 (a setup run that skips hook wiring still counts as complete), N-3 (step 1b loads source copies in unnamed step 1a states). N-4 and N-5 are informational.
+- Decision (P5): fix N-1 to N-4 in one more round, then a fresh re-review / reason: each is a small change in code or text this feature changed. N-5 is accepted, because the anchor still needs the design-confirm commit.
