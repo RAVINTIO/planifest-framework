@@ -1,7 +1,7 @@
 ---
 title: "Loop State: cross_model_review-p6"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: cross_model_review-p6
 
@@ -18,7 +18,7 @@ status: "active"
 | Iteration | `2` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
+| Last decision | `done` |
 | Last updated | `2026-10-22T08:50:00Z` |
 
 ---
@@ -37,8 +37,8 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Approach:** 1
 - **Action:** fix agent, then a fresh reviewer instance on `claude-sonnet-5-5`.
 - **Observation (fixes):** M1 `47a5084` (mutation proved in the scratchpad), M2 `c824bbb`, M3 `fa9bd5c`, M5 `557f986`, M6 `01bd0e2`, M7 `f7b2f33`, and M8 `7f655f5`. `req-005:58` stays unchanged under the armed ratchet. A new prose line keeps it true. All three checks pass.
-- **Observation (verdict):** pending.
-- **Decision:** continue: verdict pending.
+- **Observation (verdict):** APPROVE, 0 critical, 0 major, 2 minor, in `plan/current/cross-model-review-iteration-2.md`. M1 to M8 resolved or soundly deferred. One mutation per requirement, each caught by its suite. The orchestrator fixed both minors: `fast-path.md` and req-009 name the always-permitted exception (backlog 0000159), and `resolveTargetText` is no longer exported.
+- **Decision:** done: the cross-model gate approves.
 
 ---
 

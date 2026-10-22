@@ -289,14 +289,14 @@ Exception waiting (P3, human review): retroactive-release-tags.md: two release c
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T08:20:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T09:11:31Z` |
+| Wall-clock | `3091` |
 | Streams | `n/a` |
-| Model tier | primary |
-| Skills loaded | planifest-docs-agent |
-| Agents spawned | `pending` |
+| Model tier | primary, with the cross-model reviewer on `claude-sonnet-5-5` |
+| Skills loaded | planifest-docs-agent, planifest-reversal-assessor, planifest-loop-runner |
+| Agents spawned | `7` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Gate A: `docs/` exists. |
 
 P6 Gate B: docs update assessment (continuous run, auto-accepted).
@@ -324,4 +324,7 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 - Cross-model review iteration 1 (`claude-sonnet-5-5` reviewing `claude-opus-5-5`): REJECT, 0 critical, 0 major, 8 minor. Fixes for M1 to M3 and M5 to M8 in seven commits. M4 deferred to backlog 0000159.
 - Backlog filed (P6): 0000159 (an always-permitted basename is checked before the enforcement list).
 - Deviation (P6, additive): migrator Step 1b defines the framework source as a root `product.yml` with `id: "planifest-framework"`. Nothing defined it before. This repo matches, so the P3 records stand.
+- Cross-model review iteration 2 (fresh `claude-sonnet-5-5`): APPROVE, 0 critical, 0 major, 2 minor. The orchestrator fixed both: `fast-path.md` and req-009 name the always-permitted exception (backlog 0000159), and `resolveTargetText` is internal now. Loop state set to `done`.
+- Gate (P6): passed. Living docs, reference docs, recommendations, iteration log, drift report, deviation review, and cross-model approval in place. `run-tests.sh` exits 0 with 88 feature suites and 31 regression suites. Self-description and consistency checks pass. Eleven exceptions wait for the human on the loop.
+- Progress: P6 done at 2026-10-22T09:11:31Z: docs complete, deviations classed, cross-model approved on iteration 2
 - Decision (P5): fix all seven in a second batch of two parallel agents, gates and scripts. P-N3 covers backlog 0000147, so that entry closes in this feature / reason: each is small, in scope, and in files the feature already changes.

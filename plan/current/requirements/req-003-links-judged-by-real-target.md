@@ -28,7 +28,7 @@ As the human on the loop, I rely on the gates to judge where a write lands after
 - If a segment is a symbolic link, it reads the link with `readlinkSync` and puts the link text in place of that segment. It resolves a relative link text against the real folder that holds the link. An absolute link text restarts the walk at its own root.
 - A `..` segment moves to the real parent of the real path resolved so far. `resolveTarget` never collapses `..` as text before it resolves the segments to its left. This matches how the kernel resolves a shell redirect or a shell command's path.
 - The **Write** and **Edit** tools place a target another way. They collapse `..` as text against `cwd` first, and only then does the system follow links (P5 finding G-S01). With `docs/L` a link to `../plan/x/y`, `docs/L/../../src/a.js` lands in `src/a.js`.
-- `path-rules.mjs` exports `resolveTargetText(root, cwd, target)`, which collapses `..` as text first and then resolves the result through links. It returns the same three results as `resolveTarget`.
+- `path-rules.mjs` holds an internal `resolveTargetText(root, cwd, target)`, which `resolveTargetBoth` calls. It collapses `..` as text first and then resolves the result through links. It returns the same three results as `resolveTarget`.
 - `resolveTargetText` resolves a target that lands below `cwd` from the real path of `cwd`. A link in the path of `cwd` itself therefore doesn't count as a hop (P5 deviation, build log).
 - `path-rules.mjs` exports `resolveTargetBoth(root, cwd, target)`. It returns the physical and the text placements, or one entry when both land on the same path.
 - `judgeWrite`, and so `gate-write.mjs`, judges each placement. It blocks if either verdict blocks.

@@ -58,6 +58,7 @@ As the human on the loop, I rely on Fast Path never admitting a write to an enfo
 - The scope record never admits a target whose root-relative path holds a non-ASCII character (P5 finding G-S02). The gate blocks it with exit 2, and the reason names the non-ASCII rule. Record paths are already ASCII by their grammar, so no listed path loses its admission.
 - The gate checks `FAST_PATH_ENFORCEMENT_PATHS` before it matches the scope record (ADR-004).
 - A scope record never admits a path that matches `FAST_PATH_ENFORCEMENT_PATHS`, whatever it lists. The gate blocks that write with exit 2. The reason names the path and 0000033 ADR 009, and says to use the Change or Feature Pipeline.
+- An always-permitted file name, such as `claude.md`, passes without a record before the enforcement list runs, even inside an enforcement folder. That order predates 0000035, and backlog 0000159 holds it (cross-model review m1).
 
 ### Fast Path workflow text
 
