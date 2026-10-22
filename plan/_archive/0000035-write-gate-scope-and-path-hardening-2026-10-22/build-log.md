@@ -384,8 +384,8 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T09:24:30Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T09:27:04Z` |
+| Wall-clock | `154` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent (source copy) |
@@ -398,3 +398,7 @@ Exception waiting (P6, altering L201): `./README.md` joined the confirmed Compon
 - Backlog filed (P9): 0000160 (ship commit subjects overrun 72 characters).
 - Step 9: `product-version.mjs` derived `0.33.0`, which matches P0 and is above `v0.32.0`. Tag `v0.33.0` created.
 - Step 10: no `local-git-only` or `restore-pr-attribution` override. Branch `feat/0000035-write-gate-scope-and-path-hardening`. Option [1] as a draft PR, because 11 `Exception waiting` lines remain.
+- Step 10: branch and `v0.33.0` pushed. Draft PR https://github.com/planifest/planifest-framework/pull/61. Changelog PR field updated.
+- Step 10b clean-tree check: one leftover, the changelog PR edit. It passed the credential guard and went in as `1dec223`. Then clean.
+- Step 11: `final-report.md` written to this folder. `gh pr checks 61` reported no checks yet, so CI reads `pending`.
+- Progress: P9 done at 2026-10-22T09:27:04Z: v0.33.0 tagged, draft PR #61 raised, 11 exceptions waiting for the human on the loop
