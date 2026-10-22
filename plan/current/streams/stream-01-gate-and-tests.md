@@ -29,8 +29,7 @@ updated: "2026-10-22T21:33:56Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `shown-whole-unit-cut` | `plan/current/requirements/req-011-escaped-hook-output.md` | req-002 |
-| `enforcement-suite-unset-rule` | `plan/current/requirements/req-010-run-tests-clears-project-dir.md` | req-008 |
+| `shown()` | `plan/current/requirements/req-011-escaped-hook-output.md` | req-002 |
 
 ## Consumes
 

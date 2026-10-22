@@ -26,13 +26,10 @@ updated: "2026-10-22T21:33:56Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `migrate-0.34.0-rerun-setup.md` | `plan/current/requirements/req-001-rerun-setup-migration.md` | req-001 |
-| `skill-drift-check.mjs` | `plan/current/requirements/req-002-skill-drift-check.md` | req-001 |
 
 ## Consumes
 
-- `shown()` from req-011 (stream-01), for drift output escaping
-- the boot-template citation change from req-005 (stream-03), for the 0.34.0 file list
+- `shown()`
 
 ## Next step
 

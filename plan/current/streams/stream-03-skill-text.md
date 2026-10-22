@@ -29,12 +29,10 @@ updated: "2026-10-22T21:33:56Z"
 
 | Artifact ID | Defined in | Consumer |
 |-------------|------------|----------|
-| `hard-limit-citation-form` | `plan/current/requirements/req-005-hard-limits-cited-by-name.md` | req-005 |
-| `split-step-marker` | `plan/current/requirements/req-007-story-split-step.md` | req-007 |
 
 ## Consumes
 
-- `migrate-0.34.0-rerun-setup.md` from req-001 (stream-02), which carries the boot template change into `CLAUDE.md`
+- none
 
 ## Next step
 
