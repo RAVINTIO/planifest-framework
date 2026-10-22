@@ -276,7 +276,7 @@ assert_contains "Exit 2" "$PSTEP" "req-002: the P7 step handles exit 2"
 assert_contains "never through **Write** or **Edit**" "$PSTEP" "req-002: the ship agent never writes product.yml through Write or Edit"
 
 STEP7=$(sed -n '/^### Step 7: Commit archive/,/^## P8/p' "$SHIP")
-assert_contains "product.yml" "$STEP7" "req-002: Step 7 stages product.yml"
+assert_contains "git add product.yml" "$STEP7" "req-002: Step 7 stages product.yml"
 
 STEP9=$(sed -n '/^### Step 9: Create git tag/,/^### Step 10:/p' "$SHIP")
 assert_contains "product-version.mjs" "$STEP9" "req-002: Step 9 reads the version through product-version.mjs"
