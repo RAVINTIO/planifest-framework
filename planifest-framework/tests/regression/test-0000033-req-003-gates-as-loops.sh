@@ -110,6 +110,9 @@ assert_contains "build-log block" "$CRITIC_PARA" \
   "0000036 req-006: orchestrator writes the critic verdict line to the build-log block"
 assert_contains "\`report-only\` outside \`autonomous\`" "$(grep '^- \*\*Toggle defaults' "$STD")" \
   "0000036 req-006: standards toggle-defaults bullet names report-only outside autonomous"
+ARCH_OVERVIEW="$(cat "$FW/../docs/architecture-overview.md" 2>/dev/null || true)"
+assert_contains "Outside \`autonomous\`, an absent \`design_critic\` key or an absent file reads as \`report-only\`" "$ARCH_OVERVIEW" \
+  "0000036 req-006: architecture overview states the design_critic report-only default"
 
 echo ""
 echo "=== req-003: validate and security checkers ==="
