@@ -106,8 +106,10 @@ flowchart LR
 | ID | Assumption | Impact if Wrong |
 |----|-----------|----------------|
 | A-001 | Claude Code passes `CLAUDE_PROJECT_DIR` to hooks. | The deleted-cwd fix falls back to the nearest existing parent only. |
-| A-002 | Git state for the scope record can be read from `.git/HEAD`, loose refs, `commondir`, and `packed-refs` without a spawn. | A reftable repository can't use Fast Path writes, because the gate ignores the record and fails closed. |
-| A-003 | The six older migrations' scans still run against today's layout. | A scan reports false findings, and the run lists them for the human on the loop. |
+| A-002 | The six older migrations' scans still run against today's layout. | A scan reports false findings, and the run lists them for the human on the loop. |
+| A-005 | Git state for the scope record can be read from `.git/HEAD`, loose refs, `commondir`, and `packed-refs` without a spawn. | A reftable repository can't use Fast Path writes, because the gate ignores the record and fails closed. |
+
+The IDs match the assumptions table in `risk-register.md`, which also holds A-003 and A-004.
 
 ## Open Questions
 

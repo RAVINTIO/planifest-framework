@@ -25,7 +25,7 @@ This run is `autonomous`. The migrator's Hard Limit 3 needs a human answer for e
 
 1. Nothing seeds records from an old `_done/` folder, here or downstream.
 2. In this repo, P3 runs the scans of the six returning migrations and writes each record from the result. A clean scan gets `applied` with both counts at `0`.
-3. P3 writes `not applicable` records for the two downstream-only migrations without running them. Each body names the reason: this repo is the framework source.
+3. For the two downstream-only migrations, the scan here is a target check. P3 reads each file's `**Target:**` line, which names a downstream project, and writes `not applicable` without running the Migrator Instructions (req-010 FR-010.1). Each body names the reason: this repo is the framework source.
 4. A scan with findings writes no record until the human on the loop answers every batch. The migration stays pending until then.
 5. In an `autonomous` run, P3 logs one `Exception waiting (P3, human review): {migration}: {findings}` line per migration with findings. P4 reports req-010 AC-010.1 as open. No agent forces a record to close it.
 6. An apply answer gives `applied`. An answer of `none` gives `skipped`.
@@ -37,7 +37,7 @@ This run is `autonomous`. The migrator's Hard Limit 3 needs a human answer for e
 |-------------|------|------|-------------|
 | Seed `applied` records from `_done/` | No rescans, quiet first session | Records a claim no scan checked. Downstream, `_done/` reflects the framework repo, not the project. | A record must come from a scan run in that project. |
 | Write a record for a scan with findings, marked part-done | The run closes AC-010.1 alone | Needs a fourth outcome, which ADR-016 rejected. Hides findings the human on the loop never saw. | Breaks Hard Limit 3 of the migrator and the no-record-means-pending rule. |
-| Run the downstream-only migrations here | Every record comes from a scan | Their scans look for setup state this repo doesn't carry. Findings would be false or confusing. | Scope rules them out. `not applicable` states the fact. |
+| Run the downstream-only migrations' full instructions here | Each record comes from a full scan, not a target check | Their scans look for setup state this repo doesn't carry. Findings would be false or confusing. | Scope rules them out. The target check gives the same `not applicable` result from a fact in the file. |
 | Mark the downstream-only migrations `not applicable` everywhere | No scan downstream | The framework can't know which projects need them. | Each downstream scan decides. |
 
 ## Affected Components

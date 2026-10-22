@@ -55,6 +55,7 @@ No user story in the brief covers this change. The build log records it as a P1 
 **Negative:**
 - The counter still can't see sub-bullets under a checkbox line. A fold of 12 criteria into 3 lines still passes.
 - Requirements can grow larger before any gate stops them, which makes each one harder to test and review.
+- The limit doesn't undo folds already made. req-002 criterion 1 still holds eight close-out suite cases as sub-bullets. They test one script, so this run keeps them as one criterion.
 
 **Risks:**
 - Agents may treat the warning as noise and stop splitting stories. Backlog 0000139 tracks the missing split step.

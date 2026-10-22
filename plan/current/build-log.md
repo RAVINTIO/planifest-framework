@@ -133,14 +133,14 @@ Streams formed (dependency test: stories that change the same file share a strea
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T05:50:00Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-22T06:16:07Z` |
+| Wall-clock | `1567` |
 | Streams | `3` |
 | Model tier | primary |
-| Skills loaded | planifest-adr-agent |
-| Agents spawned | `pending` |
+| Skills loaded | planifest-adr-agent, planifest-loop-runner |
+| Agents spawned | `9` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Skills inbox empty. One ADR agent per stream, in one parallel batch, each inside its own ADR block. |
 
 - P2 exchange (acceptance-criteria warning): A: "There should still be a warning above 3 and less than 10 though for feedback. Just not a hard block."
@@ -158,3 +158,7 @@ Streams formed (dependency test: stories that change the same file share a strea
 - Decision (P2): split req-007 into req-007 (migration run-state behaviour) and req-010 (the one-off migration run in this repo, US-010) / reason: the critic named it a split candidate. Running the eight migrations here is a one-off task with its own exception flow.
 - Deviation (P1, directed by the human on the loop): `consistency-check.mjs` allows up to 10 acceptance criteria and warns from 4 to 10, in commits `c7e7642` and `bb2d692`. No story in the brief covers it. ADR-012 records the decision, and `scope.md` lists it in scope.
 - Decision (P2): req-009 joins stream 01 and req-010 joins stream 03, because each changes the same files as its source requirement. IDs req-009, req-010, US-009, and US-010 sit outside the stream blocks, because the orchestrator assigns them at the join.
+- P2 gate loop iteration 1: design critic REJECT (0 critical, 1 major, 8 minor). M1: the criteria-limit change had no ADR. One fix agent resolved all nine and added ADR-012.
+- P2 gate loop iteration 2: design critic APPROVE (0 critical, 0 major, 3 minor). The orchestrator fixed the three minors. Loop state set to `done`.
+- Gate (P2): passed. Ten requirements with 3 criteria each, 16 ADRs. `consistency-check.mjs` clean with no warnings, `stream-reconcile.mjs` exits 0, run mode still `autonomous`.
+- Progress: P2 done at 2026-10-22T06:16:07Z: 16 ADRs, three requirement splits, critic approved on iteration 2

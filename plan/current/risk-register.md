@@ -48,3 +48,4 @@ Documented assumptions from the specification are logged here with likelihood: m
 | A-002 | The scans in the six older migrations still run against today's layout. | A scan reports false findings, and P3 brings them to the human on the loop (see R-013). | open |
 | A-003 | No existing records need reading. `discovery.md` Record Samples reads None. | A hidden record format would conflict with the new `plan/_migrations/` layout. | open |
 | A-004 | Hooks run on Node 18 or later, so `fs.realpathSync` and `fs.lstatSync` behave as the design expects. | Link resolution differs by platform, and the suites fail on one runner. | open |
+| A-005 | Git state for the scope record can be read from `.git/HEAD`, loose refs, `commondir`, and `packed-refs` without a spawn. | A reftable repository can't use Fast Path writes, because the gate ignores the record and fails closed (see R-007). | open |

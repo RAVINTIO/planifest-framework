@@ -42,7 +42,7 @@ version: "0.1.0"
 | Pending migration | A migration with no readable record in `plan/_migrations/`. An unreadable record also counts as pending. | | planifest-framework |
 | Downstream-only migration | A migration that applies to projects that consume the framework and not to this repo. Two exist. This repo records them as `not applicable` (req-010). | | planifest-framework |
 | Migrator | The `planifest-migrator` skill. It runs one pending migration with the human on the loop and writes the record. | | planifest-framework |
-| Scan | The check a migration runs to find what needs changing. A compliant project gets a clean result and a record. | | planifest-framework |
+| Scan | The check a migration runs to find what needs changing. A compliant project gets a clean result and a record. For a downstream-only migration in the framework repo, the scan is a target check of its `**Target:**` line, which gives `not applicable` (req-010). | | planifest-framework |
 | Resume detection | The orchestrator step that lists pending migrations at session start. | | planifest-framework |
 | Close-out | The P7 to P9 sequence that archives the run, writes the report, tags, and ends with a clean working tree. | | planifest-framework |
 | `product.yml` update | The ship agent step that sets `version` and `feature` in P7, before Step 6 archives `design.md`. | | planifest-framework |
