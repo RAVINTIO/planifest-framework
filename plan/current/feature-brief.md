@@ -57,7 +57,7 @@ Recent runs each paid for the same workarounds. A long feature ID breaks the P9 
 
 | From | To | Method | Contract |
 |------|-----|--------|----------|
-| `gate-write.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs` | `path-rules.mjs` | ES module import | `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, `shown` |
+| `gate-write.mjs`, `shell-write-guard.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs` | `path-rules.mjs` | ES module import | `evaluateWrite`, `isAlwaysPermitted`, `isEnforcementPath`, `shown` |
 | Orchestrator resume detection | skill drift check script | process run by the agent | exit code and a list of stale skills |
 | Orchestrator resume detection | `run-mode.mjs` | process run by the agent | prints the run mode |
 

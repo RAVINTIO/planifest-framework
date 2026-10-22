@@ -15,7 +15,7 @@ status: "active"
 | Loop id | `design_critic` |
 | Owning phase | `P1` |
 | Toggle level | `on` |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `continue` |
@@ -34,6 +34,12 @@ status: "active"
 ### Iteration 2 (2026-10-22T21:55:00Z)
 - **Approach:** 1
 - **Action:** fix agents in parallel: stream 02 (req-001, req-002), stream 01 and 03 minors (req-006, req-008, req-010), and shared artifacts (risk register, glossary). Then a fresh critic instance.
+- **Observation:** REJECT, 0 critical, 1 major, 9 minor, in `plan/current/design-critic-p1-iteration-2.md`. Ten iteration 1 findings resolved, two partly. Major: req-007's split would move criteria lines, which `ratchet-check.mjs` blocks while a loop is active, and `autonomous` has no human to approve the move.
+- **Decision:** continue: the orchestrator fixes `scope.md`, the glossary, the brief, and NFR-002. Two fix agents take the requirement files. A fresh critic instance then reviews.
+
+### Iteration 3 (2026-10-22T22:10:00Z)
+- **Approach:** 1
+- **Action:** two fix agents in parallel: req-001, req-002, and req-007, then req-005, req-008, req-009, req-011, and the risk register. Then a fresh critic instance.
 - **Observation:** pending
 - **Decision:** pending
 

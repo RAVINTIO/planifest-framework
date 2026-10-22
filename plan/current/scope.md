@@ -22,6 +22,7 @@ version: "0.1.0"
   - This repo records it as `applied` after P3 re-runs setup here.
 - A skill drift check, `scripts/skill-drift-check.mjs` (US-002):
   - It compares `SKILL.md` bytes only, source against the installed copy.
+  - Before it compares, it applies setup's four path rewrites to the source and strips one leading byte order mark from both copies (P1 correction).
   - It warns and never blocks. It exits 0 on a match, 1 on drift or a missing copy, and 2 when it can't compare.
   - A project with no installed copies reports "not installed" with exit 1 and a setup recommendation.
   - If the active tool is unknown, it covers every installed tool folder it finds.

@@ -37,7 +37,7 @@ Functional requirements are split into individual files, one user story per file
 | ID | Category | Requirement | Target | Measurement |
 |----|----------|------------|--------|-------------|
 | NFR-001 | Performance | Hook call time with the added `lstat` and `fstat` | Under 500 ms per hook call | A timed case in the req-008 suite runs `gate-write.mjs` with a regular `design.md` |
-| NFR-002 | Performance | Drift check run time | Under 1 s on this repo | A timed case in the req-002 suite runs the script against this repo |
+| NFR-002 | Performance | Drift check run time | Under 1 s on this repo | A timed case in the req-002 suite builds an installed fixture from every real source skill, then runs the script against it. The fixture makes CI measure a full comparison, because `.claude/` is git-ignored. |
 | NFR-003 | Security | Hooks stay on Node built-ins | No `child_process` import and no import outside `node:` in any enforcement hook | Suite source check |
 | NFR-004 | Security | A FIFO never holds a hook | Each hook exits inside the suite's 5-second limit with a FIFO at `design.md` | req-008 suite case |
 | NFR-005 | Reliability | Commit subjects from skill templates | Every template subject is 72 characters or fewer and holds no placeholder | req-003 suite, which runs `hooks/commit-msg` |
