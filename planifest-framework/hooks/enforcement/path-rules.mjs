@@ -511,6 +511,8 @@ export const FAST_PATH_ENFORCEMENT_PATHS = Object.freeze([
   // Tool-local settings files, which can also register or turn off hooks
   ".claude/settings.local.json",
   "opencode.jsonc",
+  // The CI workflow setup installs, which enforces the fix(fast-path) commit rule (G-S03)
+  ".github/workflows/planifest.yml",
 ]);
 
 // foldWide: norm(p) with NFKC compatibility folding and a full case fold, so

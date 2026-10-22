@@ -33,6 +33,7 @@ Without these entries, a self-written record could unwire `gate-write` itself. T
   - `.git/` and everything below it
   - the hook wiring files per tool, with the whole `.github/hooks/` folder for Copilot
   - the tool-local settings files `.claude/settings.local.json` and `opencode.jsonc`
+  - `.github/workflows/planifest.yml`, the CI workflow that setup installs and that enforces the `fix(fast-path)` commit rule (P5 finding G-S03)
 - **Matching:** Matching is case-insensitive. The gate compares `norm(relPath)` with `norm(entry)` (0000009 ADR 005), so a mixed-case path on a case-insensitive volume still matches.
 - **Lookalikes (P5 finding G-S02):** APFS folds some non-ASCII characters onto plain letters, such as the long s (U+017F) onto `s`. Two rules close that gap:
   - `isEnforcementPath` folds both sides with `normalize("NFKC")`, then `toUpperCase().toLowerCase()`, after `norm`.

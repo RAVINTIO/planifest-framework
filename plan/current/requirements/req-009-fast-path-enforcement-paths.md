@@ -35,6 +35,7 @@ As the human on the loop, I rely on Fast Path never admitting a write to an enfo
   - any path that holds the segment pair `hooks/adapters/`, which covers every installed Tier 1 adapter such as `.cursor/hooks/adapters/cursor.mjs`
   - the hook wiring files that `setup.sh` and `setup.ps1` write, listed below
   - the tool-local settings files that a supported tool loads hooks from, listed below
+  - `.github/workflows/planifest.yml`, the CI workflow that `setup.sh` and `setup.ps1` install. It enforces the `fix(fast-path)` commit rule, so a Fast Path edit could turn that check off (P5 finding G-S03).
 - The hook wiring files are the tool settings and config files that register the hooks. `setup.sh` and `setup.ps1` write these:
   - `.claude/settings.json` (Claude Code)
   - `.cursor/settings.json` (Cursor)

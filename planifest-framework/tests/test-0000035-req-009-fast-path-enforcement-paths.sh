@@ -110,6 +110,8 @@ for target in \
   ".clinerules/hooks.json" \
   ".windsurf/hooks.json" \
   ".github/hooks/planifest.json" \
+  ".github/workflows/planifest.yml" \
+  ".GitHub/Workflows/Planifest.yml" \
   ".codex/config.toml" \
   "opencode.json" \
   "opencode.jsonc" \
@@ -129,6 +131,10 @@ assert_equals "0" "$CODE" "req-009: tools/setup.sh.md is not an enforcement path
 record "docs-site/hooks/x.md"
 run_gate "docs-site/hooks/x.md"
 assert_equals "0" "$CODE" "req-009: a hooks/ folder without enforcement/ or adapters/ is not on the list"
+# Only the installed CI workflow is listed, not every workflow file (G-S03).
+record ".github/workflows/other.yml"
+run_gate ".github/workflows/other.yml"
+assert_equals "0" "$CODE" "req-009: .github/workflows/other.yml is not an enforcement path"
 
 # =============================================================================
 echo ""
