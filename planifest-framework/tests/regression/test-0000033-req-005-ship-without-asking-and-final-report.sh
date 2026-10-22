@@ -118,7 +118,7 @@ assert_equals "0" "$(grep -c -E 'git push .*(--force|-f( |$))' "$SHIP")" "req-00
 assert_contains "No step in any mode uses \`--force\` or \`--force-with-lease\`" "$STEP10" \
   "req-005: Step 10 states the no-force rule (P5 G9)"
 assert_contains "{archive-dir}/final-report.md" "$STEP11" "req-005: Step 11 writes the final report to a file (P5 G7)"
-assert_contains 'git commit -m "plan(p9): add final report for {feature-id}" -- "{archive-dir}/final-report.md"' "$STEP11" \
+assert_contains 'git commit -m "plan(p9): add final report" -m "{feature-id}" -- "{archive-dir}/final-report.md"' "$STEP11" \
   "req-005: Step 11 commits the final report by explicit path (P5 G7)"
 assert_contains "after-PR push rule" "$STEP11" "req-005: Step 11 pushes the report under the after-PR rule (P5 G7)"
 assert_contains "points to" "$STEP11" "req-005: the chat message points to the report file (P5 G7)"

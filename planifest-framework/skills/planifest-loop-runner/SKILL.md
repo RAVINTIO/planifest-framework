@@ -24,7 +24,7 @@ hooks:
 
 Before arming any loop, read `planifest-overrides/loop-toggles.yml` (see `templates/loop-toggles.template.yml`):
 
-- Absent file, absent key, or unreadable/invalid value → the loop is **off**. Emit a one-line warning only for an invalid value on a known key.
+- Absent file, absent key, or unreadable/invalid value → the loop is **off**. Emit a one-line warning only for an invalid value on a known key. The one exception is an absent `design_critic` key, which reads as **report-only** outside `autonomous` (see below).
 - `report-only` → run the loop, write findings/verdicts, block nothing, mutate nothing.
 - `on` → verdicts gate progression per the owning skill's rules.
 
@@ -36,7 +36,9 @@ Before arming any loop, read `planifest-overrides/loop-toggles.yml` (see `templa
 - `reversal_protocol`
 - `parallel_streams`
 
-An explicit value in `planifest-overrides/loop-toggles.yml` wins over the default. Outside `autonomous`, an absent key still reads as **off**, so behaviour doesn't change. `p0_completeness` keeps its default in every mode.
+An explicit value in `planifest-overrides/loop-toggles.yml` wins over the default. `p0_completeness` keeps its default in every mode.
+
+**`design_critic` default outside `autonomous` (0000036 ADR-009):** Outside `autonomous`, an absent `design_critic` key reads as **report-only**. An absent `loop-toggles.yml` reads the same as an absent key. An invalid `design_critic` value still reads as **off**, with the one-line warning. An explicit value still wins. Outside `autonomous`, every other key still reads as **off** when absent.
 
 **Checker keys in `autonomous`:** an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set. See `standards/autonomous-run-standards.md` (Gates as loops).
 

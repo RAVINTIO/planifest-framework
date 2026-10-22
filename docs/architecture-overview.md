@@ -119,7 +119,7 @@ flowchart TD
 
 ## Governance Loops (0000016)
 
-The pipeline has an optional loop layer, entirely toggle-gated via `planifest-overrides/loop-toggles.yml` (absent = all off; zero-config behaviour identical to pre-0000016):
+The pipeline has an optional loop layer, entirely toggle-gated via `planifest-overrides/loop-toggles.yml`. An absent file or key turns a loop off, with one exception. Outside `autonomous`, an absent `design_critic` key or an absent file reads as `report-only` (0000036 ADR-009):
 
 | Loop | Seam | Verifier | Deterministic guard |
 |------|------|----------|--------------------|

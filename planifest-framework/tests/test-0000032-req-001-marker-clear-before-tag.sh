@@ -63,7 +63,7 @@ CLEAR=$(sed -n "${CLEAR_LINE:-1},$(( ${TAG_LINE:-2} - 1 ))p" "$SHIP")
 for m in plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode; do
   assert_contains "Delete \`$m\`" "$CLEAR" "req-001: marker step deletes $m"
 done
-assert_contains 'git commit -m "plan(p9): clear session markers for {feature-id}"' "$CLEAR" \
+assert_contains 'git commit -m "plan(p9): clear session markers" -m "{feature-id}"' "$CLEAR" \
   "req-001: marker step commits with the plan(p9) subject"
 assert_contains "git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode" "$CLEAR" \
   "req-001: marker step runs the git ls-files check"
@@ -109,7 +109,7 @@ echo ""
 echo "=== req-001 (K-4): nothing to commit ==="
 
 MARKERS='plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode'
-assert_contains "git diff --cached --quiet -- \"{archive-dir}\" $MARKERS || git commit -m \"plan(p9): clear session markers for {feature-id}\"" "$CLEAR" \
+assert_contains "git diff --cached --quiet -- \"{archive-dir}\" $MARKERS || git commit -m \"plan(p9): clear session markers\" -m \"{feature-id}\" -- \"{archive-dir}\"" "$CLEAR" \
   "req-001 K-4: the commit runs only when something is staged under the marker step's own paths"
 assert_contains "If nothing is staged under these paths, skip the commit" "$CLEAR" \
   "req-001 K-4: marker step skips the commit when nothing is staged under its paths"

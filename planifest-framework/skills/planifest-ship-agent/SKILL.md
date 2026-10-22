@@ -154,7 +154,7 @@ Commit the archive, changelog, `docs/about.md`, and `product.yml` to the branch 
 ```
 git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 if [ -f product.yml ]; then git add product.yml; fi
-git commit -m "plan(p7): archive {feature-id}"
+git commit -m "plan(p7): archive plan/current" -m "{feature-id}"
 ```
 
 ## P8: Build Assessment
@@ -241,7 +241,7 @@ git cat-file -e ":{archive-dir}/build-report.md"
 ```bash
 rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers for {feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
+git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers" -m "{feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
 git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 ```
 
@@ -361,7 +361,7 @@ In `autonomous`, write the final report in place of the message below. `planifes
 
 ```bash
 git add -- "{archive-dir}/final-report.md"
-git commit -m "plan(p9): add final report for {feature-id}" -- "{archive-dir}/final-report.md"
+git commit -m "plan(p9): add final report" -m "{feature-id}" -- "{archive-dir}/final-report.md"
 ```
 
 Push that commit under the after-PR push rule. The report then survives the Step 12 context clear. The chat message points to the file. Step 12 still runs after the report. In `interactive` and `continuous`, send this message:

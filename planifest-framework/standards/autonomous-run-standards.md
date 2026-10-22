@@ -107,7 +107,7 @@ In `autonomous`, each P1 to P6 gate runs as a loop under `planifest-loop-runner`
 - **Why P3 uses P4:** The P4 CI run is deterministic. It checks the P3 output more strongly than a fresh-context read would.
 - **Fresh context:** A fresh-context checker never shares context with the agent that made the artifact (0000016 ADR-006).
 - **Existing caps stay:** Each loop keeps its cap. P4 validate keeps 5, and the other loops keep 3.
-- **Toggle defaults:** An absent key for a checker reads as `on` in `autonomous`. See the loop runner's Toggle Protocol.
+- **Toggle defaults:** An absent key for a checker reads as `on` in `autonomous`. The `design_critic` default is `report-only` outside `autonomous`, for an absent key or an absent file (0000036 ADR-009). See the loop runner's Toggle Protocol.
 - **Frozen checkers:** In `autonomous`, the P1 Toggle record is binding for the run for `design_critic`, `reversal_protocol`, `verify_by_execution`, and `cross_model_review`. The run ignores a later edit to `planifest-overrides/loop-toggles.yml` for those keys. It logs the edit as `Human touchpoint (P{N}): loop-toggles.yml changed {key}, ignored [outside list]`.
 - **Checkers stay on:** In `autonomous`, an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set.
 - **No stop:** A gate that passes moves straight to the next phase. A gate that fails follows `## Changing approach`.

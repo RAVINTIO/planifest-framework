@@ -446,4 +446,10 @@ assert_contains "- Run mode confirmed: autonomous" "$HEAD_FLAT" "req-004: header
 TPL_BLOCK=$(awk 'prev ~ /^```/ && $0 == "Run mode confirmed: autonomous ({ISO-8601 timestamp})" { print "found" } { prev = $0 }' "$TPLB")
 assert_equals "found" "$TPL_BLOCK" "req-004: build-log template shows the bare anchor line in a fenced code block"
 
+ORCH_BLOCK=$(awk 'prev ~ /^ *```/ && $0 ~ /^ *Run mode confirmed: autonomous \(\{ISO-8601 timestamp\}\)$/ { print "found" } { prev = $0 }' "$ORCH")
+assert_equals "found" "$ORCH_BLOCK" "req-004: orchestrator shows the bare anchor line in a fenced code block"
+ANCHOR_TEXT=$(sed -n '/^Before recording \[3\]/,/^Immediately after recording the answer/p' "$ORCH")
+assert_contains "the preferred form" "$ANCHOR_TEXT" "req-004: orchestrator calls the bare line the preferred form"
+assert_contains "one leading \`- \`" "$ANCHOR_TEXT" "req-004: orchestrator says one leading list marker also passes"
+
 print_summary

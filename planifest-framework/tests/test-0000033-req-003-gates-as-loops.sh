@@ -74,8 +74,16 @@ for k in design_critic verify_by_execution cross_model_review reversal_protocol 
   assert_contains "$k" "$TP" "req-003: Toggle Protocol names $k"
 done
 assert_contains "explicit value" "$TP" "req-003: Toggle Protocol says an explicit value wins"
-assert_contains "Outside \`autonomous\`, an absent key still reads as **off**" "$TP" \
-  "req-003: absent key reads as off outside autonomous"
+assert_contains "Outside \`autonomous\`, an absent \`design_critic\` key reads as **report-only**" "$TP" \
+  "0000036 req-006: absent design_critic key reads as report-only outside autonomous"
+assert_contains "An absent \`loop-toggles.yml\` reads the same as an absent key" "$TP" \
+  "0000036 req-006: absent toggles file reads as an absent key for design_critic"
+assert_contains "An invalid \`design_critic\` value still reads as **off**" "$TP" \
+  "0000036 req-006: invalid design_critic value still reads as off"
+assert_contains "Outside \`autonomous\`, every other key still reads as **off** when absent" "$TP" \
+  "0000036 req-006: other keys still read as off when absent outside autonomous"
+lacks "Outside \`autonomous\`, an absent key still reads as **off**" "$TP" \
+  "0000036 req-006: Toggle Protocol drops the all-keys-off rule outside autonomous"
 assert_contains "The framework never creates \`planifest-overrides/loop-toggles.yml\`" "$TP" \
   "req-003: never-creates line stays"
 
@@ -90,6 +98,18 @@ done
 assert_contains "p0_completeness: off" "$TOGT" "req-003: p0_completeness line stays"
 HEADER=$(sed -n '1,/^[a-z#]* *p0_completeness/p' <<< "$TOGT")
 assert_contains "autonomous" "$HEADER" "req-003: template header states the autonomous rule"
+assert_contains "default report-only" "$(grep '^# *design_critic:' <<< "$TOGT")" \
+  "0000036 req-006: commented design_critic line names the report-only default"
+assert_contains "design_critic reads as report-only" "$HEADER" \
+  "0000036 req-006: template header states the design_critic report-only default"
+lacks "identical to a" "$HEADER" "0000036 req-006: template header drops the zero-config identity claim"
+CRITIC_PARA=$(grep '^\*\*Design-critic (toggle' "$ORCH")
+assert_contains "\`design_critic: report-only (absent default)\`" "$CRITIC_PARA" \
+  "0000036 req-006: orchestrator design-critic paragraph names the Toggle record outside autonomous"
+assert_contains "build-log block" "$CRITIC_PARA" \
+  "0000036 req-006: orchestrator writes the critic verdict line to the build-log block"
+assert_contains "\`report-only\` outside \`autonomous\`" "$(grep '^- \*\*Toggle defaults' "$STD")" \
+  "0000036 req-006: standards toggle-defaults bullet names report-only outside autonomous"
 
 echo ""
 echo "=== req-003: validate and security checkers ==="
