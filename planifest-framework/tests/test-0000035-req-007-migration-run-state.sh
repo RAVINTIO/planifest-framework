@@ -27,11 +27,13 @@ SELF="$(basename "$0")"
 
 # The markers keep the 0000030 residue check off this migration file name.
 # BEGIN retired-integrations
-EIGHT=(
+# 0000036 req-001 adds the 0.34.0 re-run-setup migration, so there are nine.
+NINE=(
   0001-date-format.md
   0002-british-english.md
   0003-archive-dirname.md
   migrate-0.31.0-rerun-setup-for-shell-write-guard.md
+  migrate-0.34.0-rerun-setup.md
   migrate-adoption-mode-and-about-md.md
   migrate-product-yml-component-paths.md
   migrate-remove-context-mode-and-telemetry.md
@@ -66,12 +68,12 @@ echo "=== req-007 AC-007.1: migration files sit at the top level and never move 
 
 assert_equals "no" "$(yes_no test -e "$MIGRATIONS/_done")" "req-007: migrations/_done/ no longer exists"
 
-for f in "${EIGHT[@]}"; do
+for f in "${NINE[@]}"; do
   assert_equals "yes" "$(yes_no test -f "$MIGRATIONS/$f")" "req-007: $f sits at the top level of migrations/"
 done
 
 TOP_COUNT="$(find "$MIGRATIONS" -maxdepth 1 -type f -name '*.md' | wc -l | tr -d ' ')"
-assert_equals "8" "$TOP_COUNT" "req-007: migrations/ holds exactly eight top-level migration files"
+assert_equals "9" "$TOP_COUNT" "req-007: migrations/ holds exactly nine top-level migration files"
 
 for s in migrate-archive-dirname.sh migrate-archive-dirname.ps1; do
   assert_equals "yes" "$(yes_no test -f "$MIGRATIONS/$s")" "req-007: helper script $s stays beside 0003-archive-dirname.md"
@@ -81,7 +83,7 @@ COMPONENT="$(cat "$FRAMEWORK/component.yml")"
 assert_contains 'migrationPath: "planifest-framework/migrations/"' "$COMPONENT" \
   "req-007: component.yml keeps migrationPath"
 
-for f in "${EIGHT[@]}"; do
+for f in "${NINE[@]}"; do
   SRC="$(cat "$MIGRATIONS/$f" 2>/dev/null || true)"
   assert_equals "no" "$(yes_no grep -q '_done' <<< "$SRC")" "req-007: $f carries no _done text"
   assert_equals "no" "$(yes_no grep -qiE 'move this file|mv planifest-framework/migrations' <<< "$SRC")" \
