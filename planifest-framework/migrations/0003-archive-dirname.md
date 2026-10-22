@@ -35,4 +35,4 @@ Checks whether `plan/archive/` exists in the repo root and renames it to `plan/_
    - Print: `Please resolve manually: decide which directory is authoritative, move its contents, and delete the other.`
    - Halt — do not proceed.
 
-Move this file to `planifest-framework/migrations/_done/0003-archive-dirname.md` when the migration is complete or explicitly skipped by the human.
+When the migration is complete or explicitly skipped by the human, record the outcome at `plan/_migrations/0003-archive-dirname.md` through the migrator's Record step. This file stays where it is.

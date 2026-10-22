@@ -86,7 +86,7 @@ After pulling new files into `planifest-framework/`, re-run the setup script to 
 .\planifest-framework\setup.ps1 claude-code
 ```
 
-After updating, check `planifest-framework/migrations/` for any pending `.md` files — the orchestrator will handle them automatically at next session start.
+After updating, check for pending migrations. A pending migration is a top-level `.md` file in `planifest-framework/migrations/` with no record in `plan/_migrations/`. The orchestrator runs each one at the next session start.
 
 → [Full update protocol and migration handling](pipeline-reference.md#updating-the-framework)
 

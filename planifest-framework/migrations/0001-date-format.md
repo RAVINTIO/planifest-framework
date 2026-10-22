@@ -47,4 +47,4 @@ For each non-compliant date found:
 3. Apply confirmed changes
 4. Report: `{n} corrections applied, {m} skipped`
 
-Move this file to `planifest-framework/migrations/_done/0001-date-format.md` when complete or explicitly skipped by the human.
+When complete or explicitly skipped by the human, record the outcome at `plan/_migrations/0001-date-format.md` through the migrator's Record step. This file stays where it is.

@@ -71,4 +71,4 @@ For each match found:
 3. Apply confirmed changes
 4. Report: `{n} corrections applied, {m} skipped`
 
-Move this file to `planifest-framework/migrations/_done/0002-british-english.md` when complete or explicitly skipped by the human.
+When complete or explicitly skipped by the human, record the outcome at `plan/_migrations/0002-british-english.md` through the migrator's Record step. This file stays where it is.

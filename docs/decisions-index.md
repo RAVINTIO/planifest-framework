@@ -51,7 +51,7 @@ Last updated: 0000033-human-on-the-loop-run-mode (19 Oct 2026). Adds an `autonom
 | ADR-002 | planifest-overrides sibling directory | active | Project-level overrides live in `planifest-overrides/` (sibling to `planifest-framework/`), never inside the framework |
 | ADR-003 | Sentinel-file orchestrator enforcement | active | `plan/.orchestrator-active` sentinel gates all writes to `plan/current/` |
 | ADR-004 | Repo instructions via design.md | active | Per-repo instructions (e.g. local-git-only) are embedded in `design.md` Engineering Layer |
-| ADR-005 | Markdown migration files | active | Migrations are documented in `.md` files under `planifest-framework/migrations/`; applied migrations archived to `_done/` |
+| ADR-005 | Markdown migration files | active | Migrations are documented in `.md` files under `planifest-framework/migrations/`. Its archive-to-folder mechanism is superseded by 0000035 ADR-015: migration files never move, and each project records its runs in `plan/_migrations/` |
 | ADR-006 | Two-registry capability skills | active | Capability skills exist in two registries: `planifest-framework/skills-inbox/` (framework) and `planifest-overrides/capability-skills/` (project) |
 
 ### Feature 0000006: build-assessment-phase

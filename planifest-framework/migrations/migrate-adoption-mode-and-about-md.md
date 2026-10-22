@@ -22,7 +22,7 @@ A progress file at `planifest-framework/migrations/_progress/migrate-adoption-mo
 }
 ```
 
-If the progress file exists and `part_a_complete` is true, skip Part A and go to Part B. If `part_b_complete` is true, the migration is fully complete — archive it.
+If the progress file exists and `part_a_complete` is true, skip Part A and go to Part B. If `part_b_complete` is true, the migration is fully complete — record the outcome.
 
 ---
 
@@ -114,4 +114,4 @@ Report: `Part B complete — docs/about.md initialised at version {version}.`
 
 ## Completion
 
-When both parts are complete, the migrator archives this file to `planifest-framework/migrations/_done/` and deletes the progress file.
+When both parts are complete, the migrator records the outcome at `plan/_migrations/migrate-adoption-mode-and-about-md.md` and deletes the progress file. This file stays where it is.

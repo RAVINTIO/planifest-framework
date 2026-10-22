@@ -16,9 +16,9 @@ Any project whose `product.yml` still uses the old `{id, version}` shape will hi
 
 ## What This Migration Does
 
-1. Check whether `product.yml` exists at the project root. If absent, report "No product.yml at project root — nothing to migrate" and archive (Step 5).
-2. Read `versionPolicy`. If `explicit` or `external`, report "versionPolicy is `{policy}` — components[] is not read for version derivation, nothing to migrate" and archive.
-3. If `max-component-version`, parse `components[]`. If every entry already has a `path` key (no `version` key), report "Already migrated" and archive.
+1. Check whether `product.yml` exists at the project root. If absent, report "No product.yml at project root — nothing to migrate" and record the outcome (migrator Step 5).
+2. Read `versionPolicy`. If `explicit` or `external`, report "versionPolicy is `{policy}` — components[] is not read for version derivation, nothing to migrate" and record the outcome.
+3. If `max-component-version`, parse `components[]`. If every entry already has a `path` key (no `version` key), report "Already migrated" and record the outcome.
 4. For each `components[]` entry that has a `version` key instead of a `path` key:
    - Search the project (excluding `node_modules/`, `.git/`) for a `component.yml` whose top-level `id:` field matches this entry's `id`.
    - **Exactly one match:** propose that file's path (relative to project root) as the new `path` value.
@@ -55,4 +55,4 @@ After all entries are resolved, run `node planifest-framework/scripts/product-ve
 4. Report: `{n} entries migrated, {m} skipped, {k} unresolved`.
 5. Run the sanity check above and report its result.
 
-Move this file to `planifest-framework/migrations/_done/migrate-product-yml-component-paths.md` when complete or explicitly skipped by the human.
+When complete or explicitly skipped by the human, record the outcome at `plan/_migrations/migrate-product-yml-component-paths.md` through the migrator's Record step. This file stays where it is.

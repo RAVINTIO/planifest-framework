@@ -392,17 +392,29 @@ Pass the same flags you used during initial setup. Re-running is idempotent — 
 
 ### Check for pending migrations
 
-After pulling a new version of `planifest-framework/`, check for pending migrations before starting a new pipeline run:
+After pulling a new version of `planifest-framework/`, check for pending migrations before starting a new pipeline run.
+
+Each top-level `*.md` file in `planifest-framework/migrations/` is a migration. Migration files never move. Each project records its own runs at `plan/_migrations/{stem}.md`, where `{stem}` is the file name without `.md`. A migration is pending when it has no readable record there.
+
+List the migrations and the records side by side:
 
 ```bash
-ls planifest-framework/migrations/*.md 2>/dev/null | grep -v _done
+ls planifest-framework/migrations/*.md 2>/dev/null
+ls plan/_migrations/*.md 2>/dev/null
 ```
 
 ```powershell
-Get-ChildItem planifest-framework/migrations/*.md | Where-Object { $_.FullName -notmatch '_done' }
+Get-ChildItem planifest-framework/migrations/*.md
+Get-ChildItem plan/_migrations/*.md -ErrorAction SilentlyContinue
 ```
 
-If any `.md` files appear outside `_done/`, the orchestrator will detect them at session start and invoke `planifest-migrator` before any pipeline work. You do not need to run migrations manually — the orchestrator handles them.
+A record is readable when its YAML frontmatter parses and holds three fields:
+
+- `migration` equals `{stem}.md`
+- `outcome` is `applied`, `not applicable`, or `skipped`
+- `date` is `YYYY-MM-DD`
+
+The orchestrator detects pending migrations at session start and invokes `planifest-migrator` before any pipeline work. You don't need to run migrations by hand. The migrator writes each record, and P7 never archives `plan/_migrations/`.
 
 ---
 

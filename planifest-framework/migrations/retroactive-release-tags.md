@@ -71,11 +71,10 @@ Verify on the remote that all tags appear.
 
 ## Step 6 — Mark migration complete
 
+Record the outcome at `plan/_migrations/retroactive-release-tags.md` through the migrator's Record step. This file stays where it is. Then commit the record:
+
 ```bash
-mkdir -p planifest-framework/migrations/_done
-mv planifest-framework/migrations/retroactive-release-tags.md \
-   planifest-framework/migrations/_done/retroactive-release-tags.md
-git add planifest-framework/migrations/
+git add plan/_migrations/retroactive-release-tags.md
 git commit -m "chore(migrations): complete retroactive-release-tags"
 ```
 

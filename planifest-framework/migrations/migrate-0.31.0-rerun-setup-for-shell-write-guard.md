@@ -30,7 +30,7 @@ It refreshes the installed enforcement hooks and settings for each tool the proj
 3. For Claude Code, check that `.claude/settings.json` holds exactly one PreToolUse group with matcher `Bash` whose command runs `shell-write-guard.mjs`. Also check that `.claude/hooks/enforcement/shell-write-guard.mjs` and `path-rules.mjs` exist.
    - If setup reported that the settings file isn't valid JSON, it skipped the wiring. Fix the JSON, then re-run setup.
    - If setup warned that Node is missing, it skipped the wiring. Install Node, then re-run setup.
-4. Archive this migration to `planifest-framework/migrations/_done/`.
+4. Record the outcome at `plan/_migrations/migrate-0.31.0-rerun-setup-for-shell-write-guard.md`.
 
 ---
 
@@ -43,6 +43,6 @@ Report to the human on the loop:
 
 ---
 
-## Archive
+## Record
 
-Move this file to `planifest-framework/migrations/_done/` once the human on the loop confirms the findings.
+Once the human on the loop confirms the findings, the migrator records the outcome at `plan/_migrations/migrate-0.31.0-rerun-setup-for-shell-write-guard.md`. This file stays where it is.
