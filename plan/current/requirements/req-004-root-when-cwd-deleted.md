@@ -26,7 +26,8 @@ As the human on the loop, I rely on the gates to find the repository root when t
 - The walk decides whether a folder exists with `statSync`, not `existsSync`. Only `ENOENT` and `ENOTDIR` count as missing, so the walk steps up past them.
 - Any other `statSync` error, such as `EACCES`, stops the walk at that path. The caller then calls `realpathSync` on that path.
 - The same walk serves `resolveRoot` and the relative-target rule below.
-- If `realpathSync` fails on the nearest existing folder, for example with `EACCES`, the hook treats it as a resolution error.
+- The walk can stop at a path that exists but can't be read, such as a folder with mode `000`. That path is then the resolution point, even though the walk never proved it a folder.
+- If `realpathSync` fails on the path where the walk stopped, for example with `EACCES`, the hook treats it as a resolution error.
 - That resolution error blocks the write with exit 2 when the target lies inside the root that `CLAUDE_PROJECT_DIR` gives. The reason names the error code and goes to stderr.
 - If `CLAUDE_PROJECT_DIR` is unset or gives no root, or the target lies outside that root, the hook fails open with exit 0 as before (0000003 ADR 005). This follows the fail-closed line in design.md.
 - The changed lookup is artifact `path-rules-resolveRoot-deleted-cwd`.

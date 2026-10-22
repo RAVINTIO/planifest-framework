@@ -56,6 +56,8 @@ version: "0.1.0"
   - The enforcement list also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json` and `opencode.jsonc`. It also holds the per-tool setup scripts folder `planifest-framework/setup/`. The `fast-path.md` list changes in step (req-001).
   - The stderr notice reaches the agent and the session transcript, not the main view of the human on the loop. The Fast Path changelog entry lists every path from the scope record, so the human on the loop sees each admitted path there.
   - `set-product-release.mjs` falls under a narrow Hard Limit 8 carve-out, which the P2 ADR records. It is a fixed framework script with its own suite, as `archive-current.mjs` is (0000033 ADR 010). The agent passes it arguments, never content. It writes only the named fields of `product.yml` and refuses any other path (req-002).
+  - The carve-out is a standing framework rule. P3 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `standard-boot.md` and `cursor-boot.md`. It names the seven framework scripts that skill text runs to write files (req-002).
+  - The req-002 Input Validation section treats every script argument as untrusted. It binds `--root` to the folder that `resolveRoot` returns, and gives each argument a pattern and a length cap.
 
 ## Out of Scope
 

@@ -32,6 +32,8 @@ As the human on the loop, I see every migration stay in `planifest-framework/mig
   1. For each of the six files, P3 reads the old file and writes its exact content at the new path with the **Write** tool.
   2. P3 checks that each new file is byte-identical to the old one, with `cmp` or `git diff --no-index`.
   3. P3 removes each old file, and `_done/.gitkeep`, with `git rm`.
+- If the byte check in step 2 fails for a file, P3 does not run `git rm` on that old file. P3 rewrites the new copy once with **Write** and runs the check again.
+- If the second check also fails, P3 logs an `Exception waiting (P3, human review)` line that names the file. P3 leaves both files in place and removes neither.
 - P3 never uses `mv` or `rm` for these files.
 - The helper scripts `migrate-archive-dirname.sh` and `migrate-archive-dirname.ps1` stay where they are. They now sit beside `0003-archive-dirname.md`.
 - A migration is any top-level `*.md` file in `planifest-framework/migrations/`. Helper scripts and subfolders, such as `_progress/` or a leftover `_done/`, are not migrations.

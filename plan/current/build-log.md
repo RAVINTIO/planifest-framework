@@ -117,3 +117,7 @@ Streams formed (dependency test: stories that change the same file share a strea
 - Decision (P1): the Fast Path enforcement list adds hook wiring files from setup, `hooks/adapters/`, and `.git/`, and `fast-path.md` changes in step / reason: a scope record must never unwire enforcement.
 - Decision (P1): the scope record is self-authorisation accepted at P0, and each admitted write prints a stderr notice / reason: the critic asked for a real control or an accepted-risk entry, and the run takes both.
 - Decision (P1): `set-product-release.mjs` also creates `product.yml` with `--create` and owns `components[]` through `--component` / reason: every `product.yml` write then goes through one Node path.
+- P1 gate loop iterations 2 and 3: REJECT each time. Approach 1 hit the cap of 3. Approach 2 makes the script carve-out a standing rule: the boot templates name the sanctioned scripts, and req-002 validates every script argument.
+- Decision (P1): sanctioned scripts for Hard Limit 8 are `archive-current.mjs`, `set-product-release.mjs`, `promote-to-regression.sh`, `refresh-delete-boot-files.sh` and `.ps1`, and `setup.sh` and `setup.ps1` / reason: these are the scripts skill text runs to write files.
+- Human touchpoint (P1): req-002 holds six acceptance criteria after an approach 2 fix, and folding three back needs a human `.ratchet-approve` line [outside list]
+- Backlog filed (P1): 0000129 (the ratchet blocks undoing an uncommitted acceptance-criteria addition).

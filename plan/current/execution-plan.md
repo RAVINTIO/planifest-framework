@@ -78,6 +78,7 @@ flowchart LR
 
 - `stream-01-gate-rules`: one agent builds all five requirements in sequence, because each changes `path-rules.mjs`. The order is req-006, req-004, req-003, req-005, then req-001.
 - `stream-02-release-manifest` and `stream-03-migration-state` run in parallel with stream 01.
+- Stream 02 owns the Hard Limit 8 sentence in `standard-boot.md` and `cursor-boot.md`. No other stream edits those templates.
 - Shared files: stream 01 and stream 03 may both edit `planifest-framework/skills/planifest-orchestrator/SKILL.md` and `planifest-framework/pipeline-reference.md`. The orchestrator orders those edits at P3. Stream 03 edits only its named sections.
 - `planifest-framework/component.yml` moves to `0.33.0` before P7. The orchestrator makes that edit, not a stream.
 
@@ -90,6 +91,8 @@ flowchart LR
 - Hop limit is 40. A link loop, a chain past 40 hops, or a resolution error inside the root blocks with exit 2. The scope record is removed before the Fast Path commit and never enters a commit.
 - `set-product-release.mjs` writes `product.yml` through Node and creates it from the template when needed. P2 records the script as an ADR, as 0000033 ADR 010 did for `archive-current.mjs`.
 - The script falls under a narrow Hard Limit 8 carve-out. It has fixed behaviour and its own suite, and the agent passes it arguments, never content. No write gate judges its write, which is acceptable because the script writes only the named `product.yml` fields and refuses any other path. The P2 ADR records the carve-out and its limits (req-002).
+- The carve-out is a standing framework rule. Stream 02 adds a `Sanctioned scripts:` sentence to Hard Limit 8 in `planifest-framework/templates/standard-boot.md` and `cursor-boot.md`. The sentence names the seven scripts that skill text runs to write files (req-002).
+- The req-002 Input Validation section treats every script argument as untrusted. `--root` must match the folder that `resolveRoot` returns. A rule break writes nothing and exits 2 (R-020).
 - `FAST_PATH_ENFORCEMENT_PATHS` also holds the tool-local settings files that a tool loads hooks from, such as `.claude/settings.local.json`, and `planifest-framework/setup/`. The `fast-path.md` list changes in step.
 - The stderr notice reaches the agent and the session transcript, not the main view of the human on the loop. The Fast Path step 5 changelog entry lists every record path, so the human on the loop sees each admitted path there.
 - A missing cwd now blocks a write into `src/`. This supersedes the 0000032 suite assertion at `test-0000032-req-006-outside-repository-pass.sh` lines 364 to 366.

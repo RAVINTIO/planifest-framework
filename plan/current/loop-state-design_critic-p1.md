@@ -47,8 +47,8 @@ status: "active"
 ### Iteration 1 of approach 2 (2026-10-22T01:15:00Z)
 - **Approach:** 2. Approach 1 treated each finding as a local fix to the requirement text. Approach 2 treats the script carve-out as a standing framework rule. The Hard Limit 8 text in the boot templates names the sanctioned scripts, and req-002 specifies every script input as untrusted, with patterns, limits, and suite cases.
 - **Action:** one fix agent applies approach 2 and the three minors. A fresh critic then reviews.
-- **Observation:** pending.
-- **Decision:** pending.
+- **Observation:** every change applied. The agent also added three `- [ ]` lines to req-002, which now has six acceptance criteria, so `consistency-check.mjs` exits 1. The dispatch prompt left out the three-criteria limit. The ratchet blocks folding the lines back without a human `.ratchet-approve` line.
+- **Decision:** waiting for the human on the loop: the approval line is a human-only control.
 
 ---
 
