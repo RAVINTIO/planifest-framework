@@ -106,3 +106,13 @@ Streams (start commit `c8b1036`):
 - Decision (P1): post-P6 revalidation uses cap 3 with up to 3 approaches in `autonomous`, and keeps 5 cycles elsewhere / reason: the autonomous standard says loops other than P4 keep 3.
 - Decision (P1): "Verified by" values are unit, integration, contract, e2e, execution, and manual with a reason. A criterion without the field stays valid and reports `unspecified` / reason: the testing-standards types plus P4 verify by execution, and no file gets rewritten.
 - Decision (P1): the P3 requirement-ID scan is an agent check, not a script / reason: P4 runs the same scan by agent today.
+- Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
+- Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
+- Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
+- Decision (P1): the 5.1 leg is a new job `setup-powershell-51`, not a matrix on `setup-powershell` / reason: `test-0000031-req-001-003-ci-jobs.sh` asserts the existing job uses `shell: pwsh` at major 7 or above.
+- Decision (P1): the Git Bash leg adds `windows-latest` to the `test-suite` matrix / reason: keeps the 0000031 `os:` assertion for ubuntu and macos.
+- Decision (P1): a skipped suite prints `SKIP (windows): {reason}` and gets a row in a skip table in `planifest-framework/tests/README.md` / reason: keeps the record out of `run-tests.sh`, which stream 03 may edit.
+- Decision (P1): P3 fixes a Git Bash failure when one portable change resolves it without weakening an assertion, and skips it otherwise. If more than 10 suites fail, P3 fixes them in parallel by file ownership and files one backlog entry per skipped suite family / reason: the leg must end green before P4.
+- Decision (P1): the live PowerShell test uses the retired flag `--context-mode-mcp`, with fixtures from `test-0000030-req-004` / reason: reuses known stale-state fixtures.
+- Decision (P1): stream 04 criteria carry a `Verified by:` suffix / reason: req-006 adds the field, and the template has none yet.
+- Shared files for P3: `.github/workflows/planifest.yml` and `docs/architecture-overview.md` (req-010, req-011), and suite files under `planifest-framework/tests/` (req-009, req-010). The orchestrator orders those edits at P3.
