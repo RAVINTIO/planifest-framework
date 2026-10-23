@@ -32,9 +32,9 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator |
-| Agents spawned | `0` |
+| Agents spawned | `4` (planifest-scope-lock-agent, cheaper tier) |
 | MCP calls | `0` |
-| Parallel task batches | `0` |
+| Parallel task batches | `1` |
 | P0 questions asked | `pending` |
 | Brief complete | `pending` |
 | Stack unchanged | `pending` |
