@@ -106,7 +106,7 @@ Streams (start commit `8375ca7`):
 - Shared files for P3: `skills/planifest-orchestrator/SKILL.md` (req-002, req-004, req-005, req-006) and `skills/planifest-loop-runner/SKILL.md` (req-006, req-007). The orchestrator orders those edits at P3.
 - Shared artifacts committed: `dee47b6` (scope, risk register, glossary). No backlog entry filed, so 0000170 stays unused.
 - Stream 02 returned req-001 and req-002, three criteria each.
-- Deviation (P1, unclassified): the design assumed setup copies `SKILL.md` byte for byte. Setup rewrites four relative paths, and PowerShell 5 adds a byte order mark. req-002 makes the drift check apply both before it compares. `design.md` now says so.
+- Deviation (P1, additive): the design assumed setup copies `SKILL.md` byte for byte. Setup rewrites four relative paths, and PowerShell 5 adds a byte order mark. req-002 makes the drift check apply both before it compares. `design.md` now says so.
 - Decision (P1): the 0.34.0 migration targets every installed project, the framework source included / reason: the migrator's target check would otherwise record `not applicable` here, against the design's `applied`.
 - Decision (P1): P3 updates `test-0000035-req-007` and `test-0000035-req-010`, which hard-code eight migrations / reason: the new migration makes nine.
 - Stream 03 returned req-003 to req-007, with two or three criteria each and no split candidates.
@@ -114,12 +114,12 @@ Streams (start commit `8375ca7`):
 - Decision (P1): req-006 changes only the absent-key and absent-file default. An invalid `design_critic` value still reads as `off` / reason: the narrowest change that meets the confirmed design.
 - Decision (P1): cross-feature ADR citations use a space, as in `0000033 ADR 004` / reason: `consistency-check.mjs` reads `ADR-NNN` as a local ADR, which backlog 0000079 already covers.
 - Stream 01 returned req-008 to req-011, three criteria each. It filed backlog 0000161 (FIFO reads in `check-design.mjs` and `ratchet-check.mjs`).
-- Deviation (P1, unclassified): the P0 Scope Lock answer made a throwing `lstat` fail open. Stream 01 found that this turns today's block into a pass, because `existsSync` returns false on `EACCES`. req-008 and `design.md` now read a throwing `lstat` as no design.
+- Deviation (P1, additive): the P0 Scope Lock answer made a throwing `lstat` fail open. Stream 01 found that this turns today's block into a pass, because `existsSync` returns false on `EACCES`. req-008 and `design.md` now read a throwing `lstat` as no design.
 - Decision (P1): a symbolic link at `design.md` counts as non-regular / reason: the design says anything other than a regular file, and a link can point at a FIFO.
 - Decision (P1): req-010 replaces the brief's four named suites with a rule for every suite that names an enforcement hook / reason: the count of four didn't reproduce, and seven files break the rule today.
 - Decision (P1): `shown()` cuts at whole units at a 200-character cap for both new outputs / reason: matches the 0000035 Fast Path notice cap and never splits a surrogate pair.
 - Design critic P1 iteration 1: REJECT (1 critical, 2 major, 8 minor). Mechanical check clean.
-- Deviation (P1, unclassified): the source orchestrator `SKILL.md` holds a byte order mark, so the drift check strips one from both copies, not only the installed copy. `design.md` now says so.
+- Deviation (P1, additive): the source orchestrator `SKILL.md` holds a byte order mark, so the drift check strips one from both copies, not only the installed copy. `design.md` now says so.
 - Backlog filed (P1): 0000170 (orchestrator skill byte order mark breaks the setup frontmatter parse).
 - Design critic P1 iteration 2: REJECT (0 critical, 1 major, 9 minor). Ten iteration 1 findings resolved, two partly.
 - Decision (P1): a split under an active loop only adds files and lines, and any move of an existing criterion waits until no loop is active or a human writes the approve line / reason: `ratchet-check.mjs` blocks a moved criterion, and agents never write `.ratchet-approve`.
@@ -195,7 +195,7 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - W1 req-008, req-009, req-011 (`1f64fde`). The shell-guard regression suites pass again. The orchestrator fixed a `printf` pipe into `grep -q` in W4's suite (`75b49c9`).
 - W7 req-006, req-003, and the orchestrator text of req-002 and req-004 (`080593c`).
 - W8 req-005 (`5d9ce6a`). Full suite: 97 feature and 33 regression suites passed, 0 failed.
-- Deviation (P3, unclassified): the dispatch-template sentence that req-005 fixes word for word cites "(the Write-or-Edit rule, boot Hard Limit 8)", a bracketed form beside ADR-010's main form. The req-005 suite accepts both.
+- Deviation (P3, additive): the dispatch-template sentence that req-005 fixes word for word cites "(the Write-or-Edit rule, boot Hard Limit 8)", a bracketed form beside ADR-010's main form. The req-005 suite accepts both.
 - Decision (P3): `planifest-framework/component.yml` moves to `0.34.0` and names this feature / reason: the codegen skill's framework close-out rule.
 - Gate (P3): every requirement reached GREEN in its own suite. In `autonomous`, the P4 CI run checks the P3 output.
 - Progress: P3 done at 2026-10-22T22:54:32Z: eleven requirements built in three batches, full suite green
@@ -249,9 +249,9 @@ Dispatch plan by file ownership (start commit `e248df9`):
 - Fix round 2 committed (`3029a22`). Full suite green.
 - Fresh-context re-review round 2: Low. N-1 and N-4 fixed, N-2 and N-3 partly. New Low findings M-1 (an unwritable settings file still counts as a complete setup run) and M-2 (step 1b's first allowed state reads two ways). M-3 informational.
 - Backlog filed (P5): 0000181 (step 1a checks version strings only, pre-existing) and 0000182 (M-1, M-2, and M-3).
-- Deviation (P5, unclassified): the build-log template quotes the run-mode anchor inline in backticks, where req-004 AC 2 asked for a fenced code block. A note under AC 2 records the change (security finding S-1).
-- Deviation (P5, unclassified): the write gate fails open only on `EACCES` and `EPERM` from the open or `fstat` of a regular `design.md`. The confirmed design said any failed open or read of a regular file fails open. Every other error now reads as no design (security findings hooks 1 and N-1).
-- Deviation (P5, unclassified): a regular `design.md` over 1 MiB reads as no design. The confirmed design set no size limit (security finding hooks 2).
+- Deviation (P5, additive): the build-log template quotes the run-mode anchor inline in backticks, where req-004 AC 2 asked for a fenced code block. A note under AC 2 records the change (security finding S-1).
+- Deviation (P5, additive): the write gate fails open only on `EACCES` and `EPERM` from the open or `fstat` of a regular `design.md`. The confirmed design said any failed open or read of a regular file fails open. Every other error now reads as no design (security findings hooks 1 and N-1).
+- Deviation (P5, altering): a regular `design.md` over 1 MiB reads as no design. The confirmed design set no size limit (security finding hooks 2).
 - Decision (P5): stop the fix loop and defer M-1 to M-3 to backlog 0000182 / reason: each round found smaller Low edge cases, and the gate passes at Low with no Critical, High, or Medium finding.
 - Gate (P5): report produced with specific findings. Overall risk Low after two fix rounds, each confirmed by a fresh-context re-review.
 - Progress: P5 done at 2026-10-22T23:51:49Z: High risk fixed to Low in two rounds, five backlog entries filed
@@ -274,3 +274,9 @@ Dispatch plan by file ownership (start commit `e248df9`):
 P6 Gate B: docs update assessment (continuous run, auto-accepted).
 This run adds a drift-check script, a 0.34.0 migration, twelve ADRs, and changes to the write gate, run-mode script, and several skills.
 Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, `docs/dependency-graph.md`, and the `src/setup-hook-integration/docs/` files only where this run changed their subject.
+
+- Living docs committed: `e7ba015` (registry, dependency graph, `about.md`) and `82d81fb` (decisions index, architecture overview). `src/setup-hook-integration/docs/` needed no change. No component-boundary or dependency drift. The glossary's `path-rules.mjs` importer list was wrong, and the orchestrator corrected it.
+- Recommendations and changelog committed (`894aa16`). Backlog filed (P6): 0000185 to 0000189.
+- Post-P6 revalidation: P4 check set rerun. Full suite 97 feature and 33 regression suites passed, `consistency-check.mjs` clean.
+- Deviation review (P6): `plan/current/deviation-review.md`. Six deviations additive, one altering (the 1 MiB `design.md` cap). No data, schema, or destructive item.
+- Exception waiting (P6, gross deviation): accept the 1 MiB `design.md` size cap and the closure of backlog 0000178 in this feature (`ae3f552`), or ask for that change to be split into its own feature.
