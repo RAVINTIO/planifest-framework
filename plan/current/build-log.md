@@ -116,3 +116,5 @@ Streams (start commit `c8b1036`):
 - Decision (P1): the live PowerShell test uses the retired flag `--context-mode-mcp`, with fixtures from `test-0000030-req-004` / reason: reuses known stale-state fixtures.
 - Decision (P1): stream 04 criteria carry a `Verified by:` suffix / reason: req-006 adds the field, and the template has none yet.
 - Shared files for P3: `.github/workflows/planifest.yml` and `docs/architecture-overview.md` (req-010, req-011), and suite files under `planifest-framework/tests/` (req-009, req-010). The orchestrator orders those edits at P3.
+- Shared artifacts returned: scope (11 in-scope items), risk register (22 risks, 6 assumptions), and glossary (31 terms), committed in `7d35789`. No backlog entry filed, so 0000205 stays unused.
+- Deviation (P1, unclassified): the design's `gh` assumption said a run carries on when `gh` can't run, against the red-check handling confirmed at P0. `design.md` now says the run doesn't read as done, matching the confirmed handling.
