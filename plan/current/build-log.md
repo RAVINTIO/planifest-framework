@@ -261,14 +261,14 @@ Dispatch plan by file ownership (start commit `e248df9`):
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-22T23:51:49Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-23T00:12:47Z` |
+| Wall-clock | `21` |
 | Streams | `n/a` (joined set) |
-| Model tier | cheaper (docs agents) |
-| Skills loaded | planifest-docs-agent |
-| Agents spawned | `pending` |
+| Model tier | cheaper (docs agents, cross-model reviewer), primary (deviation review) |
+| Skills loaded | planifest-docs-agent, planifest-reversal-assessor |
+| Agents spawned | `5` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Gate A: `docs/` exists. |
 
 P6 Gate B: docs update assessment (continuous run, auto-accepted).
@@ -282,3 +282,7 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 - Exception waiting (P6, gross deviation): accept the 1 MiB `design.md` size cap and the closure of backlog 0000178 in this feature (`ae3f552`), or ask for that change to be split into its own feature.
 - Cross-model review (P6): reviewer `claude-sonnet-5-5`, implementer `claude-opus-5-5`. APPROVE, 0 critical, 2 major, 6 minor. 13 of 14 mutations failed their suite. M-1 is the scheduled setup run. M-2 is the exception above.
 - Decision (P6): defer the six minor cross-model findings / reason: none changes behaviour. m-1 (an untested `lstat` pre-check) and m-3 (the citation suite checks shape only) are test gaps, m-4 is backlog 0000189, and m-6 matches an existing exposure in `gate-write.mjs`. m-2 is part of the additive S-1 deviation. m-5 (unticked criteria boxes) matches earlier features.
+- End-of-P6 setup run: the diff check found every setup-delivered file listed. `setup.sh claude-code --strict-orchestrator` exited 0 with no warning line. The drift check reports all 21 skills matching, and every installed hook matches its source. The `applied` record and the setup-config change are committed (`e36ba3d`). The req-001 suite now runs its record check with no SKIP.
+- Streams 01 to 03 set to `done`.
+- Gate (P6): zero drift, every expected artifact present, cross-model review approved.
+- Progress: P6 done at 2026-10-23T00:12:47Z: living docs updated, deviation and cross-model reviews passed, setup re-run here

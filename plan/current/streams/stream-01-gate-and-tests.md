@@ -2,7 +2,7 @@
 stream-id: "stream-01-gate-and-tests"
 kind: stream
 start-commit: "8375ca7"
-status: active
+status: done
 phase: P4
 requirements: [req-008, req-009, req-010, req-011]
 stories: [US-008, US-009, US-010, US-011]
@@ -18,7 +18,7 @@ updated: "2026-10-22T22:01:42Z"
 | P1 | 2026-10-22T21:33:56Z | 2026-10-22T22:01:42Z | 1 | at-join |
 | P2 | 2026-10-22T22:01:42Z | 2026-10-22T22:22:12Z | 2 | at-join |
 | P3 | 2026-10-22T22:23:00Z | 2026-10-22T22:54:32Z | 2 | at-join |
-| P4 | 2026-10-22T22:54:32Z | pending | 1 | pending |
+| P4 | 2026-10-22T22:54:32Z | 2026-10-22T23:06:03Z | 1 | done |
 
 ## Files changed
 
