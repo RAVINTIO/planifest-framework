@@ -106,6 +106,17 @@ Streams (start commit `c8b1036`):
 - Decision (P1): post-P6 revalidation uses cap 3 with up to 3 approaches in `autonomous`, and keeps 5 cycles elsewhere / reason: the autonomous standard says loops other than P4 keep 3.
 - Decision (P1): "Verified by" values are unit, integration, contract, e2e, execution, and manual with a reason. A criterion without the field stays valid and reports `unspecified` / reason: the testing-standards types plus P4 verify by execution, and no file gets rewritten.
 - Decision (P1): the P3 requirement-ID scan is an agent check, not a script / reason: P4 runs the same scan by agent today.
+- Stream 01 returned req-001 to req-004, three criteria each. The split step didn't trigger.
+- Decision (P1): the credential scan is a new `planifest-framework/scripts/credential-scan.mjs`, with exit 0 clean, 1 match, and 2 could not run (read as a match) / reason: Node avoids GNU and BSD `grep` differences and runs on Windows.
+- Decision (P1): skill text enforces the credential stop, through a new standing rule in `autonomous-run-standards.md`, and the script only sets an exit code / reason: the design lists no new hook.
+- Decision (P1): the scan reads staged content with `git show :path`, and the P8 and Step 10b guards call the same script / reason: one pattern list, and the scan checks what gets committed.
+- Decision (P1): a held-back file stays staged, the clean-tree checks list it, and a resumed run rescans before any commit / reason: matches the accepted cross-session Scope Lock answer.
+- Decision (P1): P9 polls `gh pr checks {n} --json name,bucket,link` every 30 seconds for up to 20 minutes, in a new Step 10c / reason: macOS has no `timeout` command and a Bash call caps at 10 minutes.
+- Decision (P1): buckets `cancel`, timed-out, an empty list, and any unknown value read as unknown. Any result other than all passed writes `Progress: P9 blocked` / reason: the confirmed red-check handling.
+- Decision (P1): the fix-and-push loop runs in `autonomous` only. In `interactive` and `continuous`, a red check goes to the human on the loop in the Step 11 message / reason: those modes already stop at the P9 gate.
+- Decision (P1): the PR title and body go to files outside the repository, `credential-scan.mjs --file` scans them, and `gh pr create` reads `--body-file` / reason: the scan needs the exact text that gets sent.
+- Decision (P1): GUTD adds a read-only step 5 that doesn't wait / reason: GUTD is a quick sync check.
+- Backlog filed (P1): 0000193 (the Step 11 push of `final-report.md` starts a CI run on a head that Step 10c never read). 0000194 and 0000195 stay unused.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
