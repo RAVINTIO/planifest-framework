@@ -113,7 +113,7 @@ Generate the test report artifact before archiving.
 
 ### Step 5b: Set product.yml release fields
 
-Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `product.yml`. Write it only through `set-product-release.mjs`, never through **Write** or **Edit**. Hard Limit 8 names the script as a sanctioned script (0000035 ADR-011).
+Run this step before Step 6 archives `design.md` (0000035 ADR-010). You own `product.yml`. Write it only through `set-product-release.mjs`, never through **Write** or **Edit**. The Write-or-Edit rule (boot Hard Limit 8) names the script as a sanctioned script (0000035 ADR-011).
 
 1. Take `{version}` from the version the human on the loop confirmed in `plan/current/design.md` at P0. Run:
    ```bash
@@ -154,7 +154,7 @@ Commit the archive, changelog, `docs/about.md`, and `product.yml` to the branch 
 ```
 git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 if [ -f product.yml ]; then git add product.yml; fi
-git commit -m "plan(p7): archive {feature-id}"
+git commit -m "plan(p7): archive plan/current" -m "{feature-id}"
 ```
 
 ## P8: Build Assessment
@@ -198,7 +198,7 @@ The `--untracked-files=all` flag lists each untracked file, not just its directo
   ```
   A non-zero exit refuses that file.
 
-Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
+Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
 - **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
@@ -241,7 +241,7 @@ git cat-file -e ":{archive-dir}/build-report.md"
 ```bash
 rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
-git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers for {feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
+git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers" -m "{feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
 git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 ```
 
@@ -361,7 +361,7 @@ In `autonomous`, write the final report in place of the message below. `planifes
 
 ```bash
 git add -- "{archive-dir}/final-report.md"
-git commit -m "plan(p9): add final report for {feature-id}" -- "{archive-dir}/final-report.md"
+git commit -m "plan(p9): add final report" -m "{feature-id}" -- "{archive-dir}/final-report.md"
 ```
 
 Push that commit under the after-PR push rule. The report then survives the Step 12 context clear. The chat message points to the file. Step 12 still runs after the report. In `interactive` and `continuous`, send this message:
@@ -382,7 +382,7 @@ plan/current/ is empty and ready for the next feature.
 
 Outside `autonomous`, list each P8 and P9 leftover below the clean-tree line, with the step or sub-agent that wrote it, where known. Then ask whether to commit and push them. The P9 gate already stops here, so this adds no new stop. The human on the loop may decline. Never leave a leftover unreported.
 
-If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline (Hard Limit 6).
+If the confirmation lists next steps, each one names its track: Fast Path, Change Pipeline, or Feature Pipeline. This follows the handover-track rule (ship agent Hard Limit 6).
 
 ### Step 12: Blocking context clear
 

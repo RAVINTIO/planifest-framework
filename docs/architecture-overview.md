@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000035-write-gate-scope-and-path-hardening (22 Oct 2026)
+Last updated: 0000036-pipeline-friction-and-gate-fixes (23 Oct 2026)
 
 ---
 
@@ -53,6 +53,7 @@ flowchart TD
         SRC["stream-reconcile.mjs\n(join reconciliation)"]
         RMD["run-mode.mjs\n(effective run mode)"]
         SPR["set-product-release.mjs\n(P7 product.yml update, 0000035)"]
+        SDC["skill-drift-check.mjs\n(warn-only drift check, 0000036)"]
     end
 
     subgraph Setup["Setup (planifest-framework/)"]
@@ -119,7 +120,7 @@ flowchart TD
 
 ## Governance Loops (0000016)
 
-The pipeline has an optional loop layer, entirely toggle-gated via `planifest-overrides/loop-toggles.yml` (absent = all off; zero-config behaviour identical to pre-0000016):
+The pipeline has an optional loop layer, entirely toggle-gated via `planifest-overrides/loop-toggles.yml`. An absent file or key turns a loop off, with one exception. Outside `autonomous`, an absent `design_critic` key or an absent file reads as `report-only` (0000036 ADR-009):
 
 | Loop | Seam | Verifier | Deterministic guard |
 |------|------|----------|--------------------|
@@ -296,9 +297,9 @@ The record is self-authorisation, so the gates add two controls:
 
 The ship agent sets `product.yml` `version` and `feature` in P7, after Step 5 and before Step 6 archives `design.md` (0000035-ADR-010). It runs `scripts/set-product-release.mjs`, which applies each `versionPolicy`. The script exits 0, 2, 4, or 5. It writes only `{root}/product.yml`, through a temp file and a rename. It imports `resolveRoot` from `path-rules.mjs` and clears `CLAUDE_PROJECT_DIR` for that call.
 
-### Hard Limit 8 sanctioned scripts
+### Sanctioned scripts: the Write-or-Edit rule (boot Hard Limit 8)
 
-Hard Limit 8 now names the fixed framework scripts that skill steps run to write files (0000035-ADR-011). Both `standard-boot.md` and `cursor-boot.md` carry one `Sanctioned scripts:` sentence. It names seven scripts:
+The Write-or-Edit rule (boot Hard Limit 8) now names the fixed framework scripts that skill steps run to write files (0000035-ADR-011). Both `standard-boot.md` and `cursor-boot.md` carry one `Sanctioned scripts:` sentence. It names seven scripts:
 
 - `archive-current.mjs`
 - `set-product-release.mjs`
@@ -317,6 +318,65 @@ A migration is pending when its record is missing or can't be read (0000035-ADR-
 ### Acceptance-criteria limit
 
 `consistency-check.mjs` allows up to 10 acceptance criteria per requirement (0000035-ADR-012). From 4 to 10 it prints a warning and exits 0.
+
+---
+
+## Pipeline friction and gate fixes (0000036)
+
+This release adds no language, runtime, or library (0000036-ADR-001). The new gate rules sit in `path-rules.mjs` on `node:fs` and `node:path`. The changed hooks start no new process. `ratchet-check.mjs` keeps its one `git` spawn.
+
+### Skill drift check
+
+`scripts/skill-drift-check.mjs` compares each source `SKILL.md` with the active tool's installed copy (0000036-ADR-005). It applies setup's four path rewrites to the source text and strips one leading byte order mark from each side. It reads the setup marker to find the active tool. If no marker is valid, it checks every installed skills folder it finds.
+
+The script uses Node built-ins, starts no process, and never writes. It never follows a link. It exits 0 when every copy matches, 1 when a copy is stale or missing or nothing is installed, and 2 when it can't compare.
+
+The orchestrator runs it in Resume Detection step 1b, after the framework update check in step 1a. On exit 1, the orchestrator names each stale or missing skill to the human on the loop and recommends `planifest-refresh-setup`. It never runs setup itself. It loads source copies of the stale skills only after step 1a found no update or the human on the loop confirmed the update.
+
+### Setup-delivered files and the 0.34.0 migration
+
+A setup-delivered file is one that `setup.sh` or `setup.ps1` copies into a tool folder or writes into a boot file or settings file (0000036-ADR-006). The definition follows what setup copies, including its copy-all fallback for templates and standards. Git hooks are not setup-delivered, because git runs them in place. `standards/framework-update-policy.md` states that a release that changes one ships a re-run-setup migration.
+
+`migrate-0.34.0-rerun-setup.md` covers 0.33.0 and 0.34.0, because 0.33.0 shipped none. Its `**Target:**` line names every project with an installed setup, the framework source included (0000036-ADR-007). This departs from the 0.31.0 migration, which names downstream projects only. At the end of P6, the agent repeats the diff check and re-runs setup here. Only then does it write the `applied` record in `plan/_migrations/`.
+
+### Write gate: design.md read rules
+
+`evaluateWrite` calls `lstatSync` on `plan/current/design.md` before it opens or reads the file (0000036-ADR-002). This narrows the exit-zero failure mode (0000003-ADR-005) for this one step.
+
+| Outcome | Gate reading |
+|---------|--------------|
+| `ENOENT` or `ENOTDIR` | No design. `scopeVerdict` judges the write. |
+| Regular file | The gate opens, checks, and reads it. |
+| Any other type, including a folder, FIFO, or link | No design, and each block adds a "not a regular file" line. |
+| Any other `lstatSync` error | No design, with no extra line. |
+
+For a regular file, the gate opens it once with `O_RDONLY`, `O_NONBLOCK`, and `O_NOFOLLOW` where the platform defines them. It then calls `fstatSync` on the descriptor. A file swapped after `lstatSync` reads as non-regular. A regular file over 1 MiB reads as no design, and the gate reads no more than the size `fstatSync` reported.
+
+Only `EACCES` and `EPERM` from the open or `fstatSync` fail open. Every other error blocks, so a code the gate doesn't know can't pass a write. The kept `chmod 000` bypass stays under the exit-zero rule and has a backlog entry.
+
+### Always-permitted names inside enforcement paths
+
+The always-permitted file-name shortcut applies only when `isEnforcementPath(relPath)` is false (0000036-ADR-003). A permitted name inside an enforcement path, such as a `CLAUDE.md` below a hook folder, goes on to the `design.md` step. The gate keeps one path list. The `plan/` and `docs/` prefix shortcut and the sentinel step are unchanged.
+
+### Escaped hook output
+
+`shown(p, max)` in `path-rules.mjs` builds its output from whole units, where a unit is one escape sequence or one unescaped code point (0000036-ADR-004). The cut never ends inside an escape or a surrogate pair. `shell-write-guard.mjs`, `ratchet-check.mjs`, and `em-dash-guard.mjs` import it. `gate-write.mjs` reaches it through `judgeWrite`. `ratchet-check.mjs` and `em-dash-guard.mjs` quote their targets at a cap of 200. `skill-drift-check.mjs` also imports it.
+
+### Run-mode anchor
+
+`run-mode.mjs` accepts the anchor as a whole line, either bare or as one `- ` list item (0000036-ADR-008). The timestamp must be a real UTC time. Leading spaces, other list markers, and trailing text all count as no anchor. The working-tree check counts both forms together and needs exactly one line. The one-commit rule, the removal rule, and the read cap are unchanged.
+
+### Design critic default
+
+Outside `autonomous`, an absent `design_critic` key or an absent `loop-toggles.yml` reads as `report-only` (0000036-ADR-009). The orchestrator spawns the critic at the P1 and P2 gates and shows the verdict with the gate summary. The verdict blocks nothing. The Governance Loops table above records this default.
+
+### Split step
+
+Before an agent adds a fourth acceptance criterion to a requirement, it asks whether the requirement holds two concerns (0000036-ADR-011). The spec agent, the design critic rubric, and the loop runner fix dispatch all carry the step. A split adds a new requirement file and moves no existing criterion line. A deferred move waits until no loop is active.
+
+### Hard-limit citations and commit subjects
+
+Every hard-limit citation reads `the {name} rule ({source} Hard Limit {N})` (0000036-ADR-010). A suite fails on a bare citation. Commit subject templates hold no placeholders, and the feature ID moves to a second `-m` message (0000036-ADR-012).
 
 ---
 
@@ -356,7 +416,7 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-002 (0000003):** Common envelope shape: all adapters normalise to `{ session_id, cwd, tool_input, event }` before delegating
 - **ADR-005 (0000003):** Exit-zero failure mode: hooks never block on unexpected errors (NFR-003)
 - **ADR-003 (0000011):** Hook adapter architecture: delegating pattern; adapters translate envelopes, enforcement logic lives only in shared scripts
-- **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches build-log.md's Hard Limit 8 enforcement pattern
+- **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches the enforcement pattern of the build-log rule (orchestrator Hard Limit 8)
 - **ADR-001 (0000020):** Hardcoded, non-extensible deletion allowlist for the refresh skill, enforced in a dedicated script, not prose alone (P5 security finding)
 - **ADR-002 (0000020):** Single marker file (`.planifest-setup-flags`) serves as both install-time record and refresh retry cache, not two separate files
 - **ADR-003 (0000020):** Mandatory human confirmation gate before any refresh action, regardless of flag-reconstruction confidence
@@ -395,9 +455,20 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-007 (0000035):** `ratchet-check.mjs` uses the shared root and target rules.
 - **ADR-008 (0000035):** Root markers under always-permitted names are not trusted.
 - **ADR-010 (0000035):** `set-product-release.mjs` sets `product.yml` at P7.
-- **ADR-011 (0000035):** Hard Limit 8 names seven sanctioned scripts.
+- **ADR-011 (0000035):** The Write-or-Edit rule (boot Hard Limit 8) names seven sanctioned scripts.
 - **ADR-015 (0000035):** Migration files never move. Supersedes the archive step of **ADR-005 (0000005)**.
 - **ADR-016 (0000035):** Each project records migration runs in `plan/_migrations/`.
+- **ADR-002 (0000036):** A non-regular, swapped, or oversize `design.md` reads as no design. Only `EACCES` and `EPERM` fail open. Narrows **ADR-005 (0000003)**.
+- **ADR-003 (0000036):** An always-permitted file name gets no shortcut inside an enforcement path.
+- **ADR-004 (0000036):** `shown()` cuts at whole units and serves four hook outputs.
+- **ADR-005 (0000036):** `skill-drift-check.mjs` is a warn-only script that Resume Detection step 1b runs.
+- **ADR-006 (0000036):** A setup-delivered file is whatever setup copies, and a release that changes one ships a re-run-setup migration.
+- **ADR-007 (0000036):** The 0.34.0 migration targets the framework source too.
+- **ADR-008 (0000036):** The run-mode anchor is a whole line, bare or as one list item.
+- **ADR-009 (0000036):** The design critic reads as `report-only` by default outside `autonomous`. Amends **ADR-003 (0000016)** and **ADR-004 (0000033)**.
+- **ADR-010 (0000036):** Hard limits are cited by name and source.
+- **ADR-011 (0000036):** A split step runs before a fourth acceptance criterion.
+- **ADR-012 (0000036):** Commit subjects hold no placeholders.
 
 ---
 

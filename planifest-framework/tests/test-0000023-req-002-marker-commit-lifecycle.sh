@@ -48,7 +48,9 @@ echo "=== req-002: deletion-side commit (ship-agent P9 marker step) ==="
 # stages any marker.
 assert_contains "git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md" \
   "$SHIP_CONTENT" "req-002: P7 Step 7 git add stages plan/current/ explicitly"
-assert_contains 'git commit -m "plan(p9): clear session markers for {feature-id}"' \
+# Updated by feature 0000036, req-003: the subject holds no placeholder and
+# the feature ID moves to the commit body.
+assert_contains 'git commit -m "plan(p9): clear session markers" -m "{feature-id}"' \
   "$SHIP_CONTENT" "req-002: P9 marker step commits the marker deletions"
 
 echo ""

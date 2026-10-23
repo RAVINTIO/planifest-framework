@@ -49,6 +49,11 @@ Write each spec artifact to `plan/` as you complete it. Write the component mani
 - Derive directly from user stories in the brief. Do not invent requirements not stated or implied.
 - Distribute functional requirements into individual granular files at `plan/current/requirements/{req-id}-{slug}.md` using the [Requirement Template](../templates/requirement.template.md).
 - Do NOT output a monolithic list in the Execution Plan. Use discrete files.
+- Split step: before you add a fourth acceptance criterion to a requirement, or when you find one that already holds four or more, ask "Does this requirement hold two concerns?" A concern is one observable outcome that a reader could ship on its own.
+  - If yes, split by addition only. Write the new concern's criteria, including the fourth, into a new requirement file with the next free ID. Add a new user story to the feature brief that splits the existing story and adds no scope. After P0, log `Deviation (P{N}, unclassified): split req-NNN into req-MMM` so the orchestrator updates `design.md` as an additive change.
+  - A split never moves or removes an existing criterion line. If an existing criterion belongs to the new concern, leave it in place and add a cross-reference in both files. Record the move as a follow-up. `ratchet-check.mjs` counts a move across files as a removal, so the move waits until no loop-state file holds `status: active` or the human on the loop writes the `.ratchet-approve` line. In `autonomous`, log `Decision (P{N}): split step for req-NNN: move {criterion} to req-MMM deferred / reason: ratchet active`.
+  - If no, keep one requirement. Log `Decision (P{N}): split step for req-NNN: keep / reason: {one line}` in the active phase block of the build log. Add a `Split step: keep` note with the same reason under Functional Requirements in the requirement file.
+  - Report each answer and its reason to the orchestrator. In `autonomous`, answer the question yourself under the decision rule in `planifest-framework/standards/autonomous-run-standards.md`.
 
 **Non-functional requirements:**
 - Must include specific, measurable targets, not vague qualifiers.
@@ -108,6 +113,6 @@ When the confirmed design indicates a waved feature (features grouped into waves
 
 **Out-of-scope discoveries:** if a dispatched subagent finds an out-of-scope bug or gap, it files `plan/backlog/` directly; see `agent-dispatch-standards.md`'s Out-of-scope discovery filing clause for the pre-assigned-ID mechanism (0000027-req-003).
 
-## Commit Cadence (Hard Limit 7)
+## Commit cadence: the commit-cadence rule (orchestrator Hard Limit 7)
 
-Commit after every meaningful artifact write, not batched to the phase gate (see orchestrator Hard Limit 7).
+Commit after every meaningful artifact write, not batched to the phase gate. See the commit-cadence rule (orchestrator Hard Limit 7).

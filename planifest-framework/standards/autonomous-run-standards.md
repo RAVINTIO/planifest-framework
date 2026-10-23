@@ -34,13 +34,13 @@ Canonical home for the run-mode rules and for what an `autonomous` run still sto
 
 In `autonomous`, only these seven items wait for the human on the loop (ADR-003):
 
-1. A schema change or a destructive operation (orchestrator Hard Limits 2 and 3).
+1. A schema change or a destructive operation, under the schema and destructive-operation rules (orchestrator Hard Limits 2 and 3).
 2. A gross deviation.
 3. Human review of the running result.
 4. Promotion beyond the candidate environment.
 5. A human-only input, such as a captcha.
 6. An exhausted budget, such as the reversal budget or the approach budget (see `## Changing approach`).
-7. A credential sighting (orchestrator Hard Limit 6). The run stops using it, finishes other work, and raises it in the final report.
+7. A credential sighting, under the credentials rule (orchestrator Hard Limit 6). The run stops using it, finishes other work, and raises it in the final report.
 
 **Handling an item:**
 
@@ -76,9 +76,9 @@ The maker always writes `unclassified`. In its pre-P7 review, the assessor repla
 **Standing rules in every mode:**
 
 - Merging a PR stays human-only.
-- Hard Limits 2 and 3 stay human-gated.
-- Hard Limit 4: one component owns each piece of data. No run writes to data that another component owns.
-- Hard Limit 6: credentials never enter context. If one appears, item 7 applies.
+- The schema and destructive-operation rules (orchestrator Hard Limits 2 and 3) stay human-gated.
+- The data-ownership rule (orchestrator Hard Limit 4): one component owns each piece of data. No run writes to data that another component owns.
+- The credentials rule (orchestrator Hard Limit 6): credentials never enter context. If one appears, item 7 applies.
 - Only the orchestrator writes `plan/.run-mode`, the build-log `Run mode` row, and the `Run mode confirmed:` line. Every subagent dispatch prompt says so.
 - The ship agent runs the branch check before any `autonomous` push. It never pushes from the default branch or from a branch outside `feat/`.
 - No run makes a force push.
@@ -107,7 +107,7 @@ In `autonomous`, each P1 to P6 gate runs as a loop under `planifest-loop-runner`
 - **Why P3 uses P4:** The P4 CI run is deterministic. It checks the P3 output more strongly than a fresh-context read would.
 - **Fresh context:** A fresh-context checker never shares context with the agent that made the artifact (0000016 ADR-006).
 - **Existing caps stay:** Each loop keeps its cap. P4 validate keeps 5, and the other loops keep 3.
-- **Toggle defaults:** An absent key for a checker reads as `on` in `autonomous`. See the loop runner's Toggle Protocol.
+- **Toggle defaults:** An absent key for a checker reads as `on` in `autonomous`. The `design_critic` default is `report-only` outside `autonomous`, for an absent key or an absent file (0000036 ADR-009). See the loop runner's Toggle Protocol.
 - **Frozen checkers:** In `autonomous`, the P1 Toggle record is binding for the run for `design_critic`, `reversal_protocol`, `verify_by_execution`, and `cross_model_review`. The run ignores a later edit to `planifest-overrides/loop-toggles.yml` for those keys. It logs the edit as `Human touchpoint (P{N}): loop-toggles.yml changed {key}, ignored [outside list]`.
 - **Checkers stay on:** In `autonomous`, an explicit `off` or `report-only` for `design_critic`, `reversal_protocol`, `verify_by_execution`, or `cross_model_review` blocks the `autonomous` choice at P0. P0 names the key and recommends removing it or setting `on`. `parallel_streams` stays free to set.
 - **No stop:** A gate that passes moves straight to the next phase. A gate that fails follows `## Changing approach`.
@@ -125,7 +125,7 @@ In `autonomous`, a cap or a no-progress halt starts a new approach rather than a
 6. The reversal budget stays at 2 per feature. Its exhaustion is an exception-list item in `autonomous`.
 7. If a new approach would change the confirmed design, the agent files a defect report. The fresh-context reversal assessor classes it, never the agent that filed it.
 
-The loop-state file holds the approach counter as a budget counter, so no agent resets it (loop runner Hard Limit 3).
+The loop-state file holds the approach counter as a budget counter, so no agent resets it. This follows the budget-counter rule (loop runner Hard Limit 3).
 
 ## Visibility
 

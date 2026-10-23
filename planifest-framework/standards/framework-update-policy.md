@@ -45,6 +45,26 @@ Record the outcome, confirmed with its stated provenance, or rejected, in `plan/
 
 Unchanged by this policy. `planifest-migrator` continues to own reading a single pending migration file, presenting its findings, applying confirmed changes, and archiving it. This policy's detection-and-confirmation step happens first, independent of whether a migration file exists; `planifest-migrator` may still run afterward for any migration that accompanies the confirmed update.
 
+## Setup-delivered files
+
+A setup-delivered file is a framework file that `setup.sh` or `setup.ps1` copies into a tool folder. It also covers a file that setup writes into a boot file or a settings file. These files count:
+
+- each skill's `SKILL.md`, with the `scripts/`, `assets/`, and `references/` folders that setup copies beside it
+- every file in `templates/` and `schemas/`, and every top-level file in `standards/`
+- each file below `standards/` that a `bundle_standards` entry names by sub-path, such as `standards/library-standards/_version-policy.md`
+- each enforcement hook in `hooks/enforcement/`, each hook adapter in `hooks/adapters/`, and each workflow file in `workflows/`
+- the hook wiring that setup writes into a tool's settings file
+
+Files in `standards/reference/` don't count. Git hooks in `hooks/` don't count either. Git runs them in place through `core.hooksPath`, so they need no setup run.
+
+The definition follows what setup does, not what the skill manifests name. If a skill's `bundle_templates` key is absent or empty, setup copies every file in `templates/` into that skill. The same fallback applies to `bundle_standards` and the top-level standards. So a release can't treat a template or standard as safe because no manifest names it.
+
+A release that changes a setup-delivered file ships a re-run-setup migration.
+
+To build the migration's file list, filter the release's `git diff --name-only` by this definition. Never filter it by the `bundle_templates` or `bundle_standards` lists. One migration may cover several releases when an earlier release shipped none. `migrations/migrate-0.34.0-rerun-setup.md` covers 0.33.0 and 0.34.0 this way.
+
+A re-run-setup migration's `**Target:**` line names every project with an installed Planifest setup, the framework source included. The framework source also carries an install, so its sessions need the refreshed files too.
+
 ## Related
 
 - `plan/current/adr/ADR-002-framework-update-policy-p0-step.md`: the decision this policy documents (mechanism choice: new P0 step, not a `planifest-migrator` extension or a new standalone skill).

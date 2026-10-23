@@ -43,7 +43,7 @@ You own `plan/_migrations/` and are its only writer. Each project keeps one reco
 
 - `applied`: the scan ran, and the human on the loop answered every batch. A clean scan also gets `applied`, with both counts at `0`.
 - `not applicable`: the migration doesn't apply to this project. The body names the reason.
-- `skipped`: the human on the loop answered `none` or skipped the migration (Hard Limit 3).
+- `skipped`: the human on the loop answered `none` or skipped the migration, per the skip rule (migrator Hard Limit 3).
 
 **Pending rule:** A migration is pending when `plan/_migrations/{stem}.md` doesn't exist. It is also pending when its record can't be read. A record can't be read when any of these hold:
 

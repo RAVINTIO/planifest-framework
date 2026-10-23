@@ -12,8 +12,8 @@
 
 id: "planifest-framework"
 name: "Planifest Framework"
-version: "0.33.0"
-feature: "0000035-write-gate-scope-and-path-hardening"
+version: "0.34.0"
+feature: "0000036-pipeline-friction-and-gate-fixes"
 
 versionPolicy: "max-component-version"
 

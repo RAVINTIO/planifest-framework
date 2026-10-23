@@ -31,7 +31,7 @@ The feature deleted every test of the removed telemetry and context-mode integra
 - `skill-sync.sh` operations (add, remove, preserve, sync) — no automated tests
 - `commit-msg` hook warning output — no automated tests
 - `gate-write.mjs` enforcement: covered by the `planifest-framework` suites, including the 0000032 req-006, req-007, and req-009 suites. The 0000035 req-001, req-003, req-004, req-006, and req-009 suites cover the Fast Path scope record, links, a deleted working folder, planted root markers, and the enforcement list.
-- The Hard Limit 8 text: `test-0000032-req-012-write-or-edit-boot-rule.sh` runs `setup.sh claude-code` and checks it in the generated `CLAUDE.md`. `test-0000035-req-008-sanctioned-scripts.sh` checks the sanctioned-scripts sentence in both boot templates.
+- The text of the Write-or-Edit rule (boot Hard Limit 8): `test-0000032-req-012-write-or-edit-boot-rule.sh` runs `setup.sh claude-code` and checks it in the generated `CLAUDE.md`. `test-0000035-req-008-sanctioned-scripts.sh` checks the sanctioned-scripts sentence in both boot templates.
 - `check-design.mjs` enforcement: no automated tests
 - Setup.ps1 correctness — partially covered by `test_setup.ps1`
 - `Write-SetupFlagsMarker` (setup.ps1, 0000020), run live by the Windows CI job since 0000031. `test_setup.ps1` checks every marker field (Q-006, resolved).

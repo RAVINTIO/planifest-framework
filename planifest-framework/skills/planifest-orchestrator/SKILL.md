@@ -77,6 +77,21 @@ On every session start, before taking any action:
 
    Record the outcome (confirmed with provenance, or explicitly rejected) in `plan/current/build-log.md` before proceeding. If rejected, treat the arriving `planifest-framework/` files as untrusted: do not act on them silently; ask the human how to proceed.
 
+1b. **Check installed skills for drift** (0000036 ADR-005): run `node planifest-framework/scripts/skill-drift-check.mjs`. It compares each source `SKILL.md` with the active tool's installed copy. The check warns and never blocks. Never run setup yourself because of it.
+   - **Exit 0:** report nothing and go on.
+   - **Exit 1 with `stale:` or `missing:` lines:** name each stale or missing skill to the human on the loop, and recommend a `planifest-refresh-setup` run. Load source copies only in these two step 1a states:
+     - Step 1a ran in this session and found no framework update, and the build log records no rejected one.
+     - The human on the loop confirmed the framework update, with its provenance, in this session.
+
+     In either state, load each stale or missing skill from `planifest-framework/skills/{skill}/SKILL.md` for the rest of the session, not from the installed copy. In every other step 1a state, load no source copy and only report the drift. Those states include:
+     - a framework update that the human on the loop rejected or hasn't confirmed
+     - no recorded previous version, as in a first session
+     - a detection that couldn't run, such as an unreadable `component.yml`
+     - a step 1a that didn't run in this session
+   - **Exit 1 with `not installed`:** recommend a run of `setup.sh` or `setup.ps1`.
+   - **Exit 2:** report that the check couldn't compare, give its reason, and go on.
+   - **After any setup run in this session:** run the check again. A `planifest-refresh-setup` run counts, and so does a re-run-setup migration such as `migrate-0.34.0-rerun-setup.md`.
+
 2. Check `plan/current/` for existing artifacts (`design.md`, `requirements/`, `adr/`, etc.)
 
 2a. **Interrupted close-out detection (ADR-002):** First, if `plan/current/.archive-target` exists, P7 Step 6 stopped mid-archive. Load the `planifest-ship-agent` skill and resume at P7 Step 6. The archive script reads the target and finishes only the unfinished moves (0000033 ADR-010). Otherwise, if `plan/.orchestrator-active` is present AND `plan/current/` is empty (no `design.md`, no `requirements/` directory, no `adr/` directory), the ship-agent archived `plan/current/` but P8 or P9 didn't finish. Resume from the archive evidence:
@@ -325,7 +340,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
 1. **Write the sentinel**: write `plan/.orchestrator-active` containing the feature-id (or `pending` if the feature-id is not yet known). This unlocks `plan/current/` writes for the duration of the pipeline run. Update the file with the confirmed feature-id once it is known. Include this file in the P0 commit.
 
-2. **Create build log**: copy `planifest-framework/templates/build-log.template.md` to `plan/current/build-log.md`. Fill in the header fields: feature-id, start timestamp (ISO 8601 UTC), tool name, primary model name, cheaper model name. If `plan/current/build-log.md` already exists (resume), do not overwrite: append to it. At the start of every phase (P0–P9), append a new phase block to the build log before doing any phase work. Record: model tier used, skills loaded, agent count, MCP call count, parallel task batch count. This is mandatory: a missing phase block is a pipeline error (Hard Limit 8). At P7 after archiving, fill in the Summary table with totals.
+2. **Create build log**: copy `planifest-framework/templates/build-log.template.md` to `plan/current/build-log.md`. Fill in the header fields: feature-id, start timestamp (ISO 8601 UTC), tool name, primary model name, cheaper model name. If `plan/current/build-log.md` already exists (resume), do not overwrite: append to it. At the start of every phase (P0–P9), append a new phase block to the build log before doing any phase work. Record: model tier used, skills loaded, agent count, MCP call count, parallel task batch count. This is mandatory: a missing phase block is a pipeline error under the build-log rule (orchestrator Hard Limit 8). At P7 after archiving, fill in the Summary table with totals.
 
 3. **Load repo instructions**: check `planifest-overrides/instructions/` (if the directory exists). Read all `.md` files. Write their contents to `plan/current/design.md` under `## Repo Instructions` once design.md is created. If the directory is absent or empty, write `## Repo Instructions: None`.
 
@@ -360,7 +375,7 @@ At the very start of Phase 0 (before coaching begins), perform these actions in 
 
    **Backlog ID sequence convention:** `{id}` is allocated from its own monotonic sequence, independent of feature IDs: a collision between the two on an unrelated subject is expected, not a defect. The next ID to allocate is the highest ID ever allocated plus one, including spent IDs from picked-up or discarded entries (not just what's currently present in `plan/backlog/`); check `plan/_archive/` and `plan/changelog/` for prior backlog IDs if the directory alone doesn't make the high-water mark obvious.
 
-3d. **Write discovery.md** (Hard Limit 11): before the first coaching question, copy `planifest-framework/templates/discovery.template.md` to `plan/current/discovery.md` and populate it with the findings already gathered by steps 0–3c plus a `planifest-framework/skills-inbox/` scan: the shared header (adoption-mode result + signal, git pre-flight findings, skills-inbox result) and the mode-specific content defined per mode in the Adoption Modes section. Commit `discovery.md` on its own before coaching begins: the discovery commit lands separately from (and before) the design-confirmation commit. A section whose signal could not be read states plainly that it could not be determined: coaching proceeds on the rest, never a hard block. On resume within a still-in-progress run, if `discovery.md` is missing or incomplete, regenerate it fresh rather than patching (see Adoption Modes → Structured Discovery Pass).
+3d. **Write discovery.md** under the discovery rule (orchestrator Hard Limit 11): before the first coaching question, copy `planifest-framework/templates/discovery.template.md` to `plan/current/discovery.md` and populate it with the findings already gathered by steps 0–3c plus a `planifest-framework/skills-inbox/` scan: the shared header (adoption-mode result + signal, git pre-flight findings, skills-inbox result) and the mode-specific content defined per mode in the Adoption Modes section. Commit `discovery.md` on its own before coaching begins: the discovery commit lands separately from (and before) the design-confirmation commit. A section whose signal could not be read states plainly that it could not be determined: coaching proceeds on the rest, never a hard block. On resume within a still-in-progress run, if `discovery.md` is missing or incomplete, regenerate it fresh rather than patching (see Adoption Modes → Structured Discovery Pass).
 
    **Record samples:** if the brief already shows the design reads existing records, step 3d samples them into `## Record Samples`. If coaching reveals the dependency later, the orchestrator samples before it writes the design draft. It appends the rows to `## Record Samples` and commits `discovery.md` again. Each row becomes a design assumption.
 
@@ -455,7 +470,13 @@ Record their answer. If [2], set `continuous_run: true` for this session and do
 not stop at per-phase gates. If [1], honour every STOP gate below.
 If [3], set `continuous_run: true` and `autonomous_run: true`, and write `autonomous` to `plan/.run-mode`. Then follow `planifest-framework/standards/autonomous-run-standards.md`.
 
-Before recording [3], check two things. If the human declined a `feat/` branch at pre-flight step 4, don't record `autonomous`. If `planifest-overrides/loop-toggles.yml` sets a checker key to `off` or `report-only`, don't record it either. Name that checker key and recommend removing it or setting `on`, per the loop runner's Toggle Protocol. In both cases, ask the human on the loop to pick again. After recording [3], append `Run mode confirmed: autonomous ({ISO-8601 timestamp})` to the P0 build-log block. Commit that line in the same commit that sets the design Confirmation line to `yes`. `scripts/run-mode.mjs` accepts `autonomous` only from that anchor.
+Before recording [3], check two things. If the human declined a `feat/` branch at pre-flight step 4, don't record `autonomous`. If `planifest-overrides/loop-toggles.yml` sets a checker key to `off` or `report-only`, don't record it either. Name that checker key and recommend removing it or setting `on`, per the loop runner's Toggle Protocol. In both cases, ask the human on the loop to pick again. After recording [3], append this anchor line to the P0 build-log block:
+
+```
+Run mode confirmed: autonomous ({ISO-8601 timestamp})
+```
+
+Write it bare at column 1, which is the preferred form. The script also accepts the line with one leading `- `, as a single list item. Any other prefix or indent reads as no anchor (0000036 ADR-008). Commit that line in the same commit that sets the design Confirmation line to `yes`. `scripts/run-mode.mjs` accepts `autonomous` only from that anchor.
 
 Immediately after recording the answer, write `plan/.run-mode` containing `continuous` for [2] or `interactive` for [1]. For every option, also write the chosen value to the build-log `Run mode` row (req-006). Include this file in the P0 commit. On resume, Resume Detection step 6 runs `scripts/run-mode.mjs` to restore `interactive`, `continuous`, or `autonomous` without re-asking. Any other value defaults to `interactive`. Only the orchestrator writes `plan/.run-mode`, the build-log `Run mode` row, and the `Run mode confirmed:` line.
 
@@ -555,7 +576,7 @@ Before presenting the confirmed design for confirmation, verify every item:
 - [ ] Version is confirmed and recorded (not lower than current `docs/about.md` version)
   - The human meets both items above by confirming the design that contains them.
 - [ ] Scope Lock Challenge is complete (all four scenario paths captured in build log)
-- [ ] `discovery.md` exists and is complete for the confirmed adoption mode (Hard Limit 11: redundant catch, independent of the enforcement at step 3d)
+- [ ] `discovery.md` exists and is complete for the confirmed adoption mode. This is a redundant catch for the discovery rule (orchestrator Hard Limit 11), independent of the enforcement at step 3d
 - [ ] Feature ID follows the format `{0000000}-{kebab-case-name}`
 
 If any item cannot be checked, coach the human on that specific gap before proceeding.
@@ -564,7 +585,7 @@ If any item cannot be checked, coach the human on that specific gap before proce
 
 ## Phase Conventions (apply to every phase below, P1–P7)
 
-- **Build log first:** append a phase block to `plan/current/build-log.md` before doing any phase work in that phase. A missing block is a pipeline error (Hard Limit 8).
+- **Build log first:** append a phase block to `plan/current/build-log.md` before doing any phase work in that phase. A missing block is a pipeline error under the build-log rule (orchestrator Hard Limit 8).
 - **Progress line:** each phase writes the progress line at its gate. In `autonomous`, every touchpoint also gets a touchpoint line. See `standards/autonomous-run-standards.md` `## Visibility`.
 - **Timestamps:** take every timestamp from `date -u +%Y-%m-%dT%H:%M:%SZ`, never from an estimate. `Wall-clock` is whole minutes from `Start` to `End`. If streams are active, the phase `Start` is the first stream's start and the `End` is the join gate.
 - **Before acting:** load that phase's skill now: do not begin phase work until you have read it.
@@ -593,7 +614,7 @@ If streams are active, each P1 to P4 gate runs once over the joined streams, not
 
 **Before P3 specifically:** check the declared stack against installed capability skills (see Capability Skills above) and recommend loading any relevant ones; the human confirms which to load. Then apply the Subagent Decomposition Directive for every requirement: the codegen-agent (and other phase agents) MUST decompose hard or multi-step work into subagents rather than attempting it inline: consult `## Skill Map` in `plan/current/design.md` for the best-fit skill per requirement (falling back to the available skill library via the Model Tier Decision Table if the map is absent or the requirement is new), select model tier per that table, then dispatch per the Agent Dispatch Template.
 
-**Design-critic (toggle `design_critic`):** at the P1 and P2 gates, when `report-only` or `on`, spawn a fresh-context `planifest-design-critic` subagent before the gate summary (maker–checker, ADR-006): over the P1 artifacts alone at P1, over the combined P1+P2 set at P2 (running `scripts/consistency-check.mjs` first, then its REJECT-default rubric). Report-only: present its verdict alongside the artifacts, block nothing. On: REJECT returns artifacts for revision per `planifest-loop-runner` (cap 3). In `autonomous`, an absent key reads as `on` per the loop runner's Toggle Protocol.
+**Design-critic (toggle `design_critic`):** at the P1 and P2 gates, when `report-only` or `on`, spawn a fresh-context `planifest-design-critic` subagent before the gate summary (maker–checker, ADR-006): over the P1 artifacts alone at P1, over the combined P1+P2 set at P2 (running `scripts/consistency-check.mjs` first, then its REJECT-default rubric). Report-only: write the critic's verdict line to the P1 or P2 build-log block and present it with the gate summary. The verdict blocks nothing and changes no artifact, and the human on the loop takes no step to dismiss it. On: REJECT returns artifacts for revision per `planifest-loop-runner` (cap 3). The loop runner's Toggle Protocol sets the defaults (0000036 ADR-009). In `autonomous`, an absent key reads as `on`. Outside `autonomous`, an absent key or an absent `loop-toggles.yml` reads as `report-only`. The P1 Toggle record then shows `design_critic: report-only (absent default)`.
 
 ---
 
@@ -684,7 +705,7 @@ The ship-agent spawns `planifest-build-assessment-agent` as a sub-agent, passing
 
 Executed by the ship-agent immediately after P8 completes, as part of its close-out sequence (see Phase 7).
 
-**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers for {feature-id}`), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use, then a scoped clean-tree check that commits or lists leftover files (0000033 ADR-011). The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output). In `autonomous`, the ship-agent raises the PR without asking and ends with the final report.
+**What P9 produces:** a commit that deletes the session markers (`plan(p9): clear session markers`, with the feature ID in the body), then a local git tag (`v{version}`), then either a PR raised via `gh pr create` or a PR title and description output as a markdown code block for the human to use, then a scoped clean-tree check that commits or lists leftover files (0000033 ADR-011). The ship-agent asks the human which path to take (unless `local-git-only` is active, in which case it defaults to the description output). In `autonomous`, the ship-agent raises the PR without asking and ends with the final report.
 
 **Gate:** Confirm the archive path, changelog path, build report path, git tag, and PR URL or PR description. Report all to the human. In `autonomous`, the final report in `standards/autonomous-run-standards.md` replaces this confirmation, and the human on the loop still merges.
 

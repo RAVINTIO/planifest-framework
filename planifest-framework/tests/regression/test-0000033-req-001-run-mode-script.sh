@@ -6,6 +6,9 @@
 #          reader after P0 calls the script instead of reading a record
 #          directly (P5 C2-1, P5 C2-2).
 #
+# 0000036 req-004: the anchor line counts bare or as one "- " list item at
+#          column 1. Every other form counts as no anchor (ADR-008).
+#
 # REGRESSION-CANDIDATE: covers the run-mode script and its git anchor, tagged by test-writer for human review at P7
 
 set -uo pipefail
@@ -364,5 +367,150 @@ assert_contains "$CALL" "$DOCS_LINE" "req-001: docs-agent reads the mode with ru
 ROW=$(grep '^| Run mode |' "$TPLB")
 lacks "Every later reader uses this row" "$ROW" "req-001: build-log template drops the read-this-row wording (P5 C3-9)"
 assert_contains "run-mode.mjs" "$ROW" "req-001: build-log template says later readers call run-mode.mjs (P5 C3-9)"
+
+echo ""
+echo "=== 0000036 req-004: anchor as a bare line or one list item ==="
+
+# anchor_with <dir> <line>...: like anchor, but appends each given line.
+anchor_with() {
+  local r="$1"; shift
+  confirm_design "$r"
+  set_row "$r" autonomous
+  printf '%s\n' "$@" >> "$r/plan/current/build-log.md"
+  git -C "$r" add -A
+  git -C "$r" commit -q -m "plan(p0): confirm design"
+}
+
+LIST_LINE="- $FORGED_LINE"
+
+R14="$SCRATCH/list-item"
+make_repo "$R14"
+anchor_with "$R14" "$LIST_LINE"
+assert_equals "autonomous" "$(mode "$R14")" "req-004: a list-item anchor in the design-confirm commit prints autonomous"
+
+N=0
+for PREFIX in "  " $'\t' "    - " "* " "+ " "> " "1. " "-- " "- - " "-  " $'-\t' "-"; do
+  N=$((N + 1))
+  R="$SCRATCH/prefix-$N"
+  make_repo "$R"
+  anchor_with "$R" "$PREFIX$FORGED_LINE"
+  assert_equals "interactive" "$(mode "$R")" "req-004: anchor prefix [$PREFIX] prints interactive"
+done
+
+R15="$SCRATCH/list-later"
+make_repo "$R15"
+confirm_design "$R15"
+git -C "$R15" add -A
+git -C "$R15" commit -q -m "plan(p0): confirm design"
+set_row "$R15" autonomous
+echo "$LIST_LINE" >> "$R15/plan/current/build-log.md"
+git -C "$R15" add -A
+git -C "$R15" commit -q -m "later"
+assert_equals "interactive" "$(mode "$R15")" "req-004: a list-item line added in a later commit prints interactive"
+
+R16="$SCRATCH/bare-plus-list"
+make_repo "$R16"
+anchor_with "$R16" "$FORGED_LINE" "$LIST_LINE"
+assert_equals "interactive" "$(mode "$R16")" "req-004: a bare line plus a list-item line prints interactive"
+assert_equals "1" "$(reason "$R16" | grep -c .)" "req-004: bare plus list writes one reason line"
+
+R17="$SCRATCH/bare-to-list"
+make_repo "$R17"
+anchor_with "$R17" "$FORGED_LINE"
+sed -i.bak "s/^Run mode confirmed: autonomous/- Run mode confirmed: autonomous/" "$R17/plan/current/build-log.md"
+rm -f "$R17/plan/current/build-log.md.bak"
+assert_equals "interactive" "$(mode "$R17")" "req-004: an uncommitted bare-to-list conversion prints interactive"
+git -C "$R17" add -A
+git -C "$R17" commit -q -m "list form"
+assert_equals "interactive" "$(mode "$R17")" "req-004: a commit that turns a bare line into a list item prints interactive"
+
+R18="$SCRATCH/list-then-notes"
+make_repo "$R18"
+anchor_with "$R18" "$LIST_LINE"
+echo "## P1" >> "$R18/plan/current/build-log.md"
+git -C "$R18" add -A
+git -C "$R18" commit -q -m "plan(p1): notes"
+assert_equals "autonomous" "$(mode "$R18")" "req-004: a later commit that leaves the list-item line alone keeps the anchor"
+
+R19="$SCRATCH/list-edited"
+make_repo "$R19"
+anchor_with "$R19" "$LIST_LINE"
+sed -i.bak "s/^- Run mode confirmed: autonomous.*/- Run mode confirmed: autonomous (2026-10-20T10:00:00Z)/" "$R19/plan/current/build-log.md"
+rm -f "$R19/plan/current/build-log.md.bak"
+git -C "$R19" add -A
+git -C "$R19" commit -q -m "edit list line"
+assert_equals "interactive" "$(mode "$R19")" "req-004: a later commit that edits a list-item line prints interactive"
+
+assert_contains "- Run mode confirmed: autonomous" "$HEAD_FLAT" "req-004: header rule 3 names the list-item form"
+
+TPL_INLINE=$(grep -cF '`Run mode confirmed: autonomous ({ISO-8601 timestamp})`' "$TPLB")
+assert_equals "yes" "$([ "$TPL_INLINE" -ge 1 ] && echo yes || echo no)" "req-004: build-log template quotes the anchor line inline in backticks (P5 S-1)"
+assert_equals "0" "$(grep -cE '^(- )?Run mode confirmed:' "$TPLB")" "req-004: no build-log template line starts like an anchor (P5 S-1)"
+assert_contains "column 1" "$(grep -F 'Run mode confirmed: autonomous' "$TPLB")" "req-004: build-log template says the orchestrator writes the line bare at column 1 (P5 S-1)"
+
+echo ""
+echo "=== 0000036 req-004: build log copied from the template (P5 S-1) ==="
+
+# make_tpl_repo <dir>: like make_repo, but the build log is a copy of the real template.
+make_tpl_repo() {
+  local r="$1"
+  make_repo "$r"
+  cp "$TPLB" "$r/plan/current/build-log.md"
+  set_row "$r" interactive
+  git -C "$r" add -A
+  git -C "$r" commit -q -m "plan(p0): build log from template"
+}
+
+R20="$SCRATCH/tpl-genuine"
+make_tpl_repo "$R20"
+anchor "$R20"
+assert_equals "autonomous" "$(mode "$R20")" "req-004: a template build log plus a genuine anchor prints autonomous (P5 S-1)"
+
+R21="$SCRATCH/tpl-no-anchor"
+make_tpl_repo "$R21"
+confirm_design "$R21"
+set_row "$R21" autonomous
+echo autonomous > "$R21/plan/.run-mode"
+git -C "$R21" add -A
+git -C "$R21" commit -q -m "plan(p0): confirm design"
+assert_equals "interactive" "$(mode "$R21")" "req-004: a template build log with no anchor prints interactive (P5 S-1)"
+
+R22="$SCRATCH/tpl-lands-at-confirm"
+make_repo "$R22"
+cp "$TPLB" "$R22/plan/current/build-log.md"
+confirm_design "$R22"
+git -C "$R22" add -A
+git -C "$R22" commit -q -m "plan(p0): confirm design"
+echo autonomous > "$R22/plan/.run-mode"
+assert_equals "interactive" "$(mode "$R22")" "req-004: a template build log that lands in the design-confirm commit prints interactive (P5 S-1)"
+
+echo ""
+echo "=== 0000036 req-004: full-line anchor with a real timestamp (P5 S-1, S-2) ==="
+
+N=0
+for BAD in \
+  "Run mode confirmed: autonomous ({ISO-8601 timestamp})" \
+  "- Run mode confirmed: autonomous ({ISO-8601 timestamp})" \
+  "Run mode confirmed: autonomous" \
+  "Run mode confirmed: autonomous-NOT" \
+  "- Run mode confirmed: autonomousNOT" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00Z) extra" \
+  "- Run mode confirmed: autonomous (2026-10-19T10:00:00Z) extra" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00Z)." \
+  "Run mode confirmed: autonomous (2026-10-19 10:00:00Z)" \
+  "Run mode confirmed: autonomous (2026-10-19T10:00:00+01:00)" \
+  "Run mode confirmed: autonomous (2026-13-45T25:61:00Z)"; do
+  N=$((N + 1))
+  R="$SCRATCH/bad-line-$N"
+  make_repo "$R"
+  anchor_with "$R" "$BAD"
+  assert_equals "interactive" "$(mode "$R")" "req-004: anchor line [$BAD] prints interactive (P5 S-1, S-2)"
+done
+
+ORCH_BLOCK=$(awk 'prev ~ /^ *```/ && $0 ~ /^ *Run mode confirmed: autonomous \(\{ISO-8601 timestamp\}\)$/ { print "found" } { prev = $0 }' "$ORCH")
+assert_equals "found" "$ORCH_BLOCK" "req-004: orchestrator shows the bare anchor line in a fenced code block"
+ANCHOR_TEXT=$(sed -n '/^Before recording \[3\]/,/^Immediately after recording the answer/p' "$ORCH")
+assert_contains "the preferred form" "$ANCHOR_TEXT" "req-004: orchestrator calls the bare line the preferred form"
+assert_contains "one leading \`- \`" "$ANCHOR_TEXT" "req-004: orchestrator says one leading list marker also passes"
 
 print_summary

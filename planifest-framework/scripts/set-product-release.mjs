@@ -21,7 +21,8 @@
  * given. With --create and no product.yml, it builds the file from
  * templates/product.template.yml under max-component-version.
  *
- * Hard Limit 8 carve-out (ADR-011): the script writes only {root}/product.yml.
+ * Carve-out from the Write-or-Edit rule (boot Hard Limit 8), per ADR-011:
+ * the script writes only {root}/product.yml.
  * Every argument is untrusted, and every rule runs before product.yml is
  * read. Each value is written as a double-quoted YAML scalar, and no allowed
  * character can end the scalar or start a line. An error message names the

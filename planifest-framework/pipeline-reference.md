@@ -64,7 +64,7 @@ P8 runs automatically after P7 archives the plan. The ship-agent spawns the `pla
 
 P9 is the terminal phase. The ship-agent reads the version, creates a local git tag (`v{version}`), then asks the human whether to push and raise the PR or output a PR description for manual use. If `local-git-only` is active in `planifest-overrides/instructions/`, the agent skips the prompt and outputs a PR description directly.
 
-P9 takes the version from `product.yml` through `product-version.mjs`. With no `product.yml` and one component, it reads that `component.yml` instead. P9 never edits `product.yml`. P7 sets its `version` and `feature` through `set-product-release.mjs`, a sanctioned script under Hard Limit 8. In a project with two or more components and no `product.yml`, P7 creates the file with `--create`.
+P9 takes the version from `product.yml` through `product-version.mjs`. With no `product.yml` and one component, it reads that `component.yml` instead. P9 never edits `product.yml`. P7 sets its `version` and `feature` through `set-product-release.mjs`, a sanctioned script under the Write-or-Edit rule (boot Hard Limit 8). In a project with two or more components and no `product.yml`, P7 creates the file with `--create`.
 
 ### Build Log
 
