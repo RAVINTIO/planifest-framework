@@ -66,7 +66,7 @@
 - Release size: three-story rule. 11 stories from 10 backlog entries, confirmed by the human on the loop as one run, above the rule.
 
 ## Assumptions
-- `gh` is signed in where P9 and GUTD run - impact if wrong: the check reports "could not run" and the run carries on, so a red PR can still pass unseen.
+- `gh` is signed in where P9 and GUTD run - impact if wrong: the check reports "CI status could not be read", and the run doesn't read as done (per the red-check handling above).
 - `gitleaks` may be absent - impact if wrong: none, since the regex patterns still run, but recall is lower.
 - Windows runners have Git Bash and Windows PowerShell 5.1 preinstalled - impact if wrong: the new legs need an install step.
 - `gh run list --branch main`, conclusion of the latest `main` run: 0/10 usable (0%) - impact if wrong: none, because the design reads the last merged PR's checks instead.
