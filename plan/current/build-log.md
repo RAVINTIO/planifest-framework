@@ -286,3 +286,24 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 - Streams 01 to 03 set to `done`.
 - Gate (P6): zero drift, every expected artifact present, cross-model review approved.
 - Progress: P6 done at 2026-10-23T00:12:47Z: living docs updated, deviation and cross-model reviews passed, setup re-run here
+- Post-gate fix (P6): after the setup run, `test-0000036-req-002-skill-drift-check.sh` failed 3 assertions. The suite passed the script path to `node -e` as `process.argv[1]`, so `skill-drift-check.mjs` read itself as the entry point and ran `main()`. Its new success line on stdout then mixed into the captured output. The suite now passes the path in `DRIFT_MODULE`. The script is unchanged. The suite passes 88 of 88, and the full suite passes 97 feature and 33 regression suites.
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-23T00:13:18Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. |
+
+- Cross-reference check: one link to `plan/current/adr/` in `docs/decisions-index.md` now points at the archive folder. The other `plan/current/` mentions name the folder as a concept, not a link.
+- Changelog: `plan/changelog/0000036-pipeline-friction-and-gate-fixes-2026-10-23.md` from P6, with a `PR` line added.
+- `.skips`: none.
+- Decision (P7): promote no regression candidate / reason: no 0000036 suite carries a `# REGRESSION-CANDIDATE:` tag, and the three tagged 0000033 suites are already in the regression pack.

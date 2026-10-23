@@ -562,11 +562,13 @@ SH_PAIRS="$(awk '/^copy_skills\(\) \{/{f=1} f&&/^\}/{exit} f' "$SETUP_SH" \
 PS1_PAIRS="$(awk '/^function Copy-PlanifestSkills/{f=1} f&&/^\}/{exit} f' "$SETUP_PS1" \
   | grep -E "skillContent -replace" \
   | sed -E "s/.*-replace '([^']+)', '([^']+)'.*/\1 -> \2/" | unescape_regex | LC_ALL=C sort)"
-SCRIPT_PAIRS="$(node --input-type=module -e "
+# The path goes in an environment variable, not argv. A module path in
+# process.argv[1] would make the script read itself as the entry point.
+SCRIPT_PAIRS="$(DRIFT_MODULE="$(native "$DRIFT")" node --input-type=module -e "
   import { pathToFileURL } from 'node:url';
-  const m = await import(pathToFileURL(process.argv[1]).href);
+  const m = await import(pathToFileURL(process.env.DRIFT_MODULE).href);
   for (const [from, to] of m.REWRITES) console.log(from + ' -> ' + to);
-" "$(native "$DRIFT")" 2>/dev/null | LC_ALL=C sort)"
+" 2>/dev/null | LC_ALL=C sort)"
 
 SH_COUNT="$(printf '%s\n' "$SH_PAIRS" | grep -c . || true)"
 assert_equals "4" "$SH_COUNT" "req-002: the suite reads four rewrites from setup.sh copy_skills()"
@@ -579,11 +581,11 @@ assert_equals "$PS1_PAIRS" "$SCRIPT_PAIRS" "req-002: the script's rewrite set ma
 echo ""
 echo "=== req-002: the tool map matches setup/{tool}.sh ==="
 
-SCRIPT_MAP="$(node --input-type=module -e "
+SCRIPT_MAP="$(DRIFT_MODULE="$(native "$DRIFT")" node --input-type=module -e "
   import { pathToFileURL } from 'node:url';
-  const m = await import(pathToFileURL(process.argv[1]).href);
+  const m = await import(pathToFileURL(process.env.DRIFT_MODULE).href);
   for (const [tool, dir] of Object.entries(m.TOOL_SKILLS_DIRS)) console.log(tool + ' ' + (dir ?? 'none'));
-" "$(native "$DRIFT")" 2>/dev/null | LC_ALL=C sort)"
+" 2>/dev/null | LC_ALL=C sort)"
 SETUP_MAP=""
 for tool_sh in "$FRAMEWORK"/setup/*.sh; do
   tool="$(basename "$tool_sh" .sh)"
