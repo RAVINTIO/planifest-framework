@@ -29,6 +29,7 @@
 
 ## Architecture Layer
 - Latency target: P9 waits at most 20 minutes for checks, then reports them as pending
+- Red-check handling (confirmed at P0): P9 writes the PR number to the build log before it waits. On a failing check, P9 fixes it on the feature branch and pushes again, up to 3 attempts, then raises an exception-list item. A `cancelled` or timed-out check reads as unknown, never as a pass. A status that can't be read is reported, and the run doesn't read as done.
 - Availability target: not applicable (local tooling)
 - Scalability target: not applicable
 - Security: no auth change. The credential scan covers staged files and the PR body. Data classification: repository text, with credentials treated as secret.
@@ -114,4 +115,4 @@ Five files in `planifest-overrides/instructions/`:
 - Suggested version: 0.35.0 (Feature Pipeline, minor bump)
 
 ## Confirmation
-Human confirmed this design before proceeding: no // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 24 Oct 2026 @ 12:46 AM BST
