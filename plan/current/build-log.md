@@ -58,3 +58,44 @@ Version confirmed: 0.35.0
 Backlog 0000073 and 0000075: left untouched (no discard answer given).
 Progress: P0 done at 2026-10-23T23:46:32Z: design confirmed, 11 stories, autonomous run
 Run mode confirmed: autonomous (2026-10-23T23:46:32Z)
+
+---
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-23T23:47:43Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `4` |
+| Model tier | primary (streams 01 to 04), cheaper (shared artifacts) |
+| Skills loaded | planifest-spec-agent, planifest-loop-runner, planifest-design-critic |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. P1 checker re-check: no `loop-toggles.yml`, so no checker key is off. Each stream gets one agent for its requirements, because requirements in a stream share files and cross-reference each other. |
+
+Toggle record (P1, binding for the run):
+
+| Toggle | Value | Source |
+|--------|-------|--------|
+| `design_critic` | `on` | autonomous default |
+| `verify_by_execution` | `on` | autonomous default |
+| `cross_model_review` | `on` | autonomous default |
+| `reversal_protocol` | `on` | autonomous default |
+| `parallel_streams` | `on` | autonomous default |
+| `p0_completeness` | `off` | absent default |
+
+Streams (start commit `c8b1036`):
+
+| Stream | Stories | Requirements | ADR block | Backlog block |
+|--------|---------|--------------|-----------|---------------|
+| `stream-01-ship-and-sync` | US-001 to US-004 | req-001 to req-004 | ADR-001 to ADR-005 | 0000193 to 0000195 |
+| `stream-02-phase-skills` | US-005, US-006 | req-005, req-006 | ADR-006 to ADR-008 | 0000196 to 0000198 |
+| `stream-03-test-suites` | US-007 to US-009 | req-007 to req-009 | ADR-009 to ADR-011 | 0000199 to 0000201 |
+| `stream-04-windows-ci` | US-010, US-011 | req-010, req-011 | ADR-012 to ADR-014 | 0000202 to 0000204 |
+
+- Shared artifacts (scope, risk register, domain glossary) go to one cheaper-tier agent in the same batch, backlog ID 0000205.
+- Decision (P1): the existing `planifest-framework/component.yml` and `src/setup-hook-integration/component.yml` stay as they are at P1, and P6 updates them / reason: both components exist and no stack changes.
+- Decision (P1): no data contract, OpenAPI spec, operational model, SLO definitions, or cost model / reason: no trigger holds. The feature adds no API, no deployed service, and no data store.
