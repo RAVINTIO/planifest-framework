@@ -1,7 +1,7 @@
 id: "planifest-framework"
 name: "Planifest Framework"
 feature: "0000036-pipeline-friction-and-gate-fixes"
-version: "0.34.0"
+version: "0.34.1"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
@@ -175,7 +175,7 @@ pipeline:
 
 metadata:
   createdAt: "2026-05-02"
-  updatedAt: "2026-10-19"
+  updatedAt: "2026-10-23"
   # Updated by 0000021 (spec-agent) P1: seeded requirements-derived
   # responsibilities/scope/risk entries for the regression-pack and
   # audit-findings-report/guardrailed-trim process ahead of P3 codegen.

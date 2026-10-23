@@ -37,8 +37,9 @@ BRACKETED="\\(the $NAME( and $NAME)? rules?, $SOURCE $BARE\\)"
 
 # bare_citations <path>...: prints one "file:line: text" row per line that
 # still holds a hard-limit number once every wrapped citation is stripped.
+# -H keeps the file name for a single file operand: GNU grep drops it.
 bare_citations() {
-  grep -rnE "$BARE" "$@" 2>/dev/null | while IFS= read -r row; do
+  grep -rnHE "$BARE" "$@" 2>/dev/null | while IFS= read -r row; do
     local loc="${row%%:*}"
     local rest="${row#*:}"
     local line="${rest%%:*}"

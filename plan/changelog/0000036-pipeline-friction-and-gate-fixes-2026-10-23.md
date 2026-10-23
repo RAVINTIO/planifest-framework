@@ -127,3 +127,9 @@ P5 rated the feature High at first, from the build-log template anchor. Two fix 
 ## Skipped Phases
 
 None
+
+## 2026-10-23 - Fast Path: req-005 suite keeps file names under GNU grep
+- Change: `bare_citations` in the req-005 suite calls `grep -rnHE` instead of `grep -rnE`.
+- Component: planifest-framework
+- Reason: GNU grep drops the file name for a single file operand, so the fixture rows lost their `file:line:` prefix. Three assertions failed on `ubuntu-latest` after PR #62 merged. macOS BSD grep keeps the name, so the local run passed (backlog 0000191).
+- Paths: `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh`, `planifest-framework/component.yml`
