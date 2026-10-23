@@ -312,3 +312,37 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 - Step 6: `archive-current.mjs` moved 31 items and printed `archive-dir: plan/_archive/0000036-pipeline-friction-and-gate-fixes-2026-10-23` (exit 0). `plan/current/` is empty. The script removes `.feature-id` by path, so Step 3's marker had no effect.
 - Step 6b: `docs/about.md` already holds version `0.34.0`, this feature, and `23 Oct 2026` from P6.
 - Progress: P7 done at 2026-10-23T00:20:19Z: plan archived, product.yml set to 0.34.0
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-23T00:20:37Z` |
+| End | `2026-10-23T00:21:44Z` |
+| Wall-clock | `1` |
+| Streams | `n/a` |
+| Model tier | cheaper |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | One assessment subagent. Nothing to run beside it. |
+
+- P8: Complete. `build-report.md` written to the archive. 0 human touchpoints. The report flags model-tier logging gaps and the waiting P6 exception.
+- Clean-tree check: clean (both changed paths sit under the archive directory, which the P9 marker step commits).
+- Progress: P8 done at 2026-10-23T00:21:44Z: build report written, clean tree
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-23T00:21:44Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | `Exception waiting` line present, so the PR goes up as a draft. |
