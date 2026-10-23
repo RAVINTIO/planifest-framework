@@ -99,3 +99,10 @@ Streams (start commit `c8b1036`):
 - Shared artifacts (scope, risk register, domain glossary) go to one cheaper-tier agent in the same batch, backlog ID 0000205.
 - Decision (P1): the existing `planifest-framework/component.yml` and `src/setup-hook-integration/component.yml` stay as they are at P1, and P6 updates them / reason: both components exist and no stack changes.
 - Decision (P1): no data contract, OpenAPI spec, operational model, SLO definitions, or cost model / reason: no trigger holds. The feature adds no API, no deployed service, and no data store.
+- Stream 02 returned req-005 and req-006, three criteria each.
+- Decision (P1): split step for req-005: keep / reason: three criteria, one outcome.
+- Decision (P1): split step for req-006: keep / reason: the field, the scan, and the legacy rule serve one outcome.
+- Decision (P1): req-005 specifies only the delta on the existing docs-agent `## Post-P6 revalidation` section (0000033 ADR 012) / reason: most of 0000086 already ships, with `planifest-overrides/doc-checks.yml` as the product's doc-check file.
+- Decision (P1): post-P6 revalidation uses cap 3 with up to 3 approaches in `autonomous`, and keeps 5 cycles elsewhere / reason: the autonomous standard says loops other than P4 keep 3.
+- Decision (P1): "Verified by" values are unit, integration, contract, e2e, execution, and manual with a reason. A criterion without the field stays valid and reports `unspecified` / reason: the testing-standards types plus P4 verify by execution, and no file gets rewritten.
+- Decision (P1): the P3 requirement-ID scan is an agent check, not a script / reason: P4 runs the same scan by agent today.
