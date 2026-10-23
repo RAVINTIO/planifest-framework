@@ -350,7 +350,7 @@ ADR files: [plan/_archive/0000035-write-gate-scope-and-path-hardening-2026-10-22
 
 ### Feature 0000036: pipeline-friction-and-gate-fixes
 
-ADR files: [plan/current/adr/](../plan/current/adr/)
+ADR files: [plan/_archive/0000036-pipeline-friction-and-gate-fixes-2026-10-23/adr/](../plan/_archive/0000036-pipeline-friction-and-gate-fixes-2026-10-23/adr/)
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|

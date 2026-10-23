@@ -4,6 +4,7 @@
 **Pipeline run:** P0 to P6 in `autonomous` mode. No phases skipped. P7 to P9 follow.
 **Date:** 2026-10-23
 **Wave:** 1 (one wave, eleven backlog entries)
+**PR:** pending, updated after the PR is raised
 
 ## What Was Built
 

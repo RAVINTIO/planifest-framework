@@ -293,8 +293,8 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-23T00:13:18Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-23T00:20:19Z` |
+| Wall-clock | `7` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent |
@@ -307,3 +307,8 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 - Changelog: `plan/changelog/0000036-pipeline-friction-and-gate-fixes-2026-10-23.md` from P6, with a `PR` line added.
 - `.skips`: none.
 - Decision (P7): promote no regression candidate / reason: no 0000036 suite carries a `# REGRESSION-CANDIDATE:` tag, and the three tagged 0000033 suites are already in the regression pack.
+- Test report: `plan/changelog/0000036-pipeline-friction-and-gate-fixes-test-report-2026-10-23.md`. 11 requirement suites pass, and the regression pack passes 33 of 33.
+- Step 5b: `product.yml: version "0.34.0", feature "0000036-pipeline-friction-and-gate-fixes"` (exit 0).
+- Step 6: `archive-current.mjs` moved 31 items and printed `archive-dir: plan/_archive/0000036-pipeline-friction-and-gate-fixes-2026-10-23` (exit 0). `plan/current/` is empty. The script removes `.feature-id` by path, so Step 3's marker had no effect.
+- Step 6b: `docs/about.md` already holds version `0.34.0`, this feature, and `23 Oct 2026` from P6.
+- Progress: P7 done at 2026-10-23T00:20:19Z: plan archived, product.yml set to 0.34.0
