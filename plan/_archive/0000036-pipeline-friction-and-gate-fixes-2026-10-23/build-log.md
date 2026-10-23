@@ -337,8 +337,8 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-23T00:21:44Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-23T00:23:03Z` |
+| Wall-clock | `1` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent |
@@ -346,3 +346,10 @@ Auto-accepted: updating the following docs: `docs/about.md`, `docs/architecture-
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | `Exception waiting` line present, so the PR goes up as a draft. |
+
+- Marker step: `8640e5f`. No marker stays tracked.
+- Tag: `v0.34.0` from `product-version.mjs` (exit 0), pushed.
+- PR: https://github.com/planifest/planifest-framework/pull/62 (draft). CI pending at report time.
+- Clean-tree check: committed 1 file, the changelog PR-URL edit (`6417ac7`).
+- Final report: `final-report.md` in the archive.
+- Progress: P9 done at 2026-10-23T00:23:03Z: v0.34.0 tagged, draft PR #62 raised, one exception waiting
