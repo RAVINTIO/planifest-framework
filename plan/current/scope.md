@@ -34,9 +34,7 @@ version: "0.1.0"
 
 ## Deferred
 
-Nothing deferred.
-
-Amended (P1): two items are deferred.
+Two items are deferred.
 
 - Backlog 0000193 tracks a gap in P9. The Step 11 push of `final-report.md` starts a CI run on a head that P9 never reads. Until 0000193 lands, the check covers only the head that P9 reads.
 - Backlog 0000199 tracks a gap in CI. CI fetches no tags, so the tag check in req-008 skips until 0000199 lands.

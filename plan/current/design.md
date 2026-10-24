@@ -29,6 +29,7 @@
 
 ## Architecture Layer
 - Latency target: P9 waits at most 20 minutes for checks, then reports them as pending
+- CI before P4 (run decision, P1): the workflow runs only on `pull_request`, so the orchestrator raises a draft PR for this branch once P3 pushes its first code commit. Each later push runs CI on it, so P3 and P4 see the Windows legs. P9 Step 10 reuses the open PR for the branch and marks it ready. It never raises a second PR.
 - Red-check handling (confirmed at P0): P9 writes the PR number to the build log before it waits. On a failing check, P9 fixes it on the feature branch and pushes again, up to 3 attempts, then raises an exception-list item. A `cancelled` or timed-out check reads as unknown, never as a pass. A status that can't be read is reported, and the run doesn't read as done.
 - Availability target: not applicable (local tooling)
 - Scalability target: not applicable

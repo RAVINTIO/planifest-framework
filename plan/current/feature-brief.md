@@ -96,8 +96,7 @@ Unchanged from 0000036.
 - Changes to the consumer workflow copy at `planifest-framework/hooks/planifest.yml`.
 
 ### Deferred
-- Nothing deferred.
-- Amended (P1): two items are deferred. Backlog 0000193 covers the unread CI run that the Step 11 `final-report.md` push starts. Backlog 0000199 covers the CI checkout that fetches no tags.
+- Two items are deferred. Backlog 0000193 covers the unread CI run that the Step 11 `final-report.md` push starts. Backlog 0000199 covers the CI checkout that fetches no tags.
 
 ## Non-Functional Requirements
 

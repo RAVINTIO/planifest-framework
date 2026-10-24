@@ -133,6 +133,9 @@ Streams (start commit `c8b1036`):
 - P1 iteration 1 fixes: five agents fixed every major and minor finding by file owner. The orchestrator fixed `design.md` and the brief, and aligned the GUTD lookup to `--limit 10` with the newest `mergedAt`.
 - Decision (P1): new risk R-023 for the Git Bash cap / reason: the P3 measurement is the only control, so the risk needs a row.
 - Decision (P1): a criterion with both `Verified by` forms must name the same type / reason: added by the req-006 fix agent, and it keeps the scan unambiguous.
+- Design critic P1 iteration 2: REJECT (1 critical, 2 major, 5 minor). 18 of 20 iteration 1 findings resolved, 3 partly.
+- Decision (P1): the orchestrator raises a draft PR once P3 pushes its first code commit, so CI runs the Windows legs before P4, and P9 Step 10 reuses that PR and marks it ready / reason: the workflow runs only on `pull_request` (critic C1), and custom-001 allows `gh pr create` without asking.
+- Decision (P1): the indented `Verified by:` line governs, and non-enum inline text is ignored / reason: critic J2 found the same-type rule flags 9 of 11 files.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
