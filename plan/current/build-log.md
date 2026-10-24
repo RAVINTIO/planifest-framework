@@ -284,3 +284,4 @@ Decision (P6): the pointer section tells P0 to load both files, every phase tran
 Decision (P6): the M-2 absence checks read `SKILL.md` and the reference files together / reason: each check stays at least as strong as before the move
 Decision (P6): `setup.ps1` writes `SKILL.md` and reference files with `WriteAllText` and a UTF-8 encoding with no BOM / reason: Windows PowerShell 5.1 adds a BOM for `Set-Content -Encoding UTF8`, ahead of the frontmatter
 Process note (P6): the fix agent confirmed M-1 RED by stashing `SKILL.md` for one run. No other agent was running, and `git stash list` is empty.
+Cross-model review (P6, iteration 2): REJECT on `claude-opus-5-5` (implementers `claude-sonnet-5-5`), 0 critical, 1 major, 2 minor. M-1: the per-gate Skill Map update and the interactive `Gate accepted:` line still load only at P0. Iteration 1 M-2, m-1, m-2, m-3, and m-5 are fixed. Suite 152 of 152. See `plan/current/cross-model-review-iteration-2.md`.
