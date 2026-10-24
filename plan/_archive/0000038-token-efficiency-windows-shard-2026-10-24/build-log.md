@@ -339,8 +339,8 @@ Progress: P8 done at 2026-10-24T22:19:36Z: build-report.md filed
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T22:19:36Z` |
-| End | `PENDING_P9_END` |
-| Wall-clock | PENDING |
+| End | `2026-10-24T22:33:06Z` |
+| Wall-clock | 14 |
 | Streams | n/a |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent |
@@ -348,4 +348,11 @@ Progress: P8 done at 2026-10-24T22:19:36Z: build-report.md filed
 | MCP calls | 0 |
 | Parallel task batches | 0 |
 | Notes | none |
+
+Credential scan (P9): PR text clean (regex only)
+PR: #65 https://github.com/RAVINTIO/planifest-framework/pull/65
+Decision (P9): PR #65 stays a draft / reason: the build log holds one `Exception waiting` line, and the ship skill raises or keeps the PR as a draft while one waits
+CI checks (P9): all passed (13 of 13 checks, head f8e3143)
+Clean-tree check: clean
+Progress: P9 done at 2026-10-24T22:33:06Z: tag v0.36.0 pushed, CI all passed, PR #65 draft with one exception waiting
 
