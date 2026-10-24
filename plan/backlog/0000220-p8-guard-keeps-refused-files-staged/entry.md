@@ -1,7 +1,7 @@
 ---
 title: "Backlog Entry: 0000220 - P8 guard keeps refused files staged"
 summary: "The ship skill P8 credential guard leaves a refused staged file in the index, unlike the new held-back rule."
-status: "open"
+status: "closed"
 ---
 # Backlog Entry: 0000220 - P8 guard keeps refused files staged
 
@@ -25,3 +25,9 @@ Decide whether the P8 guard should also unstage refused files, and align the req
 ## Why Deferred
 
 The P8 guard and its req-013 suite are outside the F-04 to F-12 fix scope. Changing them needs its own decision about the clean-tree check.
+
+---
+
+## Resolution
+
+P5 fix 2 closed this entry. The P8 guard now unstages a refused file with `git restore --staged -- {path}` and logs a held-back line. The P7 archive commit unstages held-back paths and scans before it commits. The PR text steps run in one shell call.

@@ -169,4 +169,22 @@ assert_contains 'git diff --name-only' "$S10C" "req-001: the fix-attempt scan co
 assert_contains "exception item 7" "$S10C" "req-001: Step 10c stops under exception item 7"
 assert_contains "exception item 7" "$S11" "req-001: Step 11 stops under exception item 7"
 
+echo "req-001: P8 guard and P7 commit follow the held-back rule (P5 re-review N-01, N-02, N-04)"
+P8CHECK="$(step '### P8: Clean-tree check' "$SHIP")"
+STEP7="$(step '### Step 7' "$SHIP")"
+assert_contains 'git restore --staged -- {path}' "$P8CHECK" "req-001: the P8 guard unstages a refused file"
+assert_contains "stay uncommitted" "$P8CHECK" "req-001: the P8 guard keeps the stay uncommitted phrase"
+assert_contains 'Credential scan (P8): held back {path}' "$P8CHECK" "req-001: the P8 guard logs a held-back line"
+lacks "stays staged" "$P8CHECK" "req-001: the P8 guard no longer leaves a refused file staged"
+assert_contains 'held back {path}' "$STEP7" "req-001: Step 7 reads the held-back lines"
+assert_contains 'git restore --staged -- {path}' "$STEP7" "req-001: Step 7 unstages held-back paths"
+assert_contains 'credential-scan.mjs' "$STEP7" "req-001: Step 7 runs the credential scan"
+assert_contains 'exits 0' "$STEP7" "req-001: Step 7 commits only on exit 0"
+SCAN7="$(line_of 'credential-scan.mjs' <(printf '%s\n' "$STEP7"))"
+COMMIT7="$(line_of 'git commit -m "plan(p7)' <(printf '%s\n' "$STEP7"))"
+assert_equals "yes" "$([[ -n "$SCAN7" && -n "$COMMIT7" && "$SCAN7" -lt "$COMMIT7" ]] && echo yes || echo no)" "req-001: Step 7 scans before it commits"
+assert_contains 'git rm --cached -- {path}' "$PCS" "req-001: a repository with no commit uses git rm --cached"
+assert_contains 'could not resolve HEAD' "$PCS" "req-001: the standard names the no-HEAD failure"
+assert_contains 'one shell call' "$(step '**PR text scan' "$SHIP")" "req-001: PR text steps run in one shell call"
+
 print_summary

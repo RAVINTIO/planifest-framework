@@ -154,8 +154,19 @@ Commit the archive, changelog, `docs/about.md`, and `product.yml` to the branch 
 ```
 git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 if [ -f product.yml ]; then git add product.yml; fi
+git restore --staged -- {held-back-path} ...
+node planifest-framework/scripts/credential-scan.mjs
 git commit -m "plan(p7): archive plan/current" -m "{feature-id}"
 ```
+
+In `autonomous`, the guard sits between the `git add` and the `git commit`:
+
+1. Read each `Credential scan (P{N}): held back {path}` line in `{archive-dir}/build-log.md`.
+2. Run `git restore --staged -- {path}` for each named path. In a repository with no commit, run `git rm --cached -- {path}`. A directory add can stage a held-back file again. Skip the command when no line exists.
+3. Run the scan. Staged mode scans the whole index.
+4. Run the `git commit` only when the scan exits 0. On exit `1` or `2`, stop under exception item 7.
+
+This is the one commit that uses the index and not a path list. The archive step moves many files, so a path list is impractical. The unstaging and the exit 0 scan keep the index free of held-back files.
 
 ## P8: Build Assessment
 
@@ -195,7 +206,7 @@ The script holds the one list of credential patterns. It also runs `gitleaks` wh
 
 The script refuses these file names: `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `.npmrc`, `credentials.json`, `*.keystore`, and `.netrc`. If this list and the script differ, the script wins.
 
-Refused files stay uncommitted. A refused file stays uncommitted, and a refused file that is staged stays staged. The clean-tree check lists it as a leftover again, and the guard refuses it again. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
+Refused files stay uncommitted. A refused file stays uncommitted. For each refused path, run `git restore --staged -- {path}` so the file leaves the index. In a repository with no commit, use the fallback in the pre-commit credential scan rule of `planifest-framework/standards/autonomous-run-standards.md`. The working-tree copy stays as it is. A staged refused file would make every later scan exit 1, so it must not stay in the index. Write `Credential scan (P8): held back {path}` in the P8 block. The clean-tree check lists the file as a leftover again, and the guard refuses it again. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
 - **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
@@ -303,7 +314,7 @@ git push -u origin HEAD
 gh pr view --json number,url,isDraft
 ```
 
-**PR text scan (0000037 ADR-004):** Before any `gh pr create` or `gh pr edit`, create one temp folder with `PRTMP="$(mktemp -d)"`. The folder has mode 0700. Write the PR title and the PR description into it with the Write tool, as `$PRTMP/pr-title.txt` and `$PRTMP/pr-body.md`. The body is the PR description, see template below. A file outside the repository cannot reach a commit. Scan each file:
+**PR text scan (0000037 ADR-004):** Before any `gh pr create` or `gh pr edit`, create one temp folder with `PRTMP="$(mktemp -d)"`. The folder has mode 0700. Run `mktemp`, the scans, and the `gh` call in one shell call, because `PRTMP` may not persist between calls. If a run must split them, write the folder path in the P9 block of the build log so a later call can remove it. Write the PR title and the PR description into it with the Write tool, as `$PRTMP/pr-title.txt` and `$PRTMP/pr-body.md`. The body is the PR description, see template below. A file outside the repository cannot reach a commit. Scan each file:
 
 ```bash
 node planifest-framework/scripts/credential-scan.mjs --file {path}
