@@ -20,6 +20,13 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 FRAMEWORK_SRC="$(cd "$SCRIPT_DIR/.." && pwd)"
 HOOKS="$FRAMEWORK_SRC/hooks"
 ENF="$HOOKS/enforcement"
+# Node reads a Git Bash path such as /d/a/x as D:\d\a\x, so the import lines
+# below use a file URL built from the Windows form of the path when pwd -W exists.
+ENF_NODE="$(cd "$ENF" && { pwd -W 2>/dev/null || pwd; })"
+case "$ENF_NODE" in
+  /*) ENF_URL="file://$ENF_NODE" ;;
+  *)  ENF_URL="file:///$ENF_NODE" ;;
+esac
 
 # readStdin callers: every hook in hooks/enforcement/ that reads a payload on
 # stdin.
@@ -110,7 +117,7 @@ assert_contains 'process.stdin.on("error"' "$(cat "$ENF/read-stdin.mjs")" \
 # used in place of process substitution because node on Windows throws while
 # it opens the /dev/fd path that process substitution gives under Git Bash.
 SETTLE=$(sleep 2 | node --input-type=module -e "
-  import { readStdin } from '$ENF/read-stdin.mjs';
+  import { readStdin } from '$ENF_URL/read-stdin.mjs';
   let settled = 'HUNG';
   readStdin().then(() => { settled = 'RESOLVED'; }, () => { settled = 'REJECTED'; });
   setTimeout(() => process.stdin.emit('error', new Error('synthetic stdin failure')), 50);
@@ -122,7 +129,7 @@ assert_equals "REJECTED" "$SETTLE" \
 # End-to-end, in the exact shape a hook uses it: await inside a try/catch that
 # exits 0. The shared version must reach the catch and exit 0.
 sleep 2 | node --input-type=module -e "
-  import { readStdin } from '$ENF/read-stdin.mjs';
+  import { readStdin } from '$ENF_URL/read-stdin.mjs';
   setTimeout(() => process.stdin.emit('error', new Error('synthetic stdin failure')), 50);
   try { await readStdin(); process.exit(0); } catch { process.exit(0); }
 " >/dev/null 2>&1
