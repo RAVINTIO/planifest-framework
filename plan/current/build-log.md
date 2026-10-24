@@ -230,4 +230,6 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Decision (P3): the req-001 and req-002 execution tests run the documented `gh` commands against a stub `gh` / reason: no script runs the poll (ADR-001).
 - Deviation (P3, unclassified): the P8 guard now calls `credential-scan.mjs` in place of its inline `grep` and `gitleaks` commands (req-003). Five assertions in `test-0000033-req-013-clean-close-out.sh` and its regression copy still expect the inline commands, so both suites fail until the orchestrator moves those assertions to the script.
 - Decision (P3): the orchestrator moved the five `test-0000033-req-013` assertions, and their regression copies, from the inline `grep` and `gitleaks` commands to `credential-scan.mjs`, and runs the script on the same fixtures / reason: the protection stays, and req-003 makes the script the one pattern list. Both suites pass (71 each).
+- Credential scan (P3): draft PR title and body, regex only (gitleaks not found), both exit 0.
+Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - Deviation (P3, unclassified): the req-001 execution check covers the read command and the exit-1-with-JSON case, not the whole poll, because no script runs the poll.
