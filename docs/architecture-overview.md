@@ -435,7 +435,7 @@ Phase 0 and Adoption Modes moved out of `skills/planifest-orchestrator/SKILL.md`
 - `phase-0-assess-and-coach.md`
 - `adoption-modes.md`
 
-`SKILL.md` keeps one pointer section. At the start of P0, the orchestrator reads both files and logs `P0 references loaded: {paths}`. Resume Detection reads them again when the run is still at P0. A run past P0 never loads them. Setup copies `references/` with the skill and rewrites `../` links in those files, as it does for `SKILL.md`. Both setup scripts read the files as UTF-8.
+`SKILL.md` keeps one pointer section. At the start of P0, the orchestrator reads both files and logs `P0 references loaded: {paths}`. Resume Detection reads them again when the run is still at P0. A run past P0 reloads only the `### Capability Skills` section of the Phase 0 file, at each phase transition. Setup copies `references/` with the skill. In a skill's own reference files, setup rewrites only `../standards/` links. In `SKILL.md`, it also rewrites `../templates/` and `../schemas/`. Both setup scripts read the files as UTF-8 and write them without a BOM.
 
 ### Model tiers for Claude Code
 

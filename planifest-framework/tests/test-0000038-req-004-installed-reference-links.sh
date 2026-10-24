@@ -73,4 +73,14 @@ SKILL_READ='Get-Content -Path $skillMdPath -Raw -Encoding UTF8'
 assert_equals "yes" "$(grep -qF -- "$REF_READ" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each reference file as UTF-8"
 assert_equals "yes" "$(grep -qF -- "$SKILL_READ" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each SKILL.md as UTF-8"
 
+# Windows PowerShell 5.1 adds a BOM for Set-Content -Encoding UTF8, which sits ahead of the frontmatter.
+REF_WRITE='WriteAllText($destRef, $refContent, (New-Object System.Text.UTF8Encoding $false))'
+SKILL_WRITE='WriteAllText($skillMdPath, $skillContent, (New-Object System.Text.UTF8Encoding $false))'
+BOM_WRITE='Set-Content -Path $destRef'
+BOM_SKILL_WRITE='Set-Content -Path $skillMdPath'
+assert_equals "yes" "$(grep -qF -- "$REF_WRITE" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 writes each reference file without a BOM"
+assert_equals "yes" "$(grep -qF -- "$SKILL_WRITE" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 writes each SKILL.md without a BOM"
+assert_equals "no" "$(grep -qF -- "$BOM_WRITE" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 does not use Set-Content for reference files"
+assert_equals "no" "$(grep -qF -- "$BOM_SKILL_WRITE" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 does not use Set-Content for SKILL.md"
+
 print_summary

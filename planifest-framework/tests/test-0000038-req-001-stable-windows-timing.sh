@@ -46,12 +46,15 @@ for suite in "${SUITES[@]}"; do
   label="req-001: $(basename "$(dirname "$suite")")/$(basename "$suite")"
   case "$suite" in
     *req-009*)
-      body="$(cat "$suite")"
+      # Strip comment lines so a comment can't satisfy a code check.
+      body="$(grep -v '^[[:space:]]*#' "$suite")"
       assert_equals "absent" "$([[ "$body" == *"run < 3"* ]] && echo present || echo absent)" \
         "$label has no best-of-three loop"
       assert_equals "absent" "$([[ "$body" == *"Math.min(best"* ]] && echo present || echo absent)" \
         "$label takes no best result"
-      assert_equals "present" "$([[ "$body" == *"warm-up"* ]] && echo present || echo absent)" \
+      # The warm-up is a second spawnSync call, so count code calls, not the word.
+      spawns="$(printf '%s\n' "$body" | grep -c 'spawnSync(process.execPath' || true)"
+      assert_equals "present" "$([ "${spawns:-0}" -ge 2 ] && echo present || echo absent)" \
         "$label makes a warm-up call"
       ;;
     *)

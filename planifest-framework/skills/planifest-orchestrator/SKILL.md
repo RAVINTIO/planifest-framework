@@ -247,7 +247,14 @@ At the start of P0, before any P0 action, read both files in full:
 - [phase-0-assess-and-coach.md](./references/phase-0-assess-and-coach.md)
 - [adoption-modes.md](./references/adoption-modes.md)
 
-Then append `P0 references loaded: {paths}` to the build log. Before the P0 to P1 gate passes, confirm that line exists. Load neither file after P0, unless a reversal reopens P0.
+Then append `P0 references loaded: {paths}` to the build log. Before the P0 to P1 gate passes, confirm that line exists. A reversal that reopens P0 reloads both.
+
+Three rules in the Phase 0 file apply after P0:
+- At every phase transition and before P3, read its `### Capability Skills` section again. It holds the skills-inbox check and the intake procedure.
+- The recommend-then-confirm rule in its `### How you coach` section applies in every phase.
+- Where the moved text says "above" for Context Hygiene or the mid-pipeline change protocol, it means that section of this file.
+
+Read nothing else from either file after P0.
 
 ---
 
@@ -280,7 +287,7 @@ In `autonomous`, each gate runs as a loop with a fresh-context checker per `stan
 
 If streams are active, each P1 to P4 gate runs once over the joined streams, not once per stream. See `## Parallel Streams` in `standards/agent-dispatch-standards.md`.
 
-**Before P3 specifically:** check the declared stack against installed capability skills (see Capability Skills above) and recommend loading any relevant ones; the human confirms which to load. Then apply the Subagent Decomposition Directive for every requirement: the codegen-agent (and other phase agents) MUST decompose hard or multi-step work into subagents rather than attempting it inline: consult `## Skill Map` in `plan/current/design.md` for the best-fit skill per requirement (falling back to the available skill library via the Model Tier Decision Table if the map is absent or the requirement is new), select model tier per that table, then dispatch per the Agent Dispatch Template.
+**Before P3 specifically:** check the declared stack against installed capability skills (see `### Capability Skills` in `references/phase-0-assess-and-coach.md`) and recommend loading any relevant ones; the human confirms which to load. Then apply the Subagent Decomposition Directive for every requirement: the codegen-agent (and other phase agents) MUST decompose hard or multi-step work into subagents rather than attempting it inline: consult `## Skill Map` in `plan/current/design.md` for the best-fit skill per requirement (falling back to the available skill library via the Model Tier Decision Table if the map is absent or the requirement is new), select model tier per that table, then dispatch per the Agent Dispatch Template.
 
 **Design-critic (toggle `design_critic`):** at the P1 and P2 gates, when `report-only` or `on`, spawn a fresh-context `planifest-design-critic` subagent before the gate summary (maker–checker, ADR-006): over the P1 artifacts alone at P1, over the combined P1+P2 set at P2 (running `scripts/consistency-check.mjs` first, then its REJECT-default rubric). Report-only: write the critic's verdict line to the P1 or P2 build-log block and present it with the gate summary. The verdict blocks nothing and changes no artifact, and the human on the loop takes no step to dismiss it. On: REJECT returns artifacts for revision per `planifest-loop-runner` (cap 3). The loop runner's Toggle Protocol sets the defaults (0000036 ADR-009). In `autonomous`, an absent key reads as `on`. Outside `autonomous`, an absent key or an absent `loop-toggles.yml` reads as `report-only`. The P1 Toggle record then shows `design_critic: report-only (absent default)`.
 

@@ -35,7 +35,10 @@ for mode in Greenfield "Standard Iterative" Retrofit "External Anchor"; do
 done
 
 # the old Greenfield "No discovery pass needed" line is gone
-assert_equals "no" "$(grep_has "No discovery pass needed" "$AM_REF")" \
+ORCH_ALL="$(mktemp)"
+trap 'rm -f "$ORCH_ALL"' EXIT
+cat "$ORCHESTRATOR" "$P0_REF" "$AM_REF" > "$ORCH_ALL"
+assert_equals "no" "$(grep_has "No discovery pass needed" "$ORCH_ALL")" \
   "req-006: Greenfield no-discovery exemption removed"
 
 # ── AC-1: discovery runs before coaching (Phase 0 Start Actions step) ────────

@@ -26,6 +26,10 @@ FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 # The Scope Lock Challenge moved to the Phase 0 reference file (0000038 req-004).
 ORCH_SKILL="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 SCOPE_LOCK_SKILL="$FRAMEWORK/skills/planifest-scope-lock-agent/SKILL.md"
+# Absence checks read SKILL.md and the reference file together.
+ORCH_ALL="$(mktemp)"
+trap 'rm -f "$ORCH_ALL"' EXIT
+cat "$FRAMEWORK/skills/planifest-orchestrator/SKILL.md" "$ORCH_SKILL" > "$ORCH_ALL"
 
 # Local file-content assertions. Deliberately do NOT use assert_contains
 # (from helpers/assert.sh) here: it prints the full haystack on failure,
@@ -128,13 +132,13 @@ assert_file_contains "$ORCH_SKILL" "does not alter" \
 echo ""
 echo "=== req-007: orchestrator SKILL.md — opt-in-per-question is no longer the primary flow ==="
 
-assert_file_not_contains "$ORCH_SKILL" "ask each of these four questions **one at a time**" \
+assert_file_not_contains "$ORCH_ALL" "ask each of these four questions **one at a time**" \
   "orchestrator: no longer asks the four scenario-path questions one at a time by default"
 
-assert_file_not_contains "$ORCH_SKILL" "Never pre-draft a suggested answer automatically. Until the human explicitly asks for one" \
+assert_file_not_contains "$ORCH_ALL" "Never pre-draft a suggested answer automatically. Until the human explicitly asks for one" \
   "orchestrator: no longer states drafts are never pre-made until explicitly requested"
 
-assert_file_not_contains "$ORCH_SKILL" "Suggested-answer option (ADR-003 — always offered, only drafted on explicit request)" \
+assert_file_not_contains "$ORCH_ALL" "Suggested-answer option (ADR-003 — always offered, only drafted on explicit request)" \
   "orchestrator: old offer-then-opt-in section header is gone"
 
 # =============================================================================

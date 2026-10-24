@@ -84,6 +84,21 @@ assert_contains "P0 references loaded: {paths}" "$POINTER" "req-004: pointer wri
 assert_contains "P0 to P1 gate" "$POINTER" "req-004: pointer checks the log line before the P0 to P1 gate"
 
 echo ""
+echo "=== req-004: rules that apply after P0 stay reachable ==="
+lacks "Load neither file after P0" "$POINTER" "req-004: pointer no longer bars every later read"
+assert_contains "At every phase transition and before P3" "$POINTER" "req-004: pointer re-reads Capability Skills at each transition and before P3"
+assert_contains '`### Capability Skills`' "$POINTER" "req-004: pointer names the Capability Skills section"
+assert_contains "skills-inbox check" "$POINTER" "req-004: pointer names the skills-inbox check"
+assert_contains '`### How you coach`' "$POINTER" "req-004: pointer names the coaching section"
+assert_contains "recommend-then-confirm" "$POINTER" "req-004: pointer says recommend-then-confirm applies in every phase"
+assert_contains "applies in every phase" "$POINTER" "req-004: pointer scopes recommend-then-confirm to every phase"
+assert_contains "it means that section of this file" "$POINTER" "req-004: pointer explains the cross-file 'above' wording"
+assert_contains "Context Hygiene" "$POINTER" "req-004: pointer names Context Hygiene as an 'above' target"
+assert_contains "mid-pipeline change protocol" "$POINTER" "req-004: pointer names the change protocol as an 'above' target"
+lacks "Capability Skills above" "$SKILL_TEXT" "req-004: no dangling 'Capability Skills above' cite in SKILL.md"
+assert_contains "in \`references/phase-0-assess-and-coach.md\`)" "$SKILL_TEXT" "req-004: the pre-P3 cite names the reference file"
+
+echo ""
 echo "=== req-004: Resume Detection reloads at P0 ==="
 RESUME=$(awk '/^## Resume Detection/{f=1; next} f && /^## /{exit} f' "$ORCH")
 assert_contains "still at P0" "$RESUME" "req-004: Resume Detection covers a run still at P0"

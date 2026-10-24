@@ -177,7 +177,7 @@ function Copy-PlanifestSkills {
             $skillContent = $skillContent -replace '\.\./standards/reference/', './references/reference/'
             $skillContent = $skillContent -replace '\.\./standards/', './references/'
             $skillContent = $skillContent -replace '\.\./schemas/', './assets/schemas/'
-            Set-Content -Path $skillMdPath -Value $skillContent -NoNewline -Encoding UTF8
+            [System.IO.File]::WriteAllText($skillMdPath, $skillContent, (New-Object System.Text.UTF8Encoding $false))
 
             Write-Host "  + $skillName/SKILL.md"
             
@@ -198,7 +198,7 @@ function Copy-PlanifestSkills {
                     $refContent = Get-Content -Path $destRef -Raw -Encoding UTF8
                     $refContent = $refContent -replace '\.\./standards/reference/', './reference/'
                     $refContent = $refContent -replace '\.\./standards/', './'
-                    Set-Content -Path $destRef -Value $refContent -NoNewline -Encoding UTF8
+                    [System.IO.File]::WriteAllText($destRef, $refContent, (New-Object System.Text.UTF8Encoding $false))
                 }
             }
 
