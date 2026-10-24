@@ -183,7 +183,7 @@ The commit runs only after a scan that exits 0, or exits 1 with a non-empty out-
    ```
    Agent({
      subagent_type: "general-purpose",
-     model: "claude-haiku-4-5",
+     model: "haiku",
      description: "Build assessment for {feature-id}",
      prompt: "Load the planifest-build-assessment-agent skill. Archive path: {archive-dir}/. Read build-log.md from the archive and write build-report.md to the same directory. Confirm with P8: Complete when done."
    })
