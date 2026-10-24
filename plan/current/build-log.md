@@ -172,3 +172,9 @@ Decision (P3): the ship agent sets the 0.36.0 version at P9 / reason: `set-produ
 Stream (P3): stream-04-boot at join. req-007 RED exit 1, GREEN exit 0. Commits `a35b0b8` and `9b85d49`.
 Decision (P3): stream-04 tests the boot template with an md5 of every line except the new directive / reason: no other line can change unnoticed
 Decision (P3): the orchestrator points the 0000035 req-007 and req-010 migration suites at the 0.36.0 migration and raises their counts from ten to eleven / reason: 0000037 made the same change for 0.35.0, and the 0.35.0 migration now has its record
+Stream (P3): stream-02-dispatch at join. req-002 and req-006 each RED exit 1, GREEN exit 0. Commit `5d869a8`.
+Decision (P3): stream-02 writes the Claude Code cells as plain `sonnet` and `haiku` and drops "or latest" / reason: the allowlist test needs exact values
+Decision (P3): stream-02 adds the floor as one `**Size floor:**` paragraph, identical in both files / reason: the test compares the two texts byte for byte
+Decision (P3): stream-02 declares no cross-stream artifact. Its two proposed declarations are used only inside its own files / reason: a declaration with no other consumer is a reconciliation finding
+Decision (P3): stream-02 leaves `component.yml` unbumped, and the ship agent bumps it at P9 / reason: one owner for the version
+Process note (P3): stream-02 tried a `git stash` in the shared tree. The permission system denied it, and `git stash list` is empty.
