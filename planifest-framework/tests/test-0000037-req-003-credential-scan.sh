@@ -192,4 +192,16 @@ assert_contains "stays uncommitted" "$GUARD" "req-003: P8 guard leaves the file 
 STEP10B="$(awk '/^### Step 10b/ { on = 1 } on && /^## / { exit } on { print }' "$SHIP")"
 assert_contains "credential-scan.mjs" "$STEP10B" "req-003: Step 10b guard calls the script"
 
+echo "req-003: a held-back file stays staged and shows in the clean-tree check"
+R="$(new_repo heldback)"
+mkdir -p "$R/docs"
+printf 'key %s\n' "$SECRET" >"$R/docs/leak.md"
+(cd "$R" && git add docs/leak.md)
+run_scan "$R" "$BIN" -- docs/leak.md
+assert_equals "1" "$RC" "req-003: the scan holds back a staged file with a credential"
+lacks "$SECRET" "$OUT" "req-003: the held-back report prints no matched value"
+CLEAN="$(cd "$R" && git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**')"
+assert_contains "docs/leak.md" "$CLEAN" "req-003: the held-back file shows in the clean-tree check"
+assert_equals "A " "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: the held-back file stays staged"
+
 print_summary

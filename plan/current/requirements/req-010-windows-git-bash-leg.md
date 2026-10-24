@@ -45,6 +45,7 @@ As a framework maintainer, I see the suite run on Windows under Git Bash, so tha
   - Amended (P2): in the 20 branch, the test expects the expression `${{ matrix.os == 'windows-latest' && 20 || 10 }}`, and the 0000031 suite accepts it (ADR-014).
   - Verified by: integration - shell suite over the workflow text, `test-0000037-req-010-windows-git-bash-leg.sh`
 - [ ] The `Test suite (windows-latest)` check passes on the feature PR. (Verified by: CI run on the PR, read through `gh pr checks`)
+  - Amended (P4): the Windows leg runs as seven checks, `Test suite (windows-latest, shard N of 7)` for N from 1 to 7 (ADR-014). All seven pass on the feature PR. The CI run itself is the e2e test, and `plan/current/verification-report.md` records its result.
   - Amended (P1): the check is green on the draft PR's CI run for the P4 head commit, before P4 starts. P9 Step 10 reuses that PR and marks it ready.
   - Verified by: e2e - CI run on the feature PR, read through `gh pr checks`
 - [ ] Every suite that skips on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`. No guard exists without a row, and no row exists without a guard. (Verified by: static test comparing the guards with the table rows)

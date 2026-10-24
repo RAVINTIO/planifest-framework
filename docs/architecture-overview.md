@@ -144,16 +144,24 @@ Self-modification sequencing (ADR-004) governs how such a change is applied to h
 
 ## Continuous integration (0000031)
 
-`.github/workflows/planifest.yml` runs four jobs on every pull request to `main`.
+`.github/workflows/planifest.yml` runs five jobs on every pull request to `main`.
 
 | Job | Runner | What it checks |
 |-----|--------|----------------|
 | `validate-branch` | `ubuntu-latest` | A change under `src/` also touches `plan/`, `docs/`, or a `component.yml` |
 | `self-description-check` | `ubuntu-latest` | The README matches the repository structure (0000019) |
-| `test-suite` | `ubuntu-latest` and `macos-latest`, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
+| `test-suite` | `ubuntu-latest`, `macos-latest`, and `windows-latest` under Git Bash in seven shards, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
 | `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.planifest-setup-flags` marker checks |
+| `setup-powershell-51` | `windows-latest`, Windows PowerShell 5.1 | `test_setup.ps1` passes under 5.1, including the live stale clean-up and retired-flag checks (0000037) |
 
-The `test-suite` and `setup-powershell` jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Both declare `permissions: contents: read` and `timeout-minutes: 10` (0000031-ADR-003). Windows PowerShell 5.1 has no CI coverage (0000031-ADR-001).
+These three test jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Each declares `permissions: contents: read`, no secrets, and the `pull_request` trigger (0000031-ADR-003).
+
+Feature 0000037 changed the platform matrix (ADR-012, ADR-013, and ADR-014 of that feature):
+
+- Windows PowerShell 5.1 is a supported runtime for `setup.ps1`, tested by `setup-powershell-51`.
+- The suite runs on Windows under Git Bash. `run-tests.sh` reads `PLANIFEST_SHARD_INDEX` and `PLANIFEST_SHARD_COUNT`, so the Windows leg runs in seven shards.
+- Each Windows shard has `timeout-minutes: 20`. Every other job keeps 10.
+- A suite check that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`.
 
 A red check doesn't block a merge until branch protection marks it as required. Only the human on the loop can change that setting.
 

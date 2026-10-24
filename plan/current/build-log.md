@@ -291,3 +291,6 @@ Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 
 - Lint (P4): `node --check` passes on 27 of 27 `.mjs` files, and `bash -n` passes on 158 of 158 `.sh` files. The repository has no other linter, type checker, or build step.
 - Decision (P4): the workflow YAML is validated by GitHub running it on PR #64 / reason: no local YAML parser is installed, and the run parsed and ran every job.
+- Semantic coverage (P4): 33 criteria. 27 covered, 3 deferred to verify by execution, and 3 uncovered (AC 003.3, AC 010.2, AC 011.3). All 11 feature suites pass.
+- Cycle 1 (P4): Check: semantic. Error: 3 uncovered criteria. Root cause: no suite asserted the held-back clean-tree listing, the shard split renamed the Windows check, and the architecture overview still said 5.1 had no CI coverage. Fix: a held-back fixture in the req-003 suite, an `Amended (P4)` line on AC 010.2, and an updated CI section in `docs/architecture-overview.md` with assertions in the req-011 suite. Result: pass (30 covered, 3 deferred, 0 uncovered).
+- Decision (P4): cycle 1 runs without a loop-state file / reason: it closed in one pass, and the build log and `validation-report.md` hold the cycle record.

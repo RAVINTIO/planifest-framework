@@ -97,4 +97,10 @@ assert_equals "yes" "$(yes_no "ErrorActionPreference[[:space:]]*=[[:space:]]*'Co
 assert_equals "yes" "$(yes_no 'finally' "$GUARD_FN")" "req-011: guardrails restore ErrorActionPreference in a finally block"
 assert_equals "yes" "$(yes_no 'git config core\.hooksPath planifest-framework/hooks[[:space:]]+2>&1' "$GUARD_FN")" "req-011: git config merges stderr so it never reaches the error stream"
 
+echo "== req-011: architecture overview names the 5.1 runtime and job =="
+DOC_TEXT="$(cat "$REPO_ROOT/docs/architecture-overview.md")"
+assert_equals "yes" "$(yes_no 'setup-powershell-51' "$DOC_TEXT")" "req-011: the architecture overview lists the setup-powershell-51 job"
+assert_equals "yes" "$(yes_no 'Windows PowerShell 5\.1 is a supported runtime' "$DOC_TEXT")" "req-011: the architecture overview names 5.1 as a supported runtime"
+assert_equals "no" "$(yes_no 'Windows PowerShell 5\.1 has no CI coverage' "$DOC_TEXT")" "req-011: the architecture overview drops the old no-coverage line"
+
 print_summary
