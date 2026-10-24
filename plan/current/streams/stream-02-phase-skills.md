@@ -2,7 +2,7 @@
 stream-id: "stream-02-phase-skills"
 kind: stream
 start-commit: "c8b1036"
-status: active
+status: at-join
 phase: P2
 requirements: [req-005, req-006]
 stories: [US-005, US-006]
@@ -16,7 +16,7 @@ updated: "2026-10-24T00:15:11Z"
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
 | P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:32:32Z | 1 | at-join |
-| P2 | 2026-10-24T00:33:53Z | pending | 1 | pending |
+| P2 | 2026-10-24T00:33:53Z | 2026-10-24T00:36:18Z | 1 | at-join |
 
 ## Files changed
 

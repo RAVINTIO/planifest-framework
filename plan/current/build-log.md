@@ -178,3 +178,7 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 | Notes | One ADR agent per stream, because ADRs in a stream cite each other. ADR-001 records the unchanged stack. |
 
 - Rule breach (P2): the orchestrator ran `sed -i` on the four stream files, against the Write-or-Edit rule (boot Hard Limit 8). It reverted the change with `git checkout` before any commit and made it again through Edit.
+- Streams returned 14 ADRs: ADR-001 to ADR-005 (stream 01), ADR-006 to ADR-008 (stream 02), ADR-009 to ADR-011 (stream 03), and ADR-012 to ADR-014 (stream 04). No backlog entry filed. Consistency check clean.
+- Decision (P2): each ADR carries a `## Governs` or "Requirements governed" section listing requirement IDs / reason: the template has no field for them.
+- Decision (P2): ADR-014 records the 20-minute Git Bash cap as a conditional decision, and P3 logs `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}` / reason: P3 needs no return to P2.
+- Decision (P2): the run-level draft PR ("CI before P4") gets no ADR / reason: it changes no shipped framework text, and `design.md` records it.

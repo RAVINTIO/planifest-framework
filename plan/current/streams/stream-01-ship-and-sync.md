@@ -2,7 +2,7 @@
 stream-id: "stream-01-ship-and-sync"
 kind: stream
 start-commit: "c8b1036"
-status: active
+status: at-join
 phase: P2
 requirements: [req-001, req-002, req-003, req-004]
 stories: [US-001, US-002, US-003, US-004]
@@ -16,7 +16,7 @@ updated: "2026-10-24T00:15:11Z"
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
 | P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:32:32Z | 1 | at-join |
-| P2 | 2026-10-24T00:33:53Z | pending | 1 | pending |
+| P2 | 2026-10-24T00:33:53Z | 2026-10-24T00:36:18Z | 1 | at-join |
 
 ## Files changed
 
