@@ -61,6 +61,7 @@ assert_equals "yes" "$(yes_no 'Major[[:space:]]*-lt[[:space:]]*7' "$J7")" "req-0
 echo "== req-011: consumer copy unchanged =="
 assert_equals "no" "$(yes_no 'setup-powershell-51|test_setup\.ps1' "$(cat "$CONSUMER_WORKFLOW")")" "req-011: consumer workflow does not mention the 5.1 job"
 
+# BEGIN retired-integrations (0000037 req-011 checks on the 0000030 clean-up fixtures)
 echo "== req-011: test_setup.ps1 clean-up section =="
 assert_equals "yes" "$(yes_no 'hooks[\\/]telemetry' "$PS1_TEXT")" "req-011: seeds the stale hook folder .claude/hooks/telemetry"
 assert_equals "yes" "$(yes_no 'context-mode' "$PS1_TEXT")" "req-011: seeds a stale context-mode settings.json entry"
@@ -71,6 +72,7 @@ assert_equals "yes" "$(yes_no 'LASTEXITCODE|\$\?' "$PS1_TEXT")" "req-011: assert
 assert_equals "yes" "$(yes_no -- '--context-mode-mcp was removed in 0\.29\.0 and has no effect' "$PS1_TEXT")" "req-011: asserts the notice substring"
 assert_equals "yes" "$(yes_no 'exactly one|Count -ne 1' "$PS1_TEXT")" "req-011: asserts exactly one notice line"
 assert_equals "yes" "$(yes_no 'FAIL: req-011' "$PS1_TEXT")" "req-011: failure messages name req-011"
+# END retired-integrations
 assert_equals "yes" "$(yes_no 'FAIL: req-011: .*planifest-setup-flags' "$PS1_TEXT")" "req-011: checks .planifest-setup-flags for the retired flag"
 assert_equals "yes" "$(yes_no 'FAIL: req-011: .*(stale|survive|hand-added)' "$PS1_TEXT")" "req-011: asserts the clean-up and the surviving hook"
 

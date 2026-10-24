@@ -223,6 +223,7 @@ try {
     # req-011 (feature 0000037): seed a stale Claude Code state, run a retired flag,
     # and check the clean-up runs live. Runs under PowerShell 7 and Windows PowerShell 5.1.
     # The seed copies the fixtures from test-0000030-req-004-install-clean-up-and-retired-flags.sh.
+    # BEGIN retired-integrations (0000037 req-011 fixtures for the 0000030 clean-up)
     Write-Host "--- Testing: req-011 stale clean-up and retired flag ---"
     $staleDir = Join-Path $testDir 'req-011'
     New-Item -ItemType Directory -Path (Join-Path $staleDir '.claude\hooks\telemetry') -Force | Out-Null
@@ -286,6 +287,7 @@ try {
         throw "FAIL: req-011: the retired flag appears in .planifest-setup-flags (found: '$staleMarker')"
     }
     Write-Host "  PASS: req-011: .planifest-setup-flags holds no retired flag"
+    # END retired-integrations
 
     Write-Host "SUCCESS: All setup.ps1 tests passed."
 }
