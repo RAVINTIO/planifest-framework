@@ -788,12 +788,19 @@ function Invoke-PlanifestGuardrails {
     # "fatal: not in a git directory", so relax the preference for this call only.
     $savedErrorAction = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
+    $hooksPathSet = $false
     try {
         git config core.hooksPath planifest-framework/hooks 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { $hooksPathSet = $false } else { $hooksPathSet = $true }
     } finally {
         $ErrorActionPreference = $savedErrorAction
     }
-    Write-Host "  + git config core.hooksPath planifest-framework/hooks"
+    if (-not $hooksPathSet) {
+        # Match setup.sh: warn and carry on, but never report guardrails as active.
+        Write-Host "  ! Warning: not in a git repository, skipping core.hooksPath config"
+    } else {
+        Write-Host "  + git config core.hooksPath planifest-framework/hooks"
+    }
 
     # Note: chmod is not available on Windows; hooks are made executable by setup.sh on Unix.
     # On Windows, Git for Windows respects the executable bit stored in the repo,
@@ -828,7 +835,9 @@ function Invoke-PlanifestGuardrails {
         }
     }
 
-    Write-Host "  $([char]0x2705) Git guardrails activated."
+    if ($hooksPathSet) {
+        Write-Host "  $([char]0x2705) Git guardrails activated."
+    }
 }
 
 function Initialize-PlanifestRepo {

@@ -124,6 +124,34 @@ NEST_OUT="$(PLANIFEST_SHARD_INDEX=1 PLANIFEST_SHARD_COUNT=2 bash "$NEST/run-test
 assert_equals "yes" "$(yes_no 'nested-index=\[unset\] nested-count=\[unset\]' "$NEST_OUT")" "req-010: a suite run by a sharded runner sees no shard variables"
 rm -rf "$NEST"
 
+echo "== req-010: invalid shard values fail closed (security review F-01) =="
+# Run the fixture runner with a shard pair and print its exit status.
+shard_rc() {
+  PLANIFEST_SHARD_INDEX="$1" PLANIFEST_SHARD_COUNT="$2" bash "$FIX/run-tests.sh" >/dev/null 2>&1
+  echo $?
+}
+shard_msg() {
+  PLANIFEST_SHARD_INDEX="$1" PLANIFEST_SHARD_COUNT="$2" bash "$FIX/run-tests.sh" 2>&1 >/dev/null
+}
+assert_equals "2" "$(shard_rc 08 09)" "req-010: index 08 and count 09 exit 2 (no octal reading)"
+assert_equals "2" "$(shard_rc 09 09)" "req-010: index 09 and count 09 exit 2"
+assert_equals "2" "$(shard_rc 01 07)" "req-010: a leading zero on a valid number exits 2"
+assert_equals "2" "$(shard_rc 1 99999999999999999999)" "req-010: a 20-digit count exits 2"
+assert_equals "2" "$(shard_rc 1 100)" "req-010: a count of 100 exits 2"
+assert_equals "2" "$(shard_rc 0 4)" "req-010: an index of 0 exits 2"
+assert_equals "2" "$(shard_rc 1 0)" "req-010: a count of 0 exits 2"
+assert_equals "2" "$(shard_rc 5 4)" "req-010: an index above the count exits 2"
+assert_equals "2" "$(shard_rc a 4)" "req-010: a non-numeric index exits 2"
+assert_equals "2" "$(shard_rc -1 4)" "req-010: a negative index exits 2"
+assert_equals "yes" "$(yes_no 'PLANIFEST_SHARD' "$(shard_msg 08 09)")" "req-010: an invalid value prints a message naming the variables"
+# Eight suite slots exist. Shard 9 of 9 selects position 9, so it runs nothing.
+ZERO_RC="$(shard_rc 9 9)"
+assert_equals "yes" "$([ "$ZERO_RC" != "0" ] && echo yes || echo no)" "req-010: a shard that runs zero suites exits non-zero"
+assert_equals "yes" "$(yes_no 'no suites|zero suites|0 suites' "$(shard_msg 9 9)")" "req-010: a zero-suite shard prints a message"
+assert_equals "0" "$(shard_rc 8 9)" "req-010: a valid shard with a suite still exits 0"
+assert_equals "0" "$(shard_rc 1 99)" "req-010: a count of 99 is accepted"
+assert_equals "yes" "$(yes_no 'Suites run: [0-9]+' "$(PLANIFEST_SHARD_INDEX=2 PLANIFEST_SHARD_COUNT=4 bash "$FIX/run-tests.sh" 2>&1)")" "req-010: the summary prints the count of suites run"
+
 echo "== req-010: every skip guard has a skip table row =="
 # One row per guard and one guard per row (the README says so). A guard is a
 # line that prints SKIP (windows): in a test-*.sh suite or its regression copy.

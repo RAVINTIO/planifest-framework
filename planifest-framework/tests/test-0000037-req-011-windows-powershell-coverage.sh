@@ -97,6 +97,18 @@ assert_equals "yes" "$(yes_no "ErrorActionPreference[[:space:]]*=[[:space:]]*'Co
 assert_equals "yes" "$(yes_no 'finally' "$GUARD_FN")" "req-011: guardrails restore ErrorActionPreference in a finally block"
 assert_equals "yes" "$(yes_no 'git config core\.hooksPath planifest-framework/hooks[[:space:]]+2>&1' "$GUARD_FN")" "req-011: git config merges stderr so it never reaches the error stream"
 
+echo "== req-011: a failed git config warns and skips the success lines (security review F-02) =="
+assert_equals "yes" "$(yes_no 'LASTEXITCODE' "$GUARD_FN")" "req-011: guardrails read LASTEXITCODE after git config"
+assert_equals "yes" "$(yes_no 'LASTEXITCODE[[:space:]]+-ne[[:space:]]+0' "$GUARD_FN")" "req-011: guardrails test for a non-zero git config exit"
+assert_equals "yes" "$(yes_no '! Warning: not in a git repository' "$GUARD_FN")" "req-011: guardrails print the setup.sh warning on failure"
+assert_equals "yes" "$(yes_no 'skipping core\.hooksPath config' "$GUARD_FN")" "req-011: the warning says core.hooksPath config is skipped"
+# The success lines must sit in the else branch of the exit-code test.
+HOOKS_OK_LINE="$(grep -n '+ git config core\.hooksPath' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"
+EXIT_TEST_LINE="$(grep -n 'LASTEXITCODE' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"
+assert_equals "yes" "$([ -n "$EXIT_TEST_LINE" ] && [ -n "$HOOKS_OK_LINE" ] && [ "$EXIT_TEST_LINE" -lt "$HOOKS_OK_LINE" ] && echo yes || echo no)" "req-011: the exit-code test comes before the core.hooksPath success line"
+assert_equals "yes" "$(yes_no 'Git guardrails activated' "$GUARD_FN")" "req-011: guardrails still print the activated line when git config succeeds"
+assert_equals "yes" "$(yes_no 'hooksActive|\$hooksPathSet' "$GUARD_FN")" "req-011: the activated line depends on a recorded git config result"
+
 echo "== req-011: architecture overview names the 5.1 runtime and job =="
 DOC_TEXT="$(cat "$REPO_ROOT/docs/architecture-overview.md")"
 assert_equals "yes" "$(yes_no 'setup-powershell-51' "$DOC_TEXT")" "req-011: the architecture overview lists the setup-powershell-51 job"

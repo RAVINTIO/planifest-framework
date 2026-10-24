@@ -51,7 +51,7 @@ if (-not (Test-Path ".[tool-dir]\skills")) {
 
 ## Windows skip table
 
-A suite that cannot run under Git Bash on `windows-latest` returns exit 0 early on Windows only. It prints `SKIP (windows): {reason}` first. Each guard tests the platform (`uname -s` reports `MINGW*`, `MSYS*`, or `CYGWIN*`). Each guard has one row here, and each row has one guard.
+A suite that cannot run every check under Git Bash on `windows-latest` skips the checks it names and runs the rest. It prints `SKIP (windows): {reason}` when it skips. Each guard tests the platform (`uname -s` reports `MINGW*`, `MSYS*`, or `CYGWIN*`). Each guard has one row here, and each row has one guard.
 
 | Suite | Reason | Date |
 |-------|--------|------|
