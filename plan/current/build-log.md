@@ -194,3 +194,25 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 - Design critic P2 iteration 3: APPROVE (0 critical, 0 major, 3 minor). Loop closed as `done` at 2026-10-24T00:43:58Z. The orchestrator fixed all three minor findings after the loop disarmed.
 - Gate summary (P2): 14 ADRs, one per significant decision. ADR-001 records the unchanged stack. ADR-012, ADR-013, and ADR-014 amend 0000031 ADR 001 and, conditionally, 0000031 ADR 003. Join reconciled clean. Consistency check clean.
 Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic in 3 iterations
+
+---
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T00:44:58Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `4` |
+| Model tier | primary |
+| Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer, planifest-refactor |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Capability skills: none apply to Bash, PowerShell, Node, and GitHub Actions. Baseline suite run started before any change. |
+
+- Decision (P3): each stream agent runs the test-writer, implementer, and refactor steps inline for each requirement, recording the RED and GREEN exit codes / reason: a dispatched subagent can't dispatch its own subagents.
+- Decision (P3): batch 1 runs W1 (stream 01: req-003, then req-001, req-004, req-002), W2 (stream 02: req-006), W3 (stream 03: req-007 to req-009), and W4 (stream 04: req-010 and req-011 workflow and test edits) / reason: these units share no file.
+- Decision (P3): req-005 waits for batch 2 / reason: it edits `skills/planifest-orchestrator/SKILL.md` and `standards/autonomous-run-standards.md`, which W1 also edits.
+- Decision (P3): the Git Bash failing-suite fixes wait for the draft PR's first CI run, in batch 2 / reason: the failures are unknown until CI runs on Windows, and req-009 edits the same suite files in batch 1.
