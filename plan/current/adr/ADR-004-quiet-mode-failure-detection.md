@@ -1,6 +1,6 @@
 ---
 title: "ADR 004: Quiet mode counts a suite failed on exit code or a FAIL line"
-summary: "In quiet mode run-tests.sh captures each suite to a temporary file. A suite fails when it exits non-zero, ends by signal or timeout, or prints a FAIL line while exiting 0. Default output stays byte-identical."
+summary: "In quiet mode run-tests.sh captures each suite to a temporary file. A suite fails when it exits non-zero, ends by signal or timeout, or prints a FAIL line while exiting 0. Each FAIL line carries the suite name, which is the only suite marker, and a trap on INT and TERM prints the running suite if the runner is stopped. Default output stays byte-identical."
 status: "accepted"
 version: "0.1.0"
 ---
@@ -33,6 +33,13 @@ Constraints (req-003, NFR-003, NFR-005):
 4. For a failed suite the runner prints each captured `FAIL:` line, prefixed with the suite name. If `rc` is non-zero and there is no `FAIL:` line, it prints one synthetic line, `FAIL: {suite} exited {rc} with no FAIL line`. A signal or timeout appears in that line as the exit code.
 5. The runner prints no `PASS` line and no suite header. It prints the failed-suite list and the totals block, with the same wording as default mode.
 6. The runner adds no timeout of its own. A timeout counts as failed only when something outside the runner ends the suite, and the runner then sees a non-zero code.
+6a. Quiet mode sets a `trap` on `INT` and `TERM`. If something ends the runner itself, a hung suite stays visible. On either signal the trap:
+   - prints the running suite's name and its captured `FAIL:` lines, in the format of rule 4
+   - prints the failed-suite list, with the running suite added
+   - removes the capture file
+   - exits non-zero
+   The trap adds no timeout and runs only in quiet mode.
+6b. The suite-name prefix on each `FAIL:` line is the only suite marker in quiet mode. The trap output uses the same format.
 7. The default branch keeps the current code path untouched, so default output is byte-identical. An integration test compares default output before and after on a fixture suite directory.
 8. The refactor, validate, and codegen skills run the full suite with `--quiet`. On a failure they rerun only the failing suite in full, with `bash {suite}`.
 
@@ -69,13 +76,13 @@ Decision (P2): a capture error counts as a failed suite / reason: unknown never 
 - Output shows only after a suite ends, so a long suite looks silent.
 
 **Risks:**
-- A suite that prints `FAIL:` as test data (for example when it tests a fixture runner) reads as failed in quiet mode. A P3 scan of the existing suites checks for this, and the test writer adjusts any suite found.
+- A suite that prints `FAIL:` as test data (for example when it tests a fixture runner) reads as failed in quiet mode. A P3 scan of the existing suites checks for this. For any suite found, the change may alter only the printed text. It never alters an assertion or an exit path.
 - Capture files on Windows Git Bash use `/tmp` paths. The `mktemp` call matches the other suites.
 
 ## Related ADRs
 
 - ADR-001 - depends-on (Bash only)
-- 0000037 ADR-014 - related-to (the shard and CI legs call the runner without the flag)
+- The Git Bash cap that feature 0000037 set - related-to (the shard and CI legs call the runner without the flag)
 
 ## Supersedes
 
