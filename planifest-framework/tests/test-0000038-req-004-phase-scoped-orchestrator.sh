@@ -110,7 +110,8 @@ assert_contains "adoption-modes.md" "$RESUME" "req-004: Resume Detection reloads
 
 echo ""
 echo "=== req-004: size (NFR-002) ==="
-SIZE=$(wc -c < "$ORCH" | tr -d ' ')
+# Count the committed LF bytes. Git for Windows can check the file out with CRLF.
+SIZE=$(tr -d '\r' < "$ORCH" | wc -c | tr -d ' ')
 assert_equals "under" "$([ "$SIZE" -lt 41500 ] && echo under || echo over)" \
   "req-004: SKILL.md is under 41,500 bytes (now $SIZE)"
 
