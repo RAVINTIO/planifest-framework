@@ -15,7 +15,7 @@ status: "active"
 | Loop id | `cross_model_review` |
 | Owning phase | `P6` |
 | Toggle level | `on` |
-| Iteration | `1` of cap `3` |
+| Iteration | `2` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `continue` |
