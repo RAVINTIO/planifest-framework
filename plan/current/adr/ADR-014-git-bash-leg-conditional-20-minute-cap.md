@@ -34,10 +34,10 @@ P2 writes this decision now so P3 needs no return to P2. This is a conditional d
 - The first draft-PR CI run (run 40047595064, PR #64) measured about 38 of about 140 suites in 10 minutes on `windows-latest`. The job hit its 10-minute cap. The condition in decision 2 fired, and the 20 branch applies.
 - A full run needs about 37 minutes at that rate, which is past 20. Decision 6 therefore applies too. P3 shards the Windows leg four ways, each shard with `timeout-minutes: 20`.
 - `planifest-framework/tests/run-tests.sh` reads `PLANIFEST_SHARD_INDEX` (1-based) and `PLANIFEST_SHARD_COUNT`. When both are set, it runs the suites whose position in the sorted feature-plus-regression list satisfies `(position - 1) % count == index - 1`. It prints one line naming the shard. With neither set, it behaves as before.
-- `test-suite` keeps one ubuntu leg and one macOS leg at 10 minutes. It adds four `windows-latest` entries through `include`, each with a `shard` value from 1 to 4. The job sets `timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}`.
+- `test-suite` keeps one ubuntu leg and one macOS leg at 10 minutes. It adds `windows-latest` entries through `include`, each with a `shard` value. The first pass used four, and the shipped workflow uses seven (see the update below). The job sets `timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}`.
 - Update after the fourth CI run: four shards put the four slowest setup suites in one shard, at positions 18, 26, 30, and 38. That shard reached its 20-minute cap. `test-0000030-req-004` alone takes about 10 minutes on Windows. P3 moves to seven shards, which places those four suites in four different shards. Backlog 0000213 tracks duration-weighted sharding, since a position split drifts as suites are added.
-- The line 45 assertion in `test-0000031-req-001-003-ci-jobs.sh` accepts that expression as well as the plain `10`. `test-0000037-req-010-windows-git-bash-leg.sh` expects the 20 branch and the four shard entries, and tests the shard selection against dummy suites.
-- Check names change for the Windows leg to `Test suite (windows-latest, shard N of 4)`.
+- The line 45 assertion in `test-0000031-req-001-003-ci-jobs.sh` accepts that expression as well as the plain `10`. `test-0000037-req-010-windows-git-bash-leg.sh` expects the 20 branch and the seven shard entries, and tests the shard selection against dummy suites.
+- Check names change for the Windows leg to `Test suite (windows-latest, shard N of 7)`.
 - Cost: CI minutes per PR rise above the R-013 estimate.
 
 ## Alternatives Considered

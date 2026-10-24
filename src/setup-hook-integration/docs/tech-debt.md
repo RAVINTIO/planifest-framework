@@ -56,3 +56,4 @@ These items covered tests of a hook integration that setup no longer installs.
 
 **File:** `.github/workflows/planifest.yml`
 **Status:** Partly resolved in 0000031. CI now runs the suite on Linux and macOS and `test_setup.ps1` under PowerShell 7 on Windows. Stale-entry clean-up and retired flags still have no live PowerShell test, see Q-013.
+**Resolved in 0000037.** The req-011 section of `test_setup.ps1` runs the stale clean-up and a retired flag live under PowerShell 7 and Windows PowerShell 5.1. Backlog 0000203 tracks a remaining byte order mark under 5.1.

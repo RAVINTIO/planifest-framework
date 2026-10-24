@@ -38,7 +38,7 @@ version: "0.1.0"
 | Migration branch-diff test | The test that compares a re-run-setup migration's file list with the release diff. | | planifest-framework |
 | Portability lint | The lint in the suite that flags tool use that behaves differently on GNU and BSD systems, such as `grep -r` without `-H`. | | planifest-framework |
 | Working-directory independence | The rule that every suite runs correctly from any working directory. | | planifest-framework |
-| Git Bash leg | The CI job that runs the suite on a Windows runner under Git Bash. | Git Bash suite leg | planifest-framework |
+| Git Bash leg | The CI checks that run the suite on a Windows runner under Git Bash. They run as seven shards, each named `Test suite (windows-latest, shard N of 7)` (ADR-014). | Git Bash suite leg | planifest-framework |
 | Windows PowerShell 5.1 leg | The CI job that runs `setup.ps1` under Windows PowerShell 5.1. | PowerShell 5.1 leg | setup-hook-integration |
 | Live PowerShell test | A test in `test_setup.ps1` that runs the stale clean-up and a retired-flag path for real under PowerShell, not through a stub. | | setup-hook-integration |
 | Stale clean-up path | The path in `setup.ps1` that cleans up an earlier install. | | setup-hook-integration |

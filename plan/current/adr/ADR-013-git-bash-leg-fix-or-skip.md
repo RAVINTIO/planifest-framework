@@ -21,7 +21,7 @@ A fix-all rule can stall the feature on one suite. A skip-all rule hides defects
 
 ## Decision
 
-1. `windows-latest` joins the `matrix.os` list of the `test-suite` job. The leg runs `bash planifest-framework/tests/run-tests.sh` with `shell: bash` set on the step.
+1. `windows-latest` joins the `test-suite` job. The leg runs `bash planifest-framework/tests/run-tests.sh` with `shell: bash` set on the step. ADR-014's applied branch delivers it as seven sharded `include` entries, not one `matrix.os` value.
 2. The job keeps `fail-fast: false`, `permissions: contents: read`, no secrets, and the `pull_request` trigger. It stays in this repository's workflow, and `planifest-framework/hooks/planifest.yml` does not change. The cap is `timeout-minutes: 10` unless ADR-014 applies.
 3. Each suite that fails on the Windows leg gets exactly one outcome, a fix or a skip.
    - Fix the suite when one portable change resolves a tool or path difference and no assertion weakens. Examples are `mktemp` paths, `grep -r` without `-H`, and CRLF.

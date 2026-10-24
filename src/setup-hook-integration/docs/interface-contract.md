@@ -49,6 +49,13 @@ Failure behaviour, in every case with exit 0:
 
 <!-- END retired-integrations (0000030) -->
 
+## Windows PowerShell 5.1 (0000037)
+
+`setup.ps1` runs under PowerShell 7 and Windows PowerShell 5.1 with the same inputs and outputs (0000037-ADR-012). Two behaviours matter to a caller:
+
+- `Merge-AllowedTools` parses `settings.json` through `ConvertTo-PlanifestHashtable`, since 5.1 has no `ConvertFrom-Json -AsHashtable`.
+- `Invoke-PlanifestGuardrails` checks the exit code of `git config core.hooksPath`. If the call fails, for example outside a git repository, setup prints a warning, continues, and does not print the guardrails-activated line. `setup.sh` behaves the same way.
+
 ## OpenCode setup
 
 `setup/opencode.sh` now parses and writes `opencode.json` with Node and the shared settings helpers, not `jq`. A malformed `opencode.json` stays byte-identical and setup warns (F1). If you run `setup/opencode.sh` on its own, it leaves an existing `opencode.json` unchanged and prints a warning, because the helpers come from `setup.sh`.

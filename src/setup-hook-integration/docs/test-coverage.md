@@ -13,6 +13,8 @@
 - Basic tool target setup (claude-code, cursor, etc.) — covered by `test_setup.sh`
 - `.planifest-setup-flags` marker write, content, per-tool directory, no-write-on-failure (REQ-008, 0000020), 21 live-invocation assertions, `test-0000020-req-008-install-time-marker-write.sh`
 - Install clean-up and retired flags (0000030 REQ-004, NFR-002), 220 live-invocation assertions, `test-0000030-req-004-install-clean-up-and-retired-flags.sh`. It covers the retired-flag notice and exit 0, the marker without retired flags, every clean-up step and its output, the malformed-file byte-identical skip, the Node-missing skip, the parent-path containment check (F3), failed delete and rename (F4), the exclusive temporary file and mode (F5), the opencode `opencode.json` skip (F1), and static checks of the PowerShell source (F2)
+- Windows PowerShell 5.1 and the stale clean-up (0000037 req-011), `test-0000037-req-011-windows-powershell-coverage.sh` (29 assertions) and the req-011 section of `test_setup.ps1`, which runs live under PowerShell 7 and 5.1. It covers the retired-flag notice, the stale folder and entry removal, the surviving hand-added hook, and the marker.
+- Installed hook commands (0000037 req-007), `test-0000037-req-007-wired-command.sh` (22 assertions). It runs the generated `settings.json` commands for `gate-write`, `shell-write-guard`, and `auto-trigger-orchestrator` verbatim through `bash -c`.
 - Removed files and residue (0000030 REQ-001, REQ-002, NFR-001), `test-0000030-req-001-002-removed-files-and-residue.sh`
 <!-- BEGIN retired-integrations (0000030) -->
 - Telemetry pipeline text removal (0000030 REQ-003), `test-0000030-req-003-telemetry-pipeline-text-removal.sh`
@@ -35,7 +37,7 @@ The feature deleted every test of the removed telemetry and context-mode integra
 - `check-design.mjs` enforcement: no automated tests
 - Setup.ps1 correctness — partially covered by `test_setup.ps1`
 - `Write-SetupFlagsMarker` (setup.ps1, 0000020), run live by the Windows CI job since 0000031. `test_setup.ps1` checks every marker field (Q-006, resolved).
-- The `setup.ps1` clean-up and `Write-SettingsFile` (0000030) run live in the Windows CI job on a fresh install, with nothing stale to remove. The clean-up of stale entries and the retired-flag branch are still checked statically only (Q-013).
+- The `setup.ps1` clean-up and `Write-SettingsFile` (0000030) run live in the Windows CI jobs. Since 0000037, the stale-entry clean-up and the retired-flag branch run live under PowerShell 7 and 5.1 (Q-013, resolved). The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
 
 ## Recommendation
 
