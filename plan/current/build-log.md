@@ -396,6 +396,33 @@ Exception waiting (P6, 2): confirm or reverse the held-back rule that a stopped 
 - Setup re-run (P6, final): exit 0, drift check 21 skills matching. Revalidation (P6): P4 steps 0 to 5, pass, cycle 4: 142 of 142 suites pass, and the consistency check is clean.
 - Gate summary (P6): every living doc and both manifests updated, recommendations and changelog written, the 0.35.0 migration applied with its record, and the post-P6 revalidation green. The deviation review classed 3 deviations as altering, logged as exceptions. The cross-model review approved on iteration 2.
 Progress: P6 done at 2026-10-24T11:15:33Z: docs complete, cross-model review approved, 3 exceptions waiting
+
+---
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T11:16:09Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `1` |
+| Notes | Run mode from `run-mode.mjs`: autonomous. |
+
+- Cross-reference check (P7): 0 Markdown links point into `plan/current/`. The other `plan/current/` mentions in `docs/` name the framework's working folder, not this feature's files. `docs/decisions-index.md` already links the archive path.
+- Step 1 (P7): the changelog `plan/changelog/0000037-green-ci-before-ship-2026-10-24.md` exists from P6. Its `PR` field names PR #64.
+- Step 2 (P7): no `.skips` file.
+- Decision (P7): promote `test-0000037-req-003-credential-scan.sh` to the regression pack / reason: it tests the scan script's contract by running it, which stays stable across skill rewording.
+- Decision (P7): promote `test-0000037-req-003-archive-held-back.sh` to the regression pack / reason: it runs the real archive script and scan-then-commit on fixtures, which guards against a credential reaching a commit.
+- Step 4 (P7): `promote-to-regression.sh` promoted both suites with promoter `agent`, exit 0 each. The regression copies pass (165 and 143), and the pack now holds 35 suites.
+- Step 5 (P7): test report written to `plan/changelog/0000037-green-ci-before-ship-test-report-2026-10-24.md`.
+- Step 5b (P7): `product.yml: version "0.35.0", feature "0000037-green-ci-before-ship"` (exit 0).
+- Decision (P7): don't promote `test-0000037-req-001-p9-ci-check.sh`, `test-0000037-req-002-gutd-ci-check.sh`, or `test-0000037-req-004-pr-body-scan.sh` / reason: they assert skill text, so a rewording breaks them without a behaviour change.
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
