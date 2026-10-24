@@ -35,7 +35,7 @@
 - Security: no auth change. The credential scan covers staged files and the PR body. Data classification: repository text, with credentials treated as secret.
 - Data privacy: no regulated data
 - Observability: each check writes one build-log line (`CI checks (P9): ...`, `Credential scan (P{N}): ...`, `Revalidation (P6): ...`)
-- Cost boundary: CI minutes for three new Windows legs, each capped at 10 minutes
+- Cost boundary: CI minutes for two new Windows legs (`windows-latest` in the `test-suite` matrix and the `setup-powershell-51` job), each capped at 10 minutes unless the req-010 measurement raises the Git Bash leg to 20
 
 ## Engineering Layer
 - Stack: unchanged. Bash, PowerShell, Node ES module hooks and scripts, Markdown, GitHub Actions. Build target: local.
@@ -63,6 +63,9 @@
   - Any merge by the agent
   - Changes to the consumer workflow at `planifest-framework/hooks/planifest.yml`
 - Deferred: nothing deferred
+- Amended (P1), deferred items:
+  - Backlog 0000193: the Step 11 push of `final-report.md` starts a CI run on a head that P9 never read. The P9 check covers the head P9 read.
+  - Backlog 0000199: the CI checkout fetches no tags, so the req-008 check skips in CI until that entry lands. It runs locally in the post-P6 revalidation.
 - Release size: three-story rule. 11 stories from 10 backlog entries, confirmed by the human on the loop as one run, above the rule.
 
 ## Assumptions
@@ -77,7 +80,8 @@
 - The Git Bash leg fails many suites on first run (likelihood high, impact medium). Mitigation: fix or skip each suite with a recorded reason, per 0000093.
 - Windows PowerShell 5.1 differs from PowerShell 7 in encoding and JSON handling (likelihood medium, impact medium). Mitigation: guard each difference in `setup.ps1` and test it.
 - The credential scan flags false positives and stops an `autonomous` run (likelihood medium, impact low). Mitigation: a stop names the file and line, and the human on the loop clears it.
-- `gh pr checks --watch` waits on a slow or queued runner (likelihood medium, impact low). Mitigation: a 20-minute cap, then report checks as pending.
+- The P9 poll of `gh pr checks --json` waits on a slow or queued runner (likelihood medium, impact low). Mitigation: a 20-minute cap with a 30-second poll, then report checks as pending.
+- The Git Bash leg passes its 10-minute cap, and a timeout reads as unknown (likelihood medium, impact medium). Mitigation: P3 measures the first run. If it passes 10 minutes, an ADR raises that leg to 20 minutes and amends 0000031 ADR 003 for that leg only. Sharding is the second fallback.
 - Eleven stories in one run stretch P3 and P4 (likelihood medium, impact medium). Mitigation: parallel streams split by file ownership.
 
 ## Dependencies

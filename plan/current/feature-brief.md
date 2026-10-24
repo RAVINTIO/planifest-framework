@@ -12,7 +12,7 @@ version: "0.1.0"
 
 ## Business Goal
 
-PR #62 merged with a failing `Test suite (ubuntu-latest)` check, and no agent reported it. The pipeline must not report a run as done while CI is red, and the suites must catch defects on every platform the framework supports. The goal is that every PR the ship agent raises has green checks, or a reported failure, before the final report.
+PR #62 merged with a failing `Test suite (ubuntu-latest)` check, and no agent reported it. The pipeline must not report a run as done while CI is red, and the suites must catch defects on every platform the framework supports. The goal is that the head P9 reads on every PR the ship agent raises has green checks, or a reported failure, before the final report.
 
 ## Features
 
@@ -97,12 +97,13 @@ Unchanged from 0000036.
 
 ### Deferred
 - Nothing deferred.
+- Amended (P1): two items are deferred. Backlog 0000193 covers the unread CI run that the Step 11 `final-report.md` push starts. Backlog 0000199 covers the CI checkout that fetches no tags.
 
 ## Non-Functional Requirements
 
 | NFR | Target | Measurement |
 |-----|--------|-------------|
-| CI wait | P9 waits at most 20 minutes for checks | `gh pr checks --watch` with a timeout |
+| CI wait | P9 waits at most 20 minutes for checks | `gh pr checks --json` polled every 30 seconds |
 | CI job time | Each new job keeps `timeout-minutes: 10` | Workflow file |
 | Security | No secrets in CI and `permissions: contents: read` | Workflow file, per 0000031-ADR-003 |
 

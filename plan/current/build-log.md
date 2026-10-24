@@ -126,6 +126,10 @@ Streams (start commit `c8b1036`):
 - Decision (P1): the portability lint is a new suite with a `# portable-ok: {reason}` marker, and a `sha256_of` helper replaces bare `shasum` / reason: `run-tests.sh` finds the suite, and the marker records each exemption.
 - Measured (P1): from `planifest-framework/tests/`, 1 of 130 suites fails (`test-0000010`). From `/tmp`, 2 fail, one of them intermittent (`test-0000035-req-001`). The lint flags 19 lines today.
 - Backlog filed (P1): 0000199 (the CI checkout fetches no tags, so req-008's check skips in CI). 0000200 and 0000201 stay unused.
+- Design critic P1 iteration 1: REJECT (0 critical, 9 major, 11 minor). Mechanical check clean.
+- Deviation (P1, unclassified): backlog 0000193 and 0000199 move to Deferred in `design.md`, `scope.md`, and the brief, and the brief's goal now covers the head P9 read / reason: the critic found both gaps sat nowhere in the confirmed artifacts.
+- Decision (P1): a corrected criterion gets an indented `Amended (P1):` line, and each criterion gets an indented `Verified by: {type} - {detail}` line / reason: the armed ratchet blocks changes to existing criterion lines.
+- Decision (P1): if the Git Bash leg passes 10 minutes, an ADR raises that leg's cap to 20 minutes and amends 0000031 ADR 003 for that leg only / reason: a timeout reads as unknown, so the PR would never read as done.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
