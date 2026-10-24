@@ -315,3 +315,37 @@ Decision (P7): the ship agent bumped component.yml to 0.36.0 with Edit, and the 
 archive-current: archive-dir: plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24 (plan/current/ now empty)
 Deviation (P7, additive): the ship agent appended the P7 block and three log lines to `plan/current/build-log.md` with shell `printf >>`, which breaks Hard Limit 8. The text is log-only, and no hook blocked it. Later log edits use Edit.
 Progress: P7 done at 2026-10-24T22:17:06Z: changelog, test report, product.yml 0.36.0, and archive written
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T22:17:29Z` |
+| End | `2026-10-24T22:19:36Z` |
+| Wall-clock | 2 |
+| Streams | n/a |
+| Model tier | cheaper (`haiku`) |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | 1 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Notes | none |
+
+Clean-tree check: clean
+Progress: P8 done at 2026-10-24T22:19:36Z: build-report.md filed
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T22:19:36Z` |
+| End | `PENDING_P9_END` |
+| Wall-clock | PENDING |
+| Streams | n/a |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | 0 |
+| MCP calls | 0 |
+| Parallel task batches | 0 |
+| Notes | none |
+
