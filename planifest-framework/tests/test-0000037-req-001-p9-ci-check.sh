@@ -142,4 +142,8 @@ assert_contains '"bucket":"fail"' "$OUT" "req-001: data still prints on exit 1"
 BUCKET="$(printf '%s' "$OUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);console.log(j.filter(c=>c.bucket==='fail').map(c=>c.name).join(','));});")"
 assert_equals "Test suite (ubuntu-latest)" "$BUCKET" "req-001: valid JSON with a fail bucket reads as red"
 
+# Real gh prints no JSON and "no checks reported" on stderr before checks register (P4).
+assert_contains "no checks reported" "$S10C" "req-001: Step 10c names the no-checks-yet stderr"
+assert_contains "Read that as an empty list and keep polling" "$S10C" "req-001: no checks yet keeps polling, not unreadable"
+
 print_summary

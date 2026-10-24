@@ -387,6 +387,7 @@ gh pr checks {n} --json name,bucket,link
 - **Poll:** Run it every 30 seconds for at most 20 minutes. When ADR-014's 20-minute Git Bash cap applies, the window is 30 minutes. This step does not use the `timeout` command, which macOS lacks.
 - **End:** Polling ends when the list is non-empty and no check is pending, or when the window passes. After the first non-empty list, the agent waits 30 seconds and rereads once more. A late-registering job then never reads as "all passed".
 - **Judge from the data:** Judge the result from the JSON, not from the exit status. `gh pr checks` exits 1 when a check fails and exits 8 when a check is pending. It still prints the data. A non-zero exit with valid JSON is data.
+- **No checks yet:** Before any check registers, `gh pr checks` prints nothing on stdout, writes `no checks reported` to stderr, and exits 1. Read that as an empty list and keep polling. It is not unreadable output.
 - **Unreadable:** If `gh` is missing, auth fails, or the output is not valid JSON, report "CI status could not be read" with the reason. The run does not read as done.
 
 **Map each check to one result:**

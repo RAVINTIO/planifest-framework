@@ -101,4 +101,7 @@ VALID="$(printf '%s' "$OUT" | node -e "let d='';process.stdin.on('data',c=>d+=c)
 assert_equals "not-json" "$VALID" "req-002: a signed-out gh prints no JSON"
 assert_equals "yes" "$([ "$RC" -ne 0 ] && echo yes || echo no)" "req-002: a signed-out gh exits non-zero"
 
+# Real gh prints no JSON and "no checks reported" on stderr for a PR with no checks (P4).
+assert_contains 'report "no checks reported" for that PR' "$STEP5" "req-002: step 5 reports no checks, not unreadable"
+
 print_summary

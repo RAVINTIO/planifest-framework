@@ -19,7 +19,8 @@ On receiving the literal token `GUTD` (case-insensitive):
    - Use these result words: `all passed`, `{n} failed: {names with links}`, `pending`, or `unknown: {names}`. A `cancel` bucket and any other value read as unknown. Unknown never reads as a pass.
    - Judge the result from the JSON, not from the exit status. `gh pr checks` exits 1 for a failed check and exits 8 for a pending one. It still prints the data.
    - If the list holds no merged PR, report "no merged PR to check".
-   - If `gh` is missing, signed out, or prints output that is not valid JSON, report "CI status could not be read". For a signed-out `gh`, name `gh auth login` as the fix.
+   - If `gh` prints `no checks reported` on stderr with no JSON, report "no checks reported" for that PR. That is an empty list, not unreadable output.
+   - If `gh` is missing, signed out, or prints other output that is not valid JSON, report "CI status could not be read". For a signed-out `gh`, name `gh auth login` as the fix.
    - Step 5 never changes steps 1 to 4. A failed or unreadable check does not undo the checkout or the pull.
    - The generated `CLAUDE.md` copies this text. A setup re-run refreshes that copy.
 
