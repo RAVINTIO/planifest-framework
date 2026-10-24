@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p2"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic-p2
 
@@ -18,8 +18,8 @@ status: "active"
 | Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
-| Last updated | `2026-10-24T00:36:18Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-24T00:43:58Z` |
 
 ---
 
@@ -38,6 +38,12 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Action:** the orchestrator fixed the four iteration 1 findings. Then a fresh critic instance.
 - **Observation:** REJECT, 0 critical, 1 major, 3 minor, in `plan/current/design-critic-p2-iteration-2.md`. All 4 iteration 1 findings resolved. Major F-5: ADR-008's content-based type rule conflicts with the requirement labels. Minors: leftover 20-minute figures, ADR-014 decision 5 wording, and a skip line with no tag to name.
 - **Decision:** continue: the orchestrator switches the type check to a header comment, aligns the wait figures, and fixes ADR-010, ADR-014, and req-008. A fresh critic instance then reviews.
+
+### Iteration 3 (2026-10-24T00:43:58Z)
+- **Approach:** 1
+- **Action:** the orchestrator fixed the four iteration 2 findings. Then a fresh critic instance.
+- **Observation:** APPROVE, 0 critical, 0 major, 3 minor, in `plan/current/design-critic-p2-iteration-3.md`. Mechanical check clean. All 4 iteration 2 findings resolved.
+- **Decision:** done: the pass condition holds. The orchestrator fixes the three minor findings after the loop disarms.
 
 ---
 
