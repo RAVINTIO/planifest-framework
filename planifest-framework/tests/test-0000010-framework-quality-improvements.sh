@@ -192,8 +192,8 @@ fi
 
 echo ""
 echo "=== Summary ==="
-echo "  PASS: $PASS"
-echo "  FAIL: $FAIL"
+echo "  Passed: $PASS"
+echo "  Failed: $FAIL"
 echo ""
 if [ "$FAIL" -eq 0 ]; then
   echo "All tests passed."
