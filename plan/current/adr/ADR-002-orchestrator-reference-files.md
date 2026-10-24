@@ -33,7 +33,7 @@ Rules:
 2. `SKILL.md` keeps one short section, `## Phase 0 and Adoption Modes (reference files)`. Its heading differs from the moved headings, so the absence test passes. The section links both files by relative path (`./references/...`) and says when to load them.
 3. The Framework Index gains one row for each file.
 4. At the start of P0, before any P0 action, the orchestrator reads both files in full.
-4a. After the read, the orchestrator writes one build-log line, `P0 references loaded: {paths}`, naming both files. The Phase 0 to Phase 1 Gate Checklist gains an item that the line exists. A skipped read then shows in the build log, and a unit test pins both the line and the checklist item.
+4a. After the read, the orchestrator writes one build-log line, `P0 references loaded: {paths}`, naming both files. The pointer section in `SKILL.md` holds this instruction. It also holds the gate check: before the P0 to P1 gate passes, the orchestrator confirms the line exists in the build log. The moved Phase 0 block, including its Gate Checklist, stays byte-identical to `5966840`, and the byte test has no exclusion. A skipped read then shows in the build log, and a unit test pins the line and the gate check in the pointer section.
 5. Resume Detection gains a step. When the resumed run is still at P0, which means the build log records no passed P0 gate, the orchestrator reads both files again.
 6. A run past P0 never loads either file, except when it re-enters P0 through a reversal. A reversal that reopens P0 follows rule 4.
 7. Two files, because Adoption Modes feeds the mode choice inside P0 only. A loader can then read each on its own.
@@ -69,7 +69,12 @@ Decision (P2): `SKILL.md` keeps a pointer section with a heading that differs fr
 - Tests that grep the moved text must point to the new files.
 
 **Risks:**
-- The margin is about 1,600 bytes (41,500 less about 39,900). The pointer section, two index rows, the resume step, and the req-005 advisory text must fit in it. A size test fails the build if they do not.
+- The margin is 1,799 bytes. `SKILL.md` is 77,635 bytes now. Removing Phase 0 (33,261 bytes) and Adoption Modes (4,673 bytes) leaves 39,701, and 41,500 less 39,701 is 1,799. These additions must fit in it, with a working budget for each:
+  - the pointer section, including the load instruction, the log line, and the gate check: 650 bytes
+  - two Framework Index rows: 280 bytes
+  - the resume step: 300 bytes
+  - the req-005 advisory text: 400 bytes
+  The budgets total 1,630 bytes and leave about 170 bytes spare. A size test fails the build if `SKILL.md` reaches 41,500.
 - A resumed run could skip the reload. A unit test pins the resume wording.
 - A downstream project that has not re-run setup lacks the files. The 0.36.0 migration covers this (ADR-007).
 
