@@ -15,8 +15,8 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Tool | `claude-code` |
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
-| Run mode | pending (chosen at the design confirmation) |
-| Parallel streams | pending |
+| Run mode | `autonomous` |
+| Parallel streams | pending (set at P1) |
 
 ---
 
@@ -27,17 +27,17 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T12:22:28Z` |
-| End | pending |
-| Wall-clock | pending |
+| End | `2026-10-24T19:53:35Z` |
+| Wall-clock | 451 |
 | Streams | n/a |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator |
-| Agents spawned | 0 |
+| Agents spawned | 4 |
 | MCP calls | 0 |
-| Parallel task batches | 0 |
-| P0 questions asked | pending |
-| Brief complete | pending |
-| Stack unchanged | pending |
+| Parallel task batches | 1 |
+| P0 questions asked | 4 |
+| Brief complete | no |
+| Stack unchanged | yes |
 | Notes | Scope named by the human on the loop: backlog 0000230 and the PR #64 Windows shard 1 failure. |
 
 Backlog pickup: 0000230 pulled in by the human on the loop. The other 101 entries stay untouched.
@@ -50,3 +50,12 @@ Scope Lock (first-run): a fresh install needs no prior data, full test output st
 Scope Lock (error): quiet mode can't hide a failed suite, because a crashed suite is listed and exits non-zero, and a rejected model value fails a test before shipping. [source: agent-draft-accepted]
 Scope Lock (cross-session): committed artifacts in plan/current/ and the build log carry resume state, and a resume still at P0 reloads the P0 reference files. [source: agent-draft-accepted]
 Scope Lock complete. All four scenario paths captured.
+P0 exchange (design): Q: confirm the design as written? / A: yes.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-24
+Version confirmed: 0.36.0
+Backlog pickup: 0000230 folded into the design and deleted in the design confirmation commit.
+P0 questions asked: 4
+Brief complete: no
+Stack unchanged: yes
+Run mode confirmed: autonomous (2026-10-24T19:53:35Z)
+Progress: P0 done at 2026-10-24T19:53:35Z: design confirmed, seven stories, autonomous run

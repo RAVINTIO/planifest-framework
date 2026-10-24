@@ -100,4 +100,4 @@ Five files in `planifest-overrides/instructions/`:
 - Suggested version: 0.36.0 (Feature Pipeline, minor bump)
 
 ## Confirmation
-Human confirmed this design before proceeding: no // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 24 Oct 2026 @ 08:53 PM BST
