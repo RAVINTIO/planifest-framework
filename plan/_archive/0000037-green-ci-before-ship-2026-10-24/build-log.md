@@ -474,6 +474,9 @@ Progress: P8 done at 2026-10-24T11:21:54Z: build report filed, clean tree
 - Credential scan (P9): PR text clean (regex only, gitleaks not found).
 PR: #64 https://github.com/planifest/planifest-framework/pull/64
 - Step 10 (P9): PR #64 was `OPEN`, so Step 10 updated its title and body with `gh pr edit`. It stays draft, because three `Exception waiting` lines exist.
+- Clean-tree check (P9, Step 10b): committed 1 file (`build-log.md`) through scan-then-commit as `532f983`. `plan/backlog/0000230-...` stays out (P6 Decision).
+CI checks (P9): all passed
+- Step 10c (P9): 13 of 13 checks pass on `532f983`, the head that P9 read, after 526 seconds of polling in a 30-minute window. No fix attempt was needed, so the tag stays on `31b6ae9`.
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
