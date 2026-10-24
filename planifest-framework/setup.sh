@@ -64,6 +64,19 @@ function writeSettings(sf, s) {
 
 # --- Shared functions ---
 
+# The skill's own references/*.md link to ../standards/. Bundled standards land
+# beside them, so rewrite those links. Bundled standards stay untouched.
+rewrite_skill_reference_links() {
+  local skill_dir="$1" dest_dir="$2" ref_md
+  [ -d "$skill_dir/references" ] || return 0
+  (cd "$skill_dir/references" && find . -type f -name '*.md') | while IFS= read -r ref_md; do
+    sed -i.bak \
+      -e 's|\.\./standards/reference/|./reference/|g' \
+      -e 's|\.\./standards/|./|g' \
+      "$dest_dir/references/$ref_md" && rm -f "$dest_dir/references/$ref_md.bak"
+  done
+}
+
 copy_skills() {
   local target_dir="$1"
 
@@ -91,6 +104,8 @@ copy_skills() {
           cp -r "$skill_dir/$opt_dir" "$dest_dir/"
         fi
       done
+
+      rewrite_skill_reference_links "$skill_dir" "$dest_dir"
       
       # Selective bundling: read bundle_templates and bundle_standards from SKILL.md frontmatter
       local skill_md="$skill_dir/SKILL.md"

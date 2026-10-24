@@ -188,6 +188,20 @@ function Copy-PlanifestSkills {
                 }
             }
 
+            # The skill's own references/*.md link to ../standards/. Bundled standards
+            # land beside them, so rewrite those links. Bundled standards stay untouched.
+            $srcRefsDir = Join-Path $srcDir "references"
+            if (Test-Path $srcRefsDir) {
+                Get-ChildItem -Path $srcRefsDir -Recurse -File -Filter '*.md' | ForEach-Object {
+                    $relPath = $_.FullName.Substring($srcRefsDir.Length).TrimStart('\', '/')
+                    $destRef = Join-Path (Join-Path $destDir "references") $relPath
+                    $refContent = Get-Content -Path $destRef -Raw
+                    $refContent = $refContent -replace '\.\./standards/reference/', './reference/'
+                    $refContent = $refContent -replace '\.\./standards/', './'
+                    Set-Content -Path $destRef -Value $refContent -NoNewline -Encoding UTF8
+                }
+            }
+
             # Parse bundle_templates and bundle_standards from SKILL.md frontmatter
             $rawContent = Get-Content -Path $srcSkillMd -Raw
             $bundleTemplates = @()
