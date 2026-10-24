@@ -117,6 +117,15 @@ Streams (start commit `c8b1036`):
 - Decision (P1): the PR title and body go to files outside the repository, `credential-scan.mjs --file` scans them, and `gh pr create` reads `--body-file` / reason: the scan needs the exact text that gets sent.
 - Decision (P1): GUTD adds a read-only step 5 that doesn't wait / reason: GUTD is a quick sync check.
 - Backlog filed (P1): 0000193 (the Step 11 push of `final-report.md` starts a CI run on a head that Step 10c never read). 0000194 and 0000195 stay unused.
+- Stream 03 returned req-007 to req-009, three criteria each.
+- Decision (P1): split step for req-007: keep / reason: one outcome, the installed string runs and decides correctly.
+- Decision (P1): split step for req-008: keep / reason: selection, range, filter, and skip serve one outcome.
+- Decision (P1): split step for req-009: keep / reason: the lint keeps the working-directory fix true.
+- Decision (P1): req-008 checks the highest-version re-run-setup migration only when its version is above every `v*` tag, against the range from the highest lower tag to `HEAD`, in both directions / reason: a tagged migration is frozen, and both directions catch the 0000186 defects.
+- Decision (P1): req-007 runs the verbatim `command` of `gate-write`, `shell-write-guard`, and `auto-trigger-orchestrator` through `bash -c`, with a bare-path negative fixture / reason: proves the test detects broken wiring.
+- Decision (P1): the portability lint is a new suite with a `# portable-ok: {reason}` marker, and a `sha256_of` helper replaces bare `shasum` / reason: `run-tests.sh` finds the suite, and the marker records each exemption.
+- Measured (P1): from `planifest-framework/tests/`, 1 of 130 suites fails (`test-0000010`). From `/tmp`, 2 fail, one of them intermittent (`test-0000035-req-001`). The lint flags 19 lines today.
+- Backlog filed (P1): 0000199 (the CI checkout fetches no tags, so req-008's check skips in CI). 0000200 and 0000201 stay unused.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
