@@ -300,3 +300,20 @@ Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - CI checks (P4, PR #64, head `75d5912`): all 13 checks pass.
 - Gate summary (P4): lint clean, 141 local suites pass, semantic coverage 30 covered, 3 deferred to verify by execution, 0 uncovered. Verify by execution: 24 rows passed, 0 failed. Two self-correct cycles. All four streams are done.
 Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every criterion covered or verified
+
+---
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T03:03:12Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined) |
+| Model tier | primary |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Scope: the diff from `c8b1036` to HEAD outside `plan/`, 69 files. Two reviewers in parallel: the credential and PR-text surface, and the CI, setup, and test-skip surface. |
