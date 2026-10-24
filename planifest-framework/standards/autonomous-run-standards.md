@@ -103,9 +103,10 @@ node planifest-framework/scripts/credential-scan.mjs [-- {path} ...]
 - **What it applies:** The script applies the P8 refused file names and credential patterns. It also runs `gitleaks` when `gitleaks` is on PATH, and says which scan mode ran.
 - **Exit codes:** `0` is clean. `1` is at least one match. `2` means the scan could not run. Stop on exit `1` or `2`.
 - **Who stops the commit:** The agent does. The script only sets the exit code. Nothing in this feature adds a git hook.
-- **On a match:** Run no `git commit` and no `git push` that includes a matched file. Take each matched file out of the index with `git restore --staged -- {path}`. In a repository with no commit, that command fails with `could not resolve HEAD`, so run `git rm --cached -- {path}` instead. Leave the working-tree file untouched, and do not edit it to hide the match. Later scans and commits of other files then proceed. Clean staged files stay staged.
+- **On a match:** Run no `git commit` and no `git push` that includes a matched file. Take each matched file that is staged as a new file out of the index with `git restore --staged -- {path}`. In a repository with no commit, that command fails with `could not resolve HEAD`, so run `git rm --cached -- {path}` instead. Leave the working-tree file untouched, and do not edit it to hide the match. Later scans and commits of other files then proceed. Clean staged files stay staged.
 - **Log lines:** For each matched file, write `Credential scan (P{N}): held back {path}` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then finish the work that does not depend on those files.
-- **Commit form:** Commit with explicit paths after `--`, such as `git commit -m "{message}" -- {paths}`. Never run a plain `git commit` or `git commit -a`. Either form can sweep in a path you meant to hold back.
+- **Commit form:** Commit with explicit paths after `--`. In P7 to P9, scan-then-commit replaces the path list with the safe list in `--pathspec-from-file`. Never run a plain `git commit` or `git commit -a`. Either form can sweep in a path you meant to hold back.
+- **Safe-paths mode:** `--safe-paths {out-file} -- {path} ...` scans each path in its index blob and its working-tree file. A deleted path, or a path that neither the index nor the working tree holds, is safe. The out-file holds only the safe paths.
 - **Final report:** List each path and line. Never print the secret.
 - **Clean scan:** Write `Credential scan (P{N}): clean ({scan mode})`. A regex-only scan says so in the line.
 - **Resume:** A resumed run reads the `held back {path}` lines in the build log. It never stages a path that a held-back line names until the human on the loop clears it. It reruns the scan before any commit.
@@ -113,15 +114,16 @@ node planifest-framework/scripts/credential-scan.mjs [-- {path} ...]
 
 ### Scan-then-commit
 
-Scan-then-commit is the one procedure that every `autonomous` commit in P7 to P9 follows. It tracks no path of its own. It acts on the paths the scan names, so a file that the archive script moved is caught at its new path.
+Scan-then-commit is the one procedure that every `autonomous` commit in P7 to P9 follows. The script decides which paths the commit may name. The prose never lists a held-back path itself. A tracked file with a key therefore cannot reach a commit, because `git commit -- {paths}` commits working-tree content.
 
-1. Stage the commit's paths.
-2. Run `node planifest-framework/scripts/credential-scan.mjs` over the index.
-3. On exit `1`, unstage every path the scan output names. Each `{path}:{line} {rule}` line names the current path of the file. Run `git restore --staged -- {path}`, or `git rm --cached -- {path}` in a repository with no commit. Log `Credential scan (P{N}): held back {path}` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then scan again and repeat this step until the scan exits `0` or `2`.
-4. Commit only when the scan exits `0`. Name the paths after `--` where the step allows it.
-5. On exit `2`, stop and commit nothing.
+1. Build the candidate list. For a step that commits the index, such as the P7 archive, run `git diff --cached --name-only --no-renames -z`. The `--no-renames` flag lists both the old and the new path of a rename. For any other step, use the step's own paths.
+2. Run `node planifest-framework/scripts/credential-scan.mjs --safe-paths "{out-file}" -- {candidate} ...`. Pass each candidate as its own argument. Keep `{out-file}` outside the repository, such as a file from `mktemp`. The script writes to `{out-file}` only the paths with no hit. It separates them with NUL bytes and writes their raw bytes. It prints a `{path}:{line} {rule}` line for each held-back path. Exit `0` means every path is safe. Exit `1` means at least one path is held back.
+3. On exit `2`, commit nothing and stop under exception item 7. The out-file is then empty or absent.
+4. On exit `1`, take each held-back path from the report lines. Log `Credential scan (P{N}): held back {path}` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}` for each one. Unstage each held-back path that is staged as a new file, which HEAD does not hold. Run `git restore --staged -- {path}`, or `git rm --cached -- {path}` when the repository has no commit. A tracked held-back file needs no unstage, because the commit list leaves it out. An untracked file that is not staged needs no unstage either, because `git restore --staged` fails on it.
+5. If the out-file is empty, skip the commit. An empty pathspec file makes git commit the whole index.
+6. Otherwise, commit with `git commit -m "{message}" --pathspec-from-file="{out-file}" --pathspec-file-nul`. If the step has not staged its paths yet, run `git add --pathspec-from-file="{out-file}" --pathspec-file-nul` first. Git then commits exactly the safe list and nothing else.
 
-A path can appear on more than one scan line. Unstage it once. A held-back path never needs mapping. The scan names the path where the file sits now, whether the file moved or not.
+The report line shows a path with `?` in place of unusual characters. Take the exact bytes of a held-back path from your candidate list, not from the report. The out-file keeps the raw bytes, so a non-ASCII or colon path reaches the commit unchanged. The script reads every path from the starting directory.
 
 ---
 

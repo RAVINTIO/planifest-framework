@@ -264,6 +264,192 @@ printf 'key=%s\n' "$SECRET" >"$R/a\$b.txt"
 run_scan "$R" "$BIN"
 assert_contains 'a?b.txt:1' "$OUT" "req-003: unsafe path characters print as ?"
 
+# --safe-paths mode (P5 re-review 3, N-09 and N-11): the script decides which paths a
+# commit may name. It writes the safe paths, NUL-separated and raw, to the out-file.
+echo "req-003: --safe-paths mode"
+
+# git_commit <dir> <message>: commits the index with a fixed identity.
+git_commit() {
+  (cd "$1" && git -c user.email=t@example.invalid -c user.name=t -c commit.gpgsign=false commit -q -m "$2")
+}
+
+# run_safe <dir> <out-file> [paths...]: sets OUT and RC. The paths follow `--`.
+run_safe() {
+  local dir="$1" outf="$2"
+  shift 2
+  OUT="$(cd "$dir" && PATH="$BIN" "$NODE_BIN" "$SCAN" --safe-paths "$outf" -- "$@" 2>&1)"
+  RC=$?
+}
+
+# safe_lines <out-file>: the out-file with each NUL turned into a newline.
+safe_lines() {
+  if [ -f "$1" ]; then LC_ALL=C tr '\0' '\n' <"$1"; else printf 'ABSENT'; fi
+}
+
+# nul_count <out-file>: the number of NUL bytes in the out-file.
+nul_count() {
+  LC_ALL=C tr -cd '\0' <"$1" | wc -c | tr -d ' '
+}
+
+# size_of <out-file>: the byte size of the out-file, 0 when absent.
+size_of() {
+  if [ -f "$1" ]; then wc -c <"$1" | tr -d ' '; else printf '0'; fi
+}
+
+# All paths safe: exit 0, every path in the out-file, NUL-separated.
+R="$(new_repo sp-allsafe)"
+printf 'one\n' >"$R/a.txt"
+printf 'two\n' >"$R/b.txt"
+(cd "$R" && git add a.txt b.txt)
+OF="$WORK/sp-allsafe.out"
+run_safe "$R" "$OF" a.txt b.txt
+assert_equals "0" "$RC" "req-003: --safe-paths exits 0 when every path is safe"
+assert_equals "2" "$(nul_count "$OF")" "req-003: --safe-paths writes one NUL per safe path"
+assert_equals "$(printf 'a.txt\nb.txt')" "$(safe_lines "$OF")" "req-003: --safe-paths writes every safe path"
+
+# One held back: exit 1, the safe path stays in the out-file, the report names the other.
+R="$(new_repo sp-mixed)"
+printf 'one\n' >"$R/clean.txt"
+printf 'key=%s\n' "$SECRET" >"$R/leak.txt"
+(cd "$R" && git add clean.txt leak.txt)
+OF="$WORK/sp-mixed.out"
+run_safe "$R" "$OF" clean.txt leak.txt
+assert_equals "1" "$RC" "req-003: --safe-paths exits 1 when one path is held back"
+assert_contains "leak.txt:1 aws-access-key" "$OUT" "req-003: --safe-paths reports the held-back path on stdout"
+lacks "$SECRET" "$OUT" "req-003: --safe-paths prints no secret"
+assert_equals "clean.txt" "$(safe_lines "$OF")" "req-003: --safe-paths keeps the safe path and leaves out the held-back path"
+assert_equals "1" "$(nul_count "$OF")" "req-003: the single safe path ends with one NUL"
+
+# All held back: exit 1 and an empty out-file.
+R="$(new_repo sp-allheld)"
+printf 'key=%s\n' "$SECRET" >"$R/x.txt"
+printf 'x\n' >"$R/.env"
+(cd "$R" && git add x.txt .env)
+OF="$WORK/sp-allheld.out"
+run_safe "$R" "$OF" x.txt .env
+assert_equals "1" "$RC" "req-003: --safe-paths exits 1 when every path is held back"
+assert_equals "0" "$(size_of "$OF")" "req-003: --safe-paths leaves an empty out-file when nothing is safe"
+assert_contains ".env:1 refused-file-name:" "$OUT" "req-003: --safe-paths holds back a refused file name"
+
+# An empty path list is safe and writes an empty out-file.
+R="$(new_repo sp-empty)"
+OF="$WORK/sp-empty.out"
+printf 'stale\0' >"$OF"
+run_safe "$R" "$OF"
+assert_equals "0" "$RC" "req-003: --safe-paths with no paths exits 0"
+assert_equals "0" "$(size_of "$OF")" "req-003: --safe-paths with no paths empties a stale out-file"
+
+# A tracked, modified file that now holds a key is held back, even with no staging.
+R="$(new_repo sp-tracked)"
+printf 'const a = 1;\n' >"$R/app.js"
+(cd "$R" && git add app.js) && git_commit "$R" init
+printf 'const a = 1;\nconst k = "%s";\n' "$SECRET" >"$R/app.js"
+OF="$WORK/sp-tracked.out"
+run_safe "$R" "$OF" app.js
+assert_equals "1" "$RC" "req-003: --safe-paths holds back a tracked modified file with a key"
+assert_contains "app.js:2 aws-access-key" "$OUT" "req-003: the tracked held-back file is reported with its line"
+assert_equals "0" "$(size_of "$OF")" "req-003: the tracked held-back file is not in the out-file"
+
+# A key in the index blob alone still holds the path back.
+R="$(new_repo sp-indexonly)"
+printf 'key=%s\n' "$SECRET" >"$R/i.txt"
+(cd "$R" && git add i.txt)
+printf 'clean\n' >"$R/i.txt"
+OF="$WORK/sp-indexonly.out"
+run_safe "$R" "$OF" i.txt
+assert_equals "1" "$RC" "req-003: --safe-paths scans the index blob as well as the working tree"
+assert_equals "0" "$(size_of "$OF")" "req-003: an index-only hit stays out of the out-file"
+
+# Deleted and absent paths are safe.
+R="$(new_repo sp-deleted)"
+printf 'gone\n' >"$R/gone.txt"
+printf 'staged\n' >"$R/staged-gone.txt"
+printf 'key=%s\n' "$SECRET" >"$R/oldkey.txt"
+(cd "$R" && git add gone.txt staged-gone.txt oldkey.txt) && git_commit "$R" init
+rm "$R/gone.txt" "$R/oldkey.txt"
+(cd "$R" && git rm -q --cached staged-gone.txt) && rm "$R/staged-gone.txt"
+OF="$WORK/sp-deleted.out"
+run_safe "$R" "$OF" gone.txt staged-gone.txt oldkey.txt never-existed.txt
+assert_equals "0" "$RC" "req-003: deleted and absent paths exit 0"
+assert_equals "4" "$(nul_count "$OF")" "req-003: deleted and absent paths all reach the out-file"
+assert_contains "never-existed.txt" "$(safe_lines "$OF")" "req-003: a path absent from the index and the working tree is safe"
+assert_contains "oldkey.txt" "$(safe_lines "$OF")" "req-003: a deleted path is safe even when its old blob held a key"
+
+# Raw bytes: a non-ASCII name and a colon name reach the out-file unescaped.
+R="$(new_repo sp-raw)"
+mkdir -p "$R/d"
+NA="$(printf 'caf\303\251.txt')"
+printf 'one\n' >"$R/d/$NA"
+printf 'two\n' >"$R/d/n.txt"
+printf 'key=%s\n' "$SECRET" >"$R/h.txt"
+if [ "$IS_WIN" = "no" ]; then
+  printf 'three\n' >"$R/d/a:b.txt"
+  COLON="d/a:b.txt"
+else
+  COLON=""
+fi
+(cd "$R" && git add -A)
+OF="$WORK/sp-raw.out"
+if [ -n "$COLON" ]; then
+  run_safe "$R" "$OF" "d/$NA" h.txt "$COLON" d/n.txt
+else
+  run_safe "$R" "$OF" "d/$NA" h.txt d/n.txt
+fi
+assert_equals "1" "$RC" "req-003: a mixed raw-byte list exits 1"
+EXPECT="$WORK/sp-raw.expect"
+{ printf 'd/caf\303\251.txt\0'; [ -n "$COLON" ] && printf 'd/a:b.txt\0'; printf 'd/n.txt\0'; } >"$EXPECT"
+assert_equals "same" "$(cmp -s "$OF" "$EXPECT" && echo same || echo different)" "req-003: the out-file holds raw non-ASCII and colon paths byte for byte"
+lacks "?" "$(safe_lines "$OF")" "req-003: the out-file has no ? escaping"
+assert_contains "h.txt:1" "$OUT" "req-003: the held-back path in a raw-byte list is reported"
+
+# A held-back non-ASCII name prints with ? on stdout only.
+R="$(new_repo sp-rawheld)"
+printf 'key=%s\n' "$SECRET" >"$R/h$(printf '\303\251').txt"
+(cd "$R" && git add -A)
+OF="$WORK/sp-rawheld.out"
+run_safe "$R" "$OF" "h$(printf '\303\251').txt"
+assert_equals "1" "$RC" "req-003: a held-back non-ASCII path exits 1"
+assert_contains "h?.txt:1" "$OUT" "req-003: the report escapes the held-back non-ASCII path"
+
+# Subdirectory run: paths and the out-file resolve from the starting directory.
+R="$(new_repo sp-subdir)"
+mkdir -p "$R/sub"
+printf 'clean\n' >"$R/sub/ok.txt"
+printf 'clean\n' >"$R/sub/s.txt"
+(cd "$R" && git add sub)
+printf 'key=%s\n' "$SECRET" >"$R/sub/s.txt"
+run_safe "$R/sub" "rel.out" ok.txt s.txt
+assert_equals "1" "$RC" "req-003: a subdirectory run holds back the working-tree credential"
+assert_equals "ok.txt" "$(safe_lines "$R/sub/rel.out")" "req-003: a relative out-file lands in the starting directory"
+assert_contains "s.txt:1" "$OUT" "req-003: the subdirectory report names the held-back path"
+
+# Exit 2: the scan cannot run. The out-file ends empty or absent.
+OF="$WORK/sp-err.out"
+printf 'stale\0' >"$OF"
+run_safe "$NOREPO" "$OF" a.txt
+assert_equals "2" "$RC" "req-003: --safe-paths outside a repository exits 2"
+assert_contains "scan could not run:" "$OUT" "req-003: --safe-paths exit 2 prints the reason"
+assert_equals "0" "$(size_of "$OF")" "req-003: exit 2 leaves the out-file empty or absent"
+R="$(new_repo sp-dir)"
+mkdir -p "$R/adir"
+printf 'x\n' >"$R/adir/f.txt"
+OF="$WORK/sp-dir.out"
+run_safe "$R" "$OF" adir
+assert_equals "2" "$RC" "req-003: --safe-paths exits 2 for a path it cannot read"
+assert_equals "0" "$(size_of "$OF")" "req-003: an unreadable path leaves the out-file empty or absent"
+run_safe "$R" "$WORK/no-such-dir/x.out" adir
+assert_equals "2" "$RC" "req-003: --safe-paths exits 2 when the out-file cannot be written"
+OUT="$(cd "$R" && PATH="$BIN" "$NODE_BIN" "$SCAN" --safe-paths 2>&1)"
+RC=$?
+assert_equals "2" "$RC" "req-003: --safe-paths without an out-file exits 2"
+
+# The staged mode and the file mode keep working beside the new mode.
+R="$(new_repo sp-compat)"
+printf 'key=%s\n' "$SECRET" >"$R/c.txt"
+(cd "$R" && git add c.txt)
+run_scan "$R" "$BIN"
+assert_equals "1" "$RC" "req-003: staged mode is unchanged beside --safe-paths"
+
 echo "req-003: enforcement text"
 
 STD_SEC="$(section '## Pre-commit credential scan' "$STD")"

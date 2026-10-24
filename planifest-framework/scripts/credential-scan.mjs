@@ -9,11 +9,23 @@
 // working-tree file. Paths come from `git diff --cached --name-only` plus any
 // path named after `--`. The script detects and reports. It never stops a commit.
 //
+//   node credential-scan.mjs --safe-paths {out-file} -- {path} ...   safe-paths mode
+//
+// Safe-paths mode scans each listed path, in its index blob and its working-tree
+// file, with the staged-mode rules. It writes to {out-file} only the paths with
+// no hit, NUL-separated, as the caller gave them, with no escaping. A commit then
+// names that file with `--pathspec-from-file={out-file} --pathspec-file-nul`.
+// It prints the `{path}:{line} {rule}` lines of held-back paths. A path that is
+// absent from the working tree is a deletion and is safe. Paths and the out-file
+// resolve from the starting directory.
+//
 // Exit codes: 0 clean, 1 at least one match, 2 the scan could not run.
+// Safe-paths mode keeps these codes. At exit 1 the out-file still holds the safe
+// paths. At exit 2 the out-file is empty or absent.
 // The script never prints matched text. Node built-ins only (0000037 ADR-001).
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, relative, resolve, sep } from 'node:path';
 
@@ -135,12 +147,15 @@ function gitleaksHits(buf, name) {
 }
 
 function parseArgs(argv) {
-  const out = { file: null, extra: [] };
+  const out = { file: null, extra: [], safeOut: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--file') {
       out.file = argv[++i];
       if (!out.file) throw new ScanError('--file needs a path');
+    } else if (a === '--safe-paths') {
+      out.safeOut = argv[++i];
+      if (!out.safeOut || out.safeOut === '--') throw new ScanError('--safe-paths needs an out-file');
     } else if (a === '--') {
       out.extra = argv.slice(i + 1);
       break;
@@ -148,7 +163,75 @@ function parseArgs(argv) {
       throw new ScanError(`unknown argument ${safePath(a)}`);
     }
   }
+  if (out.safeOut && out.file) throw new ScanError('--safe-paths and --file cannot be combined');
   return out;
+}
+
+// Hits for one source: [{line, rule}]. One list of rules for every mode.
+function hitsFor({ path, buf }, useGitleaks) {
+  const found = [];
+  for (const [rule, test] of NAME_RULES) {
+    if (test(basename(path).toLowerCase())) found.push({ line: 1, rule });
+  }
+  found.push(...contentHits(buf, path));
+  if (useGitleaks) found.push(...gitleaksHits(buf, path));
+  return found;
+}
+
+// Safe-paths mode. The out-file is emptied first, so an error never leaves stale
+// content. It is written again at the end with the safe paths only.
+function runSafePaths(args) {
+  const start = process.cwd();
+  const outFile = resolve(start, args.safeOut);
+  try {
+    writeFileSync(outFile, '');
+  } catch {
+    throw new ScanError(`could not write the out-file ${safePath(args.safeOut)}`);
+  }
+  const top = git(['rev-parse', '--show-toplevel']).toString('utf8').trim();
+  const useGitleaks = gitleaksAvailable();
+  console.log(useGitleaks ? 'scan mode: regex and gitleaks' : 'scan mode: regex only (gitleaks not found)');
+  const indexed = new Set(
+    git(['-C', top, 'ls-files', '--cached', '-z']).toString('utf8').split('\0').filter(Boolean),
+  );
+  const safe = [];
+  const report = [];
+  const seen = new Set();
+  for (const given of args.extra) {
+    const abs = resolve(start, given);
+    const rel = relative(top, abs).split(sep).join('/');
+    const sources = [];
+    // An absent working-tree file is a deletion. The commit then holds no content.
+    if (existsSync(abs)) {
+      let buf;
+      try {
+        if (statSync(abs).isDirectory()) throw new Error('directory');
+        buf = readFileSync(abs);
+      } catch {
+        throw new ScanError(`could not read ${safePath(given)}`);
+      }
+      sources.push({ path: rel, buf });
+      if (indexed.has(rel)) sources.push({ path: rel, buf: git(['-C', top, 'show', `:${rel}`]) });
+    }
+    let held = false;
+    for (const src of sources) {
+      for (const h of hitsFor(src, useGitleaks)) {
+        held = true;
+        const key = `${given}:${h.line}:${h.rule}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        report.push(`${safePath(given)}:${h.line} ${h.rule}`);
+      }
+    }
+    if (!held) safe.push(given);
+  }
+  try {
+    writeFileSync(outFile, safe.map((p) => `${p}\0`).join(''));
+  } catch {
+    throw new ScanError(`could not write the out-file ${safePath(args.safeOut)}`);
+  }
+  for (const line of report) console.log(line);
+  process.exit(report.length > 0 ? 1 : 0);
 }
 
 // collectSources(): [{path, buf}] for each index blob and working-tree file.
@@ -196,6 +279,7 @@ function main() {
   let useGitleaks;
   try {
     args = parseArgs(process.argv.slice(2));
+    if (args.safeOut) runSafePaths(args);
     sources = collectSources(args);
     useGitleaks = gitleaksAvailable();
   } catch (err) {
