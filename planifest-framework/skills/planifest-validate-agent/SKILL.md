@@ -39,7 +39,9 @@ Run the project's CI checks in this strict order:
 1. **Semantic Correctness** - For each requirement file in `plan/current/requirements/`:
    - Verify a mapped, executing test case identifiable by its req-ID exists (req-ID must appear in the test description or a structured comment).
    - Read the `## Acceptance Criteria` checklist in the requirement file. Verify that each individual criterion is covered by at least one test (by description or AC-ID comment). A single test may cover multiple ACs if its description clearly encompasses them.
-   - Produce a coverage table: `REQ-ID | AC | Covered by test | Pass/Fail`
+   - Produce a coverage table: `REQ-ID | AC | Type | Covered by test | Pass/Fail`
+   - The Type column holds the criterion's `Verified by` type. An indented `Verified by:` line governs and the inline text is ignored. Inline text counts only as `Verified by: {type}` with a type from the enum.
+   - Report `unspecified` for a criterion with no field or any other inline form. A missing `Verified by` field is never a failure, and nothing rewrites the requirement file.
    - Missing AC coverage = semantic validation failure (not a warning). Report the specific uncovered criterion.
    - If a requirement file has no `## Acceptance Criteria` section, flag it as a doc gap and continue; do not halt validation.
    - If logic exists without a covering test, semantic validation fails.

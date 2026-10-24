@@ -216,3 +216,7 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Decision (P3): batch 1 runs W1 (stream 01: req-003, then req-001, req-004, req-002), W2 (stream 02: req-006), W3 (stream 03: req-007 to req-009), and W4 (stream 04: req-010 and req-011 workflow and test edits) / reason: these units share no file.
 - Decision (P3): req-005 waits for batch 2 / reason: it edits `skills/planifest-orchestrator/SKILL.md` and `standards/autonomous-run-standards.md`, which W1 also edits.
 - Decision (P3): the Git Bash failing-suite fixes wait for the draft PR's first CI run, in batch 2 / reason: the failures are unknown until CI runs on Windows, and req-009 edits the same suite files in batch 1.
+- W2 returned req-006: RED exit 1 (2 passed, 20 failed), GREEN exit 0 (22 passed). The suite also passes from `/tmp`. Every suite that names the changed files passes.
+- Decision (P3): the P4 coverage table gains a `Type` column / reason: req-006 needs a place to report `unspecified`.
+- Decision (P3): the orchestrator bumps `planifest-framework/component.yml` at the P3 close / reason: the codegen close-out rule, with one owner for the file.
+- Deviation (P3, unclassified): the req-006 fixture case for inline text that differs from the indented line is covered by text assertions on the skill rule, not a runnable fixture, because ADR-008 makes the scan an agent check with no script.

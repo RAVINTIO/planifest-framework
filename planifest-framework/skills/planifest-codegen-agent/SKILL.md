@@ -153,6 +153,19 @@ Recommended action: {what the human should do}
 - For critical user flows (as identified in the design requirements' acceptance criteria), write E2E tests that exercise the full request path from HTTP request to database and back.
 - Follow the [Testing Standards](../standards/testing-standards.md) for test structure, data management, and mocking boundaries.
 
+**Requirement-ID scan before P3 closes:**
+- Run this agent check before you commit P3 and report it complete. It mirrors the P4 scan at `planifest-validate-agent` step 1 and replaces nothing there.
+- Read every file in `plan/current/requirements/`. For each requirement ID, look for that ID in the test descriptions or structured comments of the test files.
+- For each criterion, read its `Verified by` type. An indented `Verified by:` line governs. Ignore inline text on that criterion.
+- Inline text counts only when no indented line exists and only as `Verified by: {type}` with a type from the enum. Any other form reads as `unspecified`.
+- Compare the declared type with the `# Verified by: {type}` header comment in the mapped suite. Each new suite carries one such line per type it covers.
+- `execution` and `manual` need no header. Log them as `deferred to P4`.
+- A criterion that reads as `unspecified`, or has no field, skips the type check and keeps the ID check. A requirement file with no `Verified by` field passes. Never rewrite it.
+- An existing suite without a header is never rewritten. A criterion mapped only to one reads as `unspecified`.
+- An ID with no mapped test blocks P3. A type mismatch blocks P3 as well. Count a criterion as unmapped, including a mapped suite with no header for a declared type.
+- Run the TDD inner loop for each missing test under the existing attempt limit. In `autonomous`, a requirement still unmapped after 3 approaches becomes an exception-list item.
+- Write one build-log line: `Requirement-ID scan (P3): {N} requirements, {M} unmapped`.
+
 **Component manifest - complete after build:**
 - After the implementation is built, update `component.yml` to reflect what was actually implemented.
 - Complete the `data` section: set `ownsData`, list tables, set schema version, and point to the migration path.

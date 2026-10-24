@@ -22,8 +22,11 @@ As a [role], I [action], so that [outcome].
 - {{specific, testable requirement 2}}
 
 ## Acceptance Criteria
-- [ ] {{criterion 1}}
-- [ ] {{criterion 2}}
+- [ ] {{criterion 1}}. Verified by: {{unit | integration | contract | e2e | execution | manual}}
+- [ ] {{criterion 2}}. Verified by: {{unit | integration | contract | e2e | execution | manual}}
+  - Verified by: {{type}} - {{optional detail}}
+
+<!-- Verified by names the test type for the criterion. Use the inline form or the indented line. When both exist, the indented line governs and the scans ignore the inline text. A `manual` value needs a one-line reason. A file without the field stays valid and reads as `unspecified`. -->
 
 ## Dependencies
 - {{Any other components or requirements this depends on}}
