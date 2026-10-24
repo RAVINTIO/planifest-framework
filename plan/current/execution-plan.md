@@ -64,6 +64,18 @@ flowchart LR
     CI -->|pwsh 7 and powershell 5.1| PS[test_setup.ps1]
 ```
 
+## Build Order for CI
+
+CI runs only on `pull_request`, so the orchestrator raises a draft PR during P3 ("CI before P4" in `design.md`). P3 builds req-003 first, so `credential-scan.mjs` can scan the draft PR text. The req-010 and req-011 workflow edits land before the draft PR opens, so its first run holds both Windows legs.
+
+```mermaid
+flowchart LR
+    R3[req-003 credential-scan.mjs] --> DPR[draft PR at P3]
+    R10[req-010 and req-011 workflow edits] --> DPR
+    DPR -->|each push runs CI| P4[P4 reads gh pr checks]
+    P4 --> P9[P9 Step 10 reuses the PR]
+```
+
 ## Release Delivery
 
 The feature changes skills, standards, a template, and a new script that setup delivers. The orchestrator therefore writes `planifest-framework/migrations/migrate-0.35.0-rerun-setup.md` at the end of P6. The req-008 suite checks its file list against the diff from `v0.34.0`.

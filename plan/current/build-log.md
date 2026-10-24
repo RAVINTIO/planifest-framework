@@ -66,14 +66,14 @@ Run mode confirmed: autonomous (2026-10-23T23:46:32Z)
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-23T23:47:43Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T00:32:32Z` |
+| Wall-clock | `45` |
 | Streams | `4` |
-| Model tier | primary (streams 01 to 04), cheaper (shared artifacts) |
+| Model tier | primary (streams 01 to 04, critics, four fix agents), cheaper (shared artifacts, three fix agents) |
 | Skills loaded | planifest-spec-agent, planifest-loop-runner, planifest-design-critic |
-| Agents spawned | `pending` |
+| Agents spawned | `18` (5 spec, 4 critics, 9 fix) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` |
 | Notes | Run mode from `run-mode.mjs`: autonomous. P1 checker re-check: no `loop-toggles.yml`, so no checker key is off. Each stream gets one agent for its requirements, because requirements in a stream share files and cross-reference each other. |
 
 Toggle record (P1, binding for the run):
@@ -155,3 +155,7 @@ Streams (start commit `c8b1036`):
 - Shared files for P3: `.github/workflows/planifest.yml` and `docs/architecture-overview.md` (req-010, req-011), and suite files under `planifest-framework/tests/` (req-009, req-010). The orchestrator orders those edits at P3.
 - Shared artifacts returned: scope (11 in-scope items), risk register (22 risks, 6 assumptions), and glossary (31 terms), committed in `7d35789`. No backlog entry filed, so 0000205 stays unused.
 - Deviation (P1, unclassified): the design's `gh` assumption said a run carries on when `gh` can't run, against the red-check handling confirmed at P0. `design.md` now says the run doesn't read as done, matching the confirmed handling.
+- Design critic P1 approach 2 iteration 1: APPROVE (0 critical, 0 major, 3 minor). Loop closed as `done` at 2026-10-24T00:32:07Z. The orchestrator fixed all three minor findings after the loop disarmed.
+- Correction (P1): the loop-state records for iterations 2 and 3 carry estimated timestamps. The loop-state file notes the correction.
+- Gate summary (P1): 11 requirements with three criteria each, scope, risk register (24 risks), glossary, and execution plan. Join reconciled clean. Consistency check clean. Two items deferred (0000193, 0000199). Backlog filed: 0000193, 0000199.
+Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the design critic on approach 2
