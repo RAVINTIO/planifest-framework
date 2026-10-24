@@ -244,3 +244,4 @@ Progress: P4 done at 2026-10-24T21:10:44Z: 152 suites green locally and on 13 CI
 | Notes | none |
 
 Security (P5): overall risk Low. No critical, high, or medium finding. Five low findings (L1 to L5) and two informational notes, recorded in `plan/current/security-report.md`.
+Security re-review (P5): RESOLVED. Commit `2a981af` fixes L4 on Windows PowerShell 5.1 and 7, adds no new risk, and two static checks pin it. L1 and L5 are filed as backlog 0000233. L2 and L3 match the design. See `plan/current/security-rereview.md`.
