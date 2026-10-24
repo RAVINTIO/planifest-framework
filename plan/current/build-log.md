@@ -75,3 +75,17 @@ Credential scan (P0): clean (regex only). The scan ran after the design confirma
 | MCP calls | 0 |
 | Parallel task batches | pending |
 | Notes | The orchestrator dispatches the spec agent as one subagent to keep the main context small. |
+
+Decision (P1): the quiet flag is `--quiet` on `run-tests.sh` and works with the shard variables / reason: matches common CLI usage and keeps CI calls unchanged
+Decision (P1): US-002 maps primary to `sonnet` and cheaper to `haiku` in the Claude Code column, and fixes `pipeline-reference.md` line 111 and ship-agent line 186 to match / reason: the tier per task type stays and those lines hold the same invalid ids
+Decision (P1): req-001 removes the best-of-three loop in `req-009` / reason: the design says one warm-up call and one timed call with no retry
+Decision (P1): req-005 prompt doesn't wait for an answer in `continuous` and `autonomous` runs / reason: the design says it never blocks a phase
+Decision (P1): req-006 keeps the backlog wording "own reads or many tool calls" with no number / reason: the profile gives no threshold and a number would be invented
+Decision (P1): the re-run-setup migration and the 0.36.0 bump sit in the execution plan as cross-cutting deliverables / reason: no user story covers them
+Decision (P1): req-004 leaves the reference file location and any file split to P2 / reason: it is an architecture choice
+Decision (P1): no `src/{component-id}/component.yml` drafted and no data contract / reason: the component manifest already exists at `planifest-framework/component.yml` and no data changes
+Decision (P1): the spec agent wrote the requirement files inline, not through subagents / reason: seven short files with shared context cost less than seven fresh contexts
+Decision (P1): split step for req-001 to req-007: keep / reason: each holds one observable outcome with three criteria
+Decision (P1): NFR-002 sets the orchestrator size target at under 41,500 bytes / reason: 77,635 bytes now minus about 37,900 bytes moved, plus index rows
+Decision (P1): ship-agent split recorded as deferred in scope / reason: backlog 0000230 named it but the design scope omits it
+Verified (P1): the design and backlog cites differ in four places. Orchestrator is 77,635 bytes (cited 77,393), ship-agent is 42,318 (cited 42,158), the suite count is 111 top-level plus 33 regression files (cited 116), and orchestrator lines 675 and 721 hold no model ids. The execution plan lists them.
