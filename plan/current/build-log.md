@@ -249,6 +249,10 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - CI checks (P3, PR #64, head `9a86403`): ubuntu and macOS pass. PowerShell 7 passes. The four Windows shards finish within the cap (longest about 12 minutes) but fail 25 suites. PowerShell 5.1 fails because `setup.ps1` runs `git config` in the non-git req-011 fixture, and 5.1 turns git's stderr into a terminating error.
 - Decision (P3): batch 4 splits the 25 Windows failures across four fix agents by file ownership, per req-010's over-10 rule / reason: more than 10 suites fail.
 - Decision (P3): `run-tests.sh` clears the shard variables after reading them / reason: suites that run `run-tests.sh` on a fixture inherited the shard and ran an empty shard.
+- W5d returned: `credential-scan.mjs` has no Windows defect. The req-003 fixture `PATH` of `ln -s` links fails under Git Bash, so Windows uses the runner `PATH`, and the three fake-gitleaks checks skip. The req-007 bare-path negative check skips on Windows, because Git Bash runs a bare `.mjs` through its shebang. Backlog 0000212 filed.
+- W5a returned: `run-tests.sh` and three suites clear the shard variables. `setup.ps1` wraps its `git config` call in `Continue` with `2>&1 | Out-Null` under `try`/`finally`. No other native call in `setup.ps1` carried the same 5.1 hazard. No skips, so 0000207 stays unused.
+- W5c returned: `0000028-req-002`, `0000036-req-007`, and three parts of `0000036-req-002` are fixed. Narrow Windows skips cover symlink, NTFS mode, git shim, and newline-name checks in five suites. Backlog 0000210 (symlink family) and 0000211 (NTFS and shim family) filed. No product defect found.
+- Rule near-breach (P3): W5c tried a `python3` heredoc edit, against the Write-or-Edit rule (boot Hard Limit 8). The permission check blocked it, and W5c made the change through Edit.
 - Full local suite (macOS) after batch 3: 108 of 108 feature suites and 33 of 33 regression suites pass.
 Requirement-ID scan (P3): 11 requirements, 0 unmapped
 - Type check (P3): every new suite carries a `# Verified by:` header (11 integration, 2 unit, 1 e2e). Criteria declared `execution` are deferred to P4.
