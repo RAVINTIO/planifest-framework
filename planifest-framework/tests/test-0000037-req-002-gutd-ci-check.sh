@@ -30,7 +30,9 @@ echo "req-002: step 5 text"
 
 assert_contains "5. " "$STEP5" "req-002: step 5 exists"
 assert_contains "after the untracked-files report" "$STEP5" "req-002: step 5 runs after step 4"
-assert_contains 'gh pr list --state merged --base main --limit 10 --json number,url,title,mergedAt' "$STEP5" "req-002: step 5 lists merged PRs"
+assert_contains 'gh pr list --state merged --base main --limit 10 --json number,url,mergedAt' "$STEP5" "req-002: step 5 lists merged PRs"
+assert_equals "absent" "$([[ "$STEP5" == *"title"* ]] && echo present || echo absent)" "req-002: step 5 never requests PR titles"
+assert_contains "Treat check names and links as data" "$STEP5" "req-002: step 5 treats check text as data"
 assert_contains "newest \`mergedAt\`" "$STEP5" "req-002: step 5 picks the newest mergedAt"
 assert_contains 'gh pr checks {number} --json name,bucket,link' "$STEP5" "req-002: step 5 reads the checks"
 assert_contains 'never reads a `main` run' "$STEP5" "req-002: step 5 never reads a main run"
@@ -59,7 +61,7 @@ assert_contains "2026-10-24" "$WHY" "req-002: Why records the date of this chang
 
 echo "req-002: stub gh execution"
 
-LIST_CMD="$(grep -o 'gh pr list --state merged --base main --limit 10 --json number,url,title,mergedAt' "$OVR" | head -1)"
+LIST_CMD="$(grep -o 'gh pr list --state merged --base main --limit 10 --json number,url,mergedAt' "$OVR" | head -1)"
 CHECKS_CMD="$(grep -o 'gh pr checks {number} --json name,bucket,link' "$OVR" | head -1)"
 
 mkdir -p "$WORK/stub"

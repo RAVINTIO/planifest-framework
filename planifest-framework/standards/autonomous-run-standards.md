@@ -103,11 +103,12 @@ node planifest-framework/scripts/credential-scan.mjs [-- {path} ...]
 - **What it applies:** The script applies the P8 refused file names and credential patterns. It also runs `gitleaks` when `gitleaks` is on PATH, and says which scan mode ran.
 - **Exit codes:** `0` is clean. `1` is at least one match. `2` means the scan could not run. Stop on exit `1` or `2`.
 - **Who stops the commit:** The agent does. The script only sets the exit code. Nothing in this feature adds a git hook.
-- **On a match:** Run no `git commit` and no `git push` for that change. The files stay staged. Do not unstage them, and do not edit them to hide the match.
-- **Log lines:** Write `Credential scan (P{N}): held back {n} file(s)` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then finish the work that does not depend on those files.
+- **On a match:** Run no `git commit` and no `git push` that includes a matched file. Take each matched file out of the index with `git restore --staged -- {path}`. Leave the working-tree file untouched, and do not edit it to hide the match. Later scans and commits of other files then proceed. Clean staged files stay staged.
+- **Log lines:** For each matched file, write `Credential scan (P{N}): held back {path}` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then finish the work that does not depend on those files.
+- **Commit form:** Commit with explicit paths after `--`, such as `git commit -m "{message}" -- {paths}`. Never run a plain `git commit` or `git commit -a`. Either form can sweep in a path you meant to hold back.
 - **Final report:** List each path and line. Never print the secret.
 - **Clean scan:** Write `Credential scan (P{N}): clean ({scan mode})`. A regex-only scan says so in the line.
-- **Resume:** A resumed run does not commit, push, or unstage a held-back staged file. It reruns the scan before any commit. A file that now scans clean commits in the normal way.
+- **Resume:** A resumed run reads the `held back {path}` lines in the build log. It never stages a path that a held-back line names until the human on the loop clears it. It reruns the scan before any commit.
 - **Outside `autonomous`:** The script is available and the commit flow is unchanged.
 
 ---

@@ -146,4 +146,27 @@ assert_equals "Test suite (ubuntu-latest)" "$BUCKET" "req-001: valid JSON with a
 assert_contains "no checks reported" "$S10C" "req-001: Step 10c names the no-checks-yet stderr"
 assert_contains "Read that as an empty list and keep polling" "$S10C" "req-001: no checks yet keeps polling, not unreadable"
 
+echo "req-001: held-back rule is enforceable (P5 F-04)"
+PCS="$(section '## Pre-commit credential scan' "$STD")"
+assert_contains 'git restore --staged -- {path}' "$PCS" "req-001: a held-back file leaves the index"
+assert_contains "working-tree file untouched" "$PCS" "req-001: the working-tree file stays untouched"
+assert_contains 'Credential scan (P{N}): held back {path}' "$PCS" "req-001: held-back log line names the path"
+assert_contains 'Exception waiting (P{N}, 7)' "$PCS" "req-001: held-back file records an exception"
+assert_contains 'explicit paths after `--`' "$PCS" "req-001: commits name explicit paths"
+assert_contains 'plain `git commit`' "$PCS" "req-001: plain git commit is banned"
+assert_contains "never stages a path that a held-back line names" "$PCS" "req-001: resume never stages a held-back path"
+HL7="$(grep '^7\. \*\*Commit after every' "$ORCH")"
+assert_contains 'git restore --staged -- {path}' "$HL7" "req-001: Hard Limit 7 names the unstage step"
+assert_contains 'explicit paths after `--`' "$HL7" "req-001: Hard Limit 7 requires explicit paths"
+RESUME6C="$(grep '^6c\. ' "$ORCH")"
+assert_contains "held back {path}" "$RESUME6C" "req-001: resume reads the held-back lines"
+assert_contains "never stages" "$RESUME6C" "req-001: resume never stages a held-back path"
+
+echo "req-001: close-out commits run the scan (P5 F-05)"
+assert_contains 'credential-scan.mjs -- "{archive-dir}/build-log.md"' "$S10C" "req-001: Step 10c scans the build log commit"
+assert_contains 'credential-scan.mjs -- "{archive-dir}/final-report.md"' "$S11" "req-001: Step 11 scans the final report commit"
+assert_contains 'git diff --name-only' "$S10C" "req-001: the fix-attempt scan covers every changed path"
+assert_contains "exception item 7" "$S10C" "req-001: Step 10c stops under exception item 7"
+assert_contains "exception item 7" "$S11" "req-001: Step 11 stops under exception item 7"
+
 print_summary

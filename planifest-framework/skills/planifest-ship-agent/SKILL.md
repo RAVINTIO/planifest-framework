@@ -303,7 +303,7 @@ git push -u origin HEAD
 gh pr view --json number,url,isDraft
 ```
 
-**PR text scan (0000037 ADR-004):** Before any `gh pr create` or `gh pr edit`, write the PR title and the PR description to files outside the repository with the Write tool, such as `{tmp-dir}/pr-title.txt` and `{tmp-dir}/pr-body.md`. The body is the PR description, see template below. A file outside the repository cannot reach a commit. Scan each file:
+**PR text scan (0000037 ADR-004):** Before any `gh pr create` or `gh pr edit`, create one temp folder with `PRTMP="$(mktemp -d)"`. The folder has mode 0700. Write the PR title and the PR description into it with the Write tool, as `$PRTMP/pr-title.txt` and `$PRTMP/pr-body.md`. The body is the PR description, see template below. A file outside the repository cannot reach a commit. Scan each file:
 
 ```bash
 node planifest-framework/scripts/credential-scan.mjs --file {path}
@@ -313,18 +313,20 @@ node planifest-framework/scripts/credential-scan.mjs --file {path}
 - **Match:** On exit `1`, the agent regenerates the body once. The new text cites paths and results only. Then it scans again.
 - **Held back:** If the second scan matches, or any scan ends with exit `2`, the agent does not run `gh pr create` and does not run `gh pr edit`. It takes Option [2] without the description. It writes `Credential scan (P9): PR text held back` and `Exception waiting (P9, 7): credential sighting in PR text at line {n}`. The final report names the line, never the text.
 - **No edit after the scan:** Make no edit between the scan and the send. The sent text is the scanned text.
+- **Clean up:** After `gh pr create` or `gh pr edit` returns, or when the scan holds the text back, run `rm -rf "$PRTMP"`.
 
-**PR text rule:** The PR title and body cite file paths, requirement IDs, ADR IDs, check names, counts, and result words. They never include pasted command output, log lines, file contents, diff hunks, or error text. The check lists in the body use the req-001 fields name, bucket, and link. A draft PR body names each exception by item number and path only. The rule covers every PR text the run sends, including a draft PR that the orchestrator raises and the `gh pr edit` update in this step. Option [2] output passes the same scan and follows the same rule.
+**PR text rule:** The PR title and body cite file paths, requirement IDs, ADR IDs, check names, counts, and result words. They never include pasted command output, log lines, file contents, diff hunks, or error text. The check lists in the body use the req-001 fields name, bucket, and link. A draft PR body names each exception by item number and path only. The rule covers every PR text the run sends, including a draft PR that the orchestrator raises and the `gh pr edit` update in this step. Option [2] output passes the same scan and follows the same rule. PR comments and review replies follow the same PR-text rule and the same scan, or the run sends none.
 
-**Existing PR (0000037 ADR-002):** A draft PR for the branch may already exist, raised at P3. If `gh pr view` prints one, update that PR. Step 10 never raises a second PR. Update its title and body with `gh pr edit {n} --title "{title}" --body-file {body-path}`, after the scan. Run `gh pr ready {n}` only when the build log holds no `Exception waiting` line. Otherwise the PR stays draft and its body lists every waiting exception (0000033 D-003).
+**Existing PR (0000037 ADR-002):** A draft PR for the branch may already exist, raised at P3. If `gh pr view` prints one, update that PR. Step 10 never raises a second PR. Update its title and body after the scan with `TITLE="$(cat "$PRTMP/pr-title.txt")"` and then `gh pr edit {n} --title "$TITLE" --body-file "$PRTMP/pr-body.md"`. Run `gh pr ready {n}` only when the build log holds no `Exception waiting` line. Otherwise the PR stays draft and its body lists every waiting exception (0000033 D-003).
 
 **No PR yet:** Raise it with the scanned files.
 
 ```bash
-gh pr create --title "{title}" --body-file {body-path}
+TITLE="$(cat "$PRTMP/pr-title.txt")"
+gh pr create --title "$TITLE" --body-file "$PRTMP/pr-body.md"
 ```
 
-`{title}` is the scanned title, `{feature-id}: {one-line feature summary}`. The heredoc `--body` form is not used.
+The scanned title file holds `{feature-id}: {one-line feature summary}`. The shell reads it into `TITLE` and never interpolates untrusted text into the command line. The heredoc `--body` form is not used.
 
 **Record the PR:** As soon as `gh pr create` returns, or the existing PR is found, write `PR: #{n} {url}` in the P9 block of `{archive-dir}/build-log.md`. Write it before any wait. Step 10b commits the line with the other leftovers. Update the changelog (`## PR` field) with the URL.
 
@@ -411,12 +413,14 @@ Names and links come from `gh` fields only. Never paste raw check output or log 
 
 **Red check:**
 
-- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause, run the credential scan, commit, push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
+- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause. Then list every changed path with `git diff --name-only` and run the credential scan `node planifest-framework/scripts/credential-scan.mjs -- {paths}` on all of them, `src/` and workflow files included. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit with explicit paths after `--`, push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
 - **`interactive` and `continuous`:** Put the red check in the Step 11 message with a question about fixing it. Push no fix without that answer.
 
 **Progress line:** Any result other than all passed (red, pending, unknown, or unreadable) writes `Progress: P9 blocked at {End}: CI {result}`. The step never writes `P9 done` for it.
 
 **Commit the log:** Stage the archived build log by explicit path and commit it on its own before Step 11. The commit carries the `CI checks (P9)` lines, the progress line, and each fix attempt line. Step 11 then commits only `final-report.md`.
+
+In `autonomous`, run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/build-log.md"` first. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule.
 
 ```bash
 git add -- "{archive-dir}/build-log.md"
@@ -435,7 +439,7 @@ The tag then names the head that CI passed, or the last head if CI stays red. Th
 
 ### Step 11: Confirm to human
 
-In `autonomous`, write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Write the report to `{archive-dir}/final-report.md`, then commit it by explicit path:
+In `autonomous`, write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Write the report to `{archive-dir}/final-report.md`, then run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/final-report.md"`. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit it by explicit path:
 
 ```bash
 git add -- "{archive-dir}/final-report.md"
