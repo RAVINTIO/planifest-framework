@@ -101,7 +101,7 @@
 ### F-11 Low - pattern gaps and name-case bypass
 
 - **Files:** `credential-scan.mjs:24-33` and `:36-43`
-- **Evidence:** I ran fixtures for each. `.ENV` exited 0, because `startsWith('.env')` is case sensitive. The same applies to `ID_RSA` and `KEY.PEM` on case-insensitive file systems. A `-----BEGIN PGP PRIVATE KEY BLOCK-----` line exited 0, because the rule needs `PRIVATE KEY-----` with no suffix. `ghs_` and `gho_` tokens, `ASIA` AWS keys, and a homoglyph in the key prefix also exited 0. Split keys and base64 are not detected, as for any regex scan.
+- **Evidence:** I ran fixtures for each. `.ENV` exited 0, because `startsWith('.env')` is case sensitive. The same applies to `ID_RSA` and `KEY.PEM` on case-insensitive file systems. A PGP private-key block header line exited 0, because the rule needs the private-key marker followed directly by the closing dashes. `ghs_` and `gho_` tokens, `ASIA` AWS keys, and a homoglyph in the key prefix also exited 0. Split keys and base64 are not detected, as for any regex scan.
 - **Fix:** Lowercase `basename(path)` before the name rules. Change the private key rule to `-----BEGIN [A-Z ]*PRIVATE KEY`. Extend the GitHub rule to `gh[pousr]_`. Add `ASIA`. Document split and encoded keys as out of scope in req-003.
 
 ### F-12 Low - GUTD fetches PR titles it does not use

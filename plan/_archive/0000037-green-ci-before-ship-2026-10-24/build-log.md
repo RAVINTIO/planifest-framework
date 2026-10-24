@@ -422,6 +422,10 @@ Progress: P6 done at 2026-10-24T11:15:33Z: docs complete, cross-model review app
 - Step 4 (P7): `promote-to-regression.sh` promoted both suites with promoter `agent`, exit 0 each. The regression copies pass (165 and 143), and the pack now holds 35 suites.
 - Step 5 (P7): test report written to `plan/changelog/0000037-green-ci-before-ship-test-report-2026-10-24.md`.
 - Step 5b (P7): `product.yml: version "0.35.0", feature "0000037-green-ci-before-ship"` (exit 0).
+- Step 6 (P7): `archive-current.mjs` moved 37 items, removed `plan/current/.feature-id`, and exited 0. `archive-dir: plan/_archive/0000037-green-ci-before-ship-2026-10-24`. `plan/current/` is empty.
+- Step 6b (P7): `docs/about.md` holds version 0.35.0, feature `0000037-green-ci-before-ship`, and `24 Oct 2026`.
+- Credential scan (P7): held back `plan/_archive/0000037-green-ci-before-ship-2026-10-24/security-review-credentials.md` on rule `private-key-block`, line 104.
+- Decision (P7): the held-back line is review prose that quotes a PGP private-key header line as evidence, with no key material. The orchestrator reworded it to describe the header without quoting it. The rescan exited 0 with 126 of 126 candidates safe / reason: a false positive from the stronger P5 rule, and an exception would leave the archive incomplete.
 - Decision (P7): don't promote `test-0000037-req-001-p9-ci-check.sh`, `test-0000037-req-002-gutd-ci-check.sh`, or `test-0000037-req-004-pr-body-scan.sh` / reason: they assert skill text, so a rewording breaks them without a behaviour change.
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
