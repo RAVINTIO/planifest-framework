@@ -110,14 +110,14 @@ Progress: P1 done at 2026-10-24T20:02:04Z: seven requirements, 29 criteria, crit
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T20:02:04Z` |
-| End | pending |
-| Wall-clock | pending |
-| Streams | pending |
+| End | `2026-10-24T20:10:16Z` |
+| Wall-clock | 8 |
+| Streams | 1 |
 | Model tier | primary (`sonnet`) |
 | Skills loaded | planifest-adr-agent |
-| Agents spawned | pending |
+| Agents spawned | 4 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 0 |
 | Notes | none |
 
 Decision (P2): keep the stack unchanged for all seven requirements / reason: no requirement needs a capability that Bash, Node built-ins, or Markdown lack. (ADR-001)
@@ -146,3 +146,26 @@ Decision (P2): the ADR-002 size margin is 1,799 bytes (77,635 less 33,261 less 4
 Critic (P2): iteration 1, approach 1: REJECT / mechanical check failed on cross-feature ADR-014 and ADR-010 tokens in ADR-004, ADR-005, ADR-007, plus 3 major findings (ADR-004 hung suite, ADR-003 model test scope). Verdict: plan/current/critic-verdict-p2-1.md
 Critic (P2): iteration 2, approach 1: REJECT / mechanical check clean and iteration 1 findings fixed, but ADR-002 rule 4a edits the gate checklist inside the byte-identical Phase 0 block (1 major, 1 minor). Verdict: plan/current/critic-verdict-p2-2.md
 Critic (P2): iteration 3, approach 1: APPROVE / mechanical check clean, all earlier findings fixed, ADR-002 byte margin 1,799 bytes with 169 spare, no gate weakened (1 minor). Verdict: plan/current/critic-verdict-p2-3.md
+Gate (P2): passed. The design critic approved iteration 3 over P1 and P2.
+Progress: P2 done at 2026-10-24T20:10:16Z: seven ADRs, critic approved on iteration 3
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T20:10:16Z` |
+| End | pending |
+| Wall-clock | pending |
+| Streams | 4 |
+| Model tier | primary (`sonnet`) |
+| Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer, planifest-refactor |
+| Agents spawned | pending |
+| MCP calls | 0 |
+| Parallel task batches | pending |
+| Notes | none |
+
+Capability skills (P3): none relevant to a Bash, Node, and Markdown framework change.
+Decision (P3): four streams. stream-01-orchestrator holds req-004 then req-005. stream-02-dispatch holds req-002 then req-006. stream-03-tests holds req-001 and req-003. stream-04-boot holds req-007 and the 0.36.0 migration / reason: the execution plan pairs the requirements that share a file, and the four groups touch no file in common
+Decision (P3): streams form at P3, not P1 / reason: P1 and P2 ran as one track before the toggle resolved
+Decision (P3): each stream runs its own suites and the suites its files touch, not the full suite, during TDD. P4 runs the full suite over the joined tree / reason: four streams share one working tree, so a full run mid-edit would read another stream's half-made change
+Decision (P3): the ship agent sets the 0.36.0 version at P9 / reason: `set-product-release.mjs` owns the version bump
