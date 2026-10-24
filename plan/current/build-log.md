@@ -184,3 +184,8 @@ Decision (P3): the quiet trap stops the running suite and exits 128 plus the sig
 Decision (P3): every quiet FAIL line reads `{suite}: FAIL: ...`, with `regression/{name}` for regression suites / reason: the suite-name prefix is the only marker ADR-004 allows
 Decision (P3): quiet mode omits the regression suite header / reason: ADR-004 allows no suite header
 Decision (P3): no existing suite prints `FAIL:` on a pass, so stream-03 changed no suite text / reason: a scan found none
+Stream (P3): stream-01-orchestrator at join. req-004 and req-005 each RED exit 1, GREEN exit 0. Commit `68b1b1c`. `SKILL.md` is 40,788 bytes, 712 under the 41,500 target. The moved blocks match the `5966840` blob byte for byte. 27 existing suites now read the new reference files.
+Decision (P3): the pointer section is `## Phase 0 and Adoption Modes (reference files)` and sits after Context Hygiene / reason: an existing test range ends at `^## Phase 0` and still stops there
+Decision (P3): the req-005 prompt is its own paragraph before "Dynamic compaction" / reason: an existing grep must keep matching only its own line
+Decision (P3): Resume Detection gains step 6d to reload the P0 reference files / reason: it sits before step 7 with the other resume steps
+Deviation (P3, unclassified): setup rewrites `../standards/` links only inside an installed `SKILL.md`. The moved P0 text keeps those links byte for byte in `references/`, so every install would hold broken links, including the one to `p0-question-policy.md`. The orchestrator adds a matching rewrite for the skill's own reference files to `setup.sh` and `setup.ps1`, with a new install test. Neither file was in the confirmed scope.
