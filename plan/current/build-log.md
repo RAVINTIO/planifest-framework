@@ -154,14 +154,14 @@ Progress: P2 done at 2026-10-24T20:10:16Z: seven ADRs, critic approved on iterat
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T20:10:16Z` |
-| End | pending |
-| Wall-clock | pending |
+| End | `2026-10-24T20:33:10Z` |
+| Wall-clock | 22 |
 | Streams | 4 |
 | Model tier | primary (`sonnet`) |
 | Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer, planifest-refactor |
-| Agents spawned | pending |
+| Agents spawned | 5 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 1 |
 | Notes | none |
 
 Capability skills (P3): none relevant to a Bash, Node, and Markdown framework change.
@@ -189,3 +189,25 @@ Decision (P3): the pointer section is `## Phase 0 and Adoption Modes (reference 
 Decision (P3): the req-005 prompt is its own paragraph before "Dynamic compaction" / reason: an existing grep must keep matching only its own line
 Decision (P3): Resume Detection gains step 6d to reload the P0 reference files / reason: it sits before step 7 with the other resume steps
 Deviation (P3, unclassified): setup rewrites `../standards/` links only inside an installed `SKILL.md`. The moved P0 text keeps those links byte for byte in `references/`, so every install would hold broken links, including the one to `p0-question-policy.md`. The orchestrator adds a matching rewrite for the skill's own reference files to `setup.sh` and `setup.ps1`, with a new install test. Neither file was in the confirmed scope.
+Fix (P3): commit `d9a01e9` adds the reference-link rewrite to `setup.sh` and `setup.ps1`. The new suite `test-0000038-req-004-installed-reference-links.sh` went RED exit 1, GREEN exit 0. `pwsh` isn't installed locally, so the `setup.ps1` check is static until the Windows CI legs run.
+Backlog filed (P3): 0000232. Setup doesn't bundle `standards/reference/`, so two stack-evaluation links dangle in installs. The gap predates this feature.
+Join (P3): `stream-reconcile.mjs` exit 0.
+Gate (P3): passed. Every requirement reached GREEN. The P4 CI run is the checker.
+Progress: P3 done at 2026-10-24T20:33:10Z: seven requirements GREEN across four streams, one setup fix, reconcile clean
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T20:33:10Z` |
+| End | pending |
+| Wall-clock | pending |
+| Streams | 4 (joined) |
+| Model tier | primary |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | pending |
+| MCP calls | 0 |
+| Parallel task batches | pending |
+| Notes | none |
+
+Decision (P4): raise a draft PR now so CI runs the Windows legs before P9 / reason: CI runs on `pull_request` only, and req-001 needs the Windows shard to prove the fix. P9 reuses the PR.
