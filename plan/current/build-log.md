@@ -213,3 +213,10 @@ Progress: P3 done at 2026-10-24T20:33:10Z: seven requirements GREEN across four 
 Decision (P4): raise a draft PR now so CI runs the Windows legs before P9 / reason: CI runs on `pull_request` only, and req-001 needs the Windows shard to prove the fix. P9 reuses the PR.
 Draft PR (P4): #65 https://github.com/RAVINTIO/planifest-framework/pull/65
 Decision (P4): `gh pr create` names `--repo RAVINTIO/planifest-framework` and `--head` / reason: the GitHub repository moved from `planifest/planifest-framework`, and the bare form failed with "Head sha can't be blank"
+Validate (P4, run 1, local): 151 of 152 suites passed. `test-0000010` printed a `FAIL: 0` summary line and exited 0, so quiet mode counted it as failed. Quiet output: 318 bytes.
+Fix (P4, batch 1): commit `e8f86fb` renames the `test-0000010` summary lines to `Passed:` and `Failed:`. The change touches printed text only. Stream-03 had reported that no suite printed `FAIL:` on a pass, and missed this summary line.
+Validate (P4, run 2, local): 152 of 152 suites passed. Quiet output 189 bytes against 702,490 bytes in default mode.
+Validate (P4, CI on `e8f86fb`): 4 of 13 jobs failed. The req-004 and req-005 tests read baseline commit `5966840`, which a shallow CI clone lacks. One macOS run of the 0000035 req-005 10-link ratchet check took 582 ms against 500 ms. Its other samples ran 57 to 130 ms. Windows shard 1, which failed on PR #64, passed.
+Fix (P4, batch 2): commit `cf87eed` replaces the baseline commit reads with SHA-256 values of the same bytes. It also gives the 10-link ratchet check one untimed warm-up call, with the 500 ms limit kept and no retry.
+Deviation (P4, unclassified): the warm-up pattern now also covers the 0000035 req-005 10-link ratchet check. The design scoped it to three 0000032 suites.
+Decision (P4): the req-004 and req-005 tests hold baseline hashes, not a commit reference / reason: the squash merge drops commit `5966840` from `main`, so a commit read would fail forever after merge
