@@ -55,4 +55,5 @@ A suite that cannot run under Git Bash on `windows-latest` returns exit 0 early 
 
 | Suite | Reason | Date |
 |-------|--------|------|
+| `test-0000025-req-004-setup-config-relocation.sh` | Check (e) only: `chmod 555` does not block writes on NTFS, so the unwritable-folder case cannot be built. The other checks in the suite run. | 2026-10-24 |
 

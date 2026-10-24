@@ -408,6 +408,30 @@ function Merge-EnforcementHookSettings {
     }
 }
 
+function ConvertTo-PlanifestHashtable {
+    # Windows PowerShell 5.1 has no ConvertFrom-Json -AsHashtable (PowerShell 6+
+    # only). Convert the parsed PSCustomObject tree to hashtables and arrays so
+    # 5.1 and 7 give the same result. Scalars pass through unchanged.
+    param($InputObject)
+
+    if ($null -eq $InputObject) { return $null }
+    if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+        $table = @{}
+        foreach ($property in $InputObject.PSObject.Properties) {
+            $table[$property.Name] = ConvertTo-PlanifestHashtable -InputObject $property.Value
+        }
+        return $table
+    }
+    if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
+        $items = @()
+        foreach ($item in $InputObject) {
+            $items += , (ConvertTo-PlanifestHashtable -InputObject $item)
+        }
+        return , $items
+    }
+    return $InputObject
+}
+
 function Merge-AllowedTools {
     # Idempotently add "Agent" to allowedTools in .claude/settings.json (REQ-002).
     # Preserves existing allowedTools entries — additive merge only.
@@ -418,8 +442,9 @@ function Merge-AllowedTools {
     $settings = @{}
     if (Test-Path $SettingsPath) {
         $raw = Get-Content -Raw -Path $SettingsPath -Encoding UTF8
-        $settings = $raw | ConvertFrom-Json -AsHashtable -ErrorAction SilentlyContinue
-        if (-not $settings) { $settings = @{} }
+        $parsed = $raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+        $settings = ConvertTo-PlanifestHashtable -InputObject $parsed
+        if (-not ($settings -is [hashtable])) { $settings = @{} }
     }
 
     $existing = if ($settings.ContainsKey('allowedTools') -and $settings['allowedTools']) {

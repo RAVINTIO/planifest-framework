@@ -42,7 +42,7 @@ assert_equals "yes" "$(yes_no 'runs-on:[[:space:]]*\$\{\{[[:space:]]*matrix\.os[
 assert_equals "yes" "$(yes_no 'fail-fast:[[:space:]]*false' "$SUITE")" "req-001: strategy sets fail-fast false"
 assert_equals "yes" "$(yes_no 'permissions:' "$SUITE")" "req-001: job sets a permissions block"
 assert_equals "yes" "$(yes_no 'contents:[[:space:]]*read' "$SUITE")" "req-001: permissions grant contents read"
-assert_equals "yes" "$(yes_no 'timeout-minutes:[[:space:]]*10$' "$SUITE")" "req-001: job sets timeout-minutes 10"
+assert_equals "yes" "$(yes_no "timeout-minutes:[[:space:]]*(10|\\\$\\{\\{ matrix\\.os == 'windows-latest' && 20 \\|\\| 10 \\}\\})\$" "$SUITE")" "req-001: job sets timeout-minutes 10 (or the windows 20 expression, ADR-014)"
 assert_equals "yes" "$(yes_no 'actions/checkout@v4' "$SUITE")" "req-001: job uses actions/checkout@v4"
 
 echo "== req-001/ADR-003: security posture =="

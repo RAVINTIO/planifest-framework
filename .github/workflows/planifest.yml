@@ -63,20 +63,34 @@ jobs:
   # consumer repos). Consumers don't change the framework, so these tests
   # tell them nothing new. See ADR-002 (feature 0000031).
   test-suite:
-    name: Test suite (${{ matrix.os }})
+    name: Test suite (${{ matrix.os }}${{ matrix.shard && format(', shard {0} of 4', matrix.shard) || '' }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    # The Git Bash leg ran past 10 minutes, so Windows gets 20 minutes per shard
+    # and runs four shards. See ADR-014 (feature 0000037).
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}
     permissions:
       contents: read
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            shard: 1
+          - os: windows-latest
+            shard: 2
+          - os: windows-latest
+            shard: 3
+          - os: windows-latest
+            shard: 4
     steps:
       - uses: actions/checkout@v4
 
       - name: Run the framework test suite
         shell: bash
+        env:
+          PLANIFEST_SHARD_INDEX: ${{ matrix.shard }}
+          PLANIFEST_SHARD_COUNT: ${{ matrix.shard && 4 || '' }}
         run: bash planifest-framework/tests/run-tests.sh
 
   setup-powershell:

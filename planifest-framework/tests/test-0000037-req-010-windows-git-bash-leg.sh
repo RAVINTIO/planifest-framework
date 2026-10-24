@@ -8,9 +8,11 @@
 # req-010: the consumer workflow at planifest-framework/hooks/planifest.yml has no mention of the leg.
 # req-010: the skip table in planifest-framework/tests/README.md exists with its header row.
 #
-# Cap rule (ADR-014): the first pass keeps timeout-minutes 10. If P3 measures a
-# Git Bash run over 10 minutes, the job uses the expression named in WINDOWS_CAP_EXPR
-# and this suite expects that expression instead.
+# Cap rule (ADR-014): the first pass kept timeout-minutes 10. P3 measured a Git Bash
+# run over 10 minutes (about 38 suites), so the job uses the expression named in
+# WINDOWS_CAP_EXPR and the Windows leg is sharded four ways (second fallback).
+# req-010: a test of the shard selection in run-tests.sh runs against dummy suites.
+# req-010: every SKIP (windows) guard has a skip table row, and every row has a guard.
 #
 # No YAML library is available, so the tests extract each job block with awk and grep it.
 
@@ -26,7 +28,7 @@ CONSUMER_WORKFLOW="$FRAMEWORK/hooks/planifest.yml"
 TESTS_README="$SCRIPT_DIR/README.md"
 
 # Set to "20" when ADR-014 decision 2 applies. Leave "10" until P3 measures.
-CAP_BRANCH="10"
+CAP_BRANCH="20"
 WINDOWS_CAP_EXPR="\\\$\\{\\{ matrix\\.os == 'windows-latest' && 20 \\|\\| 10 \\}\\}"
 
 job_block() {
@@ -69,5 +71,55 @@ assert_equals "no" "$(yes_no 'run-tests\.sh' "$(cat "$CONSUMER_WORKFLOW")")" "re
 echo "== req-010: skip table =="
 assert_equals "yes" "$(yes_no '^## Windows skip table' "$(cat "$TESTS_README")")" "req-010: tests README has a Windows skip table section"
 assert_equals "yes" "$(yes_no '^\|[[:space:]]*Suite[[:space:]]*\|[[:space:]]*Reason[[:space:]]*\|[[:space:]]*Date[[:space:]]*\|' "$(cat "$TESTS_README")")" "req-010: skip table has Suite, Reason, and Date columns"
+
+echo "== req-010: shard entries in the workflow (ADR-014 second fallback) =="
+assert_equals "4" "$(grep -cE '^[[:space:]]+shard:[[:space:]]*[0-9]+[[:space:]]*$' <<<"$SUITE")" "req-010: the test-suite job holds four shard entries"
+assert_equals "4" "$(grep -cE '^[[:space:]]+-[[:space:]]*os:[[:space:]]*windows-latest' <<<"$SUITE")" "req-010: four include entries run on windows-latest"
+assert_equals "yes" "$(yes_no 'PLANIFEST_SHARD_INDEX:' "$SUITE")" "req-010: the step sets PLANIFEST_SHARD_INDEX"
+assert_equals "yes" "$(yes_no 'PLANIFEST_SHARD_COUNT:' "$SUITE")" "req-010: the step sets PLANIFEST_SHARD_COUNT"
+assert_equals "no" "$(yes_no 'os:[[:space:]]*\[[^]]*windows-latest' "$SUITE")" "req-010: windows-latest is not in the plain os list, only in the shard includes"
+
+echo "== req-010: shard selection in run-tests.sh =="
+FIX="$(mktemp -d "${TMPDIR:-/tmp}/planifest-shard.XXXXXX")"
+trap 'rm -rf "$FIX"' EXIT
+mkdir -p "$FIX/regression"
+cp "$SCRIPT_DIR/run-tests.sh" "$FIX/run-tests.sh"
+for n in a b c d e; do printf '#!/usr/bin/env bash\necho "dummy %s"\nexit 0\n' "$n" > "$FIX/test-$n.sh"; done
+for n in r1 r2 r3; do printf '#!/usr/bin/env bash\necho "dummy %s"\nexit 0\n' "$n" > "$FIX/regression/test-$n.sh"; done
+
+ran_names() { grep -E '^--- test-.*\.sh ---$' <<<"$1" | sed -E 's/^--- (test-.*\.sh) ---$/\1/' | tr '\n' ' '; }
+
+ALL_OUT="$(env -u PLANIFEST_SHARD_INDEX -u PLANIFEST_SHARD_COUNT bash "$FIX/run-tests.sh" 2>&1)"
+assert_equals "test-a.sh test-b.sh test-c.sh test-d.sh test-e.sh test-r1.sh test-r2.sh test-r3.sh " "$(ran_names "$ALL_OUT")" "req-010: with no shard variables every suite runs in order"
+assert_equals "no" "$(yes_no 'Shard' "$ALL_OUT")" "req-010: with no shard variables no shard line prints"
+
+S2_OUT="$(PLANIFEST_SHARD_INDEX=2 PLANIFEST_SHARD_COUNT=4 bash "$FIX/run-tests.sh" 2>&1)"
+assert_equals "test-b.sh test-r1.sh " "$(ran_names "$S2_OUT")" "req-010: shard 2 of 4 runs positions 2 and 6 of the feature-plus-regression list"
+assert_equals "yes" "$(yes_no 'Shard 2 of 4' "$S2_OUT")" "req-010: the runner prints one line naming the shard"
+assert_equals "1" "$(grep -c 'Shard 2 of 4' <<<"$S2_OUT")" "req-010: the shard line prints once"
+
+S1_OUT="$(PLANIFEST_SHARD_INDEX=1 PLANIFEST_SHARD_COUNT=4 bash "$FIX/run-tests.sh" 2>&1)"
+S3_OUT="$(PLANIFEST_SHARD_INDEX=3 PLANIFEST_SHARD_COUNT=4 bash "$FIX/run-tests.sh" 2>&1)"
+S4_OUT="$(PLANIFEST_SHARD_INDEX=4 PLANIFEST_SHARD_COUNT=4 bash "$FIX/run-tests.sh" 2>&1)"
+UNION="$(ran_names "$S1_OUT")$(ran_names "$S2_OUT")$(ran_names "$S3_OUT")$(ran_names "$S4_OUT")"
+assert_equals "8" "$(tr ' ' '\n' <<<"$UNION" | grep -c '^test-')" "req-010: the four shards run eight suite slots in total"
+assert_equals "8" "$(tr ' ' '\n' <<<"$UNION" | grep '^test-' | sort -u | wc -l | tr -d ' ')" "req-010: the four shards cover every suite exactly once"
+
+ONE_OUT="$(PLANIFEST_SHARD_INDEX=2 bash "$FIX/run-tests.sh" 2>&1)"
+assert_equals "8" "$(ran_names "$ONE_OUT" | tr ' ' '\n' | grep -c '^test-')" "req-010: an index without a count runs every suite"
+EMPTY_OUT="$(PLANIFEST_SHARD_INDEX= PLANIFEST_SHARD_COUNT= bash "$FIX/run-tests.sh" 2>&1)"
+assert_equals "8" "$(ran_names "$EMPTY_OUT" | tr ' ' '\n' | grep -c '^test-')" "req-010: empty shard variables run every suite"
+
+echo "== req-010: every skip guard has a skip table row =="
+# One row per guard and one guard per row (the README says so). A guard is a
+# line that prints SKIP (windows): in a test-*.sh suite or its regression copy.
+GUARDED="$(grep -lE '^[[:space:]]*(echo|printf).*SKIP \(windows\):' "$SCRIPT_DIR"/test-*.sh "$SCRIPT_DIR"/regression/test-*.sh 2>/dev/null | xargs -n1 basename 2>/dev/null | sort -u)"
+ROWS="$(grep -E '^\|[[:space:]]*`?test-' "$TESTS_README" | sed -E 's/^\|[[:space:]]*`?([^`| ]+)`?.*/\1/' | sort -u)"
+MISSING=""
+for g in $GUARDED; do grep -qxF "$g" <<<"$ROWS" || MISSING="$MISSING $g"; done
+assert_equals "" "$MISSING" "req-010: every suite with a SKIP (windows) guard has a skip table row"
+EXTRA=""
+for r in $ROWS; do grep -qxF "$r" <<<"$GUARDED" || EXTRA="$EXTRA $r"; done
+assert_equals "" "$EXTRA" "req-010: every skip table row names a suite with a SKIP (windows) guard"
 
 print_summary

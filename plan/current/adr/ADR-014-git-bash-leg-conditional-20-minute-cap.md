@@ -29,6 +29,16 @@ P2 writes this decision now so P3 needs no return to P2. This is a conditional d
 5. P3 records which branch applied. It writes one build-log line, `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}`. When the cap is 20, the static test `test-0000037-req-010-windows-git-bash-leg.sh` expects the expression `${{ matrix.os == 'windows-latest' && 20 || 10 }}` from decision 2.
 6. Sharding is the second fallback. If 20 minutes is not enough, or the macOS leg nears its cap, P3 shards the suite across jobs. This ADR rejects sharding for now because it changes the job layout and the check names.
 
+## Applied (P3)
+
+- The first draft-PR CI run (run 40047595064, PR #64) measured about 38 of about 140 suites in 10 minutes on `windows-latest`. The job hit its 10-minute cap. The condition in decision 2 fired, and the 20 branch applies.
+- A full run needs about 37 minutes at that rate, which is past 20. Decision 6 therefore applies too. P3 shards the Windows leg four ways, each shard with `timeout-minutes: 20`.
+- `planifest-framework/tests/run-tests.sh` reads `PLANIFEST_SHARD_INDEX` (1-based) and `PLANIFEST_SHARD_COUNT`. When both are set, it runs the suites whose position in the sorted feature-plus-regression list satisfies `(position - 1) % count == index - 1`. It prints one line naming the shard. With neither set, it behaves as before.
+- `test-suite` keeps one ubuntu leg and one macOS leg at 10 minutes. It adds four `windows-latest` entries through `include`, each with a `shard` value from 1 to 4. The job sets `timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}`.
+- The line 45 assertion in `test-0000031-req-001-003-ci-jobs.sh` accepts that expression as well as the plain `10`. `test-0000037-req-010-windows-git-bash-leg.sh` expects the 20 branch and the four shard entries, and tests the shard selection against dummy suites.
+- Check names change for the Windows leg to `Test suite (windows-latest, shard N of 4)`.
+- Cost: CI minutes per PR rise above the R-013 estimate.
+
 ## Alternatives Considered
 
 | Alternative | Pros | Cons | Why Rejected |

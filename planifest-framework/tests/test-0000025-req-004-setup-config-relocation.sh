@@ -180,8 +180,17 @@ else
   assert_equals "yes" "$(file_exists ".claude/.planifest-setup-flags")" \
     "(e): marker still written when the tracked-file write fails (fallback behavior)"
 
-  assert_equals "no" "$(file_exists "planifest-overrides/setup-config/claude-code.md")" \
-    "(e): tracked config file was not created when its directory couldn't be written"
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      # chmod 555 sets no write block on an NTFS folder, so setup can write the
+      # file and the "not created" check cannot hold. The two checks above still run.
+      echo "  SKIP (windows): chmod 555 does not block writes on NTFS, so the unwritable-folder case cannot be built"
+      ;;
+    *)
+      assert_equals "no" "$(file_exists "planifest-overrides/setup-config/claude-code.md")" \
+        "(e): tracked config file was not created when its directory couldn't be written"
+      ;;
+  esac
 
   cd "$SCRIPT_DIR"
   rm -rf "$WS"

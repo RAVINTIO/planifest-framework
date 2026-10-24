@@ -175,9 +175,10 @@ echo "=== (h): setup.ps1's dispatcher guards Install-Tier1HookRegistration on Se
 # SettingsFile-presence `if` between the Install-Tier1Hooks and
 # Install-Tier1HookRegistration calls.
 TIER1_DISPATCHER_GUARD_OK="$(python3 -c "
-import re
-with open('$SETUP_PS1') as f:
-    content = f.read()
+import re, sys
+# The file arrives on stdin as UTF-8 bytes. A Windows Python reads a /d/a/... path
+# as a missing file and opens text files as cp1252, so neither open() nor a path is used.
+content = sys.stdin.buffer.read().decode('utf-8')
 start = content.find('Install Tier 1 adapter for tools with native hook support')
 end = content.find('Write manifest listing all installed skill directories', start)
 block = content[start:end] if start != -1 and end != -1 else ''
@@ -188,7 +189,7 @@ hooks_match = re.search(r'Install-Tier1Hooks\s*\`', block)
 between = block[hooks_match.end():reg_match.start()] if hooks_match and reg_match else ''
 guarded = bool(re.search(r'if\s*\(\\\$toolConfig\.SettingsFile\)\s*\{', between))
 print('yes' if guarded else 'no')
-" 2>/dev/null)"
+" < "$SETUP_PS1" 2>/dev/null)"
 
 assert_equals "yes" "$TIER1_DISPATCHER_GUARD_OK" \
   "(h): setup.ps1 dispatcher has a dedicated SettingsFile-presence guard (distinct from the Tier/HookAdapterSrc guard) around Install-Tier1HookRegistration, mirroring setup.sh's independent two-condition structure"

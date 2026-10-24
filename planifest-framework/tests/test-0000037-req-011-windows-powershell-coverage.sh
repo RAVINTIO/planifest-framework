@@ -78,5 +78,11 @@ assert_equals "yes" "$(yes_no 'FAIL: req-011: .*(stale|survive|hand-added)' "$PS
 
 echo "== req-011: setup.ps1 runs under Windows PowerShell 5.1 =="
 assert_equals "no" "$(yes_no '`u\{' "$(cat "$SETUP_PS1")")" "req-011: setup.ps1 has no backtick-u escape (PowerShell 6+ only)"
+# ConvertFrom-Json -AsHashtable exists only in PowerShell 6+. Code lines must not call it.
+SETUP_CODE="$(grep -vE '^[[:space:]]*#' "$SETUP_PS1")"
+assert_equals "no" "$(yes_no 'ConvertFrom-Json[^|]*-AsHashtable' "$SETUP_CODE")" "req-011: setup.ps1 never calls ConvertFrom-Json -AsHashtable (PowerShell 6+ only)"
+assert_equals "yes" "$(yes_no 'function ConvertTo-PlanifestHashtable' "$SETUP_CODE")" "req-011: setup.ps1 defines the PSCustomObject-to-hashtable converter"
+assert_equals "yes" "$(yes_no 'ConvertTo-PlanifestHashtable -InputObject' "$(sed -n '/^function Merge-AllowedTools/,/^}/p' "$SETUP_PS1")")" "req-011: Merge-AllowedTools uses the converter"
+assert_equals "no" "$(yes_no '\?\?|\?\.|-Parallel|-AsPlainText|\$Is(Windows|Linux|MacOS)\b' "$SETUP_CODE")" "req-011: setup.ps1 uses no other PowerShell 6+ only syntax (?? ?. -Parallel \$IsWindows)"
 
 print_summary
