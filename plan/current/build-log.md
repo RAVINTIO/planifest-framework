@@ -134,4 +134,11 @@ Decision (P2): the size floor is qualitative ("needs its own reads or many tool 
 Decision (P2): custom-002 and the dispatch template carry the floor and exemptions in the same words / reason: the override reaches installs through the boot file and the standard reaches skills, so one text prevents drift. (ADR-006)
 Decision (P2): ship `migrate-0.36.0-rerun-setup.md` in the 0.35.0 format and recheck its list at the end of P6 / reason: installs need setup to receive the skills, references, standard, and boot text, and the diff check needs an exact list. (ADR-007)
 Decision (P2): the migration names the two new reference files explicitly / reason: a list that omits new files fails the two-way diff check. (ADR-007)
+Decision (P2): cross-feature ADR references become prose in ADR-003, ADR-004, ADR-005, and ADR-007 / reason: the mechanical check reads an `ADR-NNN` token as a local file. (critic P2 iteration 1, finding 1)
+Decision (P2): quiet mode traps `INT` and `TERM`, prints the running suite and its `FAIL:` lines plus the failed-suite list, and exits non-zero, with no runner timeout / reason: a stopped runner must not hide a hung suite. (ADR-004)
+Decision (P2): the model-value test reads `model:` and `recommended_model:` lines, indented or not, in skills, standards, and `pipeline-reference.md` / reason: the earlier pattern missed indented and `recommended_` lines and let the pipeline reference drift. (ADR-003)
+Decision (P2): `pipeline-reference.md` leaves the migration list / reason: `setup.sh` does not deliver it. (ADR-007)
+Decision (P2): P3 suite changes for `FAIL:` test data alter printed text only, never an assertion or exit path / reason: no assertion may weaken. (ADR-004)
+Decision (P2): the suite-name prefix on each `FAIL:` line is the only suite marker in quiet mode, and the summary says so / reason: it removes the clash with the no-header rule. (ADR-004)
+Decision (P2): the orchestrator logs `P0 references loaded: {paths}` after the P0 read, and the Phase 0 to Phase 1 gate checklist checks the line / reason: a skipped read then shows in the build log. (ADR-002)
 Critic (P2): iteration 1, approach 1: REJECT / mechanical check failed on cross-feature ADR-014 and ADR-010 tokens in ADR-004, ADR-005, ADR-007, plus 3 major findings (ADR-004 hung suite, ADR-003 model test scope). Verdict: plan/current/critic-verdict-p2-1.md
