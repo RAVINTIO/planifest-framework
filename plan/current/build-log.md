@@ -41,3 +41,5 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Notes | Scope named by the human on the loop: backlog 0000230 and the PR #64 Windows shard 1 failure. |
 
 Backlog pickup: 0000230 pulled in by the human on the loop. The other 101 entries stay untouched.
+Release budget: none, three-story rule
+P0 exchange (decomposition): Q: split the seven stories into two waves (shard fix, change 1, change 2 now, changes 3 to 6 later)? / A: no, all seven in one run. The human on the loop overrides the three-story rule for this feature.
