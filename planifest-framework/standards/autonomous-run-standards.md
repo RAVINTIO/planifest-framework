@@ -111,6 +111,18 @@ node planifest-framework/scripts/credential-scan.mjs [-- {path} ...]
 - **Resume:** A resumed run reads the `held back {path}` lines in the build log. It never stages a path that a held-back line names until the human on the loop clears it. It reruns the scan before any commit.
 - **Outside `autonomous`:** The script is available and the commit flow is unchanged.
 
+### Scan-then-commit
+
+Scan-then-commit is the one procedure that every `autonomous` commit in P7 to P9 follows. It tracks no path of its own. It acts on the paths the scan names, so a file that the archive script moved is caught at its new path.
+
+1. Stage the commit's paths.
+2. Run `node planifest-framework/scripts/credential-scan.mjs` over the index.
+3. On exit `1`, unstage every path the scan output names. Each `{path}:{line} {rule}` line names the current path of the file. Run `git restore --staged -- {path}`, or `git rm --cached -- {path}` in a repository with no commit. Log `Credential scan (P{N}): held back {path}` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then scan again and repeat this step until the scan exits `0` or `2`.
+4. Commit only when the scan exits `0`. Name the paths after `--` where the step allows it.
+5. On exit `2`, stop and commit nothing.
+
+A path can appear on more than one scan line. Unstage it once. A held-back path never needs mapping. The scan names the path where the file sits now, whether the file moved or not.
+
 ---
 
 ## Gates as loops

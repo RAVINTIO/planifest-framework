@@ -154,17 +154,13 @@ Commit the archive, changelog, `docs/about.md`, and `product.yml` to the branch 
 ```
 git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 if [ -f product.yml ]; then git add product.yml; fi
-git restore --staged -- {held-back-path} ...
 node planifest-framework/scripts/credential-scan.mjs
 git commit -m "plan(p7): archive plan/current" -m "{feature-id}"
 ```
 
-In `autonomous`, the guard sits between the `git add` and the `git commit`:
+In `autonomous`, this commit follows scan-then-commit, defined in `planifest-framework/standards/autonomous-run-standards.md` under `## Pre-commit credential scan`. The `git add` lines are the stage step. Run the scan after them and before the `git commit`. On exit `1`, unstage each path the scan names with `git restore --staged -- {path}`, rescan, and commit only when the scan exits 0. Log `Credential scan (P7): held back {path}` and the exception line as that procedure says. On exit `2`, stop under exception item 7.
 
-1. Read each `Credential scan (P{N}): held back {path}` line in `{archive-dir}/build-log.md`.
-2. Run `git restore --staged -- {path}` for each named path. In a repository with no commit, run `git rm --cached -- {path}`. A directory add can stage a held-back file again. Skip the command when no line exists.
-3. Run the scan. Staged mode scans the whole index.
-4. Run the `git commit` only when the scan exits 0. On exit `1` or `2`, stop under exception item 7.
+The archive script has already moved a held-back file from `plan/current/` into `{archive-dir}`. The scan names the file at its archive path, so the unstage acts on that path. Never unstage the old `plan/current/` path.
 
 This is the one commit that uses the index and not a path list. The archive step moves many files, so a path list is impractical. The unstaging and the exit 0 scan keep the index free of held-back files.
 
@@ -209,7 +205,7 @@ The script refuses these file names: `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p1
 Refused files stay uncommitted. A refused file stays uncommitted. For each refused path, run `git restore --staged -- {path}` so the file leaves the index. In a repository with no commit, use the fallback in the pre-commit credential scan rule of `planifest-framework/standards/autonomous-run-standards.md`. The working-tree copy stays as it is. A staged refused file would make every later scan exit 1, so it must not stay in the index. Write `Credential scan (P8): held back {path}` in the P8 block. The clean-tree check lists the file as a leftover again, and the guard refuses it again. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
-- **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
+- **`autonomous`:** Apply the credential guard above. Then commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Stage each remaining leftover by its explicit path, scan, and commit with the paths after `--` and the feature ID in the body:
   ```bash
   git add -- {path} ...
   git commit -m "plan(p8): commit close-out leftovers" -m "{feature-id}" -- {path} ...
@@ -239,6 +235,8 @@ Then check that `{archive-dir}/build-report.md` is staged or already tracked by 
 ```bash
 git cat-file -e ":{archive-dir}/build-report.md"
 ```
+
+In `autonomous`, the marker commit follows scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). The `git add` above is the stage step. Run `node planifest-framework/scripts/credential-scan.mjs` after that add and before step 3 deletes the markers. The marker deletions hold no content to scan. Archive moves held-back files from `plan/current/` into `{archive-dir}`, so the scan can name a path under `{archive-dir}`. On exit `1`, unstage each named path with `git restore --staged -- {path}` and rescan until the scan exits 0. A directory add stages those files again, so rescan after every add. Then the commit holds the clean archive files and not the held-back ones. On exit `2`, stop and commit nothing.
 
 3. Delete the markers, stage the deletions, and commit as one uninterrupted sequence. Do no other work between the first delete and the commit.
    - Delete `plan/.orchestrator-active`.
@@ -378,7 +376,7 @@ git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/
 Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any other late change. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P9 build-log block.
-- **`autonomous`:** Apply the P8 credential guard first, which runs `node planifest-framework/scripts/credential-scan.mjs -- {path} ...`. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
+- **`autonomous`:** Apply the P8 credential guard first, which runs `node planifest-framework/scripts/credential-scan.mjs -- {path} ...`. Then commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
   ```bash
   git add -- {path} ...
   git commit -m "plan(p9): commit close-out leftovers" -m "{feature-id}" -- {path} ...
@@ -424,14 +422,14 @@ Names and links come from `gh` fields only. Never paste raw check output or log 
 
 **Red check:**
 
-- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause. Then list every changed path with `git diff --name-only` and run the credential scan `node planifest-framework/scripts/credential-scan.mjs -- {paths}` on all of them, `src/` and workflow files included. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit with explicit paths after `--`, push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
+- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause. Then list every changed path with `git diff --name-only` and run the credential scan `node planifest-framework/scripts/credential-scan.mjs -- {paths}` on all of them, `src/` and workflow files included. Commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). On exit `1`, unstage each named path and rescan. On exit `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit with explicit paths after `--`, push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
 - **`interactive` and `continuous`:** Put the red check in the Step 11 message with a question about fixing it. Push no fix without that answer.
 
 **Progress line:** Any result other than all passed (red, pending, unknown, or unreadable) writes `Progress: P9 blocked at {End}: CI {result}`. The step never writes `P9 done` for it.
 
 **Commit the log:** Stage the archived build log by explicit path and commit it on its own before Step 11. The commit carries the `CI checks (P9)` lines, the progress line, and each fix attempt line. Step 11 then commits only `final-report.md`.
 
-In `autonomous`, run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/build-log.md"` first. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule.
+In `autonomous`, commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/build-log.md"` first. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule.
 
 ```bash
 git add -- "{archive-dir}/build-log.md"
@@ -450,7 +448,7 @@ The tag then names the head that CI passed, or the last head if CI stays red. Th
 
 ### Step 11: Confirm to human
 
-In `autonomous`, write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Write the report to `{archive-dir}/final-report.md`, then run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/final-report.md"`. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit it by explicit path:
+In `autonomous`, commit the final report with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Write the final report in place of the message below. `planifest-framework/standards/autonomous-run-standards.md` `## Final report` gives its six parts. Write the report to `{archive-dir}/final-report.md`, then run `node planifest-framework/scripts/credential-scan.mjs -- "{archive-dir}/final-report.md"`. On exit `1` or `2`, run no commit and stop under exception item 7 with the held-back rule. Otherwise commit it by explicit path:
 
 ```bash
 git add -- "{archive-dir}/final-report.md"
