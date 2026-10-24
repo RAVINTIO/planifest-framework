@@ -32,6 +32,16 @@ Add `planifest-framework/scripts/credential-scan.mjs`. It detects and reports. I
 
 On a match, the agent runs no `git commit` and no `git push` for that change. The files stay staged. The agent writes `Exception waiting (P{N}, 7)`.
 
+## Amended (P5)
+
+Re-reviews 1 to 4 (`plan/current/security-rereview*.md`) found that a held-back file could still reach a commit. The original decision above stays for history. These points replace its held-back rule.
+
+- **Scan-then-commit.** `### Scan-then-commit` in `planifest-framework/standards/autonomous-run-standards.md` is the one procedure for every P7 to P9 commit.
+- **`--safe-paths`.** The script gains a `--safe-paths {out-file}` mode. It writes the paths with no hit to the out-file, separated by NUL bytes. The script decides which paths a commit may name.
+- **Commit form.** The agent commits the safe list with `git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul`, behind an empty-list guard. `--literal-pathspecs` stops a glob in a safe name from matching a held-back tracked file.
+- **Held-back files.** A held-back file that is staged as new leaves the index. A tracked held-back file stays out of the commit list. This replaces "The files stay staged".
+- **Log line.** The line is `Credential scan (P{N}): held back {path}`, one per path, in place of a count.
+
 ## Alternatives Considered
 
 | Alternative | Pros | Cons | Why Rejected |

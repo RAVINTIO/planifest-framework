@@ -30,6 +30,10 @@ CI runs on `pull_request` only (0000031 ADR 003). No `main` run exists, so a `gh
 
 The workflow trigger stays `pull_request` only. This keeps 0000031 ADR 003.
 
+## Amended (P5)
+
+The lookup requests `--json number,url,mergedAt` and no `title`. GUTD never reads a PR title, so the override asks for none. The decision text above stays for history.
+
 ## Alternatives Considered
 
 | Alternative | Pros | Cons | Why Rejected |
