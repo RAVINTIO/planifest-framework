@@ -1,12 +1,12 @@
 ---
 title: "Requirement: req-004 - pr-body-scan"
 summary: "The ship agent scans the PR title and body for credentials before gh pr create, and PR text cites paths and results only."
-status: "active"
+status: "draft"
 version: "0.1.0"
 ---
 # Requirement: req-004 - pr-body-scan
 
-**Skill:** [spec-agent](../skills/planifest-spec-agent/SKILL.md)
+**Skill:** [spec-agent](../../../planifest-framework/skills/planifest-spec-agent/SKILL.md)
 **Feature:** 0000037-green-ci-before-ship
 **Source:** US-004
 **Priority:** must-have
@@ -32,8 +32,11 @@ Split step: not triggered. The requirement holds three criteria, and no fourth i
 
 ## Acceptance Criteria
 - [ ] Step 10 scans the PR title and body files with `credential-scan.mjs --file` before `gh pr create`, and passes the scanned body with `--body-file`. Verified by: shell test over the ship skill text, plus a script test of `--file` mode.
+  - Verified by: integration - shell test over the ship skill text, plus a script test of `--file` mode
 - [ ] A body that matches is regenerated once. A second match, or exit `2`, means no `gh pr create` call, an `Exception waiting (P9, 7)` line, and a final report entry that names the line and not the text. Verified by: shell test over the ship skill text, plus verify-by-execution with a fixture body.
+  - Verified by: integration - shell test over the ship skill text, plus execution with a fixture body
 - [ ] The ship skill states that PR text cites paths and results only, never raw output, and Option [2] output follows the same scan. Verified by: shell test over the ship skill text.
+  - Verified by: integration - shell test over the ship skill text
 
 ## Dependencies
 - req-003 (provides `credential-scan.mjs`, extended here with `--file`).
