@@ -794,7 +794,7 @@ function Invoke-PlanifestGuardrails {
         }
     }
 
-    Write-Host "  `u{2705} Git guardrails activated."
+    Write-Host "  $([char]0x2705) Git guardrails activated."
 }
 
 function Initialize-PlanifestRepo {

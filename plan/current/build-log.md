@@ -220,3 +220,8 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Decision (P3): the P4 coverage table gains a `Type` column / reason: req-006 needs a place to report `unspecified`.
 - Decision (P3): the orchestrator bumps `planifest-framework/component.yml` at the P3 close / reason: the codegen close-out rule, with one owner for the file.
 - Deviation (P3, unclassified): the req-006 fixture case for inline text that differs from the indented line is covered by text assertions on the skill rule, not a runnable fixture, because ADR-008 makes the scan an agent check with no script.
+- W4 returned req-010 and req-011 first pass: req-010 RED exit 1 (12 passed, 4 failed), GREEN exit 0 (16 passed). req-011 RED exit 1 (7 passed, 22 failed), GREEN exit 0 (29 passed). `test-0000031-req-001-003-ci-jobs.sh` passes (25). `pwsh` isn't installed locally, so `test_setup.ps1` waits for CI. The consumer workflow has no diff.
+- Decision (P3): git bash leg cap: 10 / reason: first pass, nothing measured yet.
+- Decision (P3): the req-011 clean-up section sets `$ErrorActionPreference = 'Continue'` around the setup call and restores it / reason: under `Stop`, 5.1 turns merged native stderr into a terminating error.
+- Decision (P3): the req-010 skip-guard against table-row check waits for batch 2 / reason: no guard exists yet.
+- Deviation (P3, unclassified): `setup.ps1` replaces one `` `u{2705} `` escape with `$([char]0x2705)`, because 5.1 prints the escape literally. PowerShell 7 output doesn't change.

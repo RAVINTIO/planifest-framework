@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Static tests for feature 0000037-green-ci-before-ship, req-011: Windows PowerShell coverage.
+#
+# Verified by: integration
+# Verified by: e2e
+#
+# req-011 (integration): the workflow holds a setup-powershell-51 job (ADR-012), and
+#   test_setup.ps1 text holds the stale seed, the flag run, and the four assertions.
+# req-011 (e2e): the live run of test_setup.ps1 happens in the PowerShell 7 and 5.1 CI
+#   jobs. This suite only checks that both jobs run that file.
+#
+# No YAML library is available, so the tests extract each job block with awk and grep it.
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/helpers/assert.sh"
+
+FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$FRAMEWORK/.." && pwd)"
+WORKFLOW="$REPO_ROOT/.github/workflows/planifest.yml"
+CONSUMER_WORKFLOW="$FRAMEWORK/hooks/planifest.yml"
+TEST_PS1="$SCRIPT_DIR/test_setup.ps1"
+SETUP_PS1="$FRAMEWORK/setup.ps1"
+
+job_block() {
+  awk -v id="  $1:" '
+    $0 == id { on = 1; print; next }
+    on && /^  [^ ]/ { exit }
+    on { print }
+  ' "$WORKFLOW"
+}
+
+has() { grep -Eq -- "$1" <<<"$2"; }
+yes_no() { if has "$1" "$2"; then echo "yes"; else echo "no"; fi; }
+
+J51="$(job_block setup-powershell-51)"
+J7="$(job_block setup-powershell)"
+PS1_TEXT="$(cat "$TEST_PS1")"
+
+echo "== req-011: setup-powershell-51 job =="
+assert_equals "yes" "$([ -n "$J51" ] && echo yes || echo no)" "req-011: workflow has a setup-powershell-51 job"
+assert_equals "yes" "$(yes_no 'runs-on:[[:space:]]*windows-latest' "$J51")" "req-011: job runs on windows-latest"
+assert_equals "yes" "$(yes_no 'shell:[[:space:]]*powershell$' "$J51")" "req-011: job uses shell powershell"
+assert_equals "no" "$(yes_no 'shell:[[:space:]]*pwsh' "$J51")" "req-011: job does not use shell pwsh"
+assert_equals "yes" "$(yes_no 'planifest-framework/tests/test_setup\.ps1' "$J51")" "req-011: job runs test_setup.ps1"
+assert_equals "yes" "$(yes_no '\$PSVersionTable\.PSVersion' "$J51")" "req-011: job prints PSVersionTable.PSVersion"
+assert_equals "yes" "$(yes_no 'Major[[:space:]]*-ne[[:space:]]*5' "$J51")" "req-011: job fails unless the major version is 5"
+assert_equals "yes" "$(yes_no 'permissions:' "$J51")" "req-011: job sets a permissions block"
+assert_equals "yes" "$(yes_no 'contents:[[:space:]]*read' "$J51")" "req-011: permissions grant contents read"
+assert_equals "yes" "$(yes_no 'timeout-minutes:[[:space:]]*10$' "$J51")" "req-011: job sets timeout-minutes 10"
+assert_equals "yes" "$(yes_no 'actions/checkout@v4' "$J51")" "req-011: job uses actions/checkout@v4"
+assert_equals "no" "$(yes_no 'secrets\.' "$J51")" "req-011: job references no secrets"
+assert_equals "yes" "$(yes_no 'Setup under Windows PowerShell 5\.1' "$J51")" "req-011: job name is Setup under Windows PowerShell 5.1"
+assert_equals "yes" "$(yes_no 'repository-only' "$(grep -B6 '^  setup-powershell-51:' "$WORKFLOW")")" "req-011: a comment above the job says it is repository-only"
+
+echo "== req-011: existing PowerShell 7 job unchanged =="
+assert_equals "yes" "$(yes_no 'shell:[[:space:]]*pwsh' "$J7")" "req-011: setup-powershell keeps shell pwsh"
+assert_equals "yes" "$(yes_no 'Major[[:space:]]*-lt[[:space:]]*7' "$J7")" "req-011: setup-powershell keeps its PowerShell 7 check"
+
+echo "== req-011: consumer copy unchanged =="
+assert_equals "no" "$(yes_no 'setup-powershell-51|test_setup\.ps1' "$(cat "$CONSUMER_WORKFLOW")")" "req-011: consumer workflow does not mention the 5.1 job"
+
+echo "== req-011: test_setup.ps1 clean-up section =="
+assert_equals "yes" "$(yes_no 'hooks[\\/]telemetry' "$PS1_TEXT")" "req-011: seeds the stale hook folder .claude/hooks/telemetry"
+assert_equals "yes" "$(yes_no 'context-mode' "$PS1_TEXT")" "req-011: seeds a stale context-mode settings.json entry"
+assert_equals "yes" "$(yes_no 'block-grep\.mjs' "$PS1_TEXT")" "req-011: stale entry is the context-mode Grep hook command"
+assert_equals "yes" "$(yes_no 'hand-added' "$PS1_TEXT")" "req-011: seeds a hand-added hook"
+assert_equals "yes" "$(yes_no 'setup\.ps1 claude-code --context-mode-mcp' "$PS1_TEXT")" "req-011: runs setup.ps1 claude-code --context-mode-mcp"
+assert_equals "yes" "$(yes_no 'LASTEXITCODE|\$\?' "$PS1_TEXT")" "req-011: asserts the exit code"
+assert_equals "yes" "$(yes_no -- '--context-mode-mcp was removed in 0\.29\.0 and has no effect' "$PS1_TEXT")" "req-011: asserts the notice substring"
+assert_equals "yes" "$(yes_no 'exactly one|Count -ne 1' "$PS1_TEXT")" "req-011: asserts exactly one notice line"
+assert_equals "yes" "$(yes_no 'FAIL: req-011' "$PS1_TEXT")" "req-011: failure messages name req-011"
+assert_equals "yes" "$(yes_no 'FAIL: req-011: .*planifest-setup-flags' "$PS1_TEXT")" "req-011: checks .planifest-setup-flags for the retired flag"
+assert_equals "yes" "$(yes_no 'FAIL: req-011: .*(stale|survive|hand-added)' "$PS1_TEXT")" "req-011: asserts the clean-up and the surviving hook"
+
+echo "== req-011: setup.ps1 runs under Windows PowerShell 5.1 =="
+assert_equals "no" "$(yes_no '`u\{' "$(cat "$SETUP_PS1")")" "req-011: setup.ps1 has no backtick-u escape (PowerShell 6+ only)"
+
+print_summary

@@ -71,11 +71,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
 
       - name: Run the framework test suite
+        shell: bash
         run: bash planifest-framework/tests/run-tests.sh
 
   setup-powershell:
@@ -98,4 +99,30 @@ jobs:
 
       - name: Run test_setup.ps1
         shell: pwsh
+        run: ./planifest-framework/tests/test_setup.ps1
+
+  # This job is repository-only and deliberately NOT mirrored into
+  # planifest-framework/hooks/planifest.yml. It runs test_setup.ps1 under
+  # Windows PowerShell 5.1, the default shell on a stock Windows machine.
+  # See ADR-012 (feature 0000037), which amends ADR-001 (feature 0000031).
+  setup-powershell-51:
+    name: Setup under Windows PowerShell 5.1
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PowerShell version
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion
+          if ($PSVersionTable.PSVersion.Major -ne 5) {
+            Write-Error "Windows PowerShell 5 is required."
+            exit 1
+          }
+
+      - name: Run test_setup.ps1
+        shell: powershell
         run: ./planifest-framework/tests/test_setup.ps1

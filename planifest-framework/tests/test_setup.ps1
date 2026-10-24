@@ -220,6 +220,73 @@ try {
     }
     Write-Host "  PASS: req-010: shell-write-guard.mjs is installed"
 
+    # req-011 (feature 0000037): seed a stale Claude Code state, run a retired flag,
+    # and check the clean-up runs live. Runs under PowerShell 7 and Windows PowerShell 5.1.
+    # The seed copies the fixtures from test-0000030-req-004-install-clean-up-and-retired-flags.sh.
+    Write-Host "--- Testing: req-011 stale clean-up and retired flag ---"
+    $staleDir = Join-Path $testDir 'req-011'
+    New-Item -ItemType Directory -Path (Join-Path $staleDir '.claude\hooks\telemetry') -Force | Out-Null
+    Copy-Item -Path $frameworkSrc -Destination (Join-Path $staleDir 'planifest-framework') -Recurse -Force
+    Set-Content -LiteralPath (Join-Path $staleDir '.claude\hooks\telemetry\emit-phase-start.mjs') -Value '// stale' -Encoding ASCII
+    $staleSettings = @'
+{
+  "hooks": {
+    "PreToolUse": [
+      {"matcher": "Grep", "hooks": [{"type": "command", "command": "node \".claude/hooks/context-mode/block-grep.mjs\" || echo \"[Planifest] did not run\" 1>&2"}]},
+      {"matcher": "Bash", "hooks": [{"type": "command", "command": "node scripts/my-own-bash-guard.mjs"}]}
+    ]
+  }
+}
+'@
+    # Write without a byte order mark so both PowerShell versions write the same bytes.
+    [System.IO.File]::WriteAllText((Join-Path $staleDir '.claude\settings.json'), $staleSettings, (New-Object System.Text.UTF8Encoding($false)))
+
+    Push-Location $staleDir
+    # Windows PowerShell 5.1 turns native stderr merged with *>&1 into a terminating
+    # error under 'Stop', so relax the preference for this one call.
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $global:LASTEXITCODE = 0
+        $staleOut = & .\planifest-framework\setup.ps1 claude-code --context-mode-mcp *>&1 | Out-String
+        $staleExit = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $savedPreference
+        Pop-Location
+    }
+
+    if ($staleExit -ne 0 -and $null -ne $staleExit) {
+        throw "FAIL: req-011: setup.ps1 claude-code --context-mode-mcp exited $staleExit"
+    }
+    Write-Host "  PASS: req-011: setup.ps1 exits 0 with a retired flag"
+
+    $noticeLines = @($staleOut -split "\r?\n" | Where-Object { $_ -like '*--context-mode-mcp was removed in 0.29.0 and has no effect*' })
+    if ($noticeLines.Count -ne 1) {
+        throw "FAIL: req-011: expected exactly one removal notice line, found $($noticeLines.Count)"
+    }
+    Write-Host "  PASS: req-011: exactly one removal notice"
+
+    if (Test-Path -LiteralPath (Join-Path $staleDir '.claude\hooks\telemetry')) {
+        throw "FAIL: req-011: stale hook folder .claude\hooks\telemetry was not removed"
+    }
+    $cleanSettings = Get-Content -Raw -LiteralPath (Join-Path $staleDir '.claude\settings.json')
+    if ($cleanSettings -match 'context-mode') {
+        throw "FAIL: req-011: stale context-mode entry remains in settings.json"
+    }
+    Write-Host "  PASS: req-011: stale entry and stale folder are gone"
+
+    if ($cleanSettings -notmatch 'my-own-bash-guard\.mjs') {
+        throw "FAIL: req-011: the hand-added Bash hook did not survive the clean-up"
+    }
+    Write-Host "  PASS: req-011: the hand-added hook survives"
+
+    $staleMarker = Get-Content -Raw -LiteralPath (Join-Path $staleDir '.claude\.planifest-setup-flags')
+    if ($staleMarker -match 'context-mode-mcp') {
+        throw "FAIL: req-011: the retired flag appears in .planifest-setup-flags (found: '$staleMarker')"
+    }
+    Write-Host "  PASS: req-011: .planifest-setup-flags holds no retired flag"
+
     Write-Host "SUCCESS: All setup.ps1 tests passed."
 }
 finally {
