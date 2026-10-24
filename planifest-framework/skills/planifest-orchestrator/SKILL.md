@@ -609,7 +609,7 @@ Each phase skill documents its own Input and What It Produces (see its `## Input
 | P3 Code Generation | codegen-agent | Implementation exists and matches the spec's file structure; an Escalation halt is reviewed with the human before proceeding | STOP, present components built/tests produced/deviations. Exception: `continuous_run: true` was set at P0. |
 | P4 Validate | validate-agent | CI passes | STOP, present checks run and self-correction count. Exception: proceed without confirmation if all checks passed first-attempt with zero self-corrections. |
 | P5 Security | security-agent | Report produced with specific findings | STOP, present risk rating and critical/high/medium findings. Exception: proceed without confirmation if risk is Low with zero critical/high/medium findings. |
-| P6 Documentation | docs-agent | Every living artifact produced and consistent (`docs/` is living state; `plan/` is change-in-progress: never mix the two) | STOP, present docs artifacts produced and any drift found. Exception: proceed without confirmation if zero drift and all expected artifacts present. |
+| P6 Documentation | docs-agent | Every living artifact produced and consistent (`docs/` is living state; `plan/` is change-in-progress: never mix the two), and the post-P6 revalidation passes or is skipped with no P6 edits | STOP, present docs artifacts produced and any drift found. Exception: proceed without confirmation if zero drift and all expected artifacts present. |
 
 In `autonomous`, each gate runs as a loop with a fresh-context checker per `standards/autonomous-run-standards.md` (Gates as loops) and never stops.
 

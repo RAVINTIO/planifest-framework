@@ -230,6 +230,14 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Decision (P3): the req-001 and req-002 execution tests run the documented `gh` commands against a stub `gh` / reason: no script runs the poll (ADR-001).
 - Deviation (P3, unclassified): the P8 guard now calls `credential-scan.mjs` in place of its inline `grep` and `gitleaks` commands (req-003). Five assertions in `test-0000033-req-013-clean-close-out.sh` and its regression copy still expect the inline commands, so both suites fail until the orchestrator moves those assertions to the script.
 - Decision (P3): the orchestrator moved the five `test-0000033-req-013` assertions, and their regression copies, from the inline `grep` and `gitleaks` commands to `credential-scan.mjs`, and runs the script on the same fixtures / reason: the protection stays, and req-003 makes the script the one pattern list. Both suites pass (71 each).
+- W3 returned req-009, req-007, and req-008. req-009 RED exit 1 with 31 lint findings, GREEN with 0 findings over 142 files and 12 marked payload lines. req-007 RED exit 1 against a copy with a bare trigger path, GREEN exit 0 (22). req-008 RED exit 1 against a stub (12 failures), GREEN exit 0 (20). Every changed suite passes from the repository root, `planifest-framework/tests/`, and `/tmp`.
+- Decision (P3): the req-008 check verifies the base with `refs/tags/{base}^{commit}` / reason: a tag whose commit is missing, as in a shallow clone, counts as absent.
+- Decision (P3): a `# portable-ok:` marker on the line above counts only on a comment-only line / reason: one marked line can't silence the next.
+- Decision (P3): the orchestrator marked one search string in the req-001 suite with `# portable-ok: search string, not a command` / reason: the lint read the `timeout 1` text as a command. The lint now passes (30) and req-001 still passes (56).
+- Deviation (P3, unclassified): the intermittent `test-0000035-req-001` failure didn't reproduce in 22 runs, so the suite is unchanged and backlog 0000200 tracks it.
+- Backlog filed (P3): 0000200 (fast-path scope suite intermittent failure).
+- W2b returned req-005: RED with 8 of 16 failing (exit code not captured), GREEN exit 0 (16 passed). All 72 suites that name the changed files pass.
+- Deviation (P3, unclassified): the docs-agent skip case keeps the old `Post-P6 revalidation: skipped, no P6 edits` phrase, marked as replaced, because the 0000033 req-014 suite asserts it.
 - Credential scan (P3): draft PR title and body, regex only (gitleaks not found), both exit 0.
 Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - Deviation (P3, unclassified): the req-001 execution check covers the read command and the exit-1-with-JSON case, not the whole poll, because no script runs the poll.

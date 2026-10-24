@@ -123,7 +123,7 @@ In `autonomous`, each P1 to P6 gate runs as a loop under `planifest-loop-runner`
 | P3 | Every requirement reaches GREEN | The P4 CI run that follows P3 |
 | P4 | CI passes and acceptance criteria verify | The validate loop, then `planifest-verify-by-execution` |
 | P5 | The orchestrator's P5 gate condition | A fresh-context re-review of each fixed finding |
-| P6 | Zero drift and every expected artifact | The cross-model review gate |
+| P6 | Zero drift, every expected artifact, and a passing post-P6 revalidation | The cross-model review gate |
 
 - **Why P3 uses P4:** The P4 CI run is deterministic. It checks the P3 output more strongly than a fresh-context read would.
 - **Fresh context:** A fresh-context checker never shares context with the agent that made the artifact (0000016 ADR-006).

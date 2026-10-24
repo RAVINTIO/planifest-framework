@@ -6,7 +6,7 @@
 # framework and its agents only read it.
 #
 # This file is optional. If it's absent, P6 reruns the full P4 check set
-# (validate-agent ## Process steps 0 to 5) after the docs agent's last edit.
+# (validate-agent ## Process steps 0 to 5) after the P6 commit.
 # See planifest-framework/skills/planifest-docs-agent/SKILL.md (## Post-P6 revalidation).
 #
 # command: one shell command line, at most 500 characters, with no newline.

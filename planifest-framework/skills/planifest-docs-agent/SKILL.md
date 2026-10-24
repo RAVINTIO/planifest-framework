@@ -113,16 +113,17 @@ Write `plan/changelog/{feature-id}-<YYYY-MM-DD>.md`. Read `planifest-framework/t
 
 ## Post-P6 revalidation
 
-Run this after your last doc edit and before you report P6 complete. A doc edit must not break a check that passed at P4.
+Run this after the P6 commit and before you report P6 complete. A run that happens before the commit doesn't satisfy this. A doc edit must not break a check that passed at P4.
 
 **Which checks run:**
 1. If `planifest-overrides/doc-checks.yml` exists and declares a `command`, run that command. The value must be one line of at most 500 characters. See `planifest-framework/templates/doc-checks.template.yml`.
 2. Otherwise, rerun the P4 check set: steps 0 to 5 of the validate-agent `## Process` section. Step 6 (verify by execution) doesn't rerun. If the override has no valid `command`, log why.
 
-- **On pass:** Record the command or check set and the result in the P6 build-log block.
-- **On failure:** Fix the P6 edit that caused it, then rerun the failing check. Fix the doc, never the check. The loop follows `planifest-loop-runner` with the P4 cap of 5 cycles. If the cap runs out, escalate in the validate-agent `VALIDATION BLOCKED` format. In `autonomous`, `standards/autonomous-run-standards.md` `## Changing approach` governs what happens at the cap.
+- **Log line:** Write one line in the P6 build-log block: `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}`. A failure also writes the failing check and its cycle count on the same line.
+- **On failure outside `autonomous`:** Fix the P6 edit that caused it, then rerun the failing check. Fix the doc, never the check. The loop follows `planifest-loop-runner` with the P4 cap of 5 cycles. If the cap runs out, escalate in the validate-agent `VALIDATION BLOCKED` format.
+- **On failure in `autonomous`:** Run the revalidation as a loop under `planifest-loop-runner` with a cap of 3 cycles. This matches the other P1 to P6 loops. When the cap runs out, start a new approach under `standards/autonomous-run-standards.md` `## Changing approach`. State how each approach differs from the last. After 3 approaches, file `Exception waiting (P6, 6): revalidation {failing check}` and name what the human on the loop must do. Item 6 is the exhausted-budget item. Carry on with work that doesn't depend on the failing check.
 - **Not caused by P6:** If the failing check doesn't trace to a P6 edit, record it and escalate in the same format. Don't change code under `src/` outside `docs/`.
-- **Skip case:** If Gate B decided no docs update was needed and P6 made no edit, record `Post-P6 revalidation: skipped, no P6 edits` in the P6 build-log block.
+- **Skip case:** If Gate B decided no docs update was needed and P6 made no edit, skip the rerun. Write `Revalidation (P6): {command | P4 steps 0-5}, skipped, no P6 edits`. This replaces the earlier `Post-P6 revalidation: skipped, no P6 edits` wording.
 
 ## Rules
 
