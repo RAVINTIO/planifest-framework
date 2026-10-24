@@ -135,15 +135,51 @@ SCAN="$SCRIPT_DIR/../../scripts/credential-scan.mjs"
 SCAN_SRC=$(cat "$SCAN")
 GUARD_CMD="credential-scan.mjs -- {path}"
 scan_hits() {
-  local f
+  local f rc
   for f in "$@"; do
     node "$SCAN" --file "$f" >/dev/null 2>&1
-    if [ $? -eq 1 ]; then printf '%s ' "$f"; fi
+    rc=$?
+    if [ $rc -eq 1 ]; then printf '%s ' "$f"; fi
+    if [ $rc -ne 0 ] && [ $rc -ne 1 ]; then printf 'ERROR(%s):%s ' "$rc" "$f"; fi
   done
 }
 assert_contains "$GUARD_CMD" "$C8" "req-013: P8 credential guard scans content for credential patterns (P5 G5)"
-for pat in 'AKIA[0-9A-Z]{16}' 'ghp_[A-Za-z0-9]{36}' 'xox[baprs]-'; do
-  assert_contains "$pat" "$SCAN_SRC" "req-013: the scan script holds the pattern $pat (P5 G5)"
+assert_contains 'AKIA[0-9A-Z]{16}' "$SCAN_SRC" "req-013: the scan script holds the AKIA pattern (P5 G5)"
+
+# Run the script on a fixture for every content rule and every refused file name.
+# Each secret is assembled at run time so this file holds no literal secret.
+# scan_rule <file> <rule>: the script exits 1 and names the rule.
+RULE_DIR="$SCRATCH/rules"
+mkdir -p "$RULE_DIR"
+scan_rule() {
+  local out rc
+  out=$(cd "$RULE_DIR" && node "$SCAN" --file "$1" 2>&1)
+  rc=$?
+  assert_equals "1" "$rc" "req-013: $1 exits 1 ($2)"
+  assert_contains "$1:1 $2" "$out" "req-013: $1 reports rule $2"
+}
+content_rule() {
+  printf 'x %s\n' "$2" > "$RULE_DIR/rule.txt"
+  scan_rule rule.txt "$1"
+}
+content_rule aws-access-key "AKIA""$(printf 'A%.0s' $(seq 1 16))"
+content_rule private-key-block "-----BEGIN ""RSA PRIVATE KEY""-----"
+content_rule private-key-block "-----BEGIN ""PGP PRIVATE KEY BLOCK""-----"
+content_rule github-token "gh""p_$(printf 'a%.0s' $(seq 1 36))"
+content_rule slack-token "xo""xb-1234567890"
+for pair in 'p12:.p12' 'key:.key' 'pem:.pem'; do
+  echo x > "$RULE_DIR/a${pair#*:}"
+  scan_rule "a${pair#*:}" "refused-file-name:${pair%%:*}"
+done
+for n in .env .env.local id_rsa id_rsa.pub .npmrc credentials.json c.keystore .netrc; do
+  echo x > "$RULE_DIR/$n"
+  case "$n" in
+    .env*) r=".env" ;;
+    id_rsa*) r="id_rsa" ;;
+    c.keystore) r="keystore" ;;
+    *) r="$n" ;;
+  esac
+  scan_rule "$n" "refused-file-name:$r"
 done
 assert_contains "exception item" "$C8" "req-013: a refused file becomes an exception item (P5 G5)"
 assert_contains "stay uncommitted" "$C8" "req-013: refused files stay uncommitted (P5 G5)"

@@ -15,7 +15,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { basename, join, relative, resolve, sep } from 'node:path';
 
 const MAX_PATH_LENGTH = 200;
 
@@ -35,8 +35,10 @@ const NAME_RULES = [
 const CONTENT_RULES = [
   ['aws-access-key', /AKIA[0-9A-Z]{16}/],
   // Split so that this file does not match its own rule.
-  ['private-key-block', new RegExp('-----BEGIN .*PRIVATE KEY' + '-----')],
-  ['github-token', /ghp_[A-Za-z0-9]{36}/],
+  ['aws-temporary-key', /ASIA[0-9A-Z]{16}/],
+  // A bounded class keeps the match linear on one long line.
+  ['private-key-block', new RegExp('-----BEGIN [A-Z ]{0,40}PRIVATE KEY')],
+  ['github-token', /gh[pousr]_[A-Za-z0-9]{36}/],
   ['slack-token', /xox[baprs]-/],
   ['github-pat', /github_pat_[A-Za-z0-9_]{20,}/],
   ['api-secret-key', /sk-[A-Za-z0-9_-]{20,}/],
@@ -56,7 +58,11 @@ function fail(reason) {
 
 function git(args) {
   try {
-    return execFileSync('git', args, { encoding: 'buffer', stdio: ['ignore', 'pipe', 'pipe'] });
+    return execFileSync('git', args, {
+      encoding: 'buffer',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      maxBuffer: Infinity,
+    });
   } catch (err) {
     throw new ScanError(`git ${args[0]} failed`, { cause: err });
   }
@@ -67,18 +73,31 @@ function gitleaksAvailable() {
   return !probe.error;
 }
 
-// Content hits: [{line, rule}] for a Buffer. Binary content is skipped.
-function contentHits(buf) {
-  if (buf.includes(0)) return [];
+// Texts to scan for one Buffer. Nothing is skipped. NUL bytes are removed, which
+// also turns ASCII UTF-16 without a BOM into plain text. A UTF-16 BOM adds a
+// properly decoded copy. A BOM file that cannot decode throws, so it exits 2.
+function textsFor(buf, name) {
+  const texts = [Buffer.from(buf.filter((b) => b !== 0)).toString('utf8')];
+  const le = buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe;
+  const be = buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff;
+  if (le || be) {
+    const body = buf.subarray(2);
+    if (body.length % 2 !== 0) throw new ScanError(`cannot decode UTF-16 file ${safePath(name)}`);
+    texts.push((be ? Buffer.from(body).swap16() : body).toString('utf16le'));
+  }
+  return texts;
+}
+
+// Content hits: [{line, rule}] for a Buffer.
+function contentHits(buf, name) {
   const hits = [];
-  buf
-    .toString('utf8')
-    .split('\n')
-    .forEach((text, i) => {
+  for (const whole of textsFor(buf, name)) {
+    whole.split('\n').forEach((text, i) => {
       for (const [rule, re] of CONTENT_RULES) {
         if (re.test(text)) hits.push({ line: i + 1, rule });
       }
     });
+  }
   return hits;
 }
 
@@ -134,23 +153,37 @@ function parseArgs(argv) {
 function collectSources(args) {
   if (args.file) {
     if (!existsSync(args.file)) throw new ScanError(`file not found: ${safePath(args.file)}`);
-    return [{ path: args.file, buf: readFileSync(args.file) }];
+    try {
+      return [{ path: args.file, buf: readFileSync(args.file) }];
+    } catch {
+      throw new ScanError(`could not read ${safePath(args.file)}`);
+    }
   }
+  // Git prints root-relative paths. Resolve the paths after `--` against the
+  // starting directory, then work from the repository root so every read agrees.
+  const start = process.cwd();
+  const top = git(['rev-parse', '--show-toplevel']).toString('utf8').trim();
+  const extras = args.extra.map((p) => relative(top, resolve(start, p)).split(sep).join('/'));
+  process.chdir(top);
   const staged = git(['diff', '--cached', '--name-only', '--diff-filter=ACMR', '-z'])
     .toString('utf8')
     .split('\0')
     .filter(Boolean);
-  const paths = [...new Set([...staged, ...args.extra])];
+  const indexed = new Set(
+    git(['ls-files', '--cached', '-z']).toString('utf8').split('\0').filter(Boolean),
+  );
+  const paths = [...new Set([...staged, ...extras])];
   const sources = [];
   for (const p of paths) {
-    let indexBuf = null;
-    try {
-      indexBuf = execFileSync('git', ['show', `:${p}`], { stdio: ['ignore', 'pipe', 'ignore'] });
-    } catch {
-      indexBuf = null; // not in the index
+    // A path outside the index is skipped. Any other read error stops the scan.
+    if (indexed.has(p)) sources.push({ path: p, buf: git(['show', `:${p}`]) });
+    if (existsSync(p)) {
+      try {
+        sources.push({ path: p, buf: readFileSync(p) });
+      } catch {
+        throw new ScanError(`could not read ${safePath(p)}`);
+      }
     }
-    if (indexBuf) sources.push({ path: p, buf: indexBuf });
-    if (existsSync(p)) sources.push({ path: p, buf: readFileSync(p) });
   }
   return sources;
 }
@@ -181,9 +214,9 @@ function main() {
   try {
     for (const { path, buf } of sources) {
       for (const [rule, test] of NAME_RULES) {
-        if (test(basename(path))) add(path, 1, rule);
+        if (test(basename(path).toLowerCase())) add(path, 1, rule);
       }
-      for (const h of contentHits(buf)) add(path, h.line, h.rule);
+      for (const h of contentHits(buf, path)) add(path, h.line, h.rule);
       if (useGitleaks) {
         for (const h of gitleaksHits(buf, path)) add(path, h.line, h.rule);
       }

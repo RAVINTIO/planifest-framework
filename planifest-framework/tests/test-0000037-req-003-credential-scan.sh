@@ -149,6 +149,100 @@ else
   assert_equals "1" "$RC" "req-003: a gitleaks finding exits 1"
 fi
 
+# Every content rule, run on a fixture. Each secret is assembled at run time.
+echo "req-003: every content rule runs on a fixture"
+PAD36="$(printf '%036d' 0)"
+rule_case() {
+  local rule="$1" text="$2"
+  printf 'x %s\n' "$text" >"$WORK/rc.txt"
+  run_scan "$WORK" "$BIN" --file rc.txt
+  assert_equals "1" "$RC" "req-003: rule $rule matches its fixture"
+  assert_contains "rc.txt:1 $rule" "$OUT" "req-003: rule $rule reports path, line, and rule"
+  lacks "$text" "$OUT" "req-003: rule $rule prints no matched value"
+}
+rule_case "aws-access-key" "AKIA""ABCDEFGHIJKLMNOP"
+rule_case "aws-temporary-key" "ASIA""ABCDEFGHIJKLMNOP"
+rule_case "private-key-block" "-----BEGIN ""RSA PRIVATE KEY""-----"
+rule_case "private-key-block" "-----BEGIN ""PGP PRIVATE KEY BLOCK""-----"
+rule_case "private-key-block" "-----BEGIN ""PRIVATE KEY""-----"
+for P in ghp gho ghs ghu ghr; do
+  rule_case "github-token" "${P}""_${PAD36}"
+done
+rule_case "slack-token" "xo""xb-1234567890"
+rule_case "github-pat" "github""_pat_$(printf '%022d' 0)"
+rule_case "api-secret-key" "sk""-$(printf '%024d' 0)"
+rule_case "google-api-key" "AI""za$(printf '%035d' 0)"
+
+# Every refused file name, run on a staged fixture, in upper and lower case.
+echo "req-003: every refused file name runs on a fixture"
+R="$(new_repo allnames)"
+NAMES=".env .env.local .ENV.prod id_rsa Id_Rsa.bak id_rsa.pub a.p12 b.key c.pem KEY.PEM .npmrc credentials.json d.keystore .netrc"
+for N in $NAMES; do printf 'x\n' >"$R/$N"; done
+(cd "$R" && git add -f -- $NAMES)
+run_scan "$R" "$BIN"
+assert_equals "1" "$RC" "req-003: all refused file names exit 1"
+for N in $NAMES; do
+  assert_contains "$N:1 refused-file-name:" "$OUT" "req-003: refused name $N is reported"
+done
+
+# F-01: a NUL byte or UTF-16 does not skip the content rules.
+echo "req-003: NUL bytes and UTF-16 do not hide a credential"
+mkfix() {
+  SECRET="$SECRET" KIND="$1" OUTFILE="$2" "$NODE_BIN" -e '
+    const fs = require("fs");
+    const s = "key=" + process.env.SECRET + "\n";
+    const k = process.env.KIND;
+    let b;
+    if (k === "nul") b = Buffer.concat([Buffer.from(s), Buffer.from([0])]);
+    else if (k === "nulfirst") b = Buffer.concat([Buffer.from([0]), Buffer.from(s)]);
+    else if (k === "le") b = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(s, "utf16le")]);
+    else if (k === "lenobom") b = Buffer.from(s, "utf16le");
+    else if (k === "be") b = Buffer.concat([Buffer.from([0xfe, 0xff]), Buffer.from(s, "utf16le").swap16()]);
+    else if (k === "badle") b = Buffer.from([0xff, 0xfe, 0x41, 0x00, 0x42]);
+    else if (k === "bigline") b = Buffer.from("-----BEGIN ".repeat(95000));
+    else if (k === "bigblob") b = Buffer.from(s + "a".repeat(1500000) + "\n");
+    fs.writeFileSync(process.env.OUTFILE, b);
+  '
+}
+for K in nul nulfirst le lenobom be; do
+  mkfix "$K" "$WORK/fx-$K.txt"
+  run_scan "$WORK" "$BIN" --file "fx-$K.txt"
+  assert_equals "1" "$RC" "req-003: a $K file with a credential exits 1"
+  assert_contains "fx-$K.txt:1 aws-access-key" "$OUT" "req-003: a $K file reports the rule"
+done
+mkfix badle "$WORK/fx-badle.txt"
+run_scan "$WORK" "$BIN" --file fx-badle.txt
+assert_equals "2" "$RC" "req-003: an undecodable UTF-16 file exits 2, not 0"
+
+# F-02: one 1 MB line scans in linear time.
+mkfix bigline "$WORK/fx-bigline.txt"
+T0=$SECONDS
+run_scan "$WORK" "$BIN" --file fx-bigline.txt
+T1=$SECONDS
+assert_equals "0" "$RC" "req-003: a 1 MB single line with no key exits 0"
+assert_equals "yes" "$([ $((T1 - T0)) -lt 5 ] && echo yes || echo no)" "req-003: a 1 MB single line scans in under 5 seconds"
+
+# F-03: an index blob over 1 MB is still scanned.
+R="$(new_repo bigblob)"
+mkfix bigblob "$R/big.txt"
+(cd "$R" && git add big.txt)
+printf 'clean\n' >"$R/big.txt"
+run_scan "$R" "$BIN"
+assert_equals "1" "$RC" "req-003: a credential in an index blob over 1 MB exits 1"
+assert_contains "big.txt:1 aws-access-key" "$OUT" "req-003: the large index blob hit is reported"
+
+# F-13: a run from a subdirectory reads the working-tree copy.
+R="$(new_repo subdir)"
+mkdir -p "$R/sub"
+printf 'clean\n' >"$R/sub/s.txt"
+(cd "$R" && git add sub/s.txt)
+printf 'key=%s\n' "$SECRET" >"$R/sub/s.txt"
+run_scan "$R/sub" "$BIN"
+assert_equals "1" "$RC" "req-003: a working-tree credential is found when run from a subdirectory"
+assert_contains "sub/s.txt:1" "$OUT" "req-003: the subdirectory hit reports the root-relative path"
+run_scan "$R/sub" "$BIN" -- s.txt
+assert_equals "1" "$RC" "req-003: a -- path is read relative to the subdirectory"
+
 # Exit 2 when the scan cannot run.
 NOREPO="$WORK/norepo"
 mkdir -p "$NOREPO"
@@ -172,7 +266,8 @@ assert_contains "working-tree file" "$STD_SEC" "req-003: standard names the work
 assert_contains 'exit `1` or `2`' "$STD_SEC" "req-003: standard stops on exit 1 or 2"
 assert_contains "no \`git commit\` and no \`git push\`" "$STD_SEC" "req-003: standard holds back commit and push"
 assert_contains "stay staged" "$STD_SEC" "req-003: standard keeps files staged"
-assert_contains 'Credential scan (P{N}): held back {n} file(s)' "$STD_SEC" "req-003: standard names the held-back log line"
+assert_contains 'Credential scan (P{N}): held back {path}' "$STD_SEC" "req-003: standard names the held-back log line"
+assert_contains 'git restore --staged -- {path}' "$STD_SEC" "req-003: standard takes a held-back file out of the index"
 assert_contains 'Exception waiting (P{N}, 7): credential sighting in {path}:{line}' "$STD_SEC" "req-003: standard names the exception line"
 assert_contains 'Credential scan (P{N}): clean ({scan mode})' "$STD_SEC" "req-003: standard names the clean log line"
 
