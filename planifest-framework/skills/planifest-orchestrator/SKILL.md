@@ -249,12 +249,12 @@ At the start of P0, before any P0 action, read both files in full:
 
 Then append `P0 references loaded: {paths}` to the build log. Before the P0 to P1 gate passes, confirm that line exists. A reversal that reopens P0 reloads both.
 
-Three rules in the Phase 0 file apply after P0:
+These Phase 0 file rules apply after P0. Re-read each one when it applies:
 - At every phase transition and before P3, read its `### Capability Skills` section again. It holds the skills-inbox check and the intake procedure.
 - The recommend-then-confirm rule in its `### How you coach` section applies in every phase.
-- Where the moved text says "above" for Context Hygiene or the mid-pipeline change protocol, it means that section of this file.
+- At each phase gate, update `## Skill Map` in `design.md`. In `interactive`, also append `Gate accepted: P{N}` to the build log.
 
-Read nothing else from either file after P0.
+Where the moved text says "above" for Context Hygiene or the mid-pipeline change protocol, it means that section of this file.
 
 ---
 

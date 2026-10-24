@@ -95,6 +95,9 @@ assert_contains "applies in every phase" "$POINTER" "req-004: pointer scopes rec
 assert_contains "it means that section of this file" "$POINTER" "req-004: pointer explains the cross-file 'above' wording"
 assert_contains "Context Hygiene" "$POINTER" "req-004: pointer names Context Hygiene as an 'above' target"
 assert_contains "mid-pipeline change protocol" "$POINTER" "req-004: pointer names the change protocol as an 'above' target"
+lacks "Read nothing else" "$POINTER" "req-004: pointer doesn't bar the rules that apply after P0"
+assert_contains '`## Skill Map`' "$POINTER" "req-004: pointer keeps the Skill Map update at each phase gate"
+assert_contains 'Gate accepted: P{N}' "$POINTER" "req-004: pointer keeps the interactive Gate accepted line"
 lacks "Capability Skills above" "$SKILL_TEXT" "req-004: no dangling 'Capability Skills above' cite in SKILL.md"
 assert_contains "in \`references/phase-0-assess-and-coach.md\`)" "$SKILL_TEXT" "req-004: the pre-P3 cite names the reference file"
 
