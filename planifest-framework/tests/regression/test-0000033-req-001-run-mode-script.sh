@@ -183,6 +183,12 @@ assert_equals "interactive" "$(mode "$R5B")" "req-001: a second commit adding th
 echo ""
 echo "=== req-001: symlinked records (P5 C2-1) ==="
 
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash ln -s copies the file instead of linking it, so the three symlink cases cannot be built.
+    echo "  SKIP (windows): ln -s makes a copy under Git Bash, so a symlinked record cannot be built"
+    ;;
+  *)
 R6="$SCRATCH/symlink-log"
 make_repo "$R6"
 anchor "$R6"
@@ -203,6 +209,8 @@ mv "$R6C/plan/current" "$SCRATCH/real-current"
 ln -s "$SCRATCH/real-current" "$R6C/plan/current"
 echo continuous > "$R6C/plan/.run-mode"
 assert_equals "interactive" "$(mode "$R6C")" "req-001: a symlinked plan/current/ reads interactive (P5 C2-1)"
+    ;;
+esac
 
 echo ""
 echo "=== req-001: continuous, interactive, unknown, and missing (P5 C2-1) ==="

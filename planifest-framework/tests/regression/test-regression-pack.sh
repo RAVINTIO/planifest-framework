@@ -22,7 +22,7 @@ make_env() {
   local dir="$1"
   mkdir -p "$dir/scripts" "$dir/tests/regression"
   cp "$PROMOTE" "$dir/scripts/promote-to-regression.sh"
-  ln -s tests/regression "$dir/regression"
+  # No symlink: Git Bash ln -s copies instead of linking. Readers use tests/regression directly.
   printf '{"tests":[]}\n' > "$dir/tests/regression/regression-manifest.json"
 }
 
@@ -69,7 +69,7 @@ output=$(printf '%s' "$full_out" | sed '$d')
 assert_equals "0" "$code" "promote exits 0 on happy path"
 assert_contains "Promotion complete" "$output" "promote reports completion"
 
-if [ -f "$ENV1/regression/test-my.sh" ]; then
+if [ -f "$ENV1/tests/regression/test-my.sh" ]; then
   echo "  PASS: test file copied to regression dir"
   ((PASS++)) || true
 else
@@ -77,13 +77,13 @@ else
   ((FAIL++)) || true
 fi
 
-manifest_count=$(read_manifest_count "$ENV1/regression")
+manifest_count=$(read_manifest_count "$ENV1/tests/regression")
 assert_equals "1" "$manifest_count" "manifest has 1 entry after promotion"
 
-manifest_name=$(read_manifest_field "$ENV1/regression" "name")
+manifest_name=$(read_manifest_field "$ENV1/tests/regression" "name")
 assert_equals "test-my.sh" "$manifest_name" "manifest entry has correct name"
 
-manifest_promoted_by=$(read_manifest_field "$ENV1/regression" "promotedBy")
+manifest_promoted_by=$(read_manifest_field "$ENV1/tests/regression" "promotedBy")
 assert_equals "human" "$manifest_promoted_by" "manifest entry has promotedBy=human"
 
 # ── Section 2: idempotency ────────────────────────────────────────────────────
@@ -97,7 +97,7 @@ output2=$(printf '%s' "$full_out2" | sed '$d')
 assert_equals "0" "$code2" "second promotion run exits 0 (idempotent)"
 assert_contains "already in the regression pack" "$output2" "second run reports already promoted"
 
-manifest_count2=$(read_manifest_count "$ENV1/regression")
+manifest_count2=$(read_manifest_count "$ENV1/tests/regression")
 assert_equals "1" "$manifest_count2" "manifest still has 1 entry (no duplicate) after second run"
 
 # ── Section 3: missing source file ───────────────────────────────────────────
@@ -118,7 +118,7 @@ assert_contains "not found" "$output3" "promote reports file not found"
 echo ""
 echo "--- regression-manifest.json: valid JSON ---"
 
-( cd "$ENV1/regression" && node -e "JSON.parse(require('fs').readFileSync('regression-manifest.json','utf8'));" 2>/dev/null )
+( cd "$ENV1/tests/regression" && node -e "JSON.parse(require('fs').readFileSync('regression-manifest.json','utf8'));" 2>/dev/null )
 json_valid=$?
 assert_equals "0" "$json_valid" "manifest is valid JSON after promotion"
 
