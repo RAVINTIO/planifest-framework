@@ -2,8 +2,8 @@
 stream-id: "stream-04-windows-ci"
 kind: stream
 start-commit: "c8b1036"
-status: at-join
-phase: P1
+status: active
+phase: P2
 requirements: [req-010, req-011]
 stories: [US-010, US-011]
 id-blocks: "req-010 to req-011, ADR-012 to ADR-014, backlog 0000202 to 0000204"
@@ -15,7 +15,8 @@ updated: "2026-10-24T00:15:11Z"
 
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
-| P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:15:11Z | 1 | at-join |
+| P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:32:32Z | 1 | at-join |
+| P2 | 2026-10-24T00:33:53Z | pending | 1 | pending |
 
 ## Files changed
 
