@@ -25,7 +25,12 @@ Assumption A-001 (the tool honours `haiku` and `sonnet`) cannot be proved inside
 2. The Claude Code row of the tier table reads `sonnet` for primary and `haiku` for cheaper. No task type changes tier (A-004). `opus` and `fable` are allowed values but no tier maps to them today.
 3. The dispatch skeleton passes `model: "haiku"`.
 4. The ship-agent example (line 186) and the Claude Code row of `pipeline-reference.md` (line 111) change to the aliases.
-5. A new test, `test-0000038-req-002-model-values.sh`, extracts three things and fails on any value outside the set: the Claude Code cell of each row in the tier table, every `model:` value in the dispatch skeleton, and every `model:` line in `planifest-framework/skills/*/SKILL.md`. Fixture runs prove it fails on `claude-haiku-4-5`.
+5. A new test, `test-0000038-req-002-model-values.sh`, extracts four things and fails on any value outside the set:
+   - the Claude Code cell of each row in the tier table, including the text "or latest Sonnet"
+   - every `model:` value in the dispatch skeleton (both calls)
+   - every line that matches `^[[:space:]]*(recommended_)?model:` in `planifest-framework/skills/*/SKILL.md` and `planifest-framework/standards/*.md`, indented or not, including `recommended_model:` and the indented `model:` in the ship-agent code block
+   - every `model:` line in `planifest-framework/pipeline-reference.md`, which the test reads so the Claude Code row cannot drift again
+   Fixture runs prove it fails on `claude-haiku-4-5`.
 6. The check is an allowlist, not a blocklist of full ids. A future id with a new prefix fails by default.
 7. P4 verifies by execution. It dispatches one `haiku` subagent and checks the model it reports.
 
@@ -65,7 +70,7 @@ Decision (P2): Windsurf and other tool rows keep their full ids / reason: they a
 
 - ADR-006 - related-to (both edit `agent-dispatch-standards.md`, so they run in sequence)
 - ADR-007 - depends-on (installed copies refresh through the migration)
-- 0000006 ADR-002 (model tier abstraction) - extends. The tier names stay and the Claude Code values change.
+- The model tier abstraction that feature 0000006 set - extends. The tier names stay and the Claude Code values change.
 
 ## Supersedes
 
