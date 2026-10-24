@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last updated:** 0000037-green-ci-before-ship (24 Oct 2026). `planifest-framework` is at 0.35.0. The new `credential-scan.mjs` depends on `git` and an optional `gitleaks`. `run-tests.sh` reads the shard variables. No component dependency changed.
+**Last updated:** 0000038-token-efficiency-windows-shard (24 Oct 2026). Feature 0000038 changed no component dependency. `run-tests.sh` gains a `--quiet` flag, and `planifest-orchestrator` loads two files from its own `references/` folder. Earlier: 0000037 left `planifest-framework` at 0.35.0. The new `credential-scan.mjs` depends on `git` and an optional `gitleaks`. `run-tests.sh` reads the shard variables. No component dependency changed.
 **Maintained by:** planifest-docs-agent
 
 ---
