@@ -271,3 +271,23 @@ Requirement-ID scan (P3): 11 requirements, 0 unmapped
 - Credential scan (P3): draft PR title and body, regex only (gitleaks not found), both exit 0.
 Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - Deviation (P3, unclassified): the req-001 execution check covers the read command and the exit-1-with-JSON case, not the whole poll, because no script runs the poll.
+
+---
+
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T02:37:50Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined) |
+| Model tier | cheaper (semantic coverage), primary (verify by execution) |
+| Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Library audit: skipped, no dependency manifest (Node built-ins only). |
+
+- Lint (P4): `node --check` passes on 27 of 27 `.mjs` files, and `bash -n` passes on 158 of 158 `.sh` files. The repository has no other linter, type checker, or build step.
+- Decision (P4): the workflow YAML is validated by GitHub running it on PR #64 / reason: no local YAML parser is installed, and the run parsed and ran every job.
