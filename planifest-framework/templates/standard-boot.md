@@ -17,6 +17,7 @@ This project uses the confirmed design framework. These rules are non-negotiable
 
 - **Be succinct:** Minimal prose. Format answers in markdown with brevity.
 - **Commit messages:** Never add `Co-Authored-By` or any AI attribution. The `commit-msg` hook is **blocking**: commits with AI attribution, affirmatory language, or >72-char subjects will be rejected. Follow `planifest-framework/standards/commit-standards.md`.
+- **Read large files in part:** For a file over about 20 KB, search it or read the section you need with an offset and a limit.
 - **Do not invent APIs:** Only call endpoints that explicitly exist in the provided OpenAPI interfaces.
 - **Check `.cursorindexingignore`:** The `standards/reference/` directory and guide files are deliberately excluded from your semantic search index to preserve your context window. If you need deep domain knowledge about frameworks or pitfalls, explicitly read those files using `@` mentions.
 
