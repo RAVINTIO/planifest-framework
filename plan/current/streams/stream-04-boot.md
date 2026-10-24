@@ -32,7 +32,8 @@ updated: "2026-10-24T20:10:16Z"
 
 ## Consumes
 
-- none
+- `phase-0-assess-and-coach.md`
+- `adoption-modes.md`
 
 ## Next step
 
