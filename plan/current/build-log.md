@@ -266,3 +266,10 @@ Progress: P5 done at 2026-10-24T21:15:55Z: risk Low, one low finding fixed and r
 | MCP calls | 0 |
 | Parallel task batches | pending |
 | Notes | none |
+
+P6 Gate B: docs update assessment (autonomous, auto-accepted). Feature 0000038 changed the orchestrator layout, the model tiers, the test runner, and setup. Auto-accepted: updating `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, and `docs/dependency-graph.md`. No component exposes an API, so `docs/api-index.md` stays absent.
+Decision (P6): the migration file list needs no change / reason: `test-0000037-req-008-migration-branch-diff.sh` passes with 9 setup-delivered files, and `pipeline-reference.md` and the setup scripts are not setup-delivered, as ADR-007 states.
+Decision (P6): file the one-week usage re-run as backlog 0000234 / reason: scope.md defers it, and the docs-agent routes each Deferred Items row to the backlog. Backlog 0000231, 0000232, and 0000233 already cover the other rows.
+Decision (P6): leave the version in `component.yml` and the diagram label `0.35.0` in `docs/dependency-graph.md` unchanged / reason: the ship agent sets the release at P9.
+Deviation (P6, unclassified): `test-0000037-req-009-portability-lint.sh` fails. Two lines in `test-0000038-req-004-installed-reference-links.sh` (lines 71 and 72, added by `2a981af` at P5) match the `gnu-grep-P` rule. A P6 docs edit did not cause it, so P6 changed no test. The orchestrator must fix the two lines or mark them `# portable-ok: {reason}`.
+Revalidation (P6): P4 steps 0-5, fail, `test-0000037-req-009-portability-lint.sh` (AC-009.3), 1 cycle, not caused by P6 (feature suites 116 passed and 1 failed, regression 35 passed and 0 failed)
