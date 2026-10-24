@@ -67,7 +67,7 @@ Decision (P2): the pattern goes into each suite's helper, not a shared file / re
 
 ## Related ADRs
 
-- 0000037 ADR-014 - related-to (the Windows legs are where the failure showed)
+- The Git Bash cap that feature 0000037 set - related-to (the Windows legs are where the failure showed)
 
 ## Supersedes
 
