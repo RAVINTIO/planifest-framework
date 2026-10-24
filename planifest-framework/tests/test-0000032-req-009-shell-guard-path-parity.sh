@@ -106,7 +106,7 @@ echo "=== req-009: the false-positive corpus passes with no design.md ==="
 PLAIN="$(make_git_fixture plain)"
 FALSE_POSITIVES=(
   "cat src/a.js"
-  "grep -rn 'foo' src/"
+  "grep -rn 'foo' src/" # portable-ok: payload string
   "grep '>' src/a.js"
   "ls -la src"
   "sed -n '1,5p' src/a.js"
@@ -300,7 +300,7 @@ TIMING_PAYLOADS="$WORK/timing.json"
 node -e '
   const [cwd, ...cmds] = process.argv.slice(1);
   process.stdout.write(JSON.stringify(cmds.map((command) => JSON.stringify({ cwd, tool_input: { command } }))));
-' "$(native "$PLAIN")" "echo x > src/a.js" "cat src/a.js | tee /tmp/copy.txt" "sed -i 's/a/b/' src/a.js" > "$TIMING_PAYLOADS"
+' "$(native "$PLAIN")" "echo x > src/a.js" "cat src/a.js | tee /tmp/copy.txt" "sed -i 's/a/b/' src/a.js" > "$TIMING_PAYLOADS" # portable-ok: payload string
 SLOWEST=$(node -e '
   const { spawnSync } = require("node:child_process");
   const { readFileSync } = require("node:fs");

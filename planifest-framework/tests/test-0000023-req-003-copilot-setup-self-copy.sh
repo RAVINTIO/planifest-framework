@@ -69,8 +69,8 @@ assert_equals "yes" "$(file_exists ".github/hooks/adapters/copilot.mjs")" \
 echo ""
 echo "=== (c): the source copy of the adapter is unmodified by install ==="
 
-ORIGINAL_ADAPTER_HASH="$(shasum -a 256 "$FRAMEWORK/hooks/adapters/copilot.mjs" | awk '{print $1}')"
-WORKSPACE_SOURCE_ADAPTER_HASH="$(shasum -a 256 "$WS/planifest-framework/hooks/adapters/copilot.mjs" | awk '{print $1}')"
+ORIGINAL_ADAPTER_HASH="$(sha256_of "$FRAMEWORK/hooks/adapters/copilot.mjs")"
+WORKSPACE_SOURCE_ADAPTER_HASH="$(sha256_of "$WS/planifest-framework/hooks/adapters/copilot.mjs")"
 
 assert_equals "$ORIGINAL_ADAPTER_HASH" "$WORKSPACE_SOURCE_ADAPTER_HASH" \
   "(c): planifest-framework/hooks/adapters/copilot.mjs in the workspace copy still matches the framework original (untouched by install)"
