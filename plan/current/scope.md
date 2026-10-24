@@ -24,11 +24,11 @@ version: "0.1.0"
 - Migration branch-diff test, which compares a re-run-setup migration's file list with the release diff (req-008).
 - Working-directory independence for every suite, and a portability lint that runs in the suite (req-009).
 - Windows Git Bash suite leg in `.github/workflows/planifest.yml` (req-010).
-- Windows PowerShell 5.1 setup leg, and the live stale clean-up and retired-flag tests under PowerShell. A new ADR amends 0000031-ADR-001 (req-011).
+- Windows PowerShell 5.1 setup leg, and the live stale clean-up and retired-flag tests under PowerShell. A new ADR amends 0000031 ADR 001 (req-011).
 
 ## Out of Scope
 
-- A `push` trigger on `main`. 0000031-ADR-003 keeps CI on the `pull_request` trigger only.
+- A `push` trigger on `main`. 0000031 ADR 003 keeps CI on the `pull_request` trigger only.
 - Any merge by the agent, including auto-merge.
 - Changes to the consumer workflow at `planifest-framework/hooks/planifest.yml`.
 

@@ -2,12 +2,12 @@
 stream-id: "stream-02-phase-skills"
 kind: stream
 start-commit: "c8b1036"
-status: active
+status: at-join
 phase: P1
 requirements: [req-005, req-006]
 stories: [US-005, US-006]
 id-blocks: "req-005 to req-006, ADR-006 to ADR-008, backlog 0000196 to 0000198"
-updated: "2026-10-23T23:47:43Z"
+updated: "2026-10-24T00:15:11Z"
 ---
 # Stream State: stream-02-phase-skills
 
@@ -15,11 +15,12 @@ updated: "2026-10-23T23:47:43Z"
 
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
-| P1 | 2026-10-23T23:47:43Z | pending | 1 | pending |
+| P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:15:11Z | 1 | at-join |
 
 ## Files changed
 
-- none yet
+- `plan/current/requirements/req-005-post-p6-revalidation.md`
+- `plan/current/requirements/req-006-verified-by-and-p3-scan.md`
 
 ## Declares
 
@@ -32,4 +33,4 @@ updated: "2026-10-23T23:47:43Z"
 
 ## Next step
 
-P1 spec agent writes req-005 and req-006 under `plan/current/requirements/`.
+P2 ADR agent writes the stream's ADRs from ADR-006 to ADR-008, after the P1 join and design-critic gate.

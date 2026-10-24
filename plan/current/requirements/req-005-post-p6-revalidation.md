@@ -19,7 +19,7 @@ As the human on the loop, I see the P4 checks rerun after the P6 docs edits, so 
 
 ### Current state (read before P3)
 
-`planifest-framework/skills/planifest-docs-agent/SKILL.md` already holds a `## Post-P6 revalidation` section (0000033 ADR-012). It reads `planifest-overrides/doc-checks.yml` and falls back to P4 steps 0 to 5. It caps the failure loop at 5 cycles. This requirement closes four gaps and changes no other behaviour.
+`planifest-framework/skills/planifest-docs-agent/SKILL.md` already holds a `## Post-P6 revalidation` section (0000033 ADR 012). It reads `planifest-overrides/doc-checks.yml` and falls back to P4 steps 0 to 5. It caps the failure loop at 5 cycles. This requirement closes four gaps and changes no other behaviour.
 
 ### Run after the P6 commit
 
@@ -58,7 +58,7 @@ As the human on the loop, I see the P4 checks rerun after the P6 docs edits, so 
 Three criteria, so the split step does not trigger. The three describe one outcome: a docs edit can't leave a failing check unseen. Each checks a different surface of that outcome.
 
 ## Dependencies
-- 0000033 ADR-012, which created the revalidation section and `doc-checks.template.yml`.
+- 0000033 ADR 012, which created the revalidation section and `doc-checks.template.yml`.
 - `planifest-framework/standards/autonomous-run-standards.md` (Gates as loops, Changing approach).
 - `planifest-framework/skills/planifest-loop-runner/SKILL.md`.
 - Files P3 changes: `planifest-framework/skills/planifest-docs-agent/SKILL.md`, `planifest-framework/skills/planifest-orchestrator/SKILL.md`, `planifest-framework/standards/autonomous-run-standards.md`, `planifest-framework/templates/doc-checks.template.yml` (comment text only if needed).
