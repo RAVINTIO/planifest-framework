@@ -9,7 +9,7 @@
 
 ```mermaid
 graph TD
-    subgraph "planifest-framework (component-pack, 0.35.0)"
+    subgraph "planifest-framework (component-pack, 0.36.0)"
         SKILLS["skills/ (orchestrator + phase agents)"]
         STANDARDS["standards/, templates/"]
         ENFORCE["hooks/enforcement/\n(gate-write, check-design,\nem-dash-guard)"]

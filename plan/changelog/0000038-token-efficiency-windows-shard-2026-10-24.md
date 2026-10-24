@@ -12,6 +12,45 @@ version: "0.1.0"
 **Date:** 2026-10-24
 **Wave:** 1
 
+## Release summary
+
+**Feature:** Token efficiency and Windows shard fix
+**Pipeline run:** P0 to P6 in `autonomous` mode. No phases skipped. P7 to P9 follow.
+**Version:** 0.36.0
+**PR:** https://github.com/RAVINTIO/planifest-framework/pull/65
+
+### What Was Built
+
+Planifest 0.36.0 cuts the context cost of Claude Code sessions and removes the timing noise that failed PR #64. It folds in backlog 0000230 with seven requirements.
+
+- **Stable Windows timing checks (req-001):** each hook timing check makes one untimed warm-up call and one timed call. The limit stays.
+- **Model tiers take effect (req-002):** skills name `sonnet`, `opus`, `haiku`, or `fable`, which the Agent tool accepts.
+- **Quiet test output (req-003):** `run-tests.sh --quiet` prints failures and totals. A crashed suite counts as failed.
+- **Phase-scoped orchestrator (req-004):** the P0 and Adoption Modes text moves to two reference files that only P0 loads. Setup delivers them.
+- **Context reset at gates (req-005):** the orchestrator prompts for a reset after each passed gate.
+- **Decomposition size floor (req-006):** an agent dispatches a subagent only for work that needs its own reads.
+- **Partial reads (req-007):** agents search or read a section of a file over about 20 KB.
+
+A re-run-setup migration, `plan/_migrations/migrate-0.36.0-rerun-setup.md`, updates existing installs. P5 rated the feature Low.
+
+### Decisions
+
+- ADR-001: the stack is unchanged.
+- ADR-002: Phase 0 and Adoption Modes live in two orchestrator reference files.
+- ADR-003: Claude Code model values are `sonnet`, `opus`, `haiku`, and `fable`.
+- ADR-004: quiet mode counts a suite failed on exit code or a `FAIL` line.
+- ADR-005: timing checks make one untimed warm-up and one timed call.
+- ADR-006: the decomposition size floor has named exemptions.
+- ADR-007: release 0.36.0 ships a re-run-setup migration.
+
+### Artifacts Produced
+
+The archive holds the artifacts at `plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/`. They include the feature brief, scope, execution plan, risk register, seven requirements, seven ADRs, the security report and re-review, the cross-model review, the deviation review, and the build log and build report.
+
+### Skipped Phases
+
+None.
+
 ## Iteration Steps Completed
 
 | Phase | Status | Gate Result | Notes |

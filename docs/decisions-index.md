@@ -390,7 +390,7 @@ ADR files: [plan/_archive/0000037-green-ci-before-ship-2026-10-24/adr/](../plan/
 
 ### Feature 0000038: token-efficiency-windows-shard
 
-ADR files: [plan/current/adr/](../plan/current/adr/)
+ADR files: [plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/adr/](../plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/adr/)
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
