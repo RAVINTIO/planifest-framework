@@ -68,7 +68,9 @@ PS1="$FRAMEWORK/setup.ps1"
 assert_equals "yes" "$(grep -q "'\\\\.\\\\./standards/reference/', './reference/'" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 rewrites ../standards/reference/ to ./reference/"
 assert_equals "yes" "$(grep -q "'\\\\.\\\\./standards/', './'" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 rewrites ../standards/ to ./"
 # Windows PowerShell 5.1 reads UTF-8 with no BOM as ANSI, which garbles the arrows in the moved text.
-assert_equals "yes" "$(grep -qF 'Get-Content -Path $destRef -Raw -Encoding UTF8' "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each reference file as UTF-8"
-assert_equals "yes" "$(grep -qF 'Get-Content -Path $skillMdPath -Raw -Encoding UTF8' "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each SKILL.md as UTF-8"
+REF_READ='Get-Content -Path $destRef -Raw -Encoding UTF8'
+SKILL_READ='Get-Content -Path $skillMdPath -Raw -Encoding UTF8'
+assert_equals "yes" "$(grep -qF -- "$REF_READ" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each reference file as UTF-8"
+assert_equals "yes" "$(grep -qF -- "$SKILL_READ" "$PS1" && echo yes || echo no)" "req-004 links: setup.ps1 reads each SKILL.md as UTF-8"
 
 print_summary
