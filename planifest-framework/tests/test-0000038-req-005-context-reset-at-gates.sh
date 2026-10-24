@@ -18,7 +18,9 @@ source "$TESTS_DIR/helpers/assert.sh"
 
 FW="$TESTS_DIR/.."
 ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
-BASE_BLOB="5966840:planifest-framework/skills/planifest-orchestrator/SKILL.md"
+# SHA-256 of the after-P9 paragraph line in SKILL.md at commit 5966840, with no
+# trailing newline. A shallow clone or a squash merge drops that commit.
+BASE_P9_SHA="55a154cd1904d2eec7cf3be8a884c5050064ead0642a0d0b7645850ead687d24"
 
 # lacks <needle> <haystack> <label>: passes when the haystack omits the needle.
 lacks() {
@@ -47,8 +49,8 @@ assert_contains "don't wait for an answer" "$GATE_PROMPT" "req-005: those runs c
 echo ""
 echo "=== req-005: blocking reset after P9 is unchanged ==="
 AFTER_P9=$(grep -F '**After P9 (blocking' <<< "$HYGIENE")
-BASE_P9=$(git -C "$FW" show "$BASE_BLOB" 2>/dev/null | grep -F '**After P9 (blocking')
-assert_equals "yes" "$([ -n "$BASE_P9" ] && echo yes || echo no)" "req-005: baseline after-P9 paragraph is readable"
-assert_equals "$BASE_P9" "$AFTER_P9" "req-005: after-P9 paragraph matches the baseline byte for byte"
+AFTER_P9_SHA=$(printf '%s' "$AFTER_P9" | node -e "let d=[];process.stdin.on('data',c=>d.push(c)).on('end',()=>process.stdout.write(require('crypto').createHash('sha256').update(Buffer.concat(d)).digest('hex')))" 2>/dev/null)
+assert_equals "yes" "$([ -n "$AFTER_P9" ] && echo yes || echo no)" "req-005: after-P9 paragraph is present"
+assert_equals "$BASE_P9_SHA" "$AFTER_P9_SHA" "req-005: after-P9 paragraph matches the baseline byte for byte"
 
 print_summary

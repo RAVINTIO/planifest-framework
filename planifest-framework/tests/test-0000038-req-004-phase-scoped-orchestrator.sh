@@ -20,7 +20,15 @@ ORCH_DIR="$FW/skills/planifest-orchestrator"
 ORCH="$ORCH_DIR/SKILL.md"
 P0_REF="$ORCH_DIR/references/phase-0-assess-and-coach.md"
 AM_REF="$ORCH_DIR/references/adoption-modes.md"
-BASE_BLOB="5966840:planifest-framework/skills/planifest-orchestrator/SKILL.md"
+# SHA-256 of lines 239-588 and 768-818 of SKILL.md at commit 5966840. A shallow
+# clone or a squash merge drops that commit, so the test keeps its hashes.
+BASE_P0_SHA="0d790ab2eb439d9e38fdbd2b7d3e8cd1adcb68c02e42070fed73a8d494cb0482"
+BASE_AM_SHA="1b6c886f805d8821d4062cba336a8e1491c1eb294b39fc84ec8d6178d42a2890"
+
+# sha256_of <file>: prints the file's SHA-256 in hex, or nothing if unreadable.
+sha256_of() {
+  node -e "process.stdout.write(require('crypto').createHash('sha256').update(require('fs').readFileSync(process.argv[1])).digest('hex'))" "$1" 2>/dev/null
+}
 
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
@@ -36,15 +44,11 @@ assert_equals "yes" "$([ -f "$AM_REF" ] && echo yes || echo no)" "req-004: adopt
 
 echo ""
 echo "=== req-004: moved blocks match the 5966840 blob byte for byte ==="
-git -C "$FW" show "$BASE_BLOB" 2>/dev/null | sed -n '239,588p' > "$TMP/p0.base"
-git -C "$FW" show "$BASE_BLOB" 2>/dev/null | sed -n '768,818p' > "$TMP/am.base"
-assert_equals "yes" "$([ -s "$TMP/p0.base" ] && [ -s "$TMP/am.base" ] && echo yes || echo no)" \
-  "req-004: baseline blob 5966840 is readable"
 [ -f "$P0_REF" ] && sed -n '/^## Phase 0 - Assess and Coach$/,$p' "$P0_REF" > "$TMP/p0.new" || : > "$TMP/p0.new"
 [ -f "$AM_REF" ] && sed -n '/^## Adoption Modes$/,$p' "$AM_REF" > "$TMP/am.new" || : > "$TMP/am.new"
-assert_equals "same" "$(cmp -s "$TMP/p0.base" "$TMP/p0.new" && echo same || echo different)" \
+assert_equals "$BASE_P0_SHA" "$(sha256_of "$TMP/p0.new")" \
   "req-004: Phase 0 block is byte-identical to lines 239-588 of the baseline"
-assert_equals "same" "$(cmp -s "$TMP/am.base" "$TMP/am.new" && echo same || echo different)" \
+assert_equals "$BASE_AM_SHA" "$(sha256_of "$TMP/am.new")" \
   "req-004: Adoption Modes block is byte-identical to lines 768-818 of the baseline"
 assert_contains "planifest-orchestrator/SKILL.md" "$(head -12 "$P0_REF" 2>/dev/null)" \
   "req-004: Phase 0 file names SKILL.md as its owner"
