@@ -85,4 +85,16 @@ assert_equals "yes" "$(yes_no 'function ConvertTo-PlanifestHashtable' "$SETUP_CO
 assert_equals "yes" "$(yes_no 'ConvertTo-PlanifestHashtable -InputObject' "$(sed -n '/^function Merge-AllowedTools/,/^}/p' "$SETUP_PS1")")" "req-011: Merge-AllowedTools uses the converter"
 assert_equals "no" "$(yes_no '\?\?|\?\.|-Parallel|-AsPlainText|\$Is(Windows|Linux|MacOS)\b' "$SETUP_CODE")" "req-011: setup.ps1 uses no other PowerShell 6+ only syntax (?? ?. -Parallel \$IsWindows)"
 
+echo "== req-011: native stderr never stops setup under 5.1 =="
+# Windows PowerShell 5.1 turns native stderr into a terminating error when
+# $ErrorActionPreference is Stop. In a non-git fixture, git config writes
+# "fatal: not in a git directory", so the call must relax the preference first.
+GUARD_FN="$(sed -n '/^function Invoke-PlanifestGuardrails/,/^}/p' "$SETUP_PS1")"
+GIT_LINE_NO="$(grep -nE '^[[:space:]]*git config core\.hooksPath' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"
+BEFORE_GIT="$(head -n "${GIT_LINE_NO:-0}" <<<"$GUARD_FN")"
+assert_equals "yes" "$([ -n "$GIT_LINE_NO" ] && echo yes || echo no)" "req-011: guardrails function still runs git config core.hooksPath"
+assert_equals "yes" "$(yes_no "ErrorActionPreference[[:space:]]*=[[:space:]]*'Continue'" "$BEFORE_GIT")" "req-011: guardrails relax ErrorActionPreference before the native git call"
+assert_equals "yes" "$(yes_no 'finally' "$GUARD_FN")" "req-011: guardrails restore ErrorActionPreference in a finally block"
+assert_equals "yes" "$(yes_no 'git config core\.hooksPath planifest-framework/hooks[[:space:]]+2>&1' "$GUARD_FN")" "req-011: git config merges stderr so it never reaches the error stream"
+
 print_summary

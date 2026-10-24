@@ -21,6 +21,8 @@ FAILED_SUITES=()
 SHARD_INDEX="${PLANIFEST_SHARD_INDEX:-}"
 SHARD_COUNT="${PLANIFEST_SHARD_COUNT:-}"
 SHARDED=0
+# Clear both so a suite that runs this runner on a fixture does not inherit the shard.
+unset PLANIFEST_SHARD_INDEX PLANIFEST_SHARD_COUNT
 if [ -n "$SHARD_INDEX" ] && [ -n "$SHARD_COUNT" ]; then
   case "$SHARD_INDEX$SHARD_COUNT" in
     *[!0-9]*) echo "PLANIFEST_SHARD_INDEX and PLANIFEST_SHARD_COUNT must be whole numbers." >&2; exit 2 ;;

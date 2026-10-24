@@ -9,6 +9,9 @@
 
 set -uo pipefail
 
+# A direct run may inherit a CI shard. The fixture runner must see none.
+unset PLANIFEST_SHARD_INDEX PLANIFEST_SHARD_COUNT
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 

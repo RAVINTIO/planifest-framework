@@ -18,6 +18,9 @@
 
 set -uo pipefail
 
+# A direct run may inherit a CI shard. Each check below sets its own.
+unset PLANIFEST_SHARD_INDEX PLANIFEST_SHARD_COUNT
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
 
@@ -109,6 +112,16 @@ ONE_OUT="$(PLANIFEST_SHARD_INDEX=2 bash "$FIX/run-tests.sh" 2>&1)"
 assert_equals "8" "$(ran_names "$ONE_OUT" | tr ' ' '\n' | grep -c '^test-')" "req-010: an index without a count runs every suite"
 EMPTY_OUT="$(PLANIFEST_SHARD_INDEX= PLANIFEST_SHARD_COUNT= bash "$FIX/run-tests.sh" 2>&1)"
 assert_equals "8" "$(ran_names "$EMPTY_OUT" | tr ' ' '\n' | grep -c '^test-')" "req-010: empty shard variables run every suite"
+
+echo "== req-010: a nested runner does not inherit the shard =="
+# A suite that runs run-tests.sh on a fixture must see no shard variables, so the
+# runner unsets both after it reads them.
+NEST="$(mktemp -d "${TMPDIR:-/tmp}/planifest-nest.XXXXXX")"
+cp "$SCRIPT_DIR/run-tests.sh" "$NEST/run-tests.sh"
+printf '#!/usr/bin/env bash\necho "nested-index=[${PLANIFEST_SHARD_INDEX-unset}] nested-count=[${PLANIFEST_SHARD_COUNT-unset}]"\nexit 0\n' > "$NEST/test-a.sh"
+NEST_OUT="$(PLANIFEST_SHARD_INDEX=1 PLANIFEST_SHARD_COUNT=2 bash "$NEST/run-tests.sh" 2>&1)"
+assert_equals "yes" "$(yes_no 'nested-index=\[unset\] nested-count=\[unset\]' "$NEST_OUT")" "req-010: a suite run by a sharded runner sees no shard variables"
+rm -rf "$NEST"
 
 echo "== req-010: every skip guard has a skip table row =="
 # One row per guard and one guard per row (the README says so). A guard is a

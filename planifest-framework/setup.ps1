@@ -783,7 +783,16 @@ function Invoke-PlanifestGuardrails {
     Write-Host "  Activating Planifest Git Guardrails"
 
     # Point Git to the version-controlled hooks directory
-    git config core.hooksPath planifest-framework/hooks
+    # Windows PowerShell 5.1 turns native stderr into a terminating error under
+    # $ErrorActionPreference = 'Stop'. Outside a git repository, git config writes
+    # "fatal: not in a git directory", so relax the preference for this call only.
+    $savedErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        git config core.hooksPath planifest-framework/hooks 2>&1 | Out-Null
+    } finally {
+        $ErrorActionPreference = $savedErrorAction
+    }
     Write-Host "  + git config core.hooksPath planifest-framework/hooks"
 
     # Note: chmod is not available on Windows; hooks are made executable by setup.sh on Unix.
