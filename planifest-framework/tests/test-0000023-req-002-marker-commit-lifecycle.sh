@@ -30,14 +30,15 @@ SHIP_CONTENT=$(cat "$SHIP_AGENT")
 echo ""
 echo "=== req-002: creation-side commit instructions (orchestrator P0) ==="
 
-assert_contains "Write the sentinel" "$ORCH_CONTENT" \
+P0_CONTENT=$(cat "$SCRIPT_DIR/../skills/planifest-orchestrator/references/phase-0-assess-and-coach.md")
+assert_contains "Write the sentinel" "$P0_CONTENT" \
   "req-002: Step 1 (write the sentinel) still present"
-assert_contains "Include this file in the P0 commit." "$ORCH_CONTENT" \
+assert_contains "Include this file in the P0 commit." "$P0_CONTENT" \
   "req-002: .orchestrator-active commit instruction present"
 
-assert_contains "Write strict-mode ack" "$ORCH_CONTENT" \
+assert_contains "Write strict-mode ack" "$P0_CONTENT" \
   "req-002: Step 5 (write strict-mode ack) still present"
-assert_contains "include \`plan/.orchestrator-ack\` in the P0 commit" "$ORCH_CONTENT" \
+assert_contains "include \`plan/.orchestrator-ack\` in the P0 commit" "$P0_CONTENT" \
   "req-002: .orchestrator-ack commit instruction present"
 
 echo ""

@@ -134,7 +134,7 @@ for txt in "$TP" "$GATES"; do
   assert_contains "removing it or setting \`on\`" "$txt" "req-003: P0 recommends removing the key or setting on (P5 G1)"
   assert_contains "\`parallel_streams\` stays free to set" "$txt" "req-003: parallel_streams stays free to set (P5 G1)"
 done
-RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$ORCH")
+RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md")
 assert_contains "checker key" "$RM_TEXT" "req-003: orchestrator run-mode text names the checker-key block (P5 G1)"
 assert_contains "Toggle Protocol" "$(grep 'checker key' <<< "$RM_TEXT")" "req-003: orchestrator block line links to the Toggle Protocol (P5 G1)"
 lacks "always wins, including \`off\` and \`report-only\`" "$TP" "req-003: Toggle Protocol no longer says an explicit off always wins (P5 G1)"

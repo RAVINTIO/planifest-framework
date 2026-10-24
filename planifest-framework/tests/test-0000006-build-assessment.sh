@@ -27,7 +27,7 @@ assert_file_exists() {
 
 ORCH=$(cat "$SKILLS/planifest-orchestrator/SKILL.md")
 assert_contains "build-log.md"               "$ORCH" "req-001: orchestrator references build-log.md"
-assert_contains "build-log.template.md"      "$ORCH" "req-001: orchestrator references build-log template"
+assert_contains "build-log.template.md"      "$(cat "$SKILLS/planifest-orchestrator/references/phase-0-assess-and-coach.md")" "req-001: orchestrator references build-log template"
 assert_contains "append"                     "$ORCH" "req-001: orchestrator has append instruction for resume"
 
 # -----------------------------------------------------------------------

@@ -359,14 +359,15 @@ echo "=== skill text: edited skills carry the new directives ==="
 # -----------------------------------------------------------------------
 
 ORCH=$(cat "$SKILLS/planifest-orchestrator/SKILL.md" 2>/dev/null || echo "")
-assert_contains "plan/backlog/" "$ORCH" "req-001/002: orchestrator documents backlog convention + pickup"
-assert_contains "product.yml" "$ORCH" "req-005: orchestrator reads product.yml at P0"
+P0_ORCH=$(cat "$SKILLS/planifest-orchestrator/references/phase-0-assess-and-coach.md" 2>/dev/null || echo "")
+assert_contains "plan/backlog/" "$P0_ORCH" "req-001/002: orchestrator documents backlog convention + pickup"
+assert_contains "product.yml" "$P0_ORCH" "req-005: orchestrator reads product.yml at P0"
 assert_contains "every meaningful artifact write" "$ORCH" "req-007: Hard Limit 7 strengthened"
 assert_contains "push the feature branch" "$ORCH" "req-008: push cadence documented"
 assert_contains "planifest-reversal-assessor" "$ORCH" "req-016/017: reversal protocol wired"
 assert_contains "cross-model" "$ORCH" "req-021: cross-model gate at P6→P7"
 
-WAVE_ORCH=$(printf '%s' "$ORCH" | grep -c '### Waves' || true)
+WAVE_ORCH=$(printf '%s' "$P0_ORCH" | grep -c '### Waves' || true)
 assert_equals "1" "$WAVE_ORCH" "req-006: orchestrator Decomposition uses Waves"
 
 BRIEF_T=$(cat "$TEMPLATES/feature-brief.template.md" 2>/dev/null || echo "")

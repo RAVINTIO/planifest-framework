@@ -20,6 +20,8 @@ FW="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RUNMODE="$FW/scripts/run-mode.mjs"
 STD="$FW/standards/autonomous-run-standards.md"
 ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 moved to a reference file (0000038 req-004).
+P0_REF="$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 SHIP="$FW/skills/planifest-ship-agent/SKILL.md"
 BA="$FW/skills/planifest-build-assessment-agent/SKILL.md"
 DISPATCH="$FW/standards/agent-dispatch-standards.md"
@@ -515,9 +517,9 @@ for BAD in \
   assert_equals "interactive" "$(mode "$R")" "req-004: anchor line [$BAD] prints interactive (P5 S-1, S-2)"
 done
 
-ORCH_BLOCK=$(awk 'prev ~ /^ *```/ && $0 ~ /^ *Run mode confirmed: autonomous \(\{ISO-8601 timestamp\}\)$/ { print "found" } { prev = $0 }' "$ORCH")
+ORCH_BLOCK=$(awk 'prev ~ /^ *```/ && $0 ~ /^ *Run mode confirmed: autonomous \(\{ISO-8601 timestamp\}\)$/ { print "found" } { prev = $0 }' "$P0_REF")
 assert_equals "found" "$ORCH_BLOCK" "req-004: orchestrator shows the bare anchor line in a fenced code block"
-ANCHOR_TEXT=$(sed -n '/^Before recording \[3\]/,/^Immediately after recording the answer/p' "$ORCH")
+ANCHOR_TEXT=$(sed -n '/^Before recording \[3\]/,/^Immediately after recording the answer/p' "$P0_REF")
 assert_contains "the preferred form" "$ANCHOR_TEXT" "req-004: orchestrator calls the bare line the preferred form"
 assert_contains "one leading \`- \`" "$ANCHOR_TEXT" "req-004: orchestrator says one leading list marker also passes"
 

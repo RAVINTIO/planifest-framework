@@ -23,7 +23,8 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-ORCH_SKILL="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+# The Scope Lock Challenge moved to the Phase 0 reference file (0000038 req-004).
+ORCH_SKILL="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 SCOPE_LOCK_SKILL="$FRAMEWORK/skills/planifest-scope-lock-agent/SKILL.md"
 
 # Local file-content assertions. Deliberately do NOT use assert_contains

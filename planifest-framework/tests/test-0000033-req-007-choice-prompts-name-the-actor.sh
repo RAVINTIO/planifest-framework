@@ -15,6 +15,8 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 SHIP="$FRAMEWORK/skills/planifest-ship-agent/SKILL.md"
 ORCH="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 moved to a reference file (0000038 req-004).
+P0_REF="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 FMT="$FRAMEWORK/standards/formatting-standards.md"
 OPTION_RE="^\s*\[[0-9]\].*\b(I|I'll|me|my)\b"
 
@@ -58,13 +60,13 @@ assert_equals "yes" "$([ -n "$COMPACT" ] && echo yes || echo no)" "req-007: comp
 lacks "Want me to" "$COMPACT" "req-007: compaction prompt drops Want me to"
 assert_contains "Should the agent compact" "$COMPACT" "req-007: compaction prompt names the agent"
 
-FALLBACK=$(sed -n '/^\*\*Partial-failure fallback/,/^\*\*After each answer/p' "$ORCH")
+FALLBACK=$(sed -n '/^\*\*Partial-failure fallback/,/^\*\*After each answer/p' "$P0_REF")
 assert_equals "yes" "$([ -n "$FALLBACK" ] && echo yes || echo no)" "req-007: Scope Lock fallback found"
 lacks "Want me to" "$FALLBACK" "req-007: Scope Lock fallback offer drops Want me to"
 assert_contains "Should the agent suggest an answer first? (agent suggests / human answers)" "$FALLBACK" \
   "req-007: Scope Lock fallback offer names the agent"
 
-RUNMODE=$(grep -E '^\s*\[[1-3]\] (Interactive|Continuous|Autonomous):' "$ORCH")
+RUNMODE=$(grep -E '^\s*\[[1-3]\] (Interactive|Continuous|Autonomous):' "$P0_REF")
 assert_equals "3" "$(grep -c . <<< "$RUNMODE")" "req-007: run-mode prompt has three options"
 assert_equals "3" "$(grep -c 'the agent' <<< "$RUNMODE")" "req-007: each run-mode option names the agent"
 assert_equals "0" "$(grep -c -E "\b(I|me)\b" <<< "$RUNMODE")" "req-007: no run-mode option uses I or me"

@@ -9,6 +9,8 @@ source "$SCRIPT_DIR/../helpers/assert.sh"
 
 FRAMEWORK="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ORCHESTRATOR="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 moved to a reference file (0000038 req-004).
+P0_REF="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 
 grep_has() { grep -q "$1" "$2" 2>/dev/null && echo "yes" || echo "no"; }
 
@@ -32,7 +34,7 @@ assert_contains "stop and write it before proceeding" "$HL" \
 echo ""
 echo "=== req-007: step 3d cross-reference ==="
 
-STEP_3D=$(grep "3d\." "$ORCHESTRATOR")
+STEP_3D=$(grep "3d\." "$P0_REF")
 assert_contains "Hard Limit 11" "$STEP_3D" \
   "req-007: step 3d cross-references Hard Limit 11 by number"
 
@@ -41,8 +43,8 @@ assert_contains "Hard Limit 11" "$STEP_3D" \
 echo ""
 echo "=== req-007: Gate Checklist item ==="
 
-GATE=$(sed -n '/### Phase 0 → Phase 1 Gate Checklist/,/^$/p' "$ORCHESTRATOR")
-GATE=$(sed -n '/### Phase 0 → Phase 1 Gate Checklist/,/^## /p' "$ORCHESTRATOR")
+GATE=$(sed -n '/### Phase 0 → Phase 1 Gate Checklist/,/^$/p' "$P0_REF")
+GATE=$(sed -n '/### Phase 0 → Phase 1 Gate Checklist/,/^## /p' "$P0_REF")
 assert_contains "discovery.md" "$GATE" \
   "req-007: Gate Checklist has a discovery.md item"
 assert_contains "Hard Limit 11" "$GATE" \

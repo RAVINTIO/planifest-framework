@@ -47,8 +47,9 @@ fi
 echo ""
 echo "=== req-007: skill-scope ADR referenced from the process that adds a skill ==="
 
-assert_contains "0000027-ADR-003" "$orch_content" "req-007: orchestrator references ADR-003 by ID"
-assert_contains "skill-scope test" "$orch_content" "req-007: orchestrator names the skill-scope test"
+p0_content=$(cat "$FRAMEWORK_DIR/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md")
+assert_contains "0000027-ADR-003" "$p0_content" "req-007: orchestrator references ADR-003 by ID"
+assert_contains "skill-scope test" "$p0_content" "req-007: orchestrator names the skill-scope test"
 
 # 0000028: this asserted plan/current/adr/, which only ever holds the in-flight
 # feature's artifacts. 0000027's own P7 archived this ADR, so the assertion could

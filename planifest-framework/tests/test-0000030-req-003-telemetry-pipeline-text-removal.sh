@@ -77,7 +77,7 @@ for rel in planifest-framework/standards/telemetry-standards.md \
 done
 
 echo "req-003: orchestrator keeps the product id hard-stop"
-ORCH="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+ORCH="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 has_text "$ORCH" "No declared product id found" "req-003: orchestrator keeps product id hard-stop prompt"
 has_text "$ORCH" "hard-stop" "req-003: orchestrator still says hard-stop"
 prompt=$(grep -A6 'No declared product id found' "$ORCH")

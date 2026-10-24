@@ -14,7 +14,7 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 FW="$SCRIPT_DIR/.."
 POLICY="$FW/standards/p0-question-policy.md"
-ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
+ORCH="$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 BUILD_LOG="$FW/templates/build-log.template.md"
 ASSESS="$FW/skills/planifest-build-assessment-agent/SKILL.md"
 

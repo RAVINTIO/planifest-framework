@@ -15,6 +15,9 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 FW="$SCRIPT_DIR/.."
 DISC="$FW/templates/discovery.template.md"
 ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 and Adoption Modes moved to reference files (0000038 req-004).
+P0_REF="$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
+AM_REF="$FW/skills/planifest-orchestrator/references/adoption-modes.md"
 DESIGN="$FW/templates/design.template.md"
 
 # has <needle> <haystack> <label>: like assert_contains, without the haystack dump.
@@ -23,8 +26,8 @@ has() {
 }
 
 SAMPLES=$(sed -n '/^## Record Samples/,$p' "$DISC")
-SDP=$(sed -n '/^### Structured Discovery Pass (all modes)/,/^### Mode Taxonomy/p' "$ORCH")
-STEP3D=$(sed -n '/^3d\. \*\*Write discovery.md/,/^   After adoption mode is/p' "$ORCH")
+SDP=$(sed -n '/^### Structured Discovery Pass (all modes)/,/^### Mode Taxonomy/p' "$AM_REF")
+STEP3D=$(sed -n '/^3d\. \*\*Write discovery.md/,/^   After adoption mode is/p' "$P0_REF")
 ASSUMPTIONS=$(sed -n '/^## Assumptions/,/^## Risks/p' "$DESIGN")
 
 echo "=== req-009: discovery template Record Samples ==="

@@ -15,6 +15,8 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 FW="$SCRIPT_DIR/.."
 STD="$FW/standards/autonomous-run-standards.md"
 ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 moved to a reference file (0000038 req-004).
+P0_REF="$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 GS="$FW/getting-started.md"
 PR="$FW/pipeline-reference.md"
 
@@ -47,13 +49,13 @@ assert_contains "the override wins" "$RUN_MODES" "req-001: a conflicting overrid
 echo ""
 echo "=== req-001: orchestrator run-mode prompt ==="
 
-OPTIONS=$(grep -E '^[[:space:]]*\[[123]\] (Interactive|Continuous|Autonomous):' "$ORCH")
+OPTIONS=$(grep -E '^[[:space:]]*\[[123]\] (Interactive|Continuous|Autonomous):' "$P0_REF")
 assert_equals "3" "$(grep -c . <<< "$OPTIONS")" "req-001: run-mode prompt has three named options"
 assert_contains "[3] Autonomous" "$OPTIONS" "req-001: run-mode prompt contains [3] Autonomous"
 assert_equals "3" "$(grep -c 'the agent' <<< "$OPTIONS")" "req-001: every option names the agent"
 assert_equals "0" "$(grep -cwE 'I|me' <<< "$OPTIONS")" "req-001: no option contains I or me"
 
-RECORD=$(sed -n '/^Record their answer\./,/^In \*\*interactive\*\* mode/p' "$ORCH")
+RECORD=$(sed -n '/^Record their answer\./,/^In \*\*interactive\*\* mode/p' "$P0_REF")
 assert_contains "If [3], set \`continuous_run: true\` and \`autonomous_run: true\`, and write \`autonomous\` to \`plan/.run-mode\`" \
   "$RECORD" "req-001: option [3] writes autonomous to plan/.run-mode"
 assert_equals "1" "$(grep -c 'write `autonomous` to `plan/.run-mode`' <<< "$RECORD")" \
@@ -99,9 +101,9 @@ assert_contains "autonomous" "$(grep '^| `P0:`' "$PR")" "req-001: pipeline-refer
 echo ""
 echo "=== req-001: autonomous requires a feat/ branch (P5 G3) ==="
 
-PRE4=$(grep -E '^   4\. After confirming main' "$ORCH")
+PRE4=$(grep -E '^   4\. After confirming main' "$P0_REF")
 assert_contains "\`autonomous\` run requires a \`feat/\` branch" "$PRE4" "req-001: pre-flight step 4 says autonomous requires a feat/ branch (P5 G3)"
-RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$ORCH")
+RM_TEXT=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$P0_REF")
 assert_contains "declined a \`feat/\` branch" "$RM_TEXT" "req-001: run-mode text refuses autonomous without a feat/ branch (P5 G3)"
 assert_contains "\`feat/\` branch" "$RUN_MODES" "req-001: Run modes names the feat/ branch rule (P5 G3)"
 
