@@ -136,6 +136,9 @@ Streams (start commit `c8b1036`):
 - Design critic P1 iteration 2: REJECT (1 critical, 2 major, 5 minor). 18 of 20 iteration 1 findings resolved, 3 partly.
 - Decision (P1): the orchestrator raises a draft PR once P3 pushes its first code commit, so CI runs the Windows legs before P4, and P9 Step 10 reuses that PR and marks it ready / reason: the workflow runs only on `pull_request` (critic C1), and custom-001 allows `gh pr create` without asking.
 - Decision (P1): the indented `Verified by:` line governs, and non-enum inline text is ignored / reason: critic J2 found the same-type rule flags 9 of 11 files.
+- P1 iteration 2 fixes: req-001 reuses an open PR, pushes the tag after Step 10c, and commits the Step 10c log lines. req-006 lets the indented line govern. req-009 matches in command position only, with exact counts (31 lines today, 0 after P3). req-010, req-011, and the risk register verify the Windows legs on the draft PR.
+- Decision (P1): the lint treats a quote as a possible command position, scopes the path rule to assignments, and skips its own file by name / reason: payload strings sit in quotes, and 40 legitimate path lines run inside a temporary workspace.
+- Decision (P1): P2 writes the 20-minute Git Bash cap ADR now, as a conditional decision / reason: P3 then needs no return to P2.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.
