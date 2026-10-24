@@ -33,6 +33,7 @@ Rules:
 2. `SKILL.md` keeps one short section, `## Phase 0 and Adoption Modes (reference files)`. Its heading differs from the moved headings, so the absence test passes. The section links both files by relative path (`./references/...`) and says when to load them.
 3. The Framework Index gains one row for each file.
 4. At the start of P0, before any P0 action, the orchestrator reads both files in full.
+4a. After the read, the orchestrator writes one build-log line, `P0 references loaded: {paths}`, naming both files. The Phase 0 to Phase 1 Gate Checklist gains an item that the line exists. A skipped read then shows in the build log, and a unit test pins both the line and the checklist item.
 5. Resume Detection gains a step. When the resumed run is still at P0, which means the build log records no passed P0 gate, the orchestrator reads both files again.
 6. A run past P0 never loads either file, except when it re-enters P0 through a reversal. A reversal that reopens P0 follows rule 4.
 7. Two files, because Adoption Modes feeds the mode choice inside P0 only. A loader can then read each on its own.
