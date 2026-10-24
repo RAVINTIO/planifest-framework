@@ -55,5 +55,16 @@ A suite that cannot run under Git Bash on `windows-latest` returns exit 0 early 
 
 | Suite | Reason | Date |
 |-------|--------|------|
+| `test-0000030-req-004-install-clean-up-and-retired-flags.sh` | Three checks only: the linked-parent refusal (`ln -s` copies under Git Bash), the undeletable-folder warning (`chmod 555` does not block deletes on NTFS), and the 0600 mode check (NTFS has no mode bits). The other checks run. Backlog 0000210 and 0000211. | 2026-10-24 |
+| `test-0000033-req-001-run-mode-script.sh` | The three symlinked-record checks only: `ln -s` makes a copy under Git Bash. The other checks run. Backlog 0000210. | 2026-10-24 |
+| `test-0000033-req-012-archive-script-without-glob-delete.sh` | The symlink cases (`ln -s` makes a copy under Git Bash) and the forced-stop resume case (Node does not find an extensionless `git` shim on Windows). The other checks run. Backlog 0000210 and 0000211. | 2026-10-24 |
+| `test-0000033-req-017-join-owner-and-reconciliation.sh` | The symlinked changed-file check only: `ln -s` makes a copy under Git Bash. The regression copy has the same guard. The other checks run. Backlog 0000210. | 2026-10-24 |
+| `test-0000036-req-002-skill-drift-check.sh` | The newline-in-a-name check only: NTFS rejects a newline in a folder name. The other checks run. Backlog 0000211. | 2026-10-24 |
 | `test-0000025-req-004-setup-config-relocation.sh` | Check (e) only: `chmod 555` does not block writes on NTFS, so the unwritable-folder case cannot be built. The other checks in the suite run. | 2026-10-24 |
+| `test-0000037-req-003-credential-scan.sh` | The gitleaks stand-in checks only: the stand-in is a shell script, and node starts only a `gitleaks.exe` without a shell. The other checks run on the runner `PATH`. Backlog 0000212. | 2026-10-24 |
+| `test-0000037-req-007-wired-command.sh` | The bare-path negative check only: Git Bash runs a bare `.mjs` path through its node shebang, so the missing node prefix does not fail. The other checks run. Backlog 0000212. | 2026-10-24 |
+| `test-0000035-req-004-root-when-cwd-deleted.sh` | Two groups only: the checks that delete a process's cwd (Windows cannot) and the EACCES block (`chmod 000` sets no NTFS block). The other checks run. Backlog 0000208. | 2026-10-24 |
+| `test-0000035-req-005-ratchet-check-shared-root.sh` | Three groups only: the 10-link chain and link loop (`ln -s` copies under Git Bash), and the forged-name and forged-approval checks (a Windows file name cannot hold a newline or a colon). The other checks run. Backlog 0000208. | 2026-10-24 |
+| `test-0000035-req-008-sanctioned-scripts.sh` | The link checks only (`ln -s` copies under Git Bash), the kept-mode check, and the unwritable-root and unreadable-file checks (NTFS has no POSIX mode bits). The regression copy has the same guards. The other checks run. Backlog 0000208. | 2026-10-24 |
+| `test-0000036-req-008-non-regular-design-md.sh` | The FIFO case (Git Bash `mkfifo` makes no file that Node reports as non-regular) and the swap-to-link case (Windows has no `O_NOFOLLOW`, an enforcement gap). The other checks run. Backlog 0000208 and 0000209. | 2026-10-24 |
 

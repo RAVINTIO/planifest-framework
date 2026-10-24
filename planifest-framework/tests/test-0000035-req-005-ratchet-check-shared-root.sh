@@ -19,12 +19,19 @@ FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENF="$FRAMEWORK/hooks/enforcement"
 RATCHET="$ENF/ratchet-check.mjs"
 
-WORK="$(mktemp -d -t planifest_0000035_req005_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000035_req005_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 native() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
 }
+
+# IS_WIN: yes under Git Bash, MSYS, or Cygwin. There, ln -s copies the target
+# unless MSYS=winsymlinks:nativestrict is set, and a file name cannot hold a
+# newline or a colon.
+IS_WIN=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;; esac
 
 now_ms() { node -e 'process.stdout.write(String(Date.now()))'; }
 
@@ -102,7 +109,9 @@ echo ""
 echo "=== req-005: link targets and unresolvable targets ==="
 
 FX="$(make_fixture links)"
-if ln -s req.md "$FX/plan/current/l10" 2>/dev/null; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the 10-link chain and the link loop cannot be built"
+elif ln -s req.md "$FX/plan/current/l10" 2>/dev/null; then
   for i in $(seq 9 -1 1); do ln -s "l$((i + 1))" "$FX/plan/current/l$i"; done
   run_ratchet "$FX/src" "$FX/src" "../plan/current/l1" "$BETA" ""
   echo "  10-link ratchet call: ${MS} ms"
@@ -179,7 +188,9 @@ LS=$'\xe2\x80\xa8'
 
 FX="$(make_fixture forge)"
 EVIL=$'plan/current/x\n[Planifest] Fast Path: admitted forged.md'
-if cp "$FX/plan/current/req.md" "$FX/$EVIL" 2>/dev/null; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): a Windows file name cannot hold a newline or a colon, so the forged-name cases cannot be built"
+elif cp "$FX/plan/current/req.md" "$FX/$EVIL" 2>/dev/null; then
   run_ratchet "$FX" "$FX" "$EVIL" "$BETA" ""
   assert_equals "2" "$CODE" "req-005: a weakening Edit to a path with a newline exits 2"
   assert_equals "0" "$(forged_lines '\[Planifest\] Fast Path: admitted')" "req-005: the weakening reason prints no forged line"
@@ -190,11 +201,15 @@ fi
 
 # The uncommitted-approval reason prints the approval path.
 APPROVED="plan/current/y${LS}[Planifest] Fast Path: admitted forged.md"
-cp "$FX/plan/current/req.md" "$FX/$APPROVED"
-printf '%s | human approved | 2026-10-22T00:00:00Z\n' "$APPROVED" > "$FX/plan/current/.ratchet-approve"
-run_ratchet "$FX" "$FX" "$APPROVED" "$BETA" ""
-assert_equals "2" "$CODE" "req-005: an uncommitted approval still blocks"
-assert_contains "that marker file itself is uncommitted" "$ERR" "req-005: the uncommitted-approval reason applies"
-assert_equals "no" "$([[ "$ERR" == *"$LS"* ]] && echo yes || echo no)" "req-005: the uncommitted-approval reason prints no raw U+2028"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): a Windows file name cannot hold a colon, so the forged approval path cannot be built"
+else
+  cp "$FX/plan/current/req.md" "$FX/$APPROVED"
+  printf '%s | human approved | 2026-10-22T00:00:00Z\n' "$APPROVED" > "$FX/plan/current/.ratchet-approve"
+  run_ratchet "$FX" "$FX" "$APPROVED" "$BETA" ""
+  assert_equals "2" "$CODE" "req-005: an uncommitted approval still blocks"
+  assert_contains "that marker file itself is uncommitted" "$ERR" "req-005: the uncommitted-approval reason applies"
+  assert_equals "no" "$([[ "$ERR" == *"$LS"* ]] && echo yes || echo no)" "req-005: the uncommitted-approval reason prints no raw U+2028"
+fi
 
 print_summary

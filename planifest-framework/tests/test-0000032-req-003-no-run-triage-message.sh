@@ -17,7 +17,8 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 HOOK="$SCRIPT_DIR/../hooks/enforcement/auto-trigger-orchestrator.mjs"
 ORCH="$SCRIPT_DIR/../skills/planifest-orchestrator/SKILL.md"
 
-WORK="$(mktemp -d -t planifest_0000032_req003_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000032_req003_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 # lacks <needle> <haystack> <label>: passes when the haystack omits the needle.

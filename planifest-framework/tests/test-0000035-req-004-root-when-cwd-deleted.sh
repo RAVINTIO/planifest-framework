@@ -22,7 +22,8 @@ GATE_WRITE="$ENF/gate-write.mjs"
 SHELL_GUARD="$ENF/shell-write-guard.mjs"
 PATH_RULES="$ENF/path-rules.mjs"
 
-WORK="$(mktemp -d -t planifest_0000035_req004_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000035_req004_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 LOCKED=""
 cleanup() {
   [ -n "$LOCKED" ] && chmod 755 "$LOCKED" 2>/dev/null
@@ -33,6 +34,11 @@ trap cleanup EXIT
 native() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
 }
+
+# IS_WIN: yes under Git Bash, MSYS, or Cygwin. Windows cannot delete a
+# directory that a process uses as its cwd, and chmod 000 sets no NTFS block.
+IS_WIN=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;; esac
 
 # make_fixture <name>: a git repository with no design.
 make_fixture() {
@@ -102,10 +108,15 @@ assert_contains "Warning" "$ERR" "req-004: a too-long target from a deleted cwd 
 # hook only when no cwd is usable at all. Both hooks then pass with exit 0.
 NS="$WORK/nostring"
 mkdir -p "$NS"
-(cd "$NS" && rmdir "$NS" && node "$SHELL_GUARD" >/dev/null 2>&1 <<< '{"tool_name":"Bash","tool_input":{"command":"touch src/x.js"}}')
-assert_equals "0" "$?" "req-004: with no cwd and CLAUDE_PROJECT_DIR unset, the shell guard passes"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Windows cannot delete a directory that is a process's cwd, so the no-cwd shell guard check cannot be built"
+else
+  (cd "$NS" && rmdir "$NS" && node "$SHELL_GUARD" >/dev/null 2>&1 <<< '{"tool_name":"Bash","tool_input":{"command":"touch src/x.js"}}')
+  assert_equals "0" "$?" "req-004: with no cwd and CLAUDE_PROJECT_DIR unset, the shell guard passes"
+fi
 RR=$(node --input-type=module -e "
-const { resolveRoot } = await import(process.argv[1]);
+const { pathToFileURL } = await import('node:url');
+const { resolveRoot } = await import(pathToFileURL(process.argv[1]).href);
 process.stdout.write([resolveRoot(''), resolveRoot(42), resolveRoot(undefined)].map(String).join(','));
 " "$(native "$PATH_RULES")" 2>&1)
 assert_equals "null,null,null" "$RR" "req-004: resolveRoot returns null for a cwd that is not a non-empty string"
@@ -147,7 +158,9 @@ assert_equals "0" "$CODE" "req-004: a path above the nearest existing folder pas
 echo ""
 echo "=== req-004: a walk that stops at an unreadable path ==="
 
-if [ "$(id -u)" = "0" ]; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): chmod 000 does not block reads on NTFS, so the EACCES stop cannot be built"
+elif [ "$(id -u)" = "0" ]; then
   echo "  SKIP: req-004: chmod 000 doesn't block the root user"
 else
   FX="$(make_fixture locked)"
@@ -170,6 +183,9 @@ fi
 echo ""
 echo "=== req-004: hook cwd fallback when stdin has no cwd ==="
 
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Windows cannot delete a directory that is a process's cwd, so process.cwd() cannot be made to throw"
+else
 FX="$(make_fixture fallback)"
 mkdir -p "$FX/gone"
 ERRFILE="$WORK/stderr.txt"
@@ -184,6 +200,7 @@ mkdir -p "$FX/gone"
 (cd "$FX/gone" && rmdir "$FX/gone" && node "$GATE_WRITE" >/dev/null 2>"$ERRFILE" <<< '{"tool_input":{"file_path":"src/x.js"}}')
 CODE=$?
 assert_equals "0" "$CODE" "req-004: with no cwd and CLAUDE_PROJECT_DIR unset, gate-write passes"
+fi
 
 # =============================================================================
 echo ""

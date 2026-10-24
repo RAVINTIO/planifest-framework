@@ -26,12 +26,17 @@ ENF="$FRAMEWORK/hooks/enforcement"
 GATE_WRITE="$ENF/gate-write.mjs"
 SHELL_GUARD="$ENF/shell-write-guard.mjs"
 
-WORK="$(mktemp -d -t planifest_0000036_req008_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000036_req008_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'chmod -R u+rwx "$WORK" 2>/dev/null; rm -rf "$WORK"' EXIT
 
 native() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
 }
+
+# IS_WIN: yes under Git Bash, MSYS, or Cygwin.
+IS_WIN=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;; esac
 
 GIT=(git -c user.name=t -c user.email=t@t -c commit.gpgsign=false -c init.defaultBranch=main)
 
@@ -141,7 +146,9 @@ mkdir -p "$DESIGN"
 blocks_as_non_regular "a folder"
 
 reset_design
-if mkfifo "$DESIGN" 2>/dev/null; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash mkfifo makes no FIFO that Node reports as a non-regular file, so the FIFO case cannot be built"
+elif mkfifo "$DESIGN" 2>/dev/null; then
   blocks_as_non_regular "a FIFO"
 else
   echo "  SKIP: req-008: mkfifo is not available, so the FIFO case can't run"
@@ -325,6 +332,10 @@ printf '%s' "$DESIGN_TEXT" > "$WORK/real-design.md"
 for mode in link rm notdir sock; do
   reset_design
   printf '%s' "$DESIGN_TEXT" > "$DESIGN"
+  if [ "$mode" = "link" ] && [ "$IS_WIN" = "yes" ]; then
+    echo "  SKIP (windows): Windows defines no O_NOFOLLOW, so the open follows a link swapped in after lstatSync (backlog 0000209)"
+    continue
+  fi
   if [ "$mode" = "link" ] && ! ln -s "$WORK/real-design.md" "$WORK/link-probe" 2>/dev/null; then
     echo "  SKIP: req-008: symbolic links are not available, so the swap-to-link case can't run"
     continue
