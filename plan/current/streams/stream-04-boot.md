@@ -2,8 +2,8 @@
 stream-id: "stream-04-boot"
 kind: stream
 start-commit: "7fe3f98"
-status: at-join
-phase: P3
+status: done
+phase: P4
 requirements: [req-007]
 stories: [US-007]
 id-blocks: "no new req or ADR IDs, backlog 0000241 to 0000243"

@@ -200,14 +200,14 @@ Progress: P3 done at 2026-10-24T20:33:10Z: seven requirements GREEN across four 
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T20:33:10Z` |
-| End | pending |
-| Wall-clock | pending |
+| End | `2026-10-24T21:10:44Z` |
+| Wall-clock | 37 |
 | Streams | 4 (joined) |
 | Model tier | primary |
 | Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
-| Agents spawned | pending |
+| Agents spawned | 2 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 1 |
 | Notes | none |
 
 Decision (P4): raise a draft PR now so CI runs the Windows legs before P9 / reason: CI runs on `pull_request` only, and req-001 needs the Windows shard to prove the fix. P9 reuses the PR.
@@ -223,3 +223,22 @@ Decision (P4): the req-004 and req-005 tests hold baseline hashes, not a commit 
 Verify (P4): 18 verified, 0 failed, 5 not-verifiable (unit criteria not re-run). Haiku probe reported `claude-haiku-5-5`. A stray `setup.sh` run touched the repo and the tracked file was restored by Edit. See `plan/current/verification-report.md`.
 Process note (P4): the verifier's stray `setup.sh claude-code` run used this repo as its root. The tracked `planifest-overrides/setup-config/claude-code.md` matches HEAD again. The ignored `CLAUDE.md` and `.claude/` now match source, with zero skill drift. The local flags cache omits `--strict-orchestrator`, and `plan/.orchestrator-strict` is unchanged. The end-of-P6 setup run with `--strict-orchestrator` reconciles the cache.
 Decision (P4): the req-002 probe confirms that `model: "haiku"` takes effect, because the subagent reported `claude-haiku-5-5` / reason: the design named this probe as the in-run check for US-002
+Validate (P4, CI): runs on `cf87eed`, `304c03e`, `d76233f`, and `09ffb67` all passed, with 13 of 13 jobs green each time. That includes all seven Windows shards and both PowerShell setup jobs.
+Self-corrections (P4): 2 fix batches.
+Gate (P4): passed. CI is green, and verify-by-execution found no failed criterion.
+Progress: P4 done at 2026-10-24T21:10:44Z: 152 suites green locally and on 13 CI jobs, two fix batches, 18 criteria verified by execution
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T21:10:44Z` |
+| End | pending |
+| Wall-clock | pending |
+| Streams | n/a |
+| Model tier | primary (`sonnet`) |
+| Skills loaded | planifest-security-agent |
+| Agents spawned | pending |
+| MCP calls | 0 |
+| Parallel task batches | pending |
+| Notes | none |

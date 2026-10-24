@@ -2,8 +2,8 @@
 stream-id: "stream-02-dispatch"
 kind: stream
 start-commit: "7fe3f98"
-status: at-join
-phase: P3
+status: done
+phase: P4
 requirements: [req-002, req-006]
 stories: [US-002, US-006]
 id-blocks: "no new req or ADR IDs, backlog 0000235 to 0000237"
