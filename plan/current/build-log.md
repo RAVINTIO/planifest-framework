@@ -240,6 +240,9 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Deviation (P3, unclassified): the docs-agent skip case keeps the old `Post-P6 revalidation: skipped, no P6 edits` phrase, marked as replaced, because the 0000033 req-014 suite asserts it.
 - Full suite after batch 2: 107 of 108 feature suites and 33 of 33 regression suites pass. `test-0000030-req-001-002` failed its residue check on the req-011 retired-flag fixtures.
 - Decision (P3): the orchestrator wraps the req-011 fixtures in `test_setup.ps1` and the req-011 suite in `BEGIN`/`END retired-integrations` markers / reason: the residue check already skips marked blocks, as `setup.sh` and `setup.ps1` do. The residue suite now passes (15).
+- CI checks (P3, PR #64, head `f3c6456`): ubuntu and macOS fail on `test-0000030-req-001-002` only, which the residue fix closes. `Setup under PowerShell 7` passes. `Setup under Windows PowerShell 5.1` fails, because `setup.ps1` line 421 calls `ConvertFrom-Json -AsHashtable`, which 5.1 lacks. `Test suite (windows-latest)` was cancelled at its 10-minute cap after 38 suites, with 6 failing.
+- Decision (P3): git bash leg cap: 20 / reason: the leg ran past 10 minutes (ADR-014 condition fires).
+- Deviation (P3, unclassified): the Git Bash leg measured about 38 suites in 10 minutes, so a full run needs about 37 minutes, past the 20-minute cap. P3 takes ADR-014's named second fallback and shards the Windows leg four ways, each shard capped at 20 minutes. CI minutes per PR rise above the R-013 estimate.
 - Credential scan (P3): draft PR title and body, regex only (gitleaks not found), both exit 0.
 Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - Deviation (P3, unclassified): the req-001 execution check covers the read command and the exit-1-with-JSON case, not the whole poll, because no script runs the poll.
