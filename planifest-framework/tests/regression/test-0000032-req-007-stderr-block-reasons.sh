@@ -44,9 +44,12 @@ native() {
 now_ms() { perl -MTime::HiRes=time -e 'printf "%d\n", time * 1000'; }
 
 # run_node <dir> <script> <stdin>: runs a hook from dir. It keeps the raw
-# stdout and stderr in files and sets CODE, OUT, ERR, and MS.
+# stdout and stderr in files and sets CODE, OUT, ERR, and MS. One untimed
+# warm-up call comes first and warms disk caches. The hook still starts as a
+# fresh Node process each time. The timed call runs once and never retries.
 run_node() {
   local start end
+  (cd "$1" && node "$2" >/dev/null 2>&1 <<< "$3")
   start=$(now_ms)
   (cd "$1" && node "$2" >"$OUTFILE" 2>"$ERRFILE" <<< "$3")
   CODE=$?

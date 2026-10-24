@@ -124,8 +124,9 @@ assert_contains "gate-write"                    "$COPILOT_CONTENT" "req-009: wir
 echo ""
 echo "=== req-010: capability skill intake ==="
 
-assert_contains "skills-inbox"                  "$ORCH" "req-010: skills-inbox referenced in orchestrator"
-assert_contains "capability-skills"             "$ORCH" "req-010: capability-skills referenced"
+P0_REF=$(cat "$SKILLS/planifest-orchestrator/references/phase-0-assess-and-coach.md")
+assert_contains "skills-inbox"                  "$P0_REF" "req-010: skills-inbox referenced in orchestrator"
+assert_contains "capability-skills"             "$P0_REF" "req-010: capability-skills referenced"
 assert_file_exists "$FRAMEWORK/skills-inbox/.gitkeep" "req-010: skills-inbox directory exists"
 
 # -----------------------------------------------------------------------

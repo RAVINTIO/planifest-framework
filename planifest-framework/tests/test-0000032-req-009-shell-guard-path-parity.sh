@@ -298,7 +298,7 @@ echo ""
 echo "=== req-009: each call finishes in under 200 ms ==="
 
 # Times one guard process per command, Node start-up included. Each command
-# takes the best of three runs, so a busy host doesn't fail the check.
+# makes one untimed warm-up call, then one timed call. Nothing retries.
 TIMING_PAYLOADS="$WORK/timing.json"
 node -e '
   const [cwd, ...cmds] = process.argv.slice(1);
@@ -310,13 +310,11 @@ SLOWEST=$(node -e '
   const payloads = JSON.parse(readFileSync(process.argv[2], "utf-8"));
   let slowest = 0;
   for (const input of payloads) {
-    let best = Infinity;
-    for (let run = 0; run < 3; run++) {
-      const t0 = process.hrtime.bigint();
-      spawnSync(process.execPath, [process.argv[1]], { input });
-      best = Math.min(best, Number(process.hrtime.bigint() - t0) / 1e6);
-    }
-    if (best > slowest) slowest = best;
+    spawnSync(process.execPath, [process.argv[1]], { input }); // warm-up, untimed
+    const t0 = process.hrtime.bigint();
+    spawnSync(process.execPath, [process.argv[1]], { input });
+    const elapsed = Number(process.hrtime.bigint() - t0) / 1e6;
+    if (elapsed > slowest) slowest = elapsed;
   }
   process.stdout.write(String(Math.round(slowest)));
 ' "$GUARD" "$TIMING_PAYLOADS")

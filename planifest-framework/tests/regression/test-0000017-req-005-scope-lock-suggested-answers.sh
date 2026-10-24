@@ -15,6 +15,8 @@ source "$SCRIPT_DIR/../helpers/assert.sh"
 
 FRAMEWORK="$SCRIPT_DIR/../.."
 ORCHESTRATOR="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+# The Scope Lock Challenge moved to a reference file (0000038 req-004).
+P0_REF="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 SCOPE_LOCK_AGENT="$FRAMEWORK/skills/planifest-scope-lock-agent/SKILL.md"
 
 file_exists() { [ -f "$1" ] && echo "yes" || echo "no"; }
@@ -27,25 +29,25 @@ grep_count()  { grep -c "$1" "$2" 2>/dev/null || echo 0; }
 echo ""
 echo "=== req-005(a) [updated by 0000025-req-007]: default parallel dispatch, batch presentation ==="
 
-assert_equals "yes" "$(grep_has "Default parallel dispatch, no opt-in" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Default parallel dispatch, no opt-in" "$P0_REF")" \
   "req-005a: orchestrator has a 'Default parallel dispatch, no opt-in' subsection under Scope Lock Challenge"
 
-assert_equals "yes" "$(grep_has "dispatch \`planifest-scope-lock-agent\` for all four scenario-path questions" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "dispatch \`planifest-scope-lock-agent\` for all four scenario-path questions" "$P0_REF")" \
   "req-005a: orchestrator dispatches all four scenario-path questions by default"
 
-assert_equals "yes" "$(grep_has "Drafting is always produced; it is never gated on a human opt-in request" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Drafting is always produced; it is never gated on a human opt-in request" "$P0_REF")" \
   "req-005a: orchestrator states drafting is never gated on a human opt-in request"
 
-assert_equals "yes" "$(grep_has "Batch presentation" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Batch presentation" "$P0_REF")" \
   "req-005a: orchestrator has a Batch presentation subsection"
 
-assert_equals "yes" "$(grep_has "separate, explicit accept / edit / reject for each of the four items individually" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "separate, explicit accept / edit / reject for each of the four items individually" "$P0_REF")" \
   "req-005a: orchestrator still requires a separate accept/edit/reject per item, not a blanket batch approval"
 
-assert_equals "yes" "$(grep_has "Partial-failure fallback" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Partial-failure fallback" "$P0_REF")" \
   "req-005a: orchestrator has a Partial-failure fallback subsection for a failed dispatch"
 
-assert_equals "yes" "$(grep_has "0000014-ADR-008" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "0000014-ADR-008" "$P0_REF")" \
   "req-005a: orchestrator scopes this default against 0000014-ADR-008's one-question-at-a-time convention"
 
 assert_equals "yes" "$(grep_has "planifest-scope-lock-agent" "$ORCHESTRATOR")" \
@@ -114,7 +116,7 @@ assert_equals "yes" "$(grep_has "build-log.md" "$SCOPE_LOCK_AGENT")" \
 assert_equals "yes" "$(grep_has "build-log.md" "$ORCHESTRATOR")" \
   "req-005d: orchestrator (pre-existing) references build-log.md"
 
-assert_equals "yes" "$(grep_has "record it as its own \`plan/current/build-log.md\` entry immediately\|record the confirmation" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "record it as its own \`plan/current/build-log.md\` entry immediately\|record the confirmation" "$P0_REF")" \
   "req-005d: orchestrator's Scope Lock section states each confirmation is written to build-log.md immediately"
 
 print_summary

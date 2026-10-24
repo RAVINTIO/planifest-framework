@@ -113,6 +113,8 @@ if [ "$IS_WIN" = "yes" ]; then
   echo "  SKIP (windows): Git Bash ln -s copies the target, so the 10-link chain and the link loop cannot be built"
 elif ln -s req.md "$FX/plan/current/l10" 2>/dev/null; then
   for i in $(seq 9 -1 1); do ln -s "l$((i + 1))" "$FX/plan/current/l$i"; done
+  # One untimed warm-up call, then one timed call, with no retry (0000038 req-001).
+  run_ratchet "$FX/src" "$FX/src" "../plan/current/l1" "$BETA" ""
   run_ratchet "$FX/src" "$FX/src" "../plan/current/l1" "$BETA" ""
   echo "  10-link ratchet call: ${MS} ms"
   assert_equals "2" "$CODE" "req-005: a weakening Edit through a 10-link chain exits 2"

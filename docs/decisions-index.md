@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000037-green-ci-before-ship (24 Oct 2026). Adds 14 ADRs. They cover the P9 CI check, the credential scan, the GUTD CI step, and post-P6 revalidation. They also cover the `Verified by` field, the wired-command test, the migration diff, the portability lint, and the Windows CI legs. ADR-012 and ADR-013 amend 0000031 ADR-001, and ADR-014 amends 0000031 ADR-003 for the Windows shards. Earlier: 0000036 added 12 ADRs. They cover the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, and the run-mode anchor. They also cover the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
+Last updated: 0000038-token-efficiency-windows-shard (24 Oct 2026). Adds 7 ADRs. They cover the orchestrator reference files, the model aliases, quiet test output, the timing warm-up, the decomposition size floor, and the 0.36.0 migration. Earlier: 0000037 added 14 ADRs. They cover the P9 CI check, the credential scan, the GUTD CI step, and post-P6 revalidation. They also cover the `Verified by` field, the wired-command test, the migration diff, the portability lint, and the Windows CI legs. ADR-012 and ADR-013 amend 0000031 ADR-001, and ADR-014 amends 0000031 ADR-003 for the Windows shards. Earlier: 0000036 added 12 ADRs. They cover the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, and the run-mode anchor. They also cover the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -387,6 +387,20 @@ ADR files: [plan/_archive/0000037-green-ci-before-ship-2026-10-24/adr/](../plan/
 | ADR-012 | Windows PowerShell 5.1 is a supported runtime | accepted | A `setup-powershell-51` job runs `test_setup.ps1` under 5.1 on `windows-latest`. Amends 0000031-ADR-001 on the 5.1 point. |
 | ADR-013 | Git Bash leg with a fix-or-skip rule | accepted | `windows-latest` joins the `test-suite` matrix. Each failing suite is fixed or skipped with `SKIP (windows): {reason}` and a row in the tests README. Amends 0000031-ADR-001 on the Git Bash point. |
 | ADR-014 | Git Bash leg conditional 20-minute cap | accepted | The leg passed 10 minutes, so the Windows shards get `timeout-minutes: 20` and the suite shards seven ways. Amends 0000031-ADR-003 for those shards only. |
+
+### Feature 0000038: token-efficiency-windows-shard
+
+ADR files: [plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/adr/](../plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged | accepted | No new language, runtime, or package. The changes are Markdown, shell, and PowerShell edits. |
+| ADR-002 | Phase 0 and Adoption Modes live in two orchestrator reference files | accepted | `references/phase-0-assess-and-coach.md` and `references/adoption-modes.md` hold the moved text. The orchestrator reads both at P0 and logs `P0 references loaded`. |
+| ADR-003 | Claude Code model values are sonnet, opus, haiku, and fable | accepted | The tiers read `sonnet` and `haiku`. An allowlist test fails on any other value. |
+| ADR-004 | Quiet mode counts a suite failed on exit code or a FAIL line | accepted | `run-tests.sh --quiet` captures each suite and prints failures and totals only. A `trap` on `INT` and `TERM` keeps a stopped run visible. |
+| ADR-005 | Timing checks make one untimed warm-up and one timed call | accepted | The timed call must finish under 200 ms. No retry and no best-of-three. |
+| ADR-006 | Decomposition size floor with named exemptions | accepted | Small independent units run as parallel tool calls in the main thread. Nine roles stay exempt. |
+| ADR-007 | A re-run-setup migration for release 0.36.0 | accepted | `migrate-0.36.0-rerun-setup.md` lists the changed setup-delivered files. A branch-diff test checks the list. |
 
 ---
 

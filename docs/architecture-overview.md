@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000037-green-ci-before-ship (24 Oct 2026)
+Last updated: 0000038-token-efficiency-windows-shard (24 Oct 2026)
 
 ---
 
@@ -421,6 +421,41 @@ Each acceptance criterion carries `Verified by` with one of six types: `unit`, `
 ### Portability lint
 
 A lint suite flags tool use that differs between GNU and BSD systems, such as `grep -r` without `-H` and bare `shasum` (0000037-ADR-011). A rule matches only in command position. A `# portable-ok: {reason}` marker silences one line. `helpers/assert.sh` gains `sha256_of`, which tries `sha256sum` and falls back to `shasum -a 256`. Two further suites test the installed hook commands verbatim through `bash -c` (0000037-ADR-009). They also compare the re-run-setup migration's file list with the diff since the previous `v*` tag (0000037-ADR-010).
+
+---
+
+## Token efficiency and Windows shard (0000038)
+
+Feature 0000038 cuts the tokens each run reads and fixes a flaky Windows timing check. The framework stays on the same stack (0000038-ADR-001).
+
+### Orchestrator reference files
+
+Phase 0 and Adoption Modes moved out of `skills/planifest-orchestrator/SKILL.md` into two files in `skills/planifest-orchestrator/references/` (0000038-ADR-002):
+
+- `phase-0-assess-and-coach.md`
+- `adoption-modes.md`
+
+`SKILL.md` keeps one pointer section. At the start of P0, the orchestrator reads both files and logs `P0 references loaded: {paths}`. Resume Detection reads them again when the run is still at P0. A run past P0 reloads only the `### Capability Skills` section of the Phase 0 file, at each phase transition. Setup copies `references/` with the skill. In a skill's own reference files, setup rewrites only `../standards/` links. In `SKILL.md`, it also rewrites `../templates/` and `../schemas/`. Both setup scripts read the files as UTF-8 and write them without a BOM.
+
+### Model tiers for Claude Code
+
+The Claude Code tiers are the aliases `sonnet` (primary) and `haiku` (cheaper). The allowed set is `sonnet`, `opus`, `haiku`, and `fable` (0000038-ADR-003). A test fails on any other value in the tier table, the dispatch skeleton, the skills, or `pipeline-reference.md`.
+
+### Quiet test runner
+
+`tests/run-tests.sh --quiet` prints only the failed suites and the totals (0000038-ADR-004). A suite fails on a non-zero exit code or a `FAIL:` line. The refactor, validate, and codegen skills use quiet mode.
+
+### Dispatch size floor and partial reads
+
+`custom-002` and the dispatch standard set a size floor (0000038-ADR-006). A small independent unit runs as a parallel tool call in the main thread. Nine roles stay exempt, such as the design critic and the test-writer. The boot template tells the agent to read only part of a file over about 20 KB.
+
+### Timing checks
+
+Each timing check makes one untimed warm-up call and one timed call under 200 ms, with no retry (0000038-ADR-005).
+
+### Migration
+
+`migrate-0.36.0-rerun-setup.md` tells projects to re-run setup, because the changed files reach a project only through setup (0000038-ADR-007).
 
 ---
 

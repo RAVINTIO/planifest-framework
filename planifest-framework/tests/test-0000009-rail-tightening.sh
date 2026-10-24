@@ -276,7 +276,7 @@ assert_equals "yes" "$(grep_has "strict-orchestrator\|StrictOrchestrator" "$SETU
 assert_equals "yes" "$(grep_has "orchestrator-strict" "$SETUP_PS1")" \
   "REQ-008p: setup.ps1 writes plan/.orchestrator-strict sentinel"
 
-assert_equals "yes" "$(grep_has "orchestrator-ack" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "orchestrator-ack" "$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md")" \
   "REQ-008p: orchestrator SKILL.md writes .orchestrator-ack on P0 start"
 
 assert_equals "yes" "$(grep_has "orchestrator-ack" "$SHIP_AGENT")" \

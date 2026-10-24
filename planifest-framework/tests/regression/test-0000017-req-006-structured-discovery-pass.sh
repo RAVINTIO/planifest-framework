@@ -9,6 +9,9 @@ source "$SCRIPT_DIR/../helpers/assert.sh"
 
 FRAMEWORK="$(cd "$SCRIPT_DIR/../.." && pwd)"
 ORCHESTRATOR="$FRAMEWORK/skills/planifest-orchestrator/SKILL.md"
+# Phase 0 and Adoption Modes moved to reference files (0000038 req-004).
+P0_REF="$FRAMEWORK/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
+AM_REF="$FRAMEWORK/skills/planifest-orchestrator/references/adoption-modes.md"
 DISCOVERY_TPL="$FRAMEWORK/templates/discovery.template.md"
 DESIGN_TPL="$FRAMEWORK/templates/design.template.md"
 
@@ -20,11 +23,11 @@ grep_has()    { grep -q "$1" "$2" 2>/dev/null && echo "yes" || echo "no"; }
 echo ""
 echo "=== req-006: discovery pass defined for all 4 adoption modes ==="
 
-assert_equals "yes" "$(grep_has "Structured Discovery Pass (all modes)" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Structured Discovery Pass (all modes)" "$AM_REF")" \
   "req-006: orchestrator has a Structured Discovery Pass section"
 
 # each mode's taxonomy entry mentions writing to discovery.md
-MODE_SECTION=$(sed -n '/### Mode Taxonomy/,/### Conflict Warnings/p' "$ORCHESTRATOR")
+MODE_SECTION=$(sed -n '/### Mode Taxonomy/,/### Conflict Warnings/p' "$AM_REF")
 for mode in Greenfield "Standard Iterative" Retrofit "External Anchor"; do
   BLOCK=$(printf '%s' "$MODE_SECTION" | sed -n "/\*\*$mode\*\*/,/^\*\*\|### /p")
   assert_contains "discovery.md" "$BLOCK" \
@@ -32,7 +35,10 @@ for mode in Greenfield "Standard Iterative" Retrofit "External Anchor"; do
 done
 
 # the old Greenfield "No discovery pass needed" line is gone
-assert_equals "no" "$(grep_has "No discovery pass needed" "$ORCHESTRATOR")" \
+ORCH_ALL="$(mktemp)"
+trap 'rm -f "$ORCH_ALL"' EXIT
+cat "$ORCHESTRATOR" "$P0_REF" "$AM_REF" > "$ORCH_ALL"
+assert_equals "no" "$(grep_has "No discovery pass needed" "$ORCH_ALL")" \
   "req-006: Greenfield no-discovery exemption removed"
 
 # ── AC-1: discovery runs before coaching (Phase 0 Start Actions step) ────────
@@ -40,9 +46,9 @@ assert_equals "no" "$(grep_has "No discovery pass needed" "$ORCHESTRATOR")" \
 echo ""
 echo "=== req-006: Phase 0 Start Actions wiring ==="
 
-assert_equals "yes" "$(grep_has "Write discovery.md" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Write discovery.md" "$P0_REF")" \
   "req-006: Start Actions has a Write discovery.md step"
-assert_equals "yes" "$(grep_has "before the first coaching question" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "before the first coaching question" "$P0_REF")" \
   "req-006: discovery.md written before the first coaching question"
 
 # ── AC-2: shared header content specified ────────────────────────────────────
@@ -50,9 +56,9 @@ assert_equals "yes" "$(grep_has "before the first coaching question" "$ORCHESTRA
 echo ""
 echo "=== req-006: shared header ==="
 
-assert_equals "yes" "$(grep_has "Shared header (all four modes)" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "Shared header (all four modes)" "$AM_REF")" \
   "req-006: shared header defined in orchestrator"
-HEADER_LINE=$(grep "Shared header (all four modes)" "$ORCHESTRATOR")
+HEADER_LINE=$(grep "Shared header (all four modes)" "$AM_REF")
 assert_contains "adoption-mode detection result" "$HEADER_LINE" \
   "req-006: header includes adoption-mode signal"
 assert_contains "git pre-flight" "$HEADER_LINE" \
@@ -65,9 +71,9 @@ assert_contains "skills-inbox scan" "$HEADER_LINE" \
 echo ""
 echo "=== req-006: lifecycle ==="
 
-assert_equals "yes" "$(grep_has "fresh every pipeline run" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "fresh every pipeline run" "$AM_REF")" \
   "req-006: fresh-each-run lifecycle documented"
-LIFECYCLE_LINE=$(grep "fresh every pipeline run" "$ORCHESTRATOR")
+LIFECYCLE_LINE=$(grep "fresh every pipeline run" "$AM_REF")
 assert_contains "archived" "$LIFECYCLE_LINE" \
   "req-006: archived-at-P7 documented"
 
@@ -76,9 +82,9 @@ assert_contains "archived" "$LIFECYCLE_LINE" \
 echo ""
 echo "=== req-006: partial failure ==="
 
-assert_equals "yes" "$(grep_has "could not be determined" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "could not be determined" "$AM_REF")" \
   "req-006: partial failure states section could not be determined"
-assert_equals "yes" "$(grep_has "never a hard block" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "never a hard block" "$AM_REF")" \
   "req-006: partial failure never hard-blocks coaching"
 
 # ── AC-5: resume trusts existing file; missing/incomplete regenerated ────────
@@ -86,9 +92,9 @@ assert_equals "yes" "$(grep_has "never a hard block" "$ORCHESTRATOR")" \
 echo ""
 echo "=== req-006: cross-session ==="
 
-assert_equals "yes" "$(grep_has "trusted as-is" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "trusted as-is" "$AM_REF")" \
   "req-006: resume trusts existing discovery.md"
-assert_equals "yes" "$(grep_has "regenerate it fresh" "$ORCHESTRATOR")" \
+assert_equals "yes" "$(grep_has "regenerate it fresh" "$AM_REF")" \
   "req-006: missing/incomplete discovery.md regenerated, not patched"
 RESUME_SECTION=$(sed -n '/## Resume Detection/,/^---$/p' "$ORCHESTRATOR")
 assert_contains "discovery.md" "$RESUME_SECTION" \

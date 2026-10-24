@@ -172,12 +172,12 @@ function Copy-PlanifestSkills {
 
             # Rewrite relative paths to match bundled directory structure
             $skillMdPath = Join-Path $destDir "SKILL.md"
-            $skillContent = Get-Content -Path $skillMdPath -Raw
+            $skillContent = Get-Content -Path $skillMdPath -Raw -Encoding UTF8
             $skillContent = $skillContent -replace '\.\./templates/', './assets/templates/'
             $skillContent = $skillContent -replace '\.\./standards/reference/', './references/reference/'
             $skillContent = $skillContent -replace '\.\./standards/', './references/'
             $skillContent = $skillContent -replace '\.\./schemas/', './assets/schemas/'
-            Set-Content -Path $skillMdPath -Value $skillContent -NoNewline -Encoding UTF8
+            [System.IO.File]::WriteAllText($skillMdPath, $skillContent, (New-Object System.Text.UTF8Encoding $false))
 
             Write-Host "  + $skillName/SKILL.md"
             
@@ -185,6 +185,20 @@ function Copy-PlanifestSkills {
                 $srcOptDir = Join-Path $srcDir $optDir
                 if (Test-Path $srcOptDir) {
                     Copy-Item -Path $srcOptDir -Destination $destDir -Recurse -Force
+                }
+            }
+
+            # The skill's own references/*.md link to ../standards/. Bundled standards
+            # land beside them, so rewrite those links. Bundled standards stay untouched.
+            $srcRefsDir = Join-Path $srcDir "references"
+            if (Test-Path $srcRefsDir) {
+                Get-ChildItem -Path $srcRefsDir -Recurse -File -Filter '*.md' | ForEach-Object {
+                    $relPath = $_.FullName.Substring($srcRefsDir.Length).TrimStart('\', '/')
+                    $destRef = Join-Path (Join-Path $destDir "references") $relPath
+                    $refContent = Get-Content -Path $destRef -Raw -Encoding UTF8
+                    $refContent = $refContent -replace '\.\./standards/reference/', './reference/'
+                    $refContent = $refContent -replace '\.\./standards/', './'
+                    [System.IO.File]::WriteAllText($destRef, $refContent, (New-Object System.Text.UTF8Encoding $false))
                 }
             }
 

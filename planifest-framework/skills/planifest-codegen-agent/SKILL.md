@@ -118,6 +118,8 @@ for each requirement in plan/current/requirements/:
       wait for human direction before continuing
 ```
 
+Full-suite runs in the loop use `bash planifest-framework/tests/run-tests.sh --quiet`. If a suite fails, rerun only the failing suite in full with `bash {suite}`.
+
 In `interactive` and `continuous`, the escalation above and the `TDD LOOP BLOCKED` format below apply. In `autonomous`, the third failed attempt on one requirement starts a new approach per `standards/autonomous-run-standards.md` (Changing approach). After 3 approaches, the requirement becomes an exception-list item. Move on to requirements that don't depend on it.
 
 **Sub-agent model tier:** Sub-agents declare `recommended_model: haiku` in their frontmatter. Invoke them at the cheaper model tier when the tool supports per-invocation model override. You (the codegen-agent) retain the full model for orchestration, synthesis, and cross-requirement coherence.

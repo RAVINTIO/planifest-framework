@@ -32,7 +32,7 @@ Canonical home for model tier selection and parallelism/dispatch mechanics, shar
 
 | Tool | Primary tier | Cheaper tier |
 |------|-------------|-------------|
-| Claude Code | claude-sonnet-4-6 (or latest Sonnet) | claude-haiku-4-5 (or latest Haiku) |
+| Claude Code | sonnet | haiku |
 | Cursor | gpt-4o | gpt-4o-mini |
 | Codex (OpenAI) | o1 | o1-mini |
 | GitHub Copilot | gpt-4o | gpt-4o-mini |
@@ -118,13 +118,15 @@ A join is a point where streams or batches meet again (0000033 ADR-014). Each on
 
 Agent spawning is level-2 parallelism (the Agent tool for independent sub-tasks that each need their own tool access and context); level-1 (multiple native tool calls in one message) is covered by Parallelism Rules above. Spawn when a task is self-contained enough to brief to a colleague in one paragraph; stay inline when it needs ongoing dialogue, shared mutable state, or is too small to justify the overhead.
 
+**Size floor:** dispatch a subagent only when the unit needs its own reads or many tool calls. Run small independent units as parallel tool calls in the main thread. These roles are exempt whatever the unit size: design critic, security review, cross-model review, reversal assessor, test-writer, implementer, refactor, verify-by-execution, and Scope Lock drafts. The floor never removes a maker-checker split or a TDD step. A role that needs a fresh context runs in a subagent. The dispatch standard owns the list of exempt roles.
+
 **Concrete parallel dispatch skeleton** (send both `Agent()` calls in a single message so they execute concurrently):
 
 ```
-Agent({ description: "Implement REQ-001: {one-liner}", subagent_type: "general-purpose", model: "claude-haiku-4-5",
+Agent({ description: "Implement REQ-001: {one-liner}", subagent_type: "general-purpose", model: "haiku",
   prompt: "Requirement: plan/current/requirements/req-001-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-1}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed. Also report Declares (artifact ID, defining file, consumer, for each artifact made for another unit) and Consumes (each artifact ID from another unit that you used). Make every file change through Write or Edit, never through the shell (the Write-or-Edit rule, boot Hard Limit 8). Never write `plan/.run-mode`, the build-log `Run mode` row, or a `Run mode confirmed:` line. Never write the P1 Toggle record. Only the orchestrator writes them." })
 
-Agent({ description: "Implement REQ-002: {one-liner}", subagent_type: "general-purpose", model: "claude-haiku-4-5",
+Agent({ description: "Implement REQ-002: {one-liner}", subagent_type: "general-purpose", model: "haiku",
   prompt: "Requirement: plan/current/requirements/req-002-{slug}.md. ADR: plan/current/adr/ADR-00N-{slug}.md. Stack: {constraint}. Task: {what to build}. If you discover an out-of-scope bug/gap, file it at plan/backlog/{backlog-id-2}-{slug}/entry.md per templates/backlog-entry.template.md; do not report it back for me to relay. Confirm: files modified, what changed. Also report Declares (artifact ID, defining file, consumer, for each artifact made for another unit) and Consumes (each artifact ID from another unit that you used). Make every file change through Write or Edit, never through the shell (the Write-or-Edit rule, boot Hard Limit 8). Never write `plan/.run-mode`, the build-log `Run mode` row, or a `Run mode confirmed:` line. Never write the P1 Toggle record. Only the orchestrator writes them." })
 ```
 

@@ -108,7 +108,7 @@ The orchestrator consults the **Model Tier Decision Table** before spawning ever
 
 | Tool | Primary | Cheaper |
 |------|---------|---------|
-| Claude Code | claude-sonnet-4-6 | claude-haiku-4-5 |
+| Claude Code | sonnet | haiku |
 | Cursor | gpt-4o | gpt-4o-mini |
 | Codex | o1 | o1-mini |
 | GitHub Copilot | gpt-4o | gpt-4o-mini |

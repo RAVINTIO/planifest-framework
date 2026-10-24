@@ -14,7 +14,7 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 FW="$SCRIPT_DIR/.."
 POLICY="$FW/standards/p0-question-policy.md"
-ORCH="$FW/skills/planifest-orchestrator/SKILL.md"
+ORCH="$FW/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md"
 BUILD_LOG="$FW/templates/build-log.template.md"
 ASSESS="$FW/skills/planifest-build-assessment-agent/SKILL.md"
 
@@ -30,6 +30,8 @@ has() {
 
 POLICY_TEXT="$(cat "$POLICY" 2>/dev/null || true)"
 ORCH_TEXT="$(cat "$ORCH")"
+# Absence checks read SKILL.md and the reference file together.
+ORCH_ALL_TEXT="$(cat "$FW/skills/planifest-orchestrator/SKILL.md" "$ORCH")"
 COACH=$(sed -n '/^### How you coach/,/^### Decomposition/p' "$ORCH")
 STEP3A=$(sed -n '/^3a\. \*\*Detect adoption mode/,/^3b\. /p' "$ORCH")
 END_P0=$(sed -n '/^### What you produce at the end of Phase 0/,/^### Scope Lock Challenge/p' "$ORCH")
@@ -72,7 +74,7 @@ echo ""
 echo "=== req-008: orchestrator version text ==="
 
 has "is lower than the last known version" "$ORCH_TEXT" "req-008: Hard block message stays"
-lacks "Present the last known version and the suggested bump to the human" "$ORCH_TEXT" \
+lacks "Present the last known version and the suggested bump to the human" "$ORCH_ALL_TEXT" \
   "req-008: separate version prompt removed"
 
 echo ""
