@@ -15,7 +15,7 @@ version: "0.1.0"
 
 A setup-delivered file reaches a downstream project only when setup runs again. This feature changes skills, a standard, the boot template, and the override instructions. It also adds files to the orchestrator `references/` folder. Without a re-run, an installed orchestrator would keep the old `SKILL.md` and could never load the new reference files, or would load pointers to files that do not exist.
 
-Earlier releases set the pattern: `migrate-0.34.0-rerun-setup.md` and `migrate-0.35.0-rerun-setup.md`. 0000037 ADR-010 checks the list against the branch diff in both directions. The list must therefore be exact.
+Earlier releases set the pattern: `migrate-0.34.0-rerun-setup.md` and `migrate-0.35.0-rerun-setup.md`. The migration diff check that feature 0000037 added compares the list against the branch diff in both directions. The list must therefore be exact.
 
 ## Decision
 
@@ -25,7 +25,7 @@ Earlier releases set the pattern: `migrate-0.34.0-rerun-setup.md` and `migrate-0
    - `skills/planifest-refactor/SKILL.md`, `skills/planifest-validate-agent/SKILL.md`, and `skills/planifest-codegen-agent/SKILL.md` (quiet mode)
    - `skills/planifest-ship-agent/SKILL.md` (model value)
    - `standards/agent-dispatch-standards.md` (model values and the size floor)
-   - `pipeline-reference.md`, if setup delivers it. The P6 recheck settles that.
+   - Not `pipeline-reference.md`. `setup.sh` does not deliver it, and the P6 recheck confirms that.
    - `templates/standard-boot.md` (partial reads)
    - `planifest-overrides/instructions/custom-002-prefer-subagent-decomposition.md`, delivered into the generated boot file
 3. The migration says a re-run also refreshes the generated boot file, so the new custom-002 text and the partial-read directive reach `CLAUDE.md` or its equivalent.
@@ -72,7 +72,7 @@ Decision (P2): the migration names the two new reference files explicitly / reas
 - ADR-002 - depends-on (new reference files)
 - ADR-003 - depends-on (installed standard copies)
 - ADR-006 - depends-on (boot copy of custom-002)
-- 0000037 ADR-010 - depends-on (the two-way diff check)
+- The migration diff check that feature 0000037 added - depends-on (the two-way diff check)
 
 ## Supersedes
 
