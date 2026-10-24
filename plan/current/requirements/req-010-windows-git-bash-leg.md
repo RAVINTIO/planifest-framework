@@ -35,13 +35,14 @@ As a framework maintainer, I see the suite run on Windows under Git Bash, so tha
   - The codegen agent decides each case. In `autonomous`, it logs `Decision (P3): git bash suite {name}: fix|skip / reason: {one line}` under the decision rule in `planifest-framework/standards/autonomous-run-standards.md`. Otherwise the human on the loop decides, and the agent presents all failing suites in one batch with a proposed outcome for each.
   - If more than 10 suites fail on the first run, P3 fixes the suites in parallel streams by file ownership. It skips any suite whose fix needs more than one portable change, and it files one backlog entry per skipped suite family. The leg must end green before P4.
 - A skip never hides a failure on the Ubuntu or macOS legs. The guard tests the platform (`uname -s` reports `MINGW*`, `MSYS*`, or `CYGWIN*`).
-- A new test, `planifest-framework/tests/test-0000037-req-010-windows-git-bash-leg.sh`, checks the workflow text with the same `job_block` approach as `test-0000031-req-001-003-ci-jobs.sh`. The existing 0000031 test keeps passing, because the `os:` line still names `ubuntu-latest` and `macos-latest`.
+- A new test, `planifest-framework/tests/test-0000037-req-010-windows-git-bash-leg.sh`, checks the workflow text with the same `job_block` approach as `test-0000031-req-001-003-ci-jobs.sh`. The existing 0000031 test keeps passing, because the `os:` line still names `ubuntu-latest` and `macos-latest`. In the 20-minute branch of ADR-014, `test-suite` uses the expression `${{ matrix.os == 'windows-latest' && 20 || 10 }}`, and P3 updates the `timeout-minutes` assertion in `test-0000031-req-001-003-ci-jobs.sh` to accept it.
 - `docs/architecture-overview.md` lists the new leg in the CI table and drops the statement that Git Bash has no coverage. `src/setup-hook-integration/docs/quirks.md` Q-005 records the outcome for `mktemp` paths on the Windows leg.
 
 ## Acceptance Criteria
 
 - [ ] The `test-suite` matrix holds `windows-latest` with `shell: bash`, keeps `permissions: contents: read`, `timeout-minutes: 10`, `fail-fast: false`, and the `pull_request` trigger, and the consumer workflow has no diff. (Verified by: static workflow-text test, `test-0000037-req-010-windows-git-bash-leg.sh`)
   - Amended (P1): `timeout-minutes: 10` holds for every leg unless the P3 measurement shows the Git Bash leg passes 10 minutes. In that case an ADR amends 0000031 ADR 003 and the test expects 20 for the `windows-latest` leg only.
+  - Amended (P2): in the 20 branch, the test expects the expression `${{ matrix.os == 'windows-latest' && 20 || 10 }}`, and the 0000031 suite accepts it (ADR-014).
   - Verified by: integration - shell suite over the workflow text, `test-0000037-req-010-windows-git-bash-leg.sh`
 - [ ] The `Test suite (windows-latest)` check passes on the feature PR. (Verified by: CI run on the PR, read through `gh pr checks`)
   - Amended (P1): the check is green on the draft PR's CI run for the P4 head commit, before P4 starts. P9 Step 10 reuses that PR and marks it ready.

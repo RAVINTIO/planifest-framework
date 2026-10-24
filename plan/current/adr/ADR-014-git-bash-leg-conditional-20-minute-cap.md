@@ -22,7 +22,8 @@ P2 writes this decision now so P3 needs no return to P2. This is a conditional d
 ## Decision
 
 1. P3 measures the Git Bash leg's run time on the first draft-PR CI run that holds the `windows-latest` leg. P3 also reads the macOS leg's time.
-2. If the Git Bash leg passes 10 minutes, P3 raises that leg's `timeout-minutes` to 20. This amends 0000031 ADR 003 for that leg only.
+2. If the Git Bash leg passes 10 minutes, P3 raises that leg's `timeout-minutes` to 20. This amends 0000031 ADR 003 for that leg only. `test-suite` sets one `timeout-minutes` for the whole job, so the 20 branch uses the expression `timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}`. In the same P3 change, the line 45 assertion in `test-0000031-req-001-003-ci-jobs.sh` (`timeout-minutes:\s*10$`) accepts that exact expression for `test-suite` as well as the plain `10`.
+2a. In the 20 branch, the P3, P4, and P9 poll window grows to 30 minutes, the longest job cap plus 10. In the 10 branch it stays at 20 minutes. So a leg that runs to its cap still reads before the poll ends.
 3. The ubuntu leg, the macOS leg, `setup-powershell`, and `setup-powershell-51` keep `timeout-minutes: 10`. Every other part of 0000031 ADR 003 holds, including `permissions: contents: read`, no secrets, and the `pull_request` trigger.
 4. If the leg does not pass 10 minutes, this ADR does not apply. Every job keeps 10, and 0000031 ADR 003 stands unamended.
 5. P3 records which branch applied. It writes one build-log line, `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}`. When the cap is 20, the static test `test-0000037-req-010-windows-git-bash-leg.sh` expects 20 for the `windows-latest` leg only.

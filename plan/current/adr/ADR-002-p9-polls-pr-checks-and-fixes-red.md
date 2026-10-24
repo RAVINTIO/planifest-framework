@@ -26,7 +26,7 @@ Four constraints shape the fix:
 
 P9 gains Step 10c, after Step 10b and before Step 11.
 
-- **Polling.** Step 10c runs `gh pr checks {n} --json name,bucket,link` every 30 seconds for at most 20 minutes. It ends when the list is non-empty and nothing is pending. It rereads once after 30 seconds to catch a late job.
+- **Polling.** Step 10c runs `gh pr checks {n} --json name,bucket,link` every 30 seconds for at most 20 minutes, or 30 minutes when ADR-014's 20-minute branch applies. It ends when the list is non-empty and nothing is pending. It rereads once after 30 seconds to catch a late job.
 - **Judging.** The agent judges from the JSON and never from the exit status. A non-zero exit with valid JSON is data.
 - **Buckets.** `pass` is a pass. `fail` is red. `pending` is pending. `skipping` is skipped. `cancel`, a timed-out check, an empty list, and any other value read as unknown. Unknown never counts as a pass.
 - **Fix loop.** In `autonomous` only, a red check starts up to 3 fix attempts on the feature branch. Each attempt commits under the credential scan (ADR-003) and pushes without force. After the third failure, the agent writes `Exception waiting (P9, 6)` and runs `gh pr ready --undo {n}`. In `interactive` and `continuous`, a red check goes to the human on the loop in the Step 11 message.

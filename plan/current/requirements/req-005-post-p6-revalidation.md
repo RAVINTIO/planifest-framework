@@ -40,7 +40,7 @@ As the human on the loop, I see the P4 checks rerun after the P6 docs edits, so 
 - In `interactive` and `continuous`, a failure follows the existing rule. The docs agent fixes the P6 edit, never the check, and loops up to 5 cycles. After the cap it escalates in the `VALIDATION BLOCKED` format.
 - In `autonomous`, the revalidation runs as a loop under `planifest-loop-runner` with a cap of 3 cycles. This matches the other P1 to P6 loops in `standards/autonomous-run-standards.md` (Gates as loops).
   - When the cap runs out, the agent starts a new approach under `## Changing approach`. Each approach states how it differs from the last.
-  - After 3 approaches, the failure becomes an exception-list item: `Exception waiting (P6, revalidation): {failing check and what the human on the loop must do}`. The run carries on with work that doesn't depend on the failing check, and the final report lists the item.
+  - After 3 approaches, the failure becomes an exception-list item: `Exception waiting (P6, 6): revalidation {failing check and what the human on the loop must do}`. Item 6 is the exhausted-budget item. The run carries on with work that doesn't depend on the failing check, and the final report lists the item.
 - If the failure doesn't trace to a P6 edit, the agent records it and escalates, as today. It doesn't change code under `src/` outside `docs/`.
 
 ### Named in the routing surfaces
@@ -51,6 +51,7 @@ As the human on the loop, I see the P4 checks rerun after the P6 docs edits, so 
 ## Acceptance Criteria
 - [ ] After the P6 commit, the docs agent runs the command in `planifest-overrides/doc-checks.yml`, or P4 steps 0 to 5 when no valid command exists. It then writes `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}`. Verified by: integration (a fixture repo with and without the override file).
 - [ ] If revalidation fails in `autonomous`, the docs agent loops with a cap of 3 and up to 3 approaches, then files `Exception waiting (P6, revalidation)`. Outside `autonomous` it keeps the 5-cycle cap and the `VALIDATION BLOCKED` escalation. Verified by: unit (a test that reads the docs-agent and standards text for both caps).
+  - Amended (P2): the exception line reads `Exception waiting (P6, 6): revalidation {failing check}`, so it keeps the `(P{N}, {item})` format (ADR-006).
 - [ ] The orchestrator's P6 gate condition and the autonomous standard's P6 pass condition both name a passing revalidation. Verified by: unit (a text test over both files).
 
 ## Split step: keep

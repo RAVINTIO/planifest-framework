@@ -182,3 +182,8 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 - Decision (P2): each ADR carries a `## Governs` or "Requirements governed" section listing requirement IDs / reason: the template has no field for them.
 - Decision (P2): ADR-014 records the 20-minute Git Bash cap as a conditional decision, and P3 logs `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}` / reason: P3 needs no return to P2.
 - Decision (P2): the run-level draft PR ("CI before P4") gets no ADR / reason: it changes no shipped framework text, and `design.md` records it.
+- Design critic P2 iteration 1: REJECT (0 critical, 1 major, 3 minor). Mechanical check clean.
+- Decision (P2): the 20-minute branch uses `timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}`, and P3 updates the 0000031 suite's assertion to accept it / reason: `test-suite` sets one cap for the whole job (critic major).
+- Deviation (P2, unclassified): the P9 poll window becomes the longest job cap plus 10 minutes, so 30 minutes in ADR-014's 20 branch. The design's 20-minute NFR holds in the 10 branch / reason: a leg that runs to a 20-minute cap would otherwise read as pending.
+- Decision (P2): the revalidation exception line reads `Exception waiting (P6, 6)` / reason: it keeps the `(P{N}, {item})` format.
+- Decision (P2): the P3 type check tells types apart by what the mapped test does, and defers `execution` and `manual` to P4 / reason: P4 step 1 matches IDs only, so the type needs its own method.

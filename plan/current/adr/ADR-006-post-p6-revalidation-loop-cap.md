@@ -29,7 +29,7 @@ A docs edit can break a green check. The human on the loop needs to see that bef
 - **Timing:** The docs agent runs revalidation after the P6 commit and before it reports P6 complete. A rerun that happens before the commit doesn't satisfy this.
 - **Command:** The docs agent runs the `command` from `planifest-overrides/doc-checks.yml` when it is valid. Otherwise it reruns P4 steps 0 to 5. Step 6 doesn't rerun.
 - **Log line:** The docs agent writes one line in the P6 block: `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}`. A failure adds the failing check and its cycle count.
-- **Cap in `autonomous`:** The revalidation runs as a loop under `planifest-loop-runner` with a cap of 3 cycles. When the cap runs out, the agent starts a new approach under `## Changing approach`. After 3 approaches, the failure becomes `Exception waiting (P6, revalidation): ...`.
+- **Cap in `autonomous`:** The revalidation runs as a loop under `planifest-loop-runner` with a cap of 3 cycles. When the cap runs out, the agent starts a new approach under `## Changing approach`. After 3 approaches, the failure becomes `Exception waiting (P6, 6): revalidation {failing check} ...`. Item 6 is the exhausted-budget item, and the line keeps the `(P{N}, {item})` format.
 - **Cap elsewhere:** `interactive` and `continuous` keep the 5-cycle cap and the `VALIDATION BLOCKED` escalation.
 - **Routing surfaces:** The orchestrator's P6 gate condition and the P6 row of the Gates as loops table both name a passing revalidation.
 - **Scope:** This ADR changes no other behaviour of the 0000033 section. The framework still never creates `doc-checks.yml`.
