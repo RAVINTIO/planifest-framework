@@ -2,12 +2,12 @@
 stream-id: "stream-01-ship-and-sync"
 kind: stream
 start-commit: "c8b1036"
-status: active
+status: at-join
 phase: P3
 requirements: [req-001, req-002, req-003, req-004]
 stories: [US-001, US-002, US-003, US-004]
 id-blocks: "req-001 to req-004, ADR-001 to ADR-005, backlog 0000193 to 0000195"
-updated: "2026-10-24T00:15:11Z"
+updated: "2026-10-24T02:36:34Z"
 ---
 # Stream State: stream-01-ship-and-sync
 
@@ -17,15 +17,20 @@ updated: "2026-10-24T00:15:11Z"
 |-------|-------|-----|-----------|--------|
 | P1 | 2026-10-23T23:47:43Z | 2026-10-24T00:32:32Z | 1 | at-join |
 | P2 | 2026-10-24T00:33:53Z | 2026-10-24T00:44:23Z | 1 | at-join |
-| P3 | 2026-10-24T00:44:58Z | pending | 1 | pending |
+| P3 | 2026-10-24T00:44:58Z | 2026-10-24T02:36:34Z | 1 | at-join |
 
 ## Files changed
 
-- `plan/current/requirements/req-001-p9-ci-check.md`
-- `plan/current/requirements/req-002-gutd-ci-check.md`
-- `plan/current/requirements/req-003-pre-commit-credential-scan.md`
-- `plan/current/requirements/req-004-pr-body-scan.md`
+- `plan/current/requirements/req-001-p9-ci-check.md` to `req-004-pr-body-scan.md`
+- `plan/current/adr/ADR-001` to `ADR-005`
 - `plan/backlog/0000193-final-report-push-leaves-last-head-unchecked/entry.md`
+- `planifest-framework/scripts/credential-scan.mjs`
+- `planifest-framework/skills/planifest-ship-agent/SKILL.md`
+- `planifest-framework/skills/planifest-orchestrator/SKILL.md`
+- `planifest-framework/standards/autonomous-run-standards.md`
+- `planifest-overrides/instructions/custom-003-git-up-to-date-shorthand.md`
+- `planifest-framework/tests/test-0000037-req-001` to `req-004` suites
+- `planifest-framework/tests/test-0000033-req-013-clean-close-out.sh` and its `regression/` copy
 
 ## Declares
 
@@ -38,4 +43,4 @@ updated: "2026-10-24T00:15:11Z"
 
 ## Next step
 
-P2 ADR agent writes the stream's ADRs from ADR-001 to ADR-005, after the P1 join and design-critic gate.
+P4 validate runs once over the joined streams.

@@ -202,14 +202,14 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T00:44:58Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T02:36:34Z` |
+| Wall-clock | `111` |
 | Streams | `4` |
 | Model tier | primary |
 | Skills loaded | planifest-codegen-agent, planifest-test-writer, planifest-implementer, planifest-refactor |
-| Agents spawned | `pending` |
+| Agents spawned | `11` (W1, W2, W3, W4, W2b, W4b, W5a to W5d, W6) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` |
 | Notes | Capability skills: none apply to Bash, PowerShell, Node, and GitHub Actions. Baseline suite run started before any change. |
 
 - Decision (P3): each stream agent runs the test-writer, implementer, and refactor steps inline for each requirement, recording the RED and GREEN exit codes / reason: a dispatched subagent can't dispatch its own subagents.
@@ -259,6 +259,9 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - CI checks (P3, PR #64, head `a8c8f47`): every check passes except Windows shard 2, which hit its 20-minute cap with 0 failures. Shards 1, 3, and 4 took 4 to 5 minutes. Four setup-heavy suites, at positions 18, 26, 30, and 38, all fall in shard 2 of 4. `test-0000030-req-004` alone takes about 600 seconds.
 - Deviation (P3, unclassified): the Windows leg moves from four shards to seven, which places those four suites in four different shards. CI jobs per PR rise from 10 to 13.
 - Backlog filed (P3): 0000213 (duration-weighted Windows shards).
+- CI checks (P3, PR #64, head `5d43543`): all 13 checks pass. The seven Windows shards take 2 to 13 minutes, so no shard comes within 7 minutes of its 20-minute cap.
+- Gate summary (P3): 11 requirements built, each with RED and GREEN recorded. Join reconciled clean. Consistency check clean. The P4 CI run that follows is the P3 checker (autonomous standard, Gates as loops), and the draft PR run at `5d43543` already passes.
+Progress: P3 done at 2026-10-24T02:36:34Z: 11 requirements built, local suite and all 13 CI checks green
 - Rule near-breach (P3): W5c tried a `python3` heredoc edit, against the Write-or-Edit rule (boot Hard Limit 8). The permission check blocked it, and W5c made the change through Edit.
 - Full local suite (macOS) after batch 3: 108 of 108 feature suites and 33 of 33 regression suites pass.
 Requirement-ID scan (P3): 11 requirements, 0 unmapped
