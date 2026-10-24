@@ -467,6 +467,13 @@ Progress: P8 done at 2026-10-24T11:21:54Z: build report filed, clean tree
 | MCP calls | `0` |
 | Parallel task batches | `0` |
 | Notes | Run mode from `run-mode.mjs` on the archived build log: autonomous. |
+
+- Marker step (P9): scan-then-commit over 5 candidates (build log, build report, three markers), scan exit 0, committed as `31b6ae9`. No marker stays tracked.
+- Tag (P9): `v0.35.0` from `product-version.mjs` (exit 0), created locally at `31b6ae9`, above `v0.34.0`.
+- Branch check (P9): `feat/0000037-green-ci-before-ship`. No `local-git-only` text in any override, so Step 10 takes Option [1].
+- Credential scan (P9): PR text clean (regex only, gitleaks not found).
+PR: #64 https://github.com/planifest/planifest-framework/pull/64
+- Step 10 (P9): PR #64 was `OPEN`, so Step 10 updated its title and body with `gh pr edit`. It stays draft, because three `Exception waiting` lines exist.
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
