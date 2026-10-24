@@ -156,7 +156,7 @@ git add plan/current/ plan/_archive/ plan/changelog/ docs/about.md
 if [ -f product.yml ]; then git add product.yml; fi
 git --literal-pathspecs diff --cached --name-only --no-renames -z
 node planifest-framework/scripts/credential-scan.mjs --safe-paths "{out-file}" -- {candidate} ...
-git --literal-pathspecs commit -m "plan(p7): archive plan/current" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
+[ -s "{out-file}" ] && git --literal-pathspecs commit -m "plan(p7): archive plan/current" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
 ```
 
 In `autonomous`, this commit follows scan-then-commit, defined in `planifest-framework/standards/autonomous-run-standards.md` under `## Pre-commit credential scan`. The `git add` lines are the stage step. The `git diff --cached --name-only --no-renames -z` line builds the candidate list. Pass each listed path as a `{candidate}` argument. The `--no-renames` flag lists both the old and the new path of each moved file. Git reads each line of the safe list as a pathspec, so a glob in a name could match a held-back tracked file. The `git --literal-pathspecs` prefix prevents that.
@@ -216,7 +216,7 @@ Refused files stay uncommitted. A refused file stays uncommitted. The guard unst
 - **`autonomous`:** Apply the credential guard above. Then commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). The leftover paths are the candidate list. Run the same scan with `--safe-paths "{out-file}"` before the `--`, so the script also writes the safe list. Stage and commit the safe list with the feature ID in the body. If the out-file is empty, skip both commands:
   ```bash
   git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul
-  git --literal-pathspecs commit -m "plan(p8): commit close-out leftovers" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
+  [ -s "{out-file}" ] && git --literal-pathspecs commit -m "plan(p8): commit close-out leftovers" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
   ```
   The `git --literal-pathspecs` prefix stops a glob in a safe name from matching a held-back tracked file. Create the out-file fresh in a `mktemp -d` folder outside the repository. Treat any scan exit other than `0` or `1` as exit `2` and commit nothing. Remove the folder after the commit or the skip.
   The next two lines are the message reference and the old path-list form. Don't run them in `autonomous`, because `-- {path}` commits working-tree content and can carry a held-back file:
@@ -267,7 +267,7 @@ Run `node planifest-framework/scripts/credential-scan.mjs --safe-paths "{out-fil
 rm -f plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 git rm --cached --ignore-unmatch -q plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 # interactive and continuous reference, not for autonomous: git diff --cached --quiet -- "{archive-dir}" plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode || git commit -m "plan(p9): clear session markers" -m "{feature-id}" -- "{archive-dir}" $(git ls-tree --name-only HEAD -- plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode)
-git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "plan(p9): clear session markers" -m "{feature-id}"
+[ -s "{out-file}" ] && git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "plan(p9): clear session markers" -m "{feature-id}"
 git ls-files plan/.orchestrator-active plan/.orchestrator-ack plan/.run-mode
 ```
 
@@ -403,7 +403,7 @@ Leave out nothing. Treat every line as a leftover. This catches the Step 10 chan
 - **`autonomous`:** Apply the P8 credential guard first, which runs `node planifest-framework/scripts/credential-scan.mjs -- {path} ...`. Then commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). The leftover paths are the candidate list. Run the same scan with `--safe-paths "{out-file}"` before the `--`, so the script also writes the safe list. Stage and commit the safe list with the feature ID in the body. If the out-file is empty, skip both commands. If Step 10 pushed the branch, push this commit too.
   ```bash
   git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul
-  git --literal-pathspecs commit -m "plan(p9): commit close-out leftovers" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
+  [ -s "{out-file}" ] && git --literal-pathspecs commit -m "plan(p9): commit close-out leftovers" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
   ```
   The `git --literal-pathspecs` prefix stops a glob in a safe name from matching a held-back tracked file. Create the out-file fresh in a `mktemp -d` folder outside the repository. Treat any scan exit other than `0` or `1` as exit `2` and commit nothing. Remove the folder after the commit or the skip.
   The next two lines are the message reference and the old path-list form. Don't run them in `autonomous`, because `-- {path}` commits working-tree content and can carry a held-back file:
@@ -452,7 +452,7 @@ Names and links come from `gh` fields only. Never paste raw check output or log 
 
 **Red check:**
 
-- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause. Then build the candidate list. It holds every path from `git diff --name-only -z` and every new file from `git ls-files --others --exclude-standard -z`, `src/` and workflow files included. Commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Run the credential scan, `node planifest-framework/scripts/credential-scan.mjs -- {candidate} ...`, with `--safe-paths "{out-file}"` placed before the `--`. On exit `1`, log the held-back rule lines, and leave a tracked held-back file out of the commit. On exit `2`, run no commit and stop under exception item 7 with the held-back rule. If the out-file is empty, skip the commit. Otherwise run `git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul`. Commit with `git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "fix(p9): repair failing CI check" -m "{feature-id}"`. The prefix stops a glob in a safe name from matching a held-back tracked file. Create the out-file fresh in a `mktemp -d` folder outside the repository, treat any scan exit other than `0` or `1` as exit `2`, and remove the folder after the commit or the skip. Push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
+- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause. Then build the candidate list. It holds every path from `git diff --name-only -z` and every new file from `git ls-files --others --exclude-standard -z`, `src/` and workflow files included. Commit with scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`). Run the credential scan, `node planifest-framework/scripts/credential-scan.mjs -- {candidate} ...`, with `--safe-paths "{out-file}"` placed before the `--`. On exit `1`, log the held-back rule lines, and leave a tracked held-back file out of the commit. On exit `2`, run no commit and stop under exception item 7 with the held-back rule. If the out-file is empty, skip the commit. Otherwise run `git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul`. Commit with `[ -s "{out-file}" ] && git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "fix(p9): repair failing CI check" -m "{feature-id}"`. The prefix stops a glob in a safe name from matching a held-back tracked file. Create the out-file fresh in a `mktemp -d` folder outside the repository, treat any scan exit other than `0` or `1` as exit `2`, and remove the folder after the commit or the skip. Push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
 - **`interactive` and `continuous`:** Put the red check in the Step 11 message with a question about fixing it. Push no fix without that answer.
 
 **Progress line:** Any result other than all passed (red, pending, unknown, or unreadable) writes `Progress: P9 blocked at {End}: CI {result}`. The step never writes `P9 done` for it.
@@ -463,7 +463,7 @@ In `autonomous`, commit with scan-then-commit (`planifest-framework/standards/au
 
 ```bash
 git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul
-git --literal-pathspecs commit -m "plan(p9): record CI result" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
+[ -s "{out-file}" ] && git --literal-pathspecs commit -m "plan(p9): record CI result" -m "{feature-id}" --pathspec-from-file="{out-file}" --pathspec-file-nul
 ```
 
 Create the out-file fresh in a `mktemp -d` folder outside the repository. Treat any scan exit other than `0` or `1` as exit `2` and commit nothing. Remove the folder after the commit or the skip.
@@ -491,7 +491,7 @@ In `autonomous`, commit the final report with scan-then-commit (`planifest-frame
 
 ```bash
 git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul
-git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "plan(p9): add final report" -m "{feature-id}"
+[ -s "{out-file}" ] && git --literal-pathspecs commit --pathspec-from-file="{out-file}" --pathspec-file-nul -m "plan(p9): add final report" -m "{feature-id}"
 ```
 
 Create the out-file fresh in a `mktemp -d` folder outside the repository. Treat any scan exit other than `0` or `1` as exit `2` and commit nothing. Remove the folder after the commit or the skip.

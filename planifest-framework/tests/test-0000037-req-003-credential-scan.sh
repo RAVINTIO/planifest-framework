@@ -492,4 +492,18 @@ CLEAN="$(cd "$R" && git status --porcelain --untracked-files=all -- plan/ docs/ 
 assert_contains "docs/leak.md" "$CLEAN" "req-003: the held-back file shows in the clean-tree check"
 assert_equals "A " "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: the held-back file stays staged"
 
+echo "req-003: an indexed name that starts with a colon scans (P5 N-16)"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): a Windows file name cannot hold a colon"
+else
+  R="$(new_repo colonlead)"
+  printf 'key %s\n' "$SECRET" >"$R/:lead.txt"
+  printf 'clean\n' >"$R/:ok.txt"
+  (cd "$R" && git --literal-pathspecs add -- ":lead.txt" ":ok.txt")
+  run_scan "$R" "$BIN" -- ":ok.txt"
+  assert_equals "1" "$RC" "req-003: a staged colon-led file with a key gives exit 1, not 2"
+  assert_contains "aws-access-key" "$OUT" "req-003: the colon-led file reports its rule"
+  lacks "$SECRET" "$OUT" "req-003: the colon-led report prints no matched value"
+fi
+
 print_summary

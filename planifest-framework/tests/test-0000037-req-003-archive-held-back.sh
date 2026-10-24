@@ -352,4 +352,12 @@ assert_equals "3" "$?" "req-003: the procedure skips the commit on an empty safe
 assert_equals "$BEFORE" "$(head_of "$R")" "req-003: an empty safe list made no commit, so git did not commit the whole index"
 assert_equals "other.txt" "$(cd "$R" && git diff --cached --name-only)" "req-003: the unrelated staged file stays staged"
 
+echo "req-003: every pathspec commit line guards an empty safe list (P5 N-15)"
+# An empty pathspec file makes git commit the whole index, so each command
+# line repeats the step 5 skip with [ -s "{out-file}" ].
+UNGUARDED="$(cat "$SHIP" "$STD" | grep -F 'git --literal-pathspecs commit' | grep -F -- '--pathspec-from-file' | grep -c -v -F '[ -s "{out-file}" ] &&')"
+assert_equals "0" "$UNGUARDED" "req-003: no pathspec commit line lacks the empty-list guard"
+GUARDED="$(cat "$SHIP" "$STD" | grep -c -F '[ -s "{out-file}" ] && git --literal-pathspecs commit')"
+assert_equals "yes" "$([ "$GUARDED" -ge 8 ] && echo yes || echo no)" "req-003: the guard sits on all eight pathspec commit lines"
+
 print_summary

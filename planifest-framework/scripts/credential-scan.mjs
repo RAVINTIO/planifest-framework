@@ -211,7 +211,8 @@ function runSafePaths(args) {
         throw new ScanError(`could not read ${safePath(given)}`);
       }
       sources.push({ path: rel, buf });
-      if (indexed.has(rel)) sources.push({ path: rel, buf: git(['-C', top, 'show', `:${rel}`]) });
+      // `:./` reads the blob by literal path, so a name that starts with `:` works.
+      if (indexed.has(rel)) sources.push({ path: rel, buf: git(['-C', top, 'show', `:./${rel}`]) });
     }
     let held = false;
     for (const src of sources) {
@@ -261,7 +262,7 @@ function collectSources(args) {
   const sources = [];
   for (const p of paths) {
     // A path outside the index is skipped. Any other read error stops the scan.
-    if (indexed.has(p)) sources.push({ path: p, buf: git(['show', `:${p}`]) });
+    if (indexed.has(p)) sources.push({ path: p, buf: git(['show', `:./${p}`]) });
     if (existsSync(p)) {
       try {
         sources.push({ path: p, buf: readFileSync(p) });
