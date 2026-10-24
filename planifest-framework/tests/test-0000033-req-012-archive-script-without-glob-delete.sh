@@ -125,6 +125,12 @@ assert_equals "old" "$(cat "$R2/plan/_archive/$ID-$DATE/design.md")" "req-012: t
 echo ""
 echo "=== req-012: resume after a forced stop half-way ==="
 
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Node finds git.exe on Windows, never the extensionless git shim, so the third git mv is never forced to fail.
+    echo "  SKIP (windows): the extensionless git shim is not found by Node on Windows, so the forced stop cannot be built"
+    ;;
+  *)
 R3="$SCRATCH/r3"
 make_repo "$R3"
 SHIM="$SCRATCH/shim"
@@ -162,6 +168,8 @@ assert_equals "" "$(ls -A "$R3/plan/current")" "req-012: plan/current/ is empty 
 for f in design.md execution-plan.md requirements/req-002.md adr/ADR-001.md build-log.md; do
   yes_if "req-012: resumed archive holds $f" test -f "$R3/plan/_archive/$ID-$DATE/$f"
 done
+    ;;
+esac
 
 echo ""
 echo "=== req-012: a conflict exits 3 and changes nothing ==="
@@ -202,6 +210,12 @@ assert_equals "$BEFORE5" "$(cd "$R5" && find plan | sort)" "req-012: invalid inp
 echo ""
 echo "=== req-012: symlinks and hostile names (security review) ==="
 
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash ln -s copies the target instead of linking it, so no symlink fixture can be built.
+    echo "  SKIP (windows): ln -s makes a copy under Git Bash, so the symlink cases cannot be built"
+    ;;
+  *)
 # Finding 1: a symlinked archive directory named in .archive-target.
 R6="$SCRATCH/r6"
 make_repo "$R6"
@@ -248,16 +262,23 @@ ln -s ../../src/planted "$R8/plan/current/.archive-target"
 run_archive "$R8" --feature-id "$ID" --date "$DATE" >/dev/null
 assert_equals "2" "$?" "req-012: a dangling symlink at .archive-target exits 2"
 yes_if "req-012: a dangling .archive-target symlink creates no file behind it" test ! -e "$R8/src/planted"
+    ;;
+esac
 
 # Finding 4: .archive-target values never reach error output.
 R9="$SCRATCH/r9"
 make_repo "$R9"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) ;;
+  *)
 echo "SECRET-TOKEN-0000" > "$SCRATCH/secret.txt"
 ln -s "$SCRATCH/secret.txt" "$R9/plan/current/.archive-target"
 OUT9=$(run_archive "$R9" --feature-id "$ID" --date "$DATE")
 assert_equals "2" "$?" "req-012: a symlinked .archive-target exits 2"
 lacks "SECRET-TOKEN" "$OUT9" "req-012: a symlinked .archive-target prints none of its link target"
 rm -f "$R9/plan/current/.archive-target"
+    ;;
+esac
 printf 'plan/_archive/LEAKED-VALUE\n' > "$R9/plan/current/.archive-target"
 OUT9B=$(run_archive "$R9" --feature-id "$ID" --date "$DATE")
 assert_equals "2" "$?" "req-012: an invalid regular .archive-target exits 2"

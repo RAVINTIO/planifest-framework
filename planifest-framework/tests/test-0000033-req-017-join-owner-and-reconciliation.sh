@@ -209,8 +209,16 @@ git -C "$R" add -A && git -C "$R" commit -q -m "feat: link" -m "Stream: stream-0
 state "$R" stream-01-faces "$START" "req-001" "| face-outside-link | src/faces.css | stream-02-rules |" ""
 state "$R" stream-02-rules "$START" "req-002" "" "- face-outside-link"
 OUT=$(run "$R"); EX=$?
-assert_equals "1" "$EX" "req-017: a changed file that links outside the repo doesn't count as a use"
-assert_contains "skipped src/link.css" "$OUT" "req-017: the finding names the skipped symlink"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash ln -s copies the file instead of linking it, so the symlink cannot be built.
+    echo "  SKIP (windows): ln -s makes a copy under Git Bash, so the symlinked file cannot be built"
+    ;;
+  *)
+    assert_equals "1" "$EX" "req-017: a changed file that links outside the repo doesn't count as a use"
+    assert_contains "skipped src/link.css" "$OUT" "req-017: the finding names the skipped symlink"
+    ;;
+esac
 
 R="$SCRATCH/oversize"
 START=$(make_repo "$R")

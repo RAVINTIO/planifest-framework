@@ -28,9 +28,10 @@ DOWNSTREAM_ONLY=(
 )
 # END retired-integrations
 
-# 0000036 req-001: the end-of-P6 setup run writes this record (ADR-007). Until
-# then the migration has no record and no exception line, so the check skips.
-RUN_AT_END_OF_P6="migrate-0.34.0-rerun-setup.md"
+# The end-of-P6 setup run writes this record (0000036 ADR-007). Until then the
+# newest re-run-setup migration has no record and no exception line, so the
+# check skips. 0000037 moves the name from 0.34.0, which now has its record.
+RUN_AT_END_OF_P6="migrate-0.35.0-rerun-setup.md"
 
 # The build log moves to plan/_archive/ at P7, so read whichever exists.
 BUILD_LOGS=()
@@ -121,7 +122,7 @@ for path in "$MIGRATIONS"/*.md; do
       "req-010: the build log holds exactly one Exception waiting line for $name"
   fi
 done
-assert_equals "9" "$COUNT" "req-010: the repo has nine migrations to account for"
+assert_equals "10" "$COUNT" "req-010: the repo has ten migrations to account for"
 
 # =============================================================================
 echo ""

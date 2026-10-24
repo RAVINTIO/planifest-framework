@@ -20,7 +20,10 @@ HOOKS="$FRAMEWORK/hooks/enforcement"
 SKILLS="$FRAMEWORK/skills"
 STANDARDS="$FRAMEWORK/standards"
 
-TMP="$(mktemp -d)"
+# Under Git Bash mktemp gives a /tmp/... path that node reads as C:\tmp\..., a
+# folder outside the fixture, so the hook sees an outside path and passes it.
+# `pwd -W` gives the Windows form (C:/Users/...), which both bash and node read.
+TMP="$(cd "$(mktemp -d)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$TMP"' EXIT
 
 assert_file_exists() {

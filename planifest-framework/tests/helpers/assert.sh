@@ -53,6 +53,20 @@ validate_json() {
 }
 
 # -----------------------------------------------------------------------
+# Portable hashing (req-009 FR-009.5)
+# -----------------------------------------------------------------------
+
+# sha256_of [file]: print the bare SHA-256 digest of a file, or of stdin when
+# no file is given. Tries sha256sum first and falls back to shasum -a 256.
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$@" | cut -d' ' -f1
+  else
+    shasum -a 256 "$@" | cut -d' ' -f1
+  fi
+}
+
+# -----------------------------------------------------------------------
 # Assertion helpers
 # -----------------------------------------------------------------------
 

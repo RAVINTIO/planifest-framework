@@ -26,7 +26,8 @@ RATCHET="$ENF/ratchet-check.mjs"
 EM_DASH_GUARD="$ENF/em-dash-guard.mjs"
 WINDSURF="$FRAMEWORK/hooks/adapters/windsurf.mjs"
 
-WORK="$(mktemp -d -t planifest_0000032_req007_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000032_req007_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 OUTFILE="$WORK/stdout.txt"

@@ -29,7 +29,8 @@ GATE_WRITE="$ENF/gate-write.mjs"
 # The req-008 suite holds the detection corpus. Load it without running it.
 REQ008_CORPUS_ONLY=1 source "$SCRIPT_DIR/test-0000032-req-008-shell-writer-detection.sh"
 
-WORK="$(mktemp -d -t planifest_0000032_req009_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000032_req009_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 native() {
@@ -48,8 +49,10 @@ write_design() {
 }
 
 bash_payload() {
-  node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Bash",tool_input:{command:process.argv[2]}}))' \
-    "$(native "$1")" "$2"
+  # The command goes in on stdin. Windows caps an argument list near 32 KB, and
+  # the F7 command is longer.
+  printf '%s' "$2" | node -e 'process.stdout.write(JSON.stringify({cwd:process.argv[1],tool_name:"Bash",tool_input:{command:require("fs").readFileSync(0,"utf-8")}}))' \
+    "$(native "$1")"
 }
 
 run_guard_raw() {
@@ -106,7 +109,7 @@ echo "=== req-009: the false-positive corpus passes with no design.md ==="
 PLAIN="$(make_git_fixture plain)"
 FALSE_POSITIVES=(
   "cat src/a.js"
-  "grep -rn 'foo' src/"
+  "grep -rn 'foo' src/" # portable-ok: payload string
   "grep '>' src/a.js"
   "ls -la src"
   "sed -n '1,5p' src/a.js"
@@ -300,7 +303,7 @@ TIMING_PAYLOADS="$WORK/timing.json"
 node -e '
   const [cwd, ...cmds] = process.argv.slice(1);
   process.stdout.write(JSON.stringify(cmds.map((command) => JSON.stringify({ cwd, tool_input: { command } }))));
-' "$(native "$PLAIN")" "echo x > src/a.js" "cat src/a.js | tee /tmp/copy.txt" "sed -i 's/a/b/' src/a.js" > "$TIMING_PAYLOADS"
+' "$(native "$PLAIN")" "echo x > src/a.js" "cat src/a.js | tee /tmp/copy.txt" "sed -i 's/a/b/' src/a.js" > "$TIMING_PAYLOADS" # portable-ok: payload string
 SLOWEST=$(node -e '
   const { spawnSync } = require("node:child_process");
   const { readFileSync } = require("node:fs");

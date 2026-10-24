@@ -46,6 +46,14 @@ now_ms() {
   fi
 }
 
+# copy_lf <from> <to>: copies a file with any CR removed. A Windows checkout can
+# give the source skills CRLF endings, and sed -i may or may not keep them, so
+# both sides of each comparison are held to LF. <from> and <to> may be one file.
+copy_lf() {
+  local tmp="$WORK/copy-lf.tmp"
+  tr -d '\r' < "$1" > "$tmp" && cat "$tmp" > "$2"
+}
+
 # setup_rewrite <file>: applies the setup.sh copy_skills() sed rewrites in place.
 setup_rewrite() {
   sed -i.bak \
@@ -165,8 +173,8 @@ assert_contains "stale: claude-code: demo" "$ERR" "req-002: the double-BOM copy 
 
 FX="$(make_fixture real-orchestrator)"
 mkdir -p "$FX/planifest-framework/skills/planifest-orchestrator" "$FX/.claude/skills/planifest-orchestrator"
-cp "$ORCH" "$FX/planifest-framework/skills/planifest-orchestrator/SKILL.md"
-cp "$ORCH" "$FX/.claude/skills/planifest-orchestrator/SKILL.md"
+copy_lf "$ORCH" "$FX/planifest-framework/skills/planifest-orchestrator/SKILL.md"
+copy_lf "$ORCH" "$FX/.claude/skills/planifest-orchestrator/SKILL.md"
 setup_rewrite "$FX/.claude/skills/planifest-orchestrator/SKILL.md"
 add_marker "$FX" .claude claude-code
 run_drift --root "$FX"
@@ -182,13 +190,16 @@ for skill_dir in "$SKILLS_SRC"/*; do
   [ -d "$skill_dir" ] && [ -f "$skill_dir/SKILL.md" ] || continue
   name="$(basename "$skill_dir")"
   mkdir -p "$FX/.claude/skills/$name"
-  cp "$skill_dir/SKILL.md" "$FX/.claude/skills/$name/SKILL.md"
+  copy_lf "$skill_dir/SKILL.md" "$FX/.claude/skills/$name/SKILL.md"
   setup_rewrite "$FX/.claude/skills/$name/SKILL.md"
   SKILL_COUNT=$((SKILL_COUNT + 1))
 done
 add_marker "$FX" .claude claude-code
 rm -rf "$FX/planifest-framework/skills"
 cp -R "$SKILLS_SRC" "$FX/planifest-framework/skills"
+for skill_dir in "$FX"/planifest-framework/skills/*; do
+  [ -f "$skill_dir/SKILL.md" ] && copy_lf "$skill_dir/SKILL.md" "$skill_dir/SKILL.md"
+done
 START=$(now_ms)
 run_drift --root "$FX"
 END=$(now_ms)
@@ -355,7 +366,7 @@ printf 'x' > "$FX/.claude/skills/demo/SKILL.md"
 add_marker "$FX" .claude claude-code
 run_drift --root "$FX"
 assert_equals "2" "$CODE" "req-002: a folder at a source SKILL.md can't compare (N-4)"
-assert_contains "demo/SKILL.md is a folder" "$ERR" "req-002: the reason says the source SKILL.md is a folder (N-4)"
+assert_contains "demo/SKILL.md is a folder" "${ERR//\\//}" "req-002: the reason says the source SKILL.md is a folder (N-4)"
 assert_not_contains "undefined" "$ERR" "req-002: the folder reason never prints undefined (N-4)"
 
 FX="$WORK/file-skills"
@@ -516,7 +527,15 @@ add_marker "$FX" .claude claude-code
 mkdir -p "$FX/.claude/skills"
 run_drift --root "$FX"
 assert_equals "1" "$CODE" "req-002: a crafted missing name exits 1"
-assert_contains 'evil\nstale' "$ERR" "req-002: the newline in a name prints escaped"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # NTFS does not allow a newline in a folder name, so the crafted skill folder cannot be built.
+    echo "  SKIP (windows): NTFS rejects a newline in a folder name, so the crafted name cannot be built"
+    ;;
+  *)
+    assert_contains 'evil\nstale' "$ERR" "req-002: the newline in a name prints escaped"
+    ;;
+esac
 if grep -qx 'stale: claude-code: forged' <<<"$ERR"; then
   FORGED=1
 else

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # test-0000010-framework-quality-improvements.sh
 # Acceptance tests for feature 0000010
-# Run from repo root: bash planifest-framework/tests/test-0000010-framework-quality-improvements.sh
+# Run from any directory: bash planifest-framework/tests/test-0000010-framework-quality-improvements.sh
+# Paths resolve from this script's own location (req-009 FR-009.1, FR-009.2).
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+FW_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 PASS=0
 FAIL=0
@@ -11,13 +15,13 @@ FAIL=0
 pass() { echo "  PASS: $1"; PASS=$((PASS+1)); }
 fail() { echo "  FAIL: $1"; FAIL=$((FAIL+1)); }
 
-TEMPLATE="planifest-framework/templates/requirement.template.md"
-ORCH="planifest-framework/skills/planifest-orchestrator/SKILL.md"
-CODEGEN="planifest-framework/skills/planifest-codegen-agent/SKILL.md"
-VALIDATE="planifest-framework/skills/planifest-validate-agent/SKILL.md"
-SETUP_SH="planifest-framework/setup.sh"
-SETUP_PS1="planifest-framework/setup.ps1"
-EXT="planifest-framework/external-skills"
+TEMPLATE="$FW_DIR/templates/requirement.template.md"
+ORCH="$FW_DIR/skills/planifest-orchestrator/SKILL.md"
+CODEGEN="$FW_DIR/skills/planifest-codegen-agent/SKILL.md"
+VALIDATE="$FW_DIR/skills/planifest-validate-agent/SKILL.md"
+SETUP_SH="$FW_DIR/setup.sh"
+SETUP_PS1="$FW_DIR/setup.ps1"
+EXT="$FW_DIR/external-skills"
 
 echo ""
 echo "=== REQ-001: Input Validation section in requirement.template.md ==="
@@ -95,7 +99,7 @@ else
 fi
 
 # 0000022: relocated to standards/agent-dispatch-standards.md (ADR-001) - orchestrator points to it
-DISPATCH_STD_FILE="planifest-framework/standards/agent-dispatch-standards.md"
+DISPATCH_STD_FILE="$FW_DIR/standards/agent-dispatch-standards.md"
 if [ -f "$DISPATCH_STD_FILE" ] && grep -q "native tool\|two levels\|parallel native" "$DISPATCH_STD_FILE"; then
   pass "REQ-002: agent-dispatch-standards.md clarifies two levels of parallelism"
 else

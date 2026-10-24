@@ -20,6 +20,13 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 FRAMEWORK_SRC="$(cd "$SCRIPT_DIR/.." && pwd)"
 HOOKS="$FRAMEWORK_SRC/hooks"
 ENF="$HOOKS/enforcement"
+# Node reads a Git Bash path such as /d/a/x as D:\d\a\x, so the import lines
+# below use a file URL built from the Windows form of the path when pwd -W exists.
+ENF_NODE="$(cd "$ENF" && { pwd -W 2>/dev/null || pwd; })"
+case "$ENF_NODE" in
+  /*) ENF_URL="file://$ENF_NODE" ;;
+  *)  ENF_URL="file:///$ENF_NODE" ;;
+esac
 
 # readStdin callers: every hook in hooks/enforcement/ that reads a payload on
 # stdin.
@@ -105,25 +112,27 @@ assert_contains 'process.stdin.on("error"' "$(cat "$ENF/read-stdin.mjs")" \
 
 # stdin must stay OPEN for this to mean anything: with /dev/null the stream
 # reaches "end" immediately and resolves before any error can be observed.
-# Process substitution on a sleeping process gives an fd that produces no data
-# and no EOF for the life of the check, which is the shape a stalled stdin has.
-SETTLE=$(node --input-type=module -e "
-  import { readStdin } from '$ENF/read-stdin.mjs';
+# A pipe from a sleeping process gives a stdin that produces no data and no EOF
+# for the life of the check, which is the shape a stalled stdin has. A pipe is
+# used in place of process substitution because node on Windows throws while
+# it opens the /dev/fd path that process substitution gives under Git Bash.
+SETTLE=$(sleep 2 | node --input-type=module -e "
+  import { readStdin } from '$ENF_URL/read-stdin.mjs';
   let settled = 'HUNG';
   readStdin().then(() => { settled = 'RESOLVED'; }, () => { settled = 'REJECTED'; });
   setTimeout(() => process.stdin.emit('error', new Error('synthetic stdin failure')), 50);
   setTimeout(() => { console.log(settled); process.exit(0); }, 500);
-" < <(sleep 5) 2>&1 | tail -1)
+" 2>&1 | tail -1)
 assert_equals "REJECTED" "$SETTLE" \
   "req-002: readStdin rejects on a stdin error instead of hanging forever"
 
 # End-to-end, in the exact shape a hook uses it: await inside a try/catch that
 # exits 0. The shared version must reach the catch and exit 0.
-node --input-type=module -e "
-  import { readStdin } from '$ENF/read-stdin.mjs';
+sleep 2 | node --input-type=module -e "
+  import { readStdin } from '$ENF_URL/read-stdin.mjs';
   setTimeout(() => process.stdin.emit('error', new Error('synthetic stdin failure')), 50);
   try { await readStdin(); process.exit(0); } catch { process.exit(0); }
-" < <(sleep 5) >/dev/null 2>&1
+" >/dev/null 2>&1
 assert_exit_zero $? "req-002: a hook using the shared readStdin exits 0 on a stdin stream error"
 
 # Control: the pre-extraction shape (no "error" handler) never settles its
@@ -132,7 +141,7 @@ assert_exit_zero $? "req-002: a hook using the shared readStdin exits 0 on a std
 # non-zero. That is the latent NFR-001 violation consolidating fixed, and the
 # reason the discrepancy was resolved toward the error-handling variant rather
 # than away from it.
-node --input-type=module -e "
+sleep 2 | node --input-type=module -e "
   function readStdinOld() {
     return new Promise((resolve) => {
       let data = '';
@@ -144,7 +153,7 @@ node --input-type=module -e "
   }
   setTimeout(() => process.stdin.emit('error', new Error('synthetic stdin failure')), 50);
   try { await readStdinOld(); process.exit(0); } catch { process.exit(0); }
-" < <(sleep 5) >/dev/null 2>&1
+" >/dev/null 2>&1
 PRE_EXIT=$?
 if [ "$PRE_EXIT" -ne 0 ]; then
   assert_equals "0" "0" "req-002: the pre-extraction readStdin shape exits non-zero on the same input (the bug this fixed)"

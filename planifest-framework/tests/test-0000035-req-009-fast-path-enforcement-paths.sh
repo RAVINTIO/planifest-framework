@@ -22,11 +22,17 @@ SHELL_GUARD="$ENF/shell-write-guard.mjs"
 PATH_RULES="$ENF/path-rules.mjs"
 FAST_PATH_MD="$FRAMEWORK/workflows/fast-path.md"
 
-WORK="$(mktemp -d -t planifest_0000035_req009_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000035_req009_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 native() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
+}
+
+# native_url <path>: a file:// URL for a Node import. On Windows, import() rejects D:/x.
+native_url() {
+  if command -v cygpath >/dev/null 2>&1; then printf 'file:///%s' "$(cygpath -m "$1")"; else printf 'file://%s' "$1"; fi
 }
 
 GIT=(git -c user.name=t -c user.email=t@t -c commit.gpgsign=false -c init.defaultBranch=main)
@@ -165,7 +171,7 @@ assert_equals "0" "$CODE" "req-009: control, the record still admits an ASCII ta
 
 # The enforcement match folds compatibility forms and case widely.
 FOLDED=$(node --input-type=module -e "
-import { isEnforcementPath } from '$(native "$PATH_RULES")';
+import { isEnforcementPath } from '$(native_url "$PATH_RULES")';
 process.stdout.write([
   'planifest-framework/hookſ/enforcement/gate-write.mjs',
   '.claude/ſettings.json',
@@ -179,7 +185,7 @@ echo ""
 echo "=== req-009: fast-path.md and FAST_PATH_ENFORCEMENT_PATHS name the same entries ==="
 
 CODE_LIST=$(node --input-type=module -e "
-import { FAST_PATH_ENFORCEMENT_PATHS } from '$(native "$PATH_RULES")';
+import { FAST_PATH_ENFORCEMENT_PATHS } from '$(native_url "$PATH_RULES")';
 process.stdout.write([...FAST_PATH_ENFORCEMENT_PATHS].sort().join('\n'));
 ")
 assert_equals "yes" "$([ -n "$CODE_LIST" ] && echo yes || echo no)" "req-009: path-rules.mjs exports FAST_PATH_ENFORCEMENT_PATHS"

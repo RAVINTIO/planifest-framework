@@ -12,8 +12,8 @@
 
 id: "planifest-framework"
 name: "Planifest Framework"
-version: "0.34.0"
-feature: "0000036-pipeline-friction-and-gate-fixes"
+version: "0.35.0"
+feature: "0000037-green-ci-before-ship"
 
 versionPolicy: "max-component-version"
 

@@ -22,11 +22,17 @@ PATH_RULES="$ENF/path-rules.mjs"
 RATCHET="$ENF/ratchet-check.mjs"
 EM_DASH_GUARD="$ENF/em-dash-guard.mjs"
 
-WORK="$(mktemp -d -t planifest_0000036_req011_XXXXXX)"
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+WORK="$(cd "$(mktemp -d -t planifest_0000036_req011_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$WORK"' EXIT
 
 native() {
   if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi
+}
+
+# native_url <path>: a file:// URL for a Node import. On Windows, import() rejects D:/x.
+native_url() {
+  if command -v cygpath >/dev/null 2>&1; then printf 'file:///%s' "$(cygpath -m "$1")"; else printf 'file://%s' "$1"; fi
 }
 
 # =============================================================================
@@ -37,7 +43,7 @@ echo "=== req-011: shown() cuts between whole units ==="
 # equals the expected string.
 shown_is() {
   node --input-type=module -e "
-import { shown } from '$(native "$PATH_RULES")';
+import { shown } from '$(native_url "$PATH_RULES")';
 const got = shown($1, $2);
 const want = $3;
 process.stdout.write(got === want ? 'true' : 'got ' + JSON.stringify(got));
@@ -55,7 +61,7 @@ assert_equals "true" "$(shown_is "'a\nb\x1bc\u{202E}'" 80 "'a\\\\nb\\\\x1bc\\\\u
 # Every cap from 0 to past the end gives a prefix of the full escaped text,
 # at most max long, that ends neither inside an escape nor between a pair.
 SWEEP=$(node --input-type=module -e "
-import { shown } from '$(native "$PATH_RULES")';
+import { shown } from '$(native_url "$PATH_RULES")';
 const input = 'x\n\u{202E}\x1b\u{1F600}\t\u{2028}y\u{85}z\u{E0001}';
 const full = shown(input, 1e9);
 const units = ['x', '\\\\n', '\\\\u{202E}', '\\\\x1b', '\u{1F600}', '\\\\t', '\\\\u{2028}', 'y', '\\\\x85', 'z', '\\\\u{E0001}'];

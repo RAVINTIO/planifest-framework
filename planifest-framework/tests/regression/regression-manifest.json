@@ -239,6 +239,20 @@
       "promotionDate": "2026-10-22",
       "promotedBy": "agent",
       "filePath": "tests/regression/test-0000035-req-008-sanctioned-scripts.sh"
+    },
+    {
+      "name": "test-0000037-req-003-credential-scan.sh",
+      "sourceFeature": "0000037-green-ci-before-ship",
+      "promotionDate": "2026-10-24",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000037-req-003-credential-scan.sh"
+    },
+    {
+      "name": "test-0000037-req-003-archive-held-back.sh",
+      "sourceFeature": "0000037-green-ci-before-ship",
+      "promotionDate": "2026-10-24",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000037-req-003-archive-held-back.sh"
     }
   ]
 }

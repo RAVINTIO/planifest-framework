@@ -1,7 +1,7 @@
 id: "planifest-framework"
 name: "Planifest Framework"
-feature: "0000036-pipeline-friction-and-gate-fixes"
-version: "0.34.1"
+feature: "0000037-green-ci-before-ship"
+version: "0.35.0"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
@@ -66,6 +66,13 @@ responsibilities:
   - "Admit a change with no src/ target to Fast Path, and rerun the P4 check set after P6 with an optional templates/doc-checks.template.yml (0000033)"
   - "Run independent requirements as parallel streams (templates/stream-state.template.md, parallel_streams toggle) with the orchestrator owning joins, checked by scripts/stream-reconcile.mjs (0000033)"
   - "Archive plan/current/ at P7 with scripts/archive-current.mjs (no glob delete) and print the effective run mode with scripts/run-mode.mjs (0000033)"
+  - "Poll the PR's checks at P9 Step 10c, reuse an open draft PR, and in autonomous fix a red check up to 3 times before an exception item (0000037-ADR-002)"
+  - "Scan for credentials with scripts/credential-scan.mjs before every autonomous commit (scan-then-commit, held-back files) and scan PR text from files before gh pr create (0000037-ADR-003, ADR-004)"
+  - "Read the last merged PR's checks in GUTD step 5, read-only (0000037-ADR-005)"
+  - "Run post-P6 revalidation after the P6 commit, capped at 3 cycles in autonomous (0000037-ADR-006)"
+  - "Require a Verified by field on each acceptance criterion and run a requirement-ID scan at P3 (0000037-ADR-007, ADR-008)"
+  - "Test the installed hook commands verbatim, compare the re-run-setup migration with the release diff, and lint tests for GNU and BSD differences (0000037-ADR-009, ADR-010, ADR-011)"
+  - "Run the suite on Windows under Git Bash in seven shards with a fix-or-skip rule, and test setup.ps1 under Windows PowerShell 5.1 (0000037-ADR-012, ADR-013, ADR-014)"
 
 exceptions:
   - "Does not write to planifest-overrides/ — that directory is user-owned"
@@ -96,6 +103,9 @@ contract:
     - name: "stdout (additionalContext or block message)"
       type: "event"
       description: "Gate-write block message or check-design scope injection"
+    - name: "credential-scan.mjs exit code and stdout (0000037)"
+      type: "cli"
+      description: "Exit 0 clean, 1 match, 2 could not run. Prints path:line and rule name, never matched text. --safe-paths writes the clean paths to a NUL-separated file."
   consumedBy: ["claude-code-hooks", "copilot-agent-hooks"]
   consumes: []
   breakingChangePolicy: "requires-adr"
@@ -140,6 +150,11 @@ scope:
     - "scripts/archive-current.mjs, scripts/stream-reconcile.mjs, and scripts/run-mode.mjs (0000033)"
     - "standards/autonomous-run-standards.md, standards/p0-question-policy.md, standards/release-sizing.md, and the autonomous-run additions to standards/agent-dispatch-standards.md (0000033)"
     - "templates/exception-list.template.yml, release-budget.template.yml, doc-checks.template.yml, and stream-state.template.md (0000033)"
+    - "scripts/credential-scan.mjs, the Pre-commit credential scan section of standards/autonomous-run-standards.md, and ship-agent Step 10 and Step 10c (0000037)"
+    - "Verified by field in templates/requirement.template.md, the P3 requirement-ID scan in planifest-codegen-agent, and the Type column of the P4 coverage table (0000037)"
+    - "GUTD step 5 in planifest-overrides/instructions/custom-003-git-up-to-date-shorthand.md and the revised post-P6 revalidation in planifest-docs-agent (0000037)"
+    - "tests/run-tests.sh shard selection through PLANIFEST_SHARD_INDEX and PLANIFEST_SHARD_COUNT, the portability lint, and the Windows skip table in tests/README.md (0000037)"
+    - ".github/workflows/planifest.yml Windows Git Bash shards and setup-powershell-51 job, repository-only (0000037)"
   outOfScope:
     - "Application-level code generation (handled by planifest-codegen-agent)"
     - "CI pipeline configuration for consumer projects"
@@ -153,6 +168,8 @@ risk:
     - "Path translation on Windows/Git Bash requires cygpath guards in tests"
     - "Aggressive skill/instruction trimming can leave technically-complete but ambiguous wording that increases future agent confusion or retries even without losing enforcement content — mitigated by the regression-pack baseline comparison introduced in 0000021"
     - "Only 4 of 22 regression tests pin orchestrator-specific content; a lost rule in an untested area would not fail the pack — mitigated by the P4 diff review named as a second detector in 0000022, resolving identically to a failed test (restore, never rationalise)"
+    - "credential-scan.mjs detects and reports only. The stop on a match is skill text that an agent follows, not a hook, and without gitleaks the scan uses the regex rules alone (0000037-ADR-003)"
+    - "Windows Git Bash skips some checks (symlinks, NTFS modes, cwd deletion), tracked in backlog 0000208, 0000210, 0000211, and 0000209 records a real enforcement gap on Windows (0000037)"
     - "The em dash guard's bypass sentinel is matched anywhere in the payload, including inside prose that merely quotes it, so any document explaining the rule exempts itself from the rule (0000028-P5 SEC-005)"
 
 quality:
@@ -175,7 +192,7 @@ pipeline:
 
 metadata:
   createdAt: "2026-05-02"
-  updatedAt: "2026-10-23"
+  updatedAt: "2026-10-24"
   # Updated by 0000021 (spec-agent) P1: seeded requirements-derived
   # responsibilities/scope/risk entries for the regression-pack and
   # audit-findings-report/guardrailed-trim process ahead of P3 codegen.
@@ -223,6 +240,10 @@ metadata:
   # run mode, exception list, gates as loops, P0 real-forks policy, release
   # budget, Fast Path for no-src changes, parallel streams, and the
   # archive-current, stream-reconcile, and run-mode scripts.
+  # Updated by 0000037 (docs-agent) P6: version 0.35.0. Added the P9 CI check,
+  # credential-scan.mjs with scan-then-commit, GUTD step 5, post-P6
+  # revalidation after the commit, the Verified by field and P3 scan, the
+  # portability lint, and the Windows Git Bash shards and PowerShell 5.1 job.
   createdBy: "agent"
   lastModifiedBy: "agent"
   skill: "planifest-codegen-agent"

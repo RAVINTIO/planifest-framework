@@ -23,8 +23,14 @@ CURSOR_BOOT="$FRAMEWORK/templates/cursor-boot.md"
 
 ID="0000035-write-gate-scope-and-path-hardening"
 
-SCRATCH=$(mktemp -d -t planifest_0000035_req008_XXXXXX)
+# Git Bash gives /tmp/x, which node reads as C:\tmp\x. pwd -W gives the Windows form.
+SCRATCH="$(cd "$(mktemp -d -t planifest_0000035_req008_XXXXXX)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$SCRATCH"' EXIT
+
+# IS_WIN: yes under Git Bash, MSYS, or Cygwin. There, ln -s copies the target
+# unless MSYS=winsymlinks:nativestrict is set, and chmod sets no NTFS mode.
+IS_WIN=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;; esac
 
 lacks() {
   assert_equals "absent" "$([[ "$2" == *"$1"* ]] && echo present || echo absent)" "$3"
@@ -83,7 +89,9 @@ echo "=== req-008: a valid call still passes ==="
 
 (cd "$R" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" --root "$R" >/dev/null 2>&1)
 assert_equals "0" "$?" "req-008: --root equal to the resolved root exits 0"
-if ln -s "$R" "$SCRATCH/rootlink" 2>/dev/null; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the --root link case cannot be built"
+elif ln -s "$R" "$SCRATCH/rootlink" 2>/dev/null; then
   (cd "$R" && env -u CLAUDE_PROJECT_DIR node "$SET" "${BASE[@]}" --root "$SCRATCH/rootlink" >/dev/null 2>&1)
   assert_equals "0" "$?" "req-008: a --root link whose real path is the resolved root exits 0"
 fi
@@ -161,9 +169,13 @@ reject "a --component path with an empty segment" "--component" "src//widget" \
   "${BASE[@]}" --component "widget=src//widget/component.yml"
 reject "a --component path with no file" "--component" "missing" \
   "${BASE[@]}" --component "widget=src/missing/component.yml"
-ln -s "$SCRATCH/outside/comp" "$R/src/link"
-reject "a --component path that resolves outside the root" "--component" "src/link" \
-  "${BASE[@]}" --component "widget=src/link/component.yml"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the --component link case cannot be built"
+else
+  ln -s "$SCRATCH/outside/comp" "$R/src/link"
+  reject "a --component path that resolves outside the root" "--component" "src/link" \
+    "${BASE[@]}" --component "widget=src/link/component.yml"
+fi
 
 echo "=== req-008: counts and unknown arguments ==="
 
@@ -190,6 +202,9 @@ reject "an absent --feature-id" "--feature-id" "zzz-none" --version "0.33.0"
 
 echo "=== req-008: product.yml link ==="
 
+if [ "$IS_WIN" = "yes" ]; then
+echo "  SKIP (windows): Git Bash ln -s copies the target, so the product.yml link and dangling-link cases cannot be built"
+else
 L="$SCRATCH/linkroot"
 make_root "$L"
 cp "$L/product.yml" "$SCRATCH/outside/product.yml"
@@ -211,6 +226,7 @@ ln -s "$SCRATCH/outside/nothing.yml" "$D/product.yml"
 assert_equals "2" "$?" "req-008: a dangling product.yml link exits 2"
 assert_equals "absent" "$([ -e "$SCRATCH/outside/nothing.yml" ] && echo present || echo absent)" \
   "req-008: a dangling link creates no target"
+fi
 
 echo "=== req-008: P5 hardening of the product.yml write ==="
 
@@ -249,12 +265,18 @@ assert_contains 'feature: "0000035-write-gate-scope-and-path-hardening"' "$(cat 
   "req-008: the atomic write lands the new feature"
 assert_equals "differs" "$([ "$INODE_BEFORE" = "$(inode "$A/product.yml")" ] && echo same || echo differs)" \
   "req-008: the write replaces product.yml by rename, not in place"
-assert_equals "600" "$(mode "$A/product.yml")" "req-008: the rename keeps the mode of the old product.yml"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): NTFS has no POSIX mode bits, so the kept-mode check cannot hold"
+else
+  assert_equals "600" "$(mode "$A/product.yml")" "req-008: the rename keeps the mode of the old product.yml"
+fi
 assert_equals "" "$(ls -A "$A" | grep -v -x -e planifest-framework -e src -e product.yml)" \
   "req-008: no temp file stays after a write"
 
 # P-S06 and P-S07: a root folder the script can't write to.
-if [ "$(id -u)" != "0" ]; then
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): chmod 555 and chmod 000 set no NTFS block, so the unwritable-root and unreadable-file cases cannot be built"
+elif [ "$(id -u)" != "0" ]; then
   W="$SCRATCH/roroot"
   make_root "$W"
   cp "$W/product.yml" "$SCRATCH/ro-before.yml"
@@ -315,7 +337,11 @@ YAML
 }
 manifest_path_case "with a .. segment" "../evil/component.yml" dotdot
 manifest_path_case "that starts with /" "$SCRATCH/evil/component.yml" abs
-manifest_path_case "through a link outside the root" "src/evil-link/component.yml" link
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the manifest-path link case cannot be built"
+else
+  manifest_path_case "through a link outside the root" "src/evil-link/component.yml" link
+fi
 manifest_path_case "that is not component.yml" "src/widget/other.yml" name
 
 # P-N1: a component.yml hard-linked to a file outside the root passes the
@@ -475,7 +501,11 @@ refuse_promote() {
 refuse_promote "a source outside tests/" "$FX/outside/test-secret.sh"
 refuse_promote "a source that is not test-*.sh" "$FXT/notatest.sh"
 refuse_promote "a source in a tests/ subfolder" "$FXT/helpers/test-helper.sh"
-refuse_promote "a source that is a link" "$FXT/test-link.sh"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the source-link case cannot be built"
+else
+  refuse_promote "a source that is a link" "$FXT/test-link.sh"
+fi
 [ -f "$FXT/test-hard.sh" ] && refuse_promote "a source with a second hard link" "$FXT/test-hard.sh"
 
 ERR=$(cd "$FX" && PLANIFEST_REGRESSION_DIR="$FX/elsewhere" bash "$PROMOTE_FX" "$FXT/test-ok.sh" "0000035-x" "agent" 2>&1)
@@ -483,11 +513,15 @@ assert_equals "1" "$?" "req-008: promote refuses a PLANIFEST_REGRESSION_DIR outs
 assert_equals "regression-manifest.json" "$(ls -A "$FX/elsewhere")" \
   "req-008: the redirected destination stays unchanged"
 
-ln -s "$FX/outside/test-secret.sh" "$FXT/regression/test-ok2.sh"
-refuse_promote "a destination that is a link" "$FXT/test-ok2.sh"
-assert_equals "same" "$(same "$SCRATCH/secret-before.sh" "$FX/outside/test-secret.sh")" \
-  "req-008: the destination link target stays unchanged"
-rm "$FXT/regression/test-ok2.sh"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the destination-link case cannot be built"
+else
+  ln -s "$FX/outside/test-secret.sh" "$FXT/regression/test-ok2.sh"
+  refuse_promote "a destination that is a link" "$FXT/test-ok2.sh"
+  assert_equals "same" "$(same "$SCRATCH/secret-before.sh" "$FX/outside/test-secret.sh")" \
+    "req-008: the destination link target stays unchanged"
+  rm "$FXT/regression/test-ok2.sh"
+fi
 
 # P-N3: a hard link at the destination would let cp overwrite the file
 # outside tests/regression/.
@@ -529,6 +563,10 @@ promote_in() {
 # P-N3: a manifest that is a symlink or a hard link would carry the
 # manifest write outside tests/regression/.
 for KIND in sym hard; do
+  if [ "$KIND" = sym ] && [ "$IS_WIN" = "yes" ]; then
+    echo "  SKIP (windows): Git Bash ln -s copies the target, so the symlinked-manifest case cannot be built"
+    continue
+  fi
   FM="$SCRATCH/promote-manifest-$KIND"
   promote_fixture "$FM"
   printf '{"tests":[]}\n' > "$FM/outside/manifest.json"
@@ -552,11 +590,15 @@ mkdir -p "$FT/planifest-framework/scripts" "$FT/realtests/regression"
 cp "$FRAMEWORK/scripts/promote-to-regression.sh" "$FT/planifest-framework/scripts/"
 printf '{"tests":[]}\n' > "$FT/realtests/regression/regression-manifest.json"
 cp "$FXT/test-ok.sh" "$FT/realtests/test-ok.sh"
-ln -s "$FT/realtests" "$FT/planifest-framework/tests"
-promote_in "$FT"
-assert_equals "1" "$?" "req-008: promote refuses a tests/ folder that is a link"
-assert_equals "regression-manifest.json" "$(ls -A "$FT/realtests/regression")" \
-  "req-008: the linked tests/ folder stays unchanged"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the tests/-folder link case cannot be built"
+else
+  ln -s "$FT/realtests" "$FT/planifest-framework/tests"
+  promote_in "$FT"
+  assert_equals "1" "$?" "req-008: promote refuses a tests/ folder that is a link"
+  assert_equals "regression-manifest.json" "$(ls -A "$FT/realtests/regression")" \
+    "req-008: the linked tests/ folder stays unchanged"
+fi
 
 # P-N3: the manifest write goes through a temp file and a rename.
 PSRC=$(cat "$FRAMEWORK/scripts/promote-to-regression.sh")
@@ -576,13 +618,17 @@ FL="$SCRATCH/promote-linked"
 mkdir -p "$FL/planifest-framework/scripts" "$FL/planifest-framework/tests" "$FL/realreg"
 cp "$PROMOTE_FX" "$FL/planifest-framework/scripts/"
 printf '{"tests":[]}\n' > "$FL/realreg/regression-manifest.json"
-ln -s "$FL/realreg" "$FL/planifest-framework/tests/regression"
-cp "$FXT/test-ok.sh" "$FL/planifest-framework/tests/test-ok.sh"
-(cd "$FL" && env -u PLANIFEST_REGRESSION_DIR bash "$FL/planifest-framework/scripts/promote-to-regression.sh" \
-  "$FL/planifest-framework/tests/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
-assert_equals "1" "$?" "req-008: promote refuses a tests/regression/ that is a link"
-assert_equals "regression-manifest.json" "$(ls -A "$FL/realreg")" \
-  "req-008: the linked regression folder stays unchanged"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): Git Bash ln -s copies the target, so the regression/-folder link case cannot be built"
+else
+  ln -s "$FL/realreg" "$FL/planifest-framework/tests/regression"
+  cp "$FXT/test-ok.sh" "$FL/planifest-framework/tests/test-ok.sh"
+  (cd "$FL" && env -u PLANIFEST_REGRESSION_DIR bash "$FL/planifest-framework/scripts/promote-to-regression.sh" \
+    "$FL/planifest-framework/tests/test-ok.sh" "0000035-x" "agent" >/dev/null 2>&1)
+  assert_equals "1" "$?" "req-008: promote refuses a tests/regression/ that is a link"
+  assert_equals "regression-manifest.json" "$(ls -A "$FL/realreg")" \
+    "req-008: the linked regression folder stays unchanged"
+fi
 
 SENT_STD=$(grep -o 'Sanctioned scripts:.*' "$STANDARD_BOOT")
 SENT_CUR=$(grep -o 'Sanctioned scripts:.*' "$CURSOR_BOOT")

@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000036-pipeline-friction-and-gate-fixes (23 Oct 2026). Adds 12 ADRs for the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, the run-mode anchor, the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
+Last updated: 0000037-green-ci-before-ship (24 Oct 2026). Adds 14 ADRs. They cover the P9 CI check, the credential scan, the GUTD CI step, and post-P6 revalidation. They also cover the `Verified by` field, the wired-command test, the migration diff, the portability lint, and the Windows CI legs. ADR-012 and ADR-013 amend 0000031 ADR-001, and ADR-014 amends 0000031 ADR-003 for the Windows shards. Earlier: 0000036 added 12 ADRs. They cover the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, and the run-mode anchor. They also cover the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -286,9 +286,9 @@ ADR files: [plan/_archive/0000031-ci-test-and-powershell-coverage-2026-10-16/adr
 
 | ADR | Title | Status | Summary |
 |-----|-------|--------|---------|
-| ADR-001 | CI platform matrix | accepted | The suite runs on `ubuntu-latest` and `macos-latest` with `fail-fast: false`, and `test_setup.ps1` runs under PowerShell 7 on `windows-latest`. Windows PowerShell 5.1 and Git Bash on Windows are not tested. |
+| ADR-001 | CI platform matrix | amended by 0000037 ADR-012 and ADR-013 | The suite runs on `ubuntu-latest` and `macos-latest` with `fail-fast: false`, and `test_setup.ps1` runs under PowerShell 7 on `windows-latest`. **Amended:** 0000037-ADR-012 adds a `setup-powershell-51` job for Windows PowerShell 5.1. 0000037-ADR-013 adds a `windows-latest` Git Bash leg to `test-suite`. |
 | ADR-002 | New CI jobs stay repository-only | accepted | The suite and Windows jobs go in this repository's workflow only, never in the consumer copy at `planifest-framework/hooks/planifest.yml`. Extends 0000019-ADR-001. |
-| ADR-003 | CI job security posture | accepted | New jobs keep the `pull_request` trigger and set `permissions: contents: read`, no secrets, and `timeout-minutes: 10` |
+| ADR-003 | CI job security posture | amended by 0000037 ADR-014 | New jobs keep the `pull_request` trigger and set `permissions: contents: read`, no secrets, and `timeout-minutes: 10`. **Amended:** 0000037-ADR-014 raises `timeout-minutes` to 20 for the Windows shards of `test-suite` only. Every other job keeps 10. |
 
 ### Feature 0000032: governance-continuity-and-write-gate-scope
 
@@ -366,6 +366,27 @@ ADR files: [plan/_archive/0000036-pipeline-friction-and-gate-fixes-2026-10-23/ad
 | ADR-010 | Hard limits cited by name and source | accepted | Every citation reads `the {name} rule ({source} Hard Limit {N})`. No list renumbers. Headings and the dispatch template use the same form. A suite fails on a bare citation. |
 | ADR-011 | Split step before a fourth criterion | accepted | Before an agent adds a fourth criterion, it asks whether the requirement holds two concerns. Yes means a split by addition only. An existing criterion moves only when no loop is active or the human on the loop gives an approve line. Extends 0000035-ADR-012. |
 | ADR-012 | Commit subjects without placeholders | accepted | No commit subject template holds `{`, `}`, `<`, or `>`. The P7 archive, P9 marker, and P9 final report subjects name the phase and action. The feature ID moves to a second `-m` message. |
+
+### Feature 0000037: green-ci-before-ship
+
+ADR files: [plan/_archive/0000037-green-ci-before-ship-2026-10-24/adr/](../plan/_archive/0000037-green-ci-before-ship-2026-10-24/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged, credential-scan.mjs on Node built-ins only | accepted | No new language, runtime, or package. `credential-scan.mjs` imports Node built-ins and calls `git` and, when present, `gitleaks`. |
+| ADR-002 | P9 polls PR checks and fixes red checks in autonomous | accepted | Step 10c polls `gh pr checks` every 30 seconds for 20 minutes, or 30 when ADR-014 applies. In `autonomous`, a red check gets up to 3 fix attempts. An open PR is reused, never raised twice. |
+| ADR-003 | Credential scan is one script and skill text enforces the stop | accepted | `credential-scan.mjs` scans the index blob and the working-tree file and exits 0, 1, or 2. A standing rule in the autonomous standard orders every commit to scan first. Matched files are held back. |
+| ADR-004 | PR text is scanned from files and sent from the same files | accepted | Ship writes the PR title and body to files, runs `--file` mode on each, and sends them with `--body-file`. PR text cites paths and IDs, never pasted output. |
+| ADR-005 | GUTD reads the last merged PR's checks and keeps pull_request only | accepted | GUTD step 5 reads the newest merged PR's checks, read-only. It never says "main is green". The workflow trigger stays `pull_request`. |
+| ADR-006 | Post-P6 revalidation runs after the commit and loops at cap 3 in autonomous | accepted | The docs agent revalidates after the P6 commit and writes one `Revalidation (P6)` line. In `autonomous`, the loop caps at 3 cycles, then at 3 approaches, then it becomes exception item 6. |
+| ADR-007 | Verified by field with six values and indented-line precedence | accepted | Each criterion carries `Verified by` with one of six types. An indented line governs over inline text. A file without the field stays valid and reads as `unspecified`. |
+| ADR-008 | P3 requirement-ID scan runs as a codegen agent check | accepted | The codegen agent maps each requirement ID to a test before P3 closes. It checks the declared type against a `# Verified by:` suite header. No script is added. |
+| ADR-009 | The wired-command test runs the installed command verbatim | accepted | The test runs the `command` from a generated `settings.json` through `bash -c`. A negative fixture with a bare `.mjs` path proves the test detects broken wiring. |
+| ADR-010 | The migration diff check targets the untagged migration | accepted | The check compares the highest-version `migrate-*-rerun-setup*.md` file list with `git diff` from the previous `v*` tag. It skips when no tag is fetched. |
+| ADR-011 | The portability lint matches in command position | accepted | A lint suite flags GNU and BSD differences only in command position. A `# portable-ok: {reason}` marker silences one line. `sha256_of` replaces direct `shasum`. |
+| ADR-012 | Windows PowerShell 5.1 is a supported runtime | accepted | A `setup-powershell-51` job runs `test_setup.ps1` under 5.1 on `windows-latest`. Amends 0000031-ADR-001 on the 5.1 point. |
+| ADR-013 | Git Bash leg with a fix-or-skip rule | accepted | `windows-latest` joins the `test-suite` matrix. Each failing suite is fixed or skipped with `SKIP (windows): {reason}` and a row in the tests README. Amends 0000031-ADR-001 on the Git Bash point. |
+| ADR-014 | Git Bash leg conditional 20-minute cap | accepted | The leg passed 10 minutes, so the Windows shards get `timeout-minutes: 20` and the suite shards seven ways. Amends 0000031-ADR-003 for those shards only. |
 
 ---
 

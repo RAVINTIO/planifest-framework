@@ -14,6 +14,9 @@
 
 set -uo pipefail
 
+# A direct run may inherit a CI shard. The fixture runner must see none.
+unset PLANIFEST_SHARD_INDEX PLANIFEST_SHARD_COUNT
+
 unset CLAUDE_PROJECT_DIR
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

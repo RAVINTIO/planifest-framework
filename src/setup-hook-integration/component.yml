@@ -1,8 +1,8 @@
 # Planifest Component Manifest
 id: "setup-hook-integration"
 name: "Setup Hook Integration"
-feature: "0000030-context-mode-and-telemetry-mcp-removal"
-version: "0.6.0"
+feature: "0000037-green-ci-before-ship"
+version: "0.7.0"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
@@ -19,6 +19,8 @@ responsibilities:
   # END retired-integrations (0000030)
   - "Register shell-write-guard.mjs on a Bash PreToolUse matcher for Claude Code, idempotently, in setup.sh and setup.ps1 (0000032-ADR-006)"
   - "Relocate cline.sh/cline.ps1's boot file into .clinerules/00-planifest-boot.md so it no longer collides with the .clinerules/skills directory (0000027-req-002)"
+  - "Run setup.ps1 under Windows PowerShell 5.1 as well as PowerShell 7: ConvertTo-PlanifestHashtable replaces ConvertFrom-Json -AsHashtable, and the native-command stderr hazards are contained (0000037-ADR-012)"
+  - "Check the exit code of git config core.hooksPath in setup.ps1, warn when it fails, and never print the guardrails-activated line after a failure, matching setup.sh (0000037-ADR-012)"
 
 exceptions:
   - "Must NOT replace the entire settings.json — only merge hook entries additively"
@@ -71,6 +73,7 @@ scope:
     - "setup.sh/setup.ps1 write .claude/.planifest-setup-flags at install time, in parity (0000020-setup-refresh-skill, REQ-008)"
     - "cline.sh/cline.ps1 boot-file/skills-dir path collision fix (0000027-req-002)"
     - "Retired integration flags accepted as no-ops, and the always-on retired-integration clean-up (0000030-ADR-003, ADR-004, ADR-005)"
+    - "Windows PowerShell 5.1 support in setup.ps1 and the live stale clean-up and retired-flag checks in test_setup.ps1 (0000037-ADR-012, req-011)"
   outOfScope:
     - "Hook wiring for Cursor, Windsurf, Cline, Antigravity"
     - "Hook uninstall / removal logic, except the fixed retired-integration clean-up list"
@@ -97,7 +100,8 @@ quality:
     # END retired-integrations (0000030)
     - "setup all stops at roo-code and TOOL_* values carry over (backlog 0000087)"
     - "opencode setup.ps1 passes a null skills folder (backlog 0000088)"
-    - "Live PowerShell CI covers test_setup.ps1 only. Stale-entry clean-up and retired flags have no live PowerShell test (TD-010, partly resolved in 0000031)"
+    - "Live PowerShell CI covers test_setup.ps1 only. The stale-entry clean-up and retired-flag branch run live under PowerShell 7 and 5.1 since 0000037 (TD-010, resolved)"
+    - "setup.ps1 writes a byte order mark under Windows PowerShell 5.1 through -Encoding UTF8 on some paths (backlog 0000203)"
     - "setup.ps1 ConvertTo-Json depth: PowerShell default depth is 2; using -Depth 10 workaround. If settings.json nesting exceeds depth 10, content will be truncated to string."
   quirks:
     - "setup.ps1 hook entries use forward-slash paths in command values — this matches Claude Code hook config expectations even on Windows"
@@ -107,7 +111,8 @@ quality:
     # BEGIN retired-integrations (0000030)
     - "Clean-up whole-folder deletion and matcher-only emit_event removal accepted as F6 (Q-012, backlog 0000090)"
     # END retired-integrations (0000030)
-    - "setup.ps1 stale-entry clean-up and retired-flag branch verified statically only. Write-SettingsFile runs live in the Windows CI job since 0000031 (Q-013)"
+    - "setup.ps1 stale-entry clean-up and retired-flag branch run live under PowerShell 7 and Windows PowerShell 5.1 since 0000037 (Q-013, resolved)"
+    - "On Windows Git Bash, mktemp -d returns /tmp paths that Node reads as C:\\tmp, so fixtures use pwd -W (Q-005, 0000037)"
     - "Write-SettingsFile writes UTF-8 without a BOM (Q-014)"
     - "cline.ps1's boot-file relocation (0000027-req-002) verified statically only, no pwsh available in this environment, same constraint as Q-006"
 
@@ -118,7 +123,9 @@ pipeline:
 
 metadata:
   createdAt: "2026-04-12"
-  updatedAt: "2026-08-08"
+  updatedAt: "2026-10-24"
+  # Updated by 0000037 (docs-agent) P6: recorded Windows PowerShell 5.1
+  # support, the git config exit check, and the live req-011 clean-up checks.
   # Updated by 0000027 (codegen-agent) P3: cline.sh/.ps1 boot file
   # relocated to .clinerules/00-planifest-boot.md (req-002), verified via a
   # new regression test (RED before fix, GREEN after) that also confirmed

@@ -28,9 +28,9 @@ load_detection_corpus() {
     "make &> src/build.log"
     "printf x | tee src/a.js"
     "printf x | tee -a /tmp/ok.txt src/a.js"
-    "sed -i 's/a/b/' src/a.js"
+    "sed -i 's/a/b/' src/a.js" # portable-ok: payload string
     "sed -i.bak 's/a/b/' src/a.js"
-    "sed -i '' 's/a/b/' src/a.js"
+    "sed -i '' 's/a/b/' src/a.js" # portable-ok: payload string
     "perl -pi -e 's/a/b/' src/a.js"
     "perl -i.bak -pe 's/a/b/' src/a.js"
     "cp /tmp/a.js src/a.js"
@@ -131,7 +131,7 @@ assert_contains "src/a.js" "$ERR" "req-008: the reason names the root-relative t
 assert_contains "No confirmed design" "$ERR" "req-008: the reason carries the evaluateWrite reason"
 assert_contains "Write or Edit" "$ERR" "req-008: the reason points to Write or Edit"
 
-run_guard "$ROOT" "sed -i 's/a/b/' src/a.js"
+run_guard "$ROOT" "sed -i 's/a/b/' src/a.js" # portable-ok: payload string
 assert_contains "sed" "$ERR" "req-008: the reason names the writer"
 
 run_guard "$ROOT" "cd src && echo x > a.js"
@@ -178,13 +178,13 @@ for cmd in \
   "cd /tmp && touch x" \
   "cd build && make > log.txt" \
   "cd src/app && npm test > test.log" \
-  'cd src/app && sed -i "" s/a/b/ index.js' \
   "cd src && cd app && touch index.js" \
   "ls && cd build && touch out.o" \
   "cd src/app && { touch a.js; }" \
   "cd src/app && (touch a.js)" \
   "true || false && cd build && touch out.o" \
-  "cd src/other; cd /tmp && touch x"; do
+  "cd src/other; cd /tmp && touch x" \
+  'cd src/app && sed -i "" s/a/b/ index.js'; do # portable-ok: payload string
   run_guard "$SCOPED" "$cmd"
   assert_equals "0" "$CODE" "req-008: N-1 passes with a design: $cmd"
   assert_equals "" "$ERR" "req-008: N-1 writes no stderr: $cmd"

@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000036-pipeline-friction-and-gate-fixes (23 Oct 2026)
+Last updated: 0000037-green-ci-before-ship (24 Oct 2026)
 
 ---
 
@@ -144,16 +144,24 @@ Self-modification sequencing (ADR-004) governs how such a change is applied to h
 
 ## Continuous integration (0000031)
 
-`.github/workflows/planifest.yml` runs four jobs on every pull request to `main`.
+`.github/workflows/planifest.yml` runs five jobs on every pull request to `main`.
 
 | Job | Runner | What it checks |
 |-----|--------|----------------|
 | `validate-branch` | `ubuntu-latest` | A change under `src/` also touches `plan/`, `docs/`, or a `component.yml` |
 | `self-description-check` | `ubuntu-latest` | The README matches the repository structure (0000019) |
-| `test-suite` | `ubuntu-latest` and `macos-latest`, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
+| `test-suite` | `ubuntu-latest`, `macos-latest`, and `windows-latest` under Git Bash in seven shards, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
 | `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.planifest-setup-flags` marker checks |
+| `setup-powershell-51` | `windows-latest`, Windows PowerShell 5.1 | `test_setup.ps1` passes under 5.1, including the live stale clean-up and retired-flag checks (0000037) |
 
-The `test-suite` and `setup-powershell` jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Both declare `permissions: contents: read` and `timeout-minutes: 10` (0000031-ADR-003). Windows PowerShell 5.1 has no CI coverage (0000031-ADR-001).
+These three test jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Each declares `permissions: contents: read`, no secrets, and the `pull_request` trigger (0000031-ADR-003).
+
+Feature 0000037 changed the platform matrix (ADR-012, ADR-013, and ADR-014 of that feature):
+
+- Windows PowerShell 5.1 is a supported runtime for `setup.ps1`, tested by `setup-powershell-51`.
+- The suite runs on Windows under Git Bash. `run-tests.sh` reads `PLANIFEST_SHARD_INDEX` and `PLANIFEST_SHARD_COUNT`, so the Windows leg runs in seven shards.
+- Each Windows shard has `timeout-minutes: 20`. Every other job keeps 10.
+- A suite check that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`.
 
 A red check doesn't block a merge until branch protection marks it as required. Only the human on the loop can change that setting.
 
@@ -380,6 +388,42 @@ Every hard-limit citation reads `the {name} rule ({source} Hard Limit {N})` (000
 
 ---
 
+## Green CI before ship (0000037)
+
+Feature 0000037 makes a red check visible before the human on the loop merges. The CI jobs and platform matrix sit in the Continuous integration section above.
+
+### Credential scan and scan-then-commit
+
+`scripts/credential-scan.mjs` is the one home for the credential rules (0000037-ADR-003). It applies the P8 refused file names and patterns, and also runs `gitleaks` when it is on PATH. It scans each path's index blob and its working-tree file. It exits 0 for clean, 1 for a match, and 2 when it could not run. It prints a path and line number and never the matched text. It never stops a commit. The agent does, under a standing rule in `standards/autonomous-run-standards.md`.
+
+In `autonomous`, every commit in P7 to P9 follows scan-then-commit. The `--safe-paths` mode writes only the clean paths to a NUL-separated file. The commit names that file with `--pathspec-from-file`. A matched file is held back, logged as `Credential scan (P{N}): held back {path}`, and raised as exception item 7. A resumed run reads those lines and never stages a held-back path until the human on the loop clears it.
+
+Ship writes the PR title and body to files, scans each with `--file`, and sends them with `--body-file` (0000037-ADR-004). PR text cites paths and IDs and never holds pasted output.
+
+### P9 CI check and draft-PR reuse
+
+P9 gains Step 10c (0000037-ADR-002). It runs `gh pr checks {n} --json name,bucket,link` every 30 seconds for 20 minutes, or 30 minutes while the Windows 20-minute cap applies. It judges from the JSON and never from the exit status. `cancel`, a timed-out check, an empty list, and any unmapped bucket read as unknown, never as a pass. In `autonomous`, a red check gets up to 3 fix attempts on the feature branch. Each attempt commits under scan-then-commit and pushes without force. After the third failure, the agent writes `Exception waiting (P9, 6)` and runs `gh pr ready --undo`. Any result other than all passed writes `Progress: P9 blocked`.
+
+Step 10 first looks for an open PR with `gh pr view --json number,url,isDraft,state`. If the P3 draft PR exists and its `state` is `OPEN`, Step 10 updates it with `gh pr edit --body-file` and never raises a second. A resumed P9 reads `PR: #{n}` from the archived build log.
+
+### GUTD step 5
+
+`planifest-overrides/instructions/custom-003-git-up-to-date-shorthand.md` gains step 5 (0000037-ADR-005). After the untracked-files report, it reads the checks of the newest merged PR into `main` and reports them as "the last merged PR's checks". It is read-only and does not wait. It never says "main is green". The workflow trigger stays `pull_request`.
+
+### Post-P6 revalidation
+
+The docs agent revalidates after the P6 commit and before it reports P6 complete (0000037-ADR-006). It runs the `command` from `planifest-overrides/doc-checks.yml` when valid, else P4 steps 0 to 5. It writes one `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}` line. In `autonomous`, the revalidation runs as a loop with a cap of 3 cycles. It then tries up to 3 approaches before it becomes exception item 6. Outside `autonomous`, the cap stays at 5 with the `VALIDATION BLOCKED` escalation.
+
+### Verified by field and P3 scan
+
+Each acceptance criterion carries `Verified by` with one of six types: `unit`, `integration`, `contract`, `e2e`, `execution`, or `manual` (0000037-ADR-007). An indented `Verified by:` line governs over inline text. A requirement file without the field stays valid and reads as `unspecified`. Before P3 closes, the codegen agent maps each requirement ID to a test. It also checks the declared type against the `# Verified by: {type}` header comment of the mapped suite (0000037-ADR-008). `execution` and `manual` are deferred to P4. The P4 coverage table gains a `Type` column.
+
+### Portability lint
+
+A lint suite flags tool use that differs between GNU and BSD systems, such as `grep -r` without `-H` and bare `shasum` (0000037-ADR-011). A rule matches only in command position. A `# portable-ok: {reason}` marker silences one line. `helpers/assert.sh` gains `sha256_of`, which tries `sha256sum` and falls back to `shasum -a 256`. Two further suites test the installed hook commands verbatim through `bash -c` (0000037-ADR-009). They also compare the re-run-setup migration's file list with the diff since the previous `v*` tag (0000037-ADR-010).
+
+---
+
 ## Data Ownership
 
 No components own persistent data. Planifest operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.planifest-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `planifest-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `planifest-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
@@ -469,6 +513,15 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-010 (0000036):** Hard limits are cited by name and source.
 - **ADR-011 (0000036):** A split step runs before a fourth acceptance criterion.
 - **ADR-012 (0000036):** Commit subjects hold no placeholders.
+- **ADR-002 (0000037):** P9 polls the PR's checks, reuses an open PR, and in `autonomous` fixes a red check up to 3 times.
+- **ADR-003 (0000037):** One script, `credential-scan.mjs`, holds the credential rules. Skill text enforces the stop.
+- **ADR-004 (0000037):** PR text is scanned from files and sent from the same files.
+- **ADR-005 (0000037):** GUTD reads the last merged PR's checks and keeps the `pull_request` trigger.
+- **ADR-006 (0000037):** Post-P6 revalidation runs after the P6 commit and caps at 3 cycles in `autonomous`.
+- **ADR-007 (0000037):** `Verified by` takes six values, and an indented line governs.
+- **ADR-012 (0000037):** Windows PowerShell 5.1 is a supported runtime. Amends **ADR-001 (0000031)**.
+- **ADR-013 (0000037):** The suite runs on Windows under Git Bash with a fix-or-skip rule. Amends **ADR-001 (0000031)**.
+- **ADR-014 (0000037):** The Windows shards get a 20-minute cap. Amends **ADR-003 (0000031)** for those shards.
 
 ---
 

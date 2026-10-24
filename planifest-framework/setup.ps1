@@ -408,6 +408,30 @@ function Merge-EnforcementHookSettings {
     }
 }
 
+function ConvertTo-PlanifestHashtable {
+    # Windows PowerShell 5.1 has no ConvertFrom-Json -AsHashtable (PowerShell 6+
+    # only). Convert the parsed PSCustomObject tree to hashtables and arrays so
+    # 5.1 and 7 give the same result. Scalars pass through unchanged.
+    param($InputObject)
+
+    if ($null -eq $InputObject) { return $null }
+    if ($InputObject -is [System.Management.Automation.PSCustomObject]) {
+        $table = @{}
+        foreach ($property in $InputObject.PSObject.Properties) {
+            $table[$property.Name] = ConvertTo-PlanifestHashtable -InputObject $property.Value
+        }
+        return $table
+    }
+    if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
+        $items = @()
+        foreach ($item in $InputObject) {
+            $items += , (ConvertTo-PlanifestHashtable -InputObject $item)
+        }
+        return , $items
+    }
+    return $InputObject
+}
+
 function Merge-AllowedTools {
     # Idempotently add "Agent" to allowedTools in .claude/settings.json (REQ-002).
     # Preserves existing allowedTools entries — additive merge only.
@@ -418,8 +442,9 @@ function Merge-AllowedTools {
     $settings = @{}
     if (Test-Path $SettingsPath) {
         $raw = Get-Content -Raw -Path $SettingsPath -Encoding UTF8
-        $settings = $raw | ConvertFrom-Json -AsHashtable -ErrorAction SilentlyContinue
-        if (-not $settings) { $settings = @{} }
+        $parsed = $raw | ConvertFrom-Json -ErrorAction SilentlyContinue
+        $settings = ConvertTo-PlanifestHashtable -InputObject $parsed
+        if (-not ($settings -is [hashtable])) { $settings = @{} }
     }
 
     $existing = if ($settings.ContainsKey('allowedTools') -and $settings['allowedTools']) {
@@ -758,8 +783,28 @@ function Invoke-PlanifestGuardrails {
     Write-Host "  Activating Planifest Git Guardrails"
 
     # Point Git to the version-controlled hooks directory
-    git config core.hooksPath planifest-framework/hooks
-    Write-Host "  + git config core.hooksPath planifest-framework/hooks"
+    # Windows PowerShell 5.1 turns native stderr into a terminating error under
+    # $ErrorActionPreference = 'Stop'. Outside a git repository, git config writes
+    # "fatal: not in a git directory", so relax the preference for this call only.
+    $savedErrorAction = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $hooksPathSet = $false
+    try {
+        # Reset first so a stale exit code from an earlier native command cannot read as success.
+        $global:LASTEXITCODE = 0
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            git config core.hooksPath planifest-framework/hooks 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $hooksPathSet = $false } else { $hooksPathSet = $true }
+        }
+    } finally {
+        $ErrorActionPreference = $savedErrorAction
+    }
+    if (-not $hooksPathSet) {
+        # Match setup.sh: warn and carry on, but never report guardrails as active.
+        Write-Host "  ! Warning: could not set core.hooksPath, the commit-msg hook is not active"
+    } else {
+        Write-Host "  + git config core.hooksPath planifest-framework/hooks"
+    }
 
     # Note: chmod is not available on Windows; hooks are made executable by setup.sh on Unix.
     # On Windows, Git for Windows respects the executable bit stored in the repo,
@@ -794,7 +839,9 @@ function Invoke-PlanifestGuardrails {
         }
     }
 
-    Write-Host "  `u{2705} Git guardrails activated."
+    if ($hooksPathSet) {
+        Write-Host "  $([char]0x2705) Git guardrails activated."
+    }
 }
 
 function Initialize-PlanifestRepo {

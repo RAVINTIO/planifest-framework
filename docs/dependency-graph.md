@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last updated:** 0000036-pipeline-friction-and-gate-fixes (23 Oct 2026). `planifest-framework` is at 0.34.0. `skill-drift-check.mjs` and `em-dash-guard.mjs` now import `path-rules.mjs`. No component dependency changed.
+**Last updated:** 0000037-green-ci-before-ship (24 Oct 2026). `planifest-framework` is at 0.35.0. The new `credential-scan.mjs` depends on `git` and an optional `gitleaks`. `run-tests.sh` reads the shard variables. No component dependency changed.
 **Maintained by:** planifest-docs-agent
 
 ---
@@ -9,7 +9,7 @@
 
 ```mermaid
 graph TD
-    subgraph "planifest-framework (component-pack, 0.34.0)"
+    subgraph "planifest-framework (component-pack, 0.35.0)"
         SKILLS["skills/ (orchestrator + phase agents)"]
         STANDARDS["standards/, templates/"]
         ENFORCE["hooks/enforcement/\n(gate-write, check-design,\nem-dash-guard)"]
@@ -18,6 +18,8 @@ graph TD
         SCRIPTS["scripts/\n(archive-current, stream-reconcile,\nrun-mode, 0000033)"]
         SPR["scripts/set-product-release.mjs\n(P7 product.yml update, 0000035)"]
         SDC["scripts/skill-drift-check.mjs\n(warn-only drift check, 0000036)"]
+        CSCAN["scripts/credential-scan.mjs\n(pre-commit and PR text scan, 0000037)"]
+        RUNTESTS["tests/run-tests.sh\n(shard selection, 0000037)"]
         EDG["hooks/enforcement/em-dash-guard.mjs\n(Write/Edit)"]
         RATCHET["hooks/enforcement/ratchet-check.mjs\n(Write/Edit, armed while a loop is active)"]
         PATHRULES["hooks/enforcement/path-rules.mjs\n(gated-path rules, repository root,\nlink resolution, scope record,\nshared module, always installed, 0000032/0000035)"]
@@ -41,6 +43,9 @@ graph TD
 
     subgraph "System Tools (runtime deps)"
         NODE["node (required, sole runtime)"]
+        GIT["git (staged and index reads)"]
+        GITLEAKS["gitleaks (optional)"]
+        SHARDENV["PLANIFEST_SHARD_INDEX,\nPLANIFEST_SHARD_COUNT\n(CI environment)"]
     end
 
     CC -->|"plans Write/Edit call"| HookRunner
@@ -69,6 +74,11 @@ graph TD
     SKILLS -->|"orchestrator runs in Resume Detection"| SDC
     SDC -.->|"imports shown"| PATHRULES
     SDC --- NODE
+    SKILLS -->|"ship skill and autonomous standard call"| CSCAN
+    CSCAN --- NODE
+    CSCAN -->|"reads index blobs and staged paths"| GIT
+    CSCAN -.->|"runs when on PATH"| GITLEAKS
+    RUNTESTS -->|"reads"| SHARDENV
     HookRunner -->|"PreToolUse Write/Edit"| EDG
     EDG -.->|"imports shown"| PATHRULES
     EDG -.->|"imports"| ENFSHARED
@@ -97,6 +107,8 @@ graph TD
 - `path-rules.mjs` still imports Node built-ins only and no `node:child_process` (0000035-ADR-001). It now also reads `plan/.fast-path-scope` and git state from `.git` files.
 - `planifest-framework`'s `hooks/enforcement/shell-write-guard.mjs` → Claude Code's Bash PreToolUse hook runner (0000032-ADR-006): `setup.sh` and `setup.ps1` register it for Claude Code only. Other tools don't run it.
 - `planifest-ship-agent` and `planifest-orchestrator` → three scripts in `planifest-framework/scripts/` (0000033). The ship agent calls `archive-current.mjs` at P7 and `run-mode.mjs` for the effective run mode. The orchestrator calls `stream-reconcile.mjs` after each join and `run-mode.mjs` after P0. The scripts use Node built-ins and `git`. All of this stays inside `planifest-framework`, so no component dependency changed.
+- `planifest-ship-agent` and the autonomous standard → `credential-scan.mjs` (0000037-ADR-003, ADR-004): the ship skill calls it for the P8 and Step 10b guards and for PR text in `--file` mode. `standards/autonomous-run-standards.md` orders every `autonomous` commit to call it first. The script imports Node built-ins only (0000037-ADR-001). It spawns `git` and, when `gitleaks` is on PATH, `gitleaks`. A missing `gitleaks` falls back to the regex rules. All of this stays inside `planifest-framework`, so no component dependency changed.
+- `run-tests.sh` → shard variables (0000037-ADR-014): it reads `PLANIFEST_SHARD_INDEX` and `PLANIFEST_SHARD_COUNT` from the CI environment and clears both after reading. With neither set, it runs every suite.
 - `planifest-refresh-setup` (0000020) -> `setup-hook-integration`: two-way relationship via the `.planifest-setup-flags` marker file. `setup.sh`/`setup.ps1` write it on every successful install (producer); the refresh skill reads it for reconstruction and writes to it again before deletion (consumer and secondary writer of the same file, ADR-002). The refresh skill also re-invokes `setup.sh`/`setup.ps1` directly once flags are confirmed, and calls `refresh-delete-boot-files.sh`/`.ps1` (its own hardcoded deletion script, not a dependency on `setup-hook-integration`).
 
 ---

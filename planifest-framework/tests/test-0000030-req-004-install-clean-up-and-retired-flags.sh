@@ -43,7 +43,7 @@ make_workspace() {
 fingerprint() {
   (cd "$1" && find . -path ./.git -prune -o -type f -print | LC_ALL=C sort | while IFS= read -r f; do
     printf '%s ' "$f"
-    grep -v '"writtenAt"' "$f" | shasum | cut -d' ' -f1
+    grep -v '"writtenAt"' "$f" | sha256_of
   done)
 }
 
@@ -263,10 +263,10 @@ echo "=== req-004 / NFR-004: malformed settings.json stays byte-identical, exit 
 WS=$(make_workspace)
 seed_claude_stale_state "$WS"
 printf '{ "hooks": { "PreToolUse": [ broken\n' > "$WS/.claude/settings.json"
-sum_before=$(shasum "$WS/.claude/settings.json" | cut -d' ' -f1)
+sum_before=$(sha256_of "$WS/.claude/settings.json")
 out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
 assert_exit_zero $? "malformed: setup exits 0"
-sum_after=$(shasum "$WS/.claude/settings.json" | cut -d' ' -f1)
+sum_after=$(sha256_of "$WS/.claude/settings.json")
 assert_equals "$sum_before" "$sum_after" "malformed: settings.json byte-identical"
 assert_contains ".claude/settings.json is not valid JSON" "$out" "malformed: file named in output"
 assert_contains "JSON" "$(printf '%s\n' "$out" | grep 'not valid JSON' | head -1)" "malformed: parse error printed"
@@ -297,10 +297,10 @@ echo "=== P5 F1: malformed opencode.json stays byte-identical, exit 0 ==="
 
 WS=$(make_workspace)
 printf '{ "plugins": [ broken\n' > "$WS/opencode.json"
-sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+sum_before=$(sha256_of "$WS/opencode.json")
 out=$(cd "$WS" && bash planifest-framework/setup.sh opencode 2>&1)
 assert_exit_zero $? "malformed opencode.json: setup exits 0"
-assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+assert_equals "$sum_before" "$(sha256_of "$WS/opencode.json")" \
   "malformed opencode.json: file byte-identical"
 assert_contains "opencode.json is not valid JSON" "$out" "malformed opencode.json: warning names the file"
 assert_contains "Setup complete." "$out" "malformed opencode.json: rest of install finishes"
@@ -322,10 +322,10 @@ if PATH="$NO_NODE_PATH" command -v node >/dev/null 2>&1; then
 else
   WS=$(make_workspace)
   printf '{ "plugins": [ broken\n' > "$WS/opencode.json"
-  sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+  sum_before=$(sha256_of "$WS/opencode.json")
   out=$(cd "$WS" && PATH="$NO_NODE_PATH" bash planifest-framework/setup.sh opencode 2>&1)
   assert_exit_zero $? "opencode without node: setup exits 0"
-  assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+  assert_equals "$sum_before" "$(sha256_of "$WS/opencode.json")" \
     "opencode without node: malformed opencode.json byte-identical"
   assert_contains "opencode.json" "$(printf '%s\n' "$out" | grep '^  !' || true)" \
     "opencode without node: warning names opencode.json"
@@ -343,10 +343,10 @@ fi
 # leave a malformed file alone and exit 0.
 WS=$(make_workspace)
 printf 'not json at all\n' > "$WS/opencode.json"
-sum_before=$(shasum "$WS/opencode.json" | cut -d' ' -f1)
+sum_before=$(sha256_of "$WS/opencode.json")
 out=$(cd "$WS" && bash planifest-framework/setup/opencode.sh 2>&1)
 assert_exit_zero $? "opencode.sh alone, malformed: exits 0"
-assert_equals "$sum_before" "$(shasum "$WS/opencode.json" | cut -d' ' -f1)" \
+assert_equals "$sum_before" "$(sha256_of "$WS/opencode.json")" \
   "opencode.sh alone, malformed: file byte-identical"
 rm -rf "$WS"
 
@@ -403,8 +403,16 @@ out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
 assert_exit_zero $? "linked parent: setup exits 0"
 assert_equals "yes" "$(yes_no exists "$OUTSIDE/.telemetry-failures/sentinel.txt")" \
   "linked parent: folder outside the project is not deleted"
-assert_contains "plan/.telemetry-failures resolves outside the project" "$out" \
-  "linked parent: refusal is reported"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash ln -s copies the folder instead of linking it, so no link points outside the project.
+    echo "  SKIP (windows): ln -s makes a copy under Git Bash, so the linked parent cannot be built"
+    ;;
+  *)
+    assert_contains "plan/.telemetry-failures resolves outside the project" "$out" \
+      "linked parent: refusal is reported"
+    ;;
+esac
 rm -rf "$WS" "$OUTSIDE"
 
 # PowerShell twin (static)
@@ -429,7 +437,15 @@ else
   trap 'chmod 755 "$LOCKED" 2>/dev/null' EXIT
   out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
   assert_exit_zero $? "undeletable folder: setup exits 0"
-  assert_contains "could not remove .claude/hooks/telemetry" "$out" "undeletable folder: warning printed"
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      # chmod 555 does not block deletes on NTFS, so the delete succeeds and no warning prints.
+      echo "  SKIP (windows): chmod 555 does not block deletes on NTFS, so the undeletable folder cannot be built"
+      ;;
+    *)
+      assert_contains "could not remove .claude/hooks/telemetry" "$out" "undeletable folder: warning printed"
+      ;;
+  esac
   assert_contains "Setup complete." "$out" "undeletable folder: rest of install finishes"
   chmod 755 "$LOCKED"
   trap - EXIT
@@ -457,7 +473,15 @@ out=$(cd "$WS" && bash planifest-framework/setup.sh claude-code 2>&1)
 assert_exit_zero $? "0600 settings: setup exits 0"
 assert_contains "block-grep.mjs" "$out" "0600 settings: clean-up rewrote the file"
 mode=$(node -e 'console.log((require("fs").statSync(process.argv[1]).mode & 0o777).toString(8))' "$WS/.claude/settings.json")
-assert_equals "600" "$mode" "0600 settings: mode 0600 kept after the rewrite"
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # NTFS has no POSIX mode bits, so chmod 600 never sticks and stat reports 666.
+    echo "  SKIP (windows): NTFS has no POSIX mode bits, so mode 0600 cannot be set or read back"
+    ;;
+  *)
+    assert_equals "600" "$mode" "0600 settings: mode 0600 kept after the rewrite"
+    ;;
+esac
 assert_equals "0" "$(find "$WS/.claude" -name '*.planifest-tmp*' | wc -l | tr -d ' ')" \
   "0600 settings: no temporary file left behind"
 rm -rf "$WS"

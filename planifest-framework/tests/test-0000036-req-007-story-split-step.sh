@@ -26,7 +26,8 @@ SPEC="$FRAMEWORK/skills/planifest-spec-agent/SKILL.md"
 CRITIC="$FRAMEWORK/skills/planifest-design-critic/SKILL.md"
 LOOP="$FRAMEWORK/skills/planifest-loop-runner/SKILL.md"
 
-TMP="$(mktemp -d)"
+# Node reads the Git Bash path /tmp/x as C:\tmp\x, so use the Windows form where pwd -W exists.
+TMP="$(cd "$(mktemp -d)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$TMP"' EXIT
 
 has() { grep -qF -- "$2" "$1" 2>/dev/null && echo yes || echo no; }
