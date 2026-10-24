@@ -1,6 +1,6 @@
 ---
 title: "Scope - green CI before ship"
-summary: "Defines what 0000037 delivers, what it leaves out, and that nothing is deferred."
+summary: "Defines what 0000037 delivers, what it leaves out, and what it defers."
 status: "draft"
 version: "0.1.0"
 ---
@@ -8,7 +8,7 @@ version: "0.1.0"
 
 **Skill:** [spec-agent](../../planifest-framework/skills/planifest-spec-agent/SKILL.md)
 **Feature:** 0000037-green-ci-before-ship
-**Version:** 0.34.0
+**Version:** 0.35.0
 
 > Release size exceeds the three-story rule, with no `release-budget.yml`. The human on the loop confirmed eleven stories from ten backlog entries as one run.
 
@@ -35,3 +35,8 @@ version: "0.1.0"
 ## Deferred
 
 Nothing deferred.
+
+Amended (P1): two items are deferred.
+
+- Backlog 0000193 tracks a gap in P9. The Step 11 push of `final-report.md` starts a CI run on a head that P9 never reads. Until 0000193 lands, the check covers only the head that P9 reads.
+- Backlog 0000199 tracks a gap in CI. CI fetches no tags, so the tag check in req-008 skips until 0000199 lands.

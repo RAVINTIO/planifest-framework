@@ -21,7 +21,7 @@
   - US-011: As a framework maintainer, I see `setup.ps1` run under Windows PowerShell 5.1, and the stale clean-up and retired-flag paths run live under PowerShell, so that Windows defects fail in CI. (0000092, 0000094)
 - Acceptance criteria confirmed: 11 (one per brief criterion. P1 expands each story to up to 3.)
 - Constraints:
-  - CI keeps the `pull_request` trigger only (0000031 ADR 003). GUTD reads the checks of the last merged PR through `gh pr list --state merged --base main --limit 1` and `gh pr checks`, not a `main` run.
+  - CI keeps the `pull_request` trigger only (0000031 ADR 003). GUTD reads the checks of the last merged PR through `gh pr list --state merged --base main --limit 10 --json number,url,title,mergedAt`, picking the newest `mergedAt`, and `gh pr checks`, not a `main` run.
   - New CI jobs stay in this repository's workflow (0000031 ADR 002). Each keeps `permissions: contents: read`, no secrets, and `timeout-minutes: 10`.
   - The agent never merges and never pushes to `main`.
   - Windows PowerShell 5.1 becomes a supported runtime for `setup.ps1`. A new ADR amends 0000031 ADR 001.

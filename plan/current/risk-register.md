@@ -8,7 +8,7 @@ version: "0.1.0"
 
 **Skill:** [spec-agent](../../planifest-framework/skills/planifest-spec-agent/SKILL.md) (updated by any agent that identifies a new risk)
 **Feature:** 0000037-green-ci-before-ship
-**Version:** 0.34.0
+**Version:** 0.35.0
 **Overall Risk Level:** medium
 
 > Every entry is specific to this feature. R-001 to R-005 come from the Risks section of `design.md`. R-006 onward are added by the spec agent.
@@ -20,7 +20,7 @@ version: "0.1.0"
 | R-001 | technical | The Git Bash leg fails many suites on its first run. | high | medium | Fix or skip each failing suite, and record the reason for each skip, per backlog 0000093. | open |
 | R-002 | technical | Windows PowerShell 5.1 differs from PowerShell 7 in encoding and JSON handling, so `setup.ps1` behaves differently on each. | medium | medium | Guard each difference in `setup.ps1`, and test each guard under PowerShell 5.1 (req-011). | open |
 | R-003 | operational | The credential scan flags false positives and stops an `autonomous` run. | medium | low | The stop names the file and line. The human on the loop clears the match. | open |
-| R-004 | operational | `gh pr checks --watch` waits on a slow or queued runner. | medium | low | Cap the wait at 20 minutes, then report the remaining checks as pending. | open |
+| R-004 | operational | Polling `gh pr checks` waits on a slow or queued runner. | medium | low | Poll every 30 seconds for at most 20 minutes, then report the remaining checks as pending (req-001). | open |
 | R-005 | operational | Eleven stories in one run stretch P3 and P4. | medium | medium | Split the work into parallel streams by file ownership. | open |
 | R-006 | security | A cancelled or timed-out check reads as a pass, so a red PR reads as done. | low | high | Map `cancelled` and timed-out conclusions to unknown, never to pass. Add a suite case for each conclusion (req-001, req-002). | open |
 | R-007 | operational | A check status that `gh` cannot read lets the run finish with a red PR unseen. | medium | high | Report the unreadable status, and the run does not read as done. The assumption text in A-001 conflicts with this rule, so the Architecture Layer rule applies. | open |
@@ -29,16 +29,17 @@ version: "0.1.0"
 | R-010 | security | A scan log line copies the matched credential into `plan/current/build-log.md`, which the run commits. | low | high | Each `Credential scan (P{N})` line names the file and line only, never the matched value (req-003, req-004). | open |
 | R-011 | security | A new CI job gains secrets or broader permissions than the workflow allows. | low | high | Each new job keeps `permissions: contents: read`, no secrets, and `timeout-minutes: 10`, per 0000031-ADR-003 (req-010, req-011). | open |
 | R-012 | compliance | The Windows legs run before the ADR that amends 0000031-ADR-001 exists, so CI contradicts a recorded decision. | low | medium | Write the amending ADR before the code for req-010 and req-011. | open |
-| R-013 | operational | The three Windows legs add CI minutes to every PR. | medium | low | Keep `timeout-minutes: 10` on each leg, which caps the cost at 30 minutes per PR. | open |
+| R-013 | operational | The two new Windows legs add CI minutes to every PR. | medium | low | Keep `timeout-minutes: 10` on each new job, which caps the cost at 20 minutes per PR. If R-023 raises the Git Bash cap to 20 minutes, the cost rises to 30 minutes per PR. | open |
 | R-014 | operational | The consumer workflow copy at `planifest-framework/hooks/planifest.yml` stays unchanged, so consumer projects get no new CI check. | high | medium | Keep the change out of scope, as the design states. The human on the loop decides any later change. | open |
 | R-015 | technical | The portability lint flags legitimate tool use or misses a GNU and BSD difference. | medium | low | Add suite cases for a flagged form and an allowed form. Name `grep -r` without `-H` as the first rule (req-009). | open |
 | R-016 | technical | The wired-command test passes on macOS and fails on Windows, because it depends on path separators or the working directory. | medium | medium | Run the command string as `setup.sh` writes it. Run every suite from any working directory (req-007, req-009). | open |
-| R-017 | technical | The migration branch-diff test cannot read the release diff in CI without the base ref, so the test passes by skipping. | medium | medium | The suite fails when the base ref is absent. The CI checkout fetches the base ref (req-008). | open |
-| R-018 | operational | The P3 requirement-ID scan blocks P3 close on a requirement that has no test type, such as a docs-only requirement. | medium | low | The scan reads the "Verified by" field only. A requirement with no test type records a reason (req-006). | open |
-| R-019 | operational | Post-P6 revalidation reruns the P4 checks on docs-only commits, adding time and surfacing late failures. | medium | low | Rerun the full P4 check set. Write each rerun to the `Revalidation (P6)` build-log line (req-005). | open |
+| R-017 | technical | The migration branch-diff test cannot read the release diff in CI, because CI fetches no tags, so the test passes by skipping. | medium | medium | The test prints `SKIP` and exits 0 when the base tag is absent (req-008). CI skips until backlog 0000199 makes it fetch tags. Run the suite locally with tags present to get the real result. | open |
+| R-018 | operational | The P3 requirement-ID scan blocks P3 close on a requirement with no mapped test, such as a docs-only requirement. | medium | low | The scan maps each requirement ID to its tests. A criterion with no `Verified by` field skips the type check and keeps the ID check (req-006). A docs-only requirement uses `manual` with a one-line reason. | open |
+| R-019 | operational | Post-P6 revalidation reruns checks on docs-only commits, adding time and surfacing late failures. | medium | low | Run the product's doc-check command when `planifest-overrides/doc-checks.yml` declares one. Otherwise rerun P4 steps 0 to 5. Write each rerun to the `Revalidation (P6)` build-log line (req-005). | open |
 | R-020 | operational | The P9 fix-and-push loop pushes up to three times and adds three CI runs, and a flaky test can read as green on the last attempt. | low | medium | Stop after three attempts, then raise an exception-list item. Log each attempt in the build log (req-001). | open |
 | R-021 | operational | P9 reads the checks of a different PR, because the PR number is missing or wrong. | low | medium | Write the PR number to the build log before the wait. Read checks for that number only (req-001). | open |
 | R-022 | operational | The GUTD check reports the last merged PR's checks as the state of `main`, when a commit landed on `main` without a PR. | low | medium | The GUTD report names the PR number it read, so the human on the loop sees which PR the result covers (req-002). | open |
+| R-023 | operational | The Git Bash leg passes its 10-minute cap. A timeout reads as `cancel`, so the PR never reads as done. | medium | high | P3 measures the first run. If the leg passes 10 minutes, an ADR raises that leg's cap to 20 minutes and amends 0000031 ADR 003 for that leg only. Sharding is the second fallback. The new suites also add time to the macOS leg, which has about 2.5 minutes of headroom (req-010). | open |
 
 ## Assumptions Logged as Risks
 

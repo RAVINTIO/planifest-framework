@@ -130,6 +130,9 @@ Streams (start commit `c8b1036`):
 - Deviation (P1, unclassified): backlog 0000193 and 0000199 move to Deferred in `design.md`, `scope.md`, and the brief, and the brief's goal now covers the head P9 read / reason: the critic found both gaps sat nowhere in the confirmed artifacts.
 - Decision (P1): a corrected criterion gets an indented `Amended (P1):` line, and each criterion gets an indented `Verified by: {type} - {detail}` line / reason: the armed ratchet blocks changes to existing criterion lines.
 - Decision (P1): if the Git Bash leg passes 10 minutes, an ADR raises that leg's cap to 20 minutes and amends 0000031 ADR 003 for that leg only / reason: a timeout reads as unknown, so the PR would never read as done.
+- P1 iteration 1 fixes: five agents fixed every major and minor finding by file owner. The orchestrator fixed `design.md` and the brief, and aligned the GUTD lookup to `--limit 10` with the newest `mergedAt`.
+- Decision (P1): new risk R-023 for the Git Bash cap / reason: the P3 measurement is the only control, so the risk needs a row.
+- Decision (P1): a criterion with both `Verified by` forms must name the same type / reason: added by the req-006 fix agent, and it keeps the scan unambiguous.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.

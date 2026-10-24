@@ -40,7 +40,7 @@ Functional requirements are split into individual files, one user story per file
 | NFR-002 | Performance | Each new CI job finishes within its cap | `timeout-minutes: 10` on every new job | Workflow file and the req-010 and req-011 suites |
 | NFR-003 | Security | New CI jobs hold no secrets and read only | `permissions: contents: read`, no `secrets.` reference, `pull_request` trigger only (0000031 ADR 003) | Workflow file and the req-010 and req-011 suites |
 | NFR-004 | Security | The credential scan never prints a matched value | 0 matched values in script output, build-log lines, or PR text | req-003 and req-004 suites with a planted test credential |
-| NFR-005 | Reliability | The suite passes from any starting directory | 0 of 130 suites fail from the repository root, `planifest-framework/tests/`, or a temporary directory | req-009 suite |
+| NFR-005 | Reliability | Every suite passes from any starting directory | 0 suites fail from the repository root, `planifest-framework/tests/`, or a temporary directory. Baseline: 130 suites before this feature. | req-009 suite |
 
 ## API Summary
 

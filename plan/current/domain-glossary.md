@@ -8,7 +8,7 @@ version: "0.1.0"
 
 **Skill:** [spec-agent](../../planifest-framework/skills/planifest-spec-agent/SKILL.md) (updated by any agent that introduces a new domain term)
 **Feature:** 0000037-green-ci-before-ship
-**Version:** 0.34.0
+**Version:** 0.35.0
 
 > Terms come from `design.md`, `feature-brief.md`, and `discovery.md`. Concepts without a clear name are listed after the table.
 
@@ -17,15 +17,15 @@ version: "0.1.0"
 | Term | Definition | Aliases | Used In |
 |------|-----------|---------|---------|
 | P9 CI check | The check in the ship skill's Step 10. It waits for the PR's checks after `gh pr create` and reports each result before the final report. | P9 check | planifest-framework |
-| Last merged PR's checks | The check results of the most recent pull request merged into `main`. The GUTD check reads them through `gh pr list --state merged --base main --limit 1` and `gh pr checks`. | last merged PR checks | planifest-framework |
+| Last merged PR's checks | The check results of the most recent pull request merged into `main`. The GUTD check reads them through `gh pr list --state merged --base main --limit 10 --json number,url,title,mergedAt`, picking the newest `mergedAt`, and `gh pr checks`. | last merged PR checks | planifest-framework |
 | GUTD CI check | The step in the GUTD instruction that reads the last merged PR's checks and reports them. | | planifest-framework |
 | Pending check | A check that is still running when the P9 wait reaches 20 minutes. P9 reports it as pending, never as a pass. | | planifest-framework |
-| Unknown check status | The state of a check whose conclusion is `cancelled` or timed out, or whose status `gh` cannot read. It reads as unknown, never as a pass. | unknown | planifest-framework |
+| Unknown check status | The state of a check whose bucket is `cancel`, a timed-out check, or any value outside the mapped buckets. It reads as unknown, never as a pass. | unknown | planifest-framework |
 | Red-check handling | The rule that P9 writes the PR number to the build log before it waits. On a failing check, P9 fixes the check on the feature branch and pushes again, up to three attempts. | | planifest-framework |
-| Exception-list item | The entry the ship agent raises for the human on the loop when a check stays red after three fix attempts. | | planifest-framework |
+| Exception-list item | The entry the ship or docs agent writes for the human on the loop when a step cannot finish. Items 6 and 7 cover a red check after three fix attempts and a credential sighting. A revalidation failure after three approaches also raises one. | | planifest-framework |
 | Credential scan | A scan of text for credentials. It runs the P8 credential patterns always, and `gitleaks` when it is installed. | credential patterns | planifest-framework |
 | Pre-commit credential scan | The credential scan of staged files that an `autonomous` run performs before each commit and push. | pre-commit scan | planifest-framework |
-| Held-back push | A push that the pre-commit credential scan stops after a match. The run stops at the match, and the push waits until the human on the loop clears it. | | planifest-framework |
+| Held-back push | A commit and push that the pre-commit credential scan stops after a match. The files stay staged. The run finishes work that does not depend on them, and the push waits until the human on the loop clears the match. | | planifest-framework |
 | PR body scan | The credential scan of the pull request body that runs before `gh pr create`. | | planifest-framework |
 | Post-P6 revalidation | The rerun of the P4 checks after the P6 docs edits. It stops a docs change from breaking a green check before ship. | revalidation | planifest-framework |
 | Doc-check command | A command that a product declares in `planifest-overrides/`. Post-P6 revalidation runs it when the product declares one. | | planifest-framework |
@@ -51,4 +51,4 @@ version: "0.1.0"
 ## Concepts without a clear name
 
 - **Timed-out check.** The design uses "timed-out" for a check whose job reaches its `timeout-minutes` limit. The design uses "pending" for a check that the P9 wait does not finish within 20 minutes. This glossary keeps the two terms separate.
-- **Unreadable status.** The design lists an unreadable status with the `cancelled` conclusion under unknown. No separate term names an unreadable status. This glossary treats it as part of the unknown check status until the human on the loop names it.
+- **Unreadable status.** The requirements report an unreadable status as its own result, `could not be read`. It is separate from the unknown check status, so this glossary keeps the two terms apart.

@@ -22,7 +22,7 @@ As a framework maintainer, I see the suite run on Windows under Git Bash, so tha
 - Run time risk: Git Bash forks slowly, so the Windows leg may pass 10 minutes. Run 40012567385 shows `Test suite (macos-latest)` at 7 minutes 36 seconds and ubuntu at 3 minutes 28 seconds. The new suites from req-007 to req-011 also add time to the macOS leg, which has about 2.5 minutes of headroom.
 - Measurement and fallback for P3:
   - P3 measures the Git Bash leg's run time on its first CI run, and also reads the macOS leg's time.
-  - If the Git Bash leg passes 10 minutes, P2 or P3 raises that one leg's `timeout-minutes` to 20. An ADR in block ADR-012 to ADR-014 records the change and amends 0000031 ADR 003 for that leg only. The ubuntu and macOS legs keep 10.
+  - If the Git Bash leg passes 10 minutes, P2 or P3 raises that one leg's `timeout-minutes` to 20. A new ADR from stream 04's P2 block records the change and amends 0000031 ADR 003 for that leg only. The ubuntu and macOS legs keep 10.
   - If 20 minutes is not enough, or the macOS leg nears its cap, P3 shards the suite across jobs. Sharding is the second fallback.
   - A timeout reads as `cancel`, which req-001 maps to unknown, so the PR would never read as done. This is why the measurement comes first.
 - The existing `setup-powershell` job stays as it is. Its PowerShell 7 version check keeps `0000031` tests green.
@@ -49,7 +49,7 @@ As a framework maintainer, I see the suite run on Windows under Git Bash, so tha
 ## Dependencies
 
 - req-009 (stream-03) edits many of the same suite files for working-directory independence and the portability lint. P3 sequences the edits to one file by one owner, and the join step reconciles them.
-- 0000031 ADR 001 (platform matrix), ADR 002 (repository-only jobs), and ADR 003 (job security posture). ADR 003 may be amended for the Windows leg only, through an ADR in block ADR-012 to ADR-014.
+- 0000031 ADR 001 (platform matrix), ADR 002 (repository-only jobs), and ADR 003 (job security posture). ADR 003 may be amended for the Windows leg only, through a new ADR from stream 04's P2 block.
 - Q-005 in `src/setup-hook-integration/docs/quirks.md` (Windows `mktemp` paths).
 
 Split step: keep. The requirement holds one concern, a green Windows Git Bash leg. The fix-or-skip rule and the skip record are the means to reach it, and nobody could ship them apart from the leg.
