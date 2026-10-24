@@ -29,6 +29,7 @@ As a framework maintainer, I see `setup.ps1` run under Windows PowerShell 5.1, a
   - The retired flag does not appear in `.claude\.planifest-setup-flags`.
 - The section runs under both PowerShell 7 and Windows PowerShell 5.1, because both jobs run `test_setup.ps1`.
 - A new test, `planifest-framework/tests/test-0000037-req-011-windows-powershell-coverage.sh`, checks the workflow text for the new job and checks `test_setup.ps1` text for the seed, the flag run, and the four assertions. `src/setup-hook-integration/docs/quirks.md` Q-013 records that the clean-up now runs live, and Q-006 and Q-008 stay as they are.
+- The 5.1 leg verifies on the draft PR's CI run, not at P9. The orchestrator raises that draft PR once P3 pushes its first code commit, and each later push runs CI on it. P3 fixes any 5.1 failure before P4.
 - Windows PowerShell 5.1 has no `pwsh`-only syntax in the touched files. The guard that the discovery notes mention near line 709 of `setup.ps1` is a comment about reparse points, so no code guard needs a change.
 
 Split step: keep. Backlog 0000092 and 0000094 share one outcome, that `setup.ps1` runs live under PowerShell on Windows with its clean-up path covered, and 0000094 alone adds no job. The requirement holds three criteria. Neither half ships alone in a useful form, because the clean-up test only proves the 5.1 claim if it runs in the 5.1 leg.
@@ -36,6 +37,7 @@ Split step: keep. Backlog 0000092 and 0000094 share one outcome, that `setup.ps1
 ## Acceptance Criteria
 
 - [ ] The workflow holds a `setup-powershell-51` job on `windows-latest` with `shell: powershell`, `permissions: contents: read`, `timeout-minutes: 10`, no secrets, and a version check that fails unless the major version is 5. The `Setup under Windows PowerShell 5.1` check passes on the feature PR. (Verified by: static workflow-text test, then CI run read through `gh pr checks`)
+  - Amended (P1): the `Setup under Windows PowerShell 5.1` check passes on the draft PR's CI run for the P4 head commit, not first at P9.
   - Verified by: integration - shell suite over the workflow text, then the CI run read through `gh pr checks`
 - [ ] `test_setup.ps1` seeds a stale `settings.json` entry, a stale hook folder, and a hand-added hook, runs `setup.ps1 claude-code --context-mode-mcp`, and asserts the exit code, the single notice, the clean-up, the surviving hook, and the clean marker. Both the PowerShell 7 job and the 5.1 job pass it. (Verified by: live PowerShell run in CI, and a static test of the `test_setup.ps1` text)
   - Amended (P1): the single-notice assertion matches one output line that contains the substring `--context-mode-mcp was removed in 0.29.0 and has no effect`, not an exact line.

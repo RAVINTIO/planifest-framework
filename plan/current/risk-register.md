@@ -17,7 +17,7 @@ version: "0.1.0"
 
 | ID | Category | Description | Likelihood | Impact | Mitigation | Status |
 |----|----------|------------|------------|--------|-----------|--------|
-| R-001 | technical | The Git Bash leg fails many suites on its first run. | high | medium | Fix or skip each failing suite, and record the reason for each skip, per backlog 0000093. | open |
+| R-001 | technical | The Git Bash leg fails many suites on its first run on the draft PR, which the orchestrator raises after P3's first code commit. | high | medium | Fix or skip each failing suite, and record the reason for each skip, per backlog 0000093. Each later push reruns CI on the draft PR, so P3 sees the result before P4. | open |
 | R-002 | technical | Windows PowerShell 5.1 differs from PowerShell 7 in encoding and JSON handling, so `setup.ps1` behaves differently on each. | medium | medium | Guard each difference in `setup.ps1`, and test each guard under PowerShell 5.1 (req-011). | open |
 | R-003 | operational | The credential scan flags false positives and stops an `autonomous` run. | medium | low | The stop names the file and line. The human on the loop clears the match. | open |
 | R-004 | operational | Polling `gh pr checks` waits on a slow or queued runner. | medium | low | Poll every 30 seconds for at most 20 minutes, then report the remaining checks as pending (req-001). | open |
@@ -39,7 +39,8 @@ version: "0.1.0"
 | R-020 | operational | The P9 fix-and-push loop pushes up to three times and adds three CI runs, and a flaky test can read as green on the last attempt. | low | medium | Stop after three attempts, then raise an exception-list item. Log each attempt in the build log (req-001). | open |
 | R-021 | operational | P9 reads the checks of a different PR, because the PR number is missing or wrong. | low | medium | Write the PR number to the build log before the wait. Read checks for that number only (req-001). | open |
 | R-022 | operational | The GUTD check reports the last merged PR's checks as the state of `main`, when a commit landed on `main` without a PR. | low | medium | The GUTD report names the PR number it read, so the human on the loop sees which PR the result covers (req-002). | open |
-| R-023 | operational | The Git Bash leg passes its 10-minute cap. A timeout reads as `cancel`, so the PR never reads as done. | medium | high | P3 measures the first run. If the leg passes 10 minutes, an ADR raises that leg's cap to 20 minutes and amends 0000031 ADR 003 for that leg only. Sharding is the second fallback. The new suites also add time to the macOS leg, which has about 2.5 minutes of headroom (req-010). | open |
+| R-023 | operational | The Git Bash leg passes its 10-minute cap. A timeout reads as `cancel`, so the PR never reads as done. | medium | high | P3 measures the leg on the draft PR's first CI run. If the leg passes 10 minutes, P3 raises that leg's cap to 20 minutes under the conditional ADR that P2 wrote, which amends 0000031 ADR 003 for that leg only. Sharding is the second fallback. The new suites also add time to the macOS leg, which has about 2.5 minutes of headroom (req-010). | open |
+| R-024 | operational | The draft PR shows the human on the loop an unfinished branch while P3 to P9 run. | low | low | The PR stays in draft state. Its body says P3 to P9 are in progress. P9 Step 10 marks it ready. | open |
 
 ## Assumptions Logged as Risks
 
@@ -49,7 +50,7 @@ Documented assumptions from the specification are logged here with likelihood: m
 |----|-----------|----------------|--------|
 | A-001 | `gh` is installed and signed in wherever P9 and GUTD run. | The check reports that it could not run. The design's assumption text says the run carries on, but the Architecture Layer says the run does not read as done (see R-007). | open |
 | A-002 | `gitleaks` may be absent. | Only the regex patterns run, so recall is lower (see R-008). | open |
-| A-003 | Windows runners have Git Bash and Windows PowerShell 5.1 preinstalled. | The new Windows legs need an install step. | open |
+| A-003 | Windows runners have Git Bash and Windows PowerShell 5.1 preinstalled. | The new Windows legs need an install step. The draft PR's first CI run shows this at P3. | open |
 | A-004 | `gh run list --branch main` returns no usable conclusion, so GUTD reads the last merged PR's checks instead. | None, because the design does not read a `main` run. | open |
 | A-005 | `gh run list` returns a usable conclusion for every `pull_request` run. | P9 and GUTD find no result to report. | open |
 | A-006 | `.github/workflows/planifest.yml` triggers on `pull_request` only. | A future `push` trigger makes the merged-PR lookup redundant, but not wrong. | open |
