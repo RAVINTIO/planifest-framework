@@ -2,7 +2,7 @@
 stream-id: "stream-04-boot"
 kind: stream
 start-commit: "7fe3f98"
-status: active
+status: at-join
 phase: P3
 requirements: [req-007]
 stories: [US-007]
@@ -15,11 +15,15 @@ updated: "2026-10-24T20:10:16Z"
 
 | Phase | Start | End | Subagents | Result |
 |-------|-------|-----|-----------|--------|
-| P3 | 2026-10-24T20:10:16Z | pending | 1 | pending |
+| P3 | 2026-10-24T20:10:16Z | 2026-10-24T20:16:00Z | 1 | at-join |
 
 ## Files changed
 
-- pending
+- planifest-framework/templates/standard-boot.md
+- planifest-framework/tests/test-0000038-req-007-partial-reads.sh
+- planifest-framework/migrations/migrate-0.36.0-rerun-setup.md
+- planifest-framework/tests/test-0000035-req-007-migration-run-state.sh
+- planifest-framework/tests/test-0000035-req-010-migration-records-for-this-repo.sh
 
 ## Declares
 
@@ -32,4 +36,4 @@ updated: "2026-10-24T20:10:16Z"
 
 ## Next step
 
-Build req-007 through the TDD loop, then draft `migrate-0.36.0-rerun-setup.md` per ADR-007. The P6 recheck finalises its file list.
+Wait at the P3 join. req-007 is GREEN (RED exit 1, GREEN exit 0). The migration draft waits for the P6 recheck of its file list. `test-0000037-req-008-migration-branch-diff.sh` fails until the other streams' files land and P6 finalises the list.

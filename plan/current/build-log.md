@@ -169,3 +169,6 @@ Decision (P3): four streams. stream-01-orchestrator holds req-004 then req-005. 
 Decision (P3): streams form at P3, not P1 / reason: P1 and P2 ran as one track before the toggle resolved
 Decision (P3): each stream runs its own suites and the suites its files touch, not the full suite, during TDD. P4 runs the full suite over the joined tree / reason: four streams share one working tree, so a full run mid-edit would read another stream's half-made change
 Decision (P3): the ship agent sets the 0.36.0 version at P9 / reason: `set-product-release.mjs` owns the version bump
+Stream (P3): stream-04-boot at join. req-007 RED exit 1, GREEN exit 0. Commits `a35b0b8` and `9b85d49`.
+Decision (P3): stream-04 tests the boot template with an md5 of every line except the new directive / reason: no other line can change unnoticed
+Decision (P3): the orchestrator points the 0000035 req-007 and req-010 migration suites at the 0.36.0 migration and raises their counts from ten to eleven / reason: 0000037 made the same change for 0.35.0, and the 0.35.0 migration now has its record
