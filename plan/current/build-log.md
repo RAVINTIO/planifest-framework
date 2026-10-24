@@ -246,6 +246,7 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - W4b returned batch 3: `setup.ps1` replaces `ConvertFrom-Json -AsHashtable` with a `ConvertTo-PlanifestHashtable` helper on both versions, and no other PowerShell 6+ feature was found. `run-tests.sh` gains `PLANIFEST_SHARD_INDEX` and `PLANIFEST_SHARD_COUNT`. The workflow runs four Windows shards at a 20-minute cap. req-010 RED exit 1 (22 passed, 10 failed), GREEN exit 0 (32). Shard 1 of 4 ran 36 of 141 suites locally and passed.
 - Decision (P3): the Windows suite outcomes are fix for `0000016`, `0000017-req-002`, `0000023-req-003`, and `0000028-req-002`, and skip for one `0000025-req-004` check (`chmod 555` doesn't block writes on NTFS) / reason: the ADR-013 fix-or-skip rule.
 - Decision (P3): the ratchet `expected 2, actual 0` failures trace to `mktemp -d` returning `/tmp/x`, which Node reads as `C:\tmp\x`, outside the fixture root. The fixtures now use `pwd -W` / reason: the cause sits in the suites. CI confirms or refutes it.
+- Full local suite (macOS) after batch 3: 108 of 108 feature suites and 33 of 33 regression suites pass.
 Requirement-ID scan (P3): 11 requirements, 0 unmapped
 - Type check (P3): every new suite carries a `# Verified by:` header (11 integration, 2 unit, 1 e2e). Criteria declared `execution` are deferred to P4.
 - Decision (P3): `planifest-framework/component.yml` moves to 0.35.0 with feature `0000037-green-ci-before-ship` / reason: the codegen close-out rule for framework changes.
