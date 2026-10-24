@@ -1,7 +1,7 @@
 ---
 title: "Loop State: cross_model_review-p6"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: cross_model_review-p6
 
@@ -15,11 +15,11 @@ status: "active"
 | Loop id | `cross_model_review` |
 | Owning phase | `P6` |
 | Toggle level | `on` (autonomous default) |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
-| Last updated | `2026-10-24T21:56:00Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-24T22:05:49Z` |
 
 ---
 
@@ -38,6 +38,12 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Action:** a fresh-context reviewer on `claude-opus-5-5` checked the iteration 1 fixes in `78430f9` and re-reviewed the full diff. The implementing agents ran on `claude-sonnet-5-5`. Verdict in `plan/current/cross-model-review-iteration-2.md`.
 - **Observation:** REJECT, 0 critical, 1 major, 2 minor. M-2, m-1, m-2, m-3, and m-5 are fixed, and backlog 0000235 holds m-4. M-1 is partly fixed: the per-gate Skill Map update and the interactive `Gate accepted:` line still load only at P0. The moved blocks stay byte-identical. `SKILL.md` is 41,281 bytes. The suite passes 152 of 152.
 - **Decision:** continue: the M-1 gap shrank from three rules to two, so the no-progress rule doesn't fire. Add both rules to the `SKILL.md` pointer, then a fresh reviewer instance re-reviews in iteration 3.
+
+### Iteration 3 (2026-10-24T22:05:49Z)
+- **Approach:** 1
+- **Action:** a fresh-context reviewer on `claude-opus-5-5` checked the iteration 2 fix in `4f9347a` and the CRLF size-check fix in `2875f40`, then re-reviewed the full diff. The implementing agents ran on `claude-sonnet-5-5`. Verdict in `plan/current/cross-model-review-iteration-3.md`.
+- **Observation:** APPROVE, 0 critical, 0 major, 4 minor. M-1, m-1, and m-2 from iteration 2 are fixed. Every post-P0 rule in the Phase 0 file has post-P0 coverage. The moved blocks stay byte-identical. `SKILL.md` is 41,391 bytes. The CRLF fix measures committed LF bytes and doesn't weaken the size check. The suite passes 152 of 152.
+- **Decision:** done: the pass condition is met, so P7 may begin.
 
 ---
 
