@@ -233,15 +233,36 @@ Progress: P4 done at 2026-10-24T21:10:44Z: 152 suites green locally and on 13 CI
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T21:10:44Z` |
-| End | pending |
-| Wall-clock | pending |
+| End | `2026-10-24T21:15:55Z` |
+| Wall-clock | 5 |
 | Streams | n/a |
 | Model tier | primary (`sonnet`) |
 | Skills loaded | planifest-security-agent |
-| Agents spawned | pending |
+| Agents spawned | 2 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 0 |
 | Notes | none |
 
 Security (P5): overall risk Low. No critical, high, or medium finding. Five low findings (L1 to L5) and two informational notes, recorded in `plan/current/security-report.md`.
 Security re-review (P5): RESOLVED. Commit `2a981af` fixes L4 on Windows PowerShell 5.1 and 7, adds no new risk, and two static checks pin it. L1 and L5 are filed as backlog 0000233. L2 and L3 match the design. See `plan/current/security-rereview.md`.
+Fix (P5): commit `2a981af` adds `-Encoding UTF8` to both `Get-Content` reads in `setup.ps1`. The new static checks went RED exit 1, then GREEN exit 0.
+Deviation (P5, unclassified): the L4 fix also changes the existing `SKILL.md` read in `setup.ps1`, which had the same encoding bug before this feature.
+Backlog filed (P5): 0000233 holds L1 (quiet trap misses `HUP`) and L5 (silent setup rewrite failures).
+Decision (P5): L2 and L3 stay as built / reason: the warm-up is the design's intent and a hook that is slow on every run still fails, and the boot and `CLAUDE.md` files sit under the 20 KB line
+Gate (P5): passed. Risk Low with no critical, high, or medium finding. The fresh re-review marked L4 resolved.
+Progress: P5 done at 2026-10-24T21:15:55Z: risk Low, one low finding fixed and re-reviewed, two filed as backlog 0000233
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T21:15:55Z` |
+| End | pending |
+| Wall-clock | pending |
+| Streams | n/a |
+| Model tier | cheaper (`haiku`) for docs, primary for the checks |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | pending |
+| MCP calls | 0 |
+| Parallel task batches | pending |
+| Notes | none |
