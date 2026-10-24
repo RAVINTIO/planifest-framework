@@ -52,6 +52,16 @@ assert_contains "tracked held-back file needs no unstage" "$STC" "req-003: step 
 assert_contains "If the out-file is empty, skip the commit." "$STC" "req-003: step 5 skips the commit on an empty list"
 assert_contains "--pathspec-from-file" "$STC" "req-003: step 6 commits from the safe list"
 assert_contains "--pathspec-file-nul" "$STC" "req-003: step 6 reads the safe list as NUL-separated"
+assert_contains "git --literal-pathspecs commit" "$STC" "req-003 N-12: step 6 commits with literal pathspecs"
+assert_contains "git --literal-pathspecs add" "$STC" "req-003 N-12: step 6 stages with literal pathspecs"
+assert_contains "git --literal-pathspecs restore --staged -- {path}" "$STC" "req-003 N-12: step 4 unstages with literal pathspecs"
+assert_contains "git --literal-pathspecs rm --cached -- {path}" "$STC" "req-003 N-12: step 4 handles no-commit with literal pathspecs"
+assert_contains "glob" "$STC" "req-003 N-12: the standard gives the reason in one sentence"
+assert_contains "other than \`0\` or \`1\`" "$STC" "req-003 N-14: any other scan exit counts as exit 2"
+assert_contains "\`126\`" "$STC" "req-003 N-14: the example is exit 126"
+assert_contains "mktemp -d" "$STC" "req-003 N-14: the out-file sits in a fresh mktemp -d folder"
+assert_contains "outside the repository" "$STC" "req-003 N-14: the out-file sits outside the repository"
+assert_contains "Remove the folder" "$STC" "req-003 N-14: the folder is removed after the commit or the skip"
 lacks "Then scan again" "$STC" "req-003: the rescan loop is gone"
 lacks "Unstage it once" "$STC" "req-003: the unstage-once text is gone"
 assert_contains "no \`git commit\` and no \`git push\`" "$PCS" "req-003: the standard keeps the hold-back phrase"
@@ -61,7 +71,19 @@ for h in '### Step 7' '### P8: Clean-tree check' '### P9 marker step' '### Step 
   B="$(step "$h" "$SHIP")"
   assert_contains "scan-then-commit" "$B" "req-003: $h cites scan-then-commit"
   assert_contains "--pathspec-from-file" "$B" "req-003: $h commits from the safe list"
+  assert_contains "git --literal-pathspecs commit" "$B" "req-003 N-12: $h commits with literal pathspecs"
+  # Every autonomous add or commit that reads the safe list is literal.
+  assert_equals "0" "$(grep -E 'git (add|commit) .*--pathspec-from-file' <<<"$B" | grep -c -v -F 'git --literal-pathspecs')" "req-003 N-12: $h has no non-literal safe-list command"
 done
+P9B="$(step '### P9 marker step' "$SHIP")"
+RMFIRST="$(grep -n -F 'rm -f plan/.orchestrator-active' <<<"$P9B" | head -1 | cut -d: -f1)"
+assert_equals "#" "$(sed -n "$((RMFIRST + 2))p" <<<"$P9B" | cut -c1)" "req-003 N-13: the old path-list line in the block is a comment"
+assert_contains "interactive and continuous reference" "$(sed -n "$((RMFIRST + 2))p" <<<"$P9B")" "req-003 N-13: the old path-list commit is labelled for interactive and continuous"
+assert_contains "git --literal-pathspecs commit --pathspec-from-file=" "$(sed -n "$((RMFIRST + 3))p" <<<"$P9B")" "req-003 N-13: the command the block runs is the autonomous commit"
+assert_equals "0" "$(sed -n "$((RMFIRST + 1)),\$p" <<<"$P9B" | grep -v '^#' | grep -c -F 'git ls-tree --name-only HEAD --')" "req-003 N-13: no executable line holds the old path-list form"
+assert_contains "git --literal-pathspecs restore --staged -- {path}" "$P9B" "req-003 N-12: the marker step unstages with literal pathspecs"
+assert_contains "git --literal-pathspecs restore --staged -- {path}" "$(step '### Step 7' "$SHIP")" "req-003 N-12: Step 7 unstages with literal pathspecs"
+assert_contains "git --literal-pathspecs add" "$(step '### P8: Clean-tree check' "$SHIP")" "req-003 N-12: the P8 guard stages with literal pathspecs"
 STEP7="$(step '### Step 7' "$SHIP")"
 lacks "{held-back-path}" "$STEP7" "req-003: Step 7 no longer unstages the old plan/current/ path"
 assert_contains "--safe-paths" "$STEP7" "req-003: Step 7 runs the safe-paths mode"
@@ -91,21 +113,21 @@ scan_then_commit() {
     while IFS= read -r p; do
       [ -n "$p" ] || continue
       # Unstage only a path that is staged as a new file. A tracked file needs no unstage.
-      if (cd "$repo" && git ls-files --error-unmatch -- "$p" >/dev/null 2>&1) \
+      if (cd "$repo" && git --literal-pathspecs ls-files --error-unmatch -- "$p" >/dev/null 2>&1) \
          && ! (cd "$repo" && git cat-file -e "HEAD:$p" 2>/dev/null); then
         if (cd "$repo" && git rev-parse --verify -q HEAD >/dev/null); then
-          (cd "$repo" && git restore --staged -- "$p")
+          (cd "$repo" && git --literal-pathspecs restore --staged -- "$p")
         else
-          (cd "$repo" && git rm -q --cached -- "$p")
+          (cd "$repo" && git --literal-pathspecs rm -q --cached -- "$p")
         fi
       fi
     done <<<"$HELD"
   fi
   if [ ! -s "$outf" ]; then return 3; fi
   if [ "$stage" = "yes" ]; then
-    (cd "$repo" && git add --pathspec-from-file="$outf" --pathspec-file-nul) || return 4
+    (cd "$repo" && git --literal-pathspecs add --pathspec-from-file="$outf" --pathspec-file-nul) || return 4
   fi
-  (cd "$repo" && git commit -q -m "$msg" -m "0000001-x" --pathspec-from-file="$outf" --pathspec-file-nul) || return 5
+  (cd "$repo" && git --literal-pathspecs commit -q -m "$msg" -m "0000001-x" --pathspec-from-file="$outf" --pathspec-file-nul) || return 5
   return 0
 }
 
@@ -271,6 +293,40 @@ assert_equals "docs/.env.local" "$HELD" "req-003: the unstaged key file is parse
 assert_equals "docs/ok.md" "$(cd "$R" && git show --name-only --format= HEAD)" "req-003: the commit names only the clean leftover"
 assert_contains "?? docs/.env.local" "$(cd "$R" && git status --porcelain --untracked-files=all)" "req-003: the key file stays untracked"
 no_key_in_history "$R" "req-003: unstaged" ".env.local"
+
+IS_WIN=no
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;; esac
+
+# key_fragments <repo> <rev:path>: counts lines of a committed file that hold part of the key.
+# It prints a number only, never the key.
+key_fragments() { (cd "$1" && git show "$2" 2>/dev/null | grep -c -F "${SECRET:4:8}"); }
+
+# glob_fixture <label> <held-back tracked name> <safe untracked name>
+# The safe name is a glob that also matches the held-back tracked file (N-12).
+glob_fixture() {
+  local label="$1" held="$2" safe="$3"
+  R="$(new_repo "$label")"
+  printf 'const h = 1;\n' >"$R/$held"
+  (cd "$R" && git add -- "$held" && git commit -q -m "add held")
+  printf 'const h = 1;\nconst k = "%s";\n' "$SECRET" >"$R/$held"
+  printf 'const s = 1;\n' >"$R/$safe"
+  CANDS=("$held" "$safe")
+  scan_then_commit "$R" "fix(p9): glob names" stage "${CANDS[@]}"
+  assert_equals "0" "$?" "req-003 N-12: the $label commit succeeds"
+  assert_equals "$held" "$HELD" "req-003 N-12: the scan holds back $held"
+  assert_equals "$safe" "$(cd "$R" && git show --name-only --format= HEAD)" "req-003 N-12: the $label commit names only $safe"
+  assert_equals "0" "$(key_fragments "$R" "HEAD:$held")" "req-003 N-12: HEAD:$held holds no key"
+  assert_equals "0" "$(cd "$R" && git log --all -p | grep -c -F "${SECRET:4:8}")" "req-003 N-12: no commit in the $label history holds a key fragment"
+  assert_contains "$SECRET" "$(cat "$R/$held")" "req-003 N-12: the key stays in the working-tree copy of $held"
+}
+
+echo "req-003 N-12: a safe glob name must not commit a held-back tracked file"
+if [ "$IS_WIN" = "yes" ]; then
+  echo "  SKIP (windows): a Windows file name cannot hold an asterisk, so the a*.js fixture cannot be built"
+else
+  glob_fixture globstar ab.js 'a*.js'
+fi
+glob_fixture globbracket pagesi.js 'pages[id].js'
 
 echo "req-003: a scan exit 2 commits nothing"
 R="$(new_repo scanerr)"
