@@ -30,7 +30,7 @@ P9 gains Step 10c, after Step 10b and before Step 11.
 - **Judging.** The agent judges from the JSON and never from the exit status. A non-zero exit with valid JSON is data.
 - **Buckets.** `pass` is a pass. `fail` is red. `pending` is pending. `skipping` is skipped. `cancel`, a timed-out check, an empty list, and any other value read as unknown. Unknown never counts as a pass.
 - **Fix loop.** In `autonomous` only, a red check starts up to 3 fix attempts on the feature branch. Each attempt commits under the credential scan (ADR-003) and pushes without force. After the third failure, the agent writes `Exception waiting (P9, 6)` and runs `gh pr ready --undo {n}`. In `interactive` and `continuous`, a red check goes to the human on the loop in the Step 11 message.
-- **Existing PR.** Step 10 checks for an open PR with `gh pr view --json number,url,isDraft`. If one exists, it updates that PR with `gh pr edit --body-file` and never raises a second. It runs `gh pr ready` only when the build log holds no `Exception waiting` line.
+- **Existing PR.** Step 10 checks for an open PR with `gh pr view --json number,url,isDraft,state`, and reuses it only when `state` is `OPEN`. If one exists, it updates that PR with `gh pr edit --body-file` and never raises a second. It runs `gh pr ready` only when the build log holds no `Exception waiting` line.
 - **Tag.** Step 10 pushes the branch only. The agent pushes the `v{version}` tag after Step 10c. If fix commits land, it recreates the local tag at the new head first.
 - **Blocked.** Any result other than all passed writes `Progress: P9 blocked`. It never writes `P9 done`.
 

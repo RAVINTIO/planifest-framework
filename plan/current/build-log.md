@@ -356,14 +356,14 @@ Progress: P5 done at 2026-10-24T04:37:32Z: security report produced, every intro
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T04:38:05Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T11:15:33Z` |
+| Wall-clock | `397` (includes a pause by the human on the loop) |
 | Streams | `n/a` (joined) |
-| Model tier | cheaper (living docs, recommendations), primary (migration) |
-| Skills loaded | planifest-docs-agent |
-| Agents spawned | `pending` |
+| Model tier | primary (docs, migration, fixes on `claude-sonnet-5-5`), reviewers on `claude-opus-5-5` |
+| Skills loaded | planifest-docs-agent, planifest-reversal-assessor, planifest-loop-runner |
+| Agents spawned | `8` (3 docs, 1 deviation assessor, 2 cross-model reviewers, 2 fix agents) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` |
 | Notes | Gate A: `docs/` exists. Run mode from `run-mode.mjs`: autonomous. No `planifest-overrides/doc-checks.yml`, so post-P6 revalidation reruns P4 steps 0 to 5. |
 
 P6 Gate B: docs update assessment (continuous run, auto-accepted).
@@ -387,9 +387,15 @@ Exception waiting (P6, 2): confirm or reverse the held-back rule that a stopped 
 - Cross-model review (P6, iteration 1): REJECT, 0 critical, 1 major, 7 minor. Reviewer `claude-opus-5-5`, implementer `claude-sonnet-5-5`. M-1: req-003, ADR-003, and one req-003 test still describe the replaced held-back rule. The suite passes 142 of 142, and the migration list matches the release diff.
 - Human touchpoint (P6): the human on the loop paused the run and resumed it with "Go" [outside list]
 - Decision (P6): untracked `plan/backlog/0000230-token-efficiency-from-claude-code-usage-profile/` came from another project's session, not this run. This run won't commit or edit it, and the P8 and P9 clean-tree checks leave it out / reason: this run didn't produce it, so committing it would add another session's work to this PR.
-- Fix (P6, cross-model iteration 1): req-003 and ADR-003 now describe scan-then-commit, `--safe-paths`, and the `held back {path}` line. The GUTD fields in req-002, ADR-005, and `design.md` drop `title`. The risk register statuses match the outcomes. In shipped text, the held-back fixture acts out the unstage, Hard Limit 7 points at scan-then-commit, and Step 10 reuses a PR only when `state` is `OPEN`. 12 long sentences are split.
+- Fix (P6, cross-model iteration 1): req-003 and ADR-003 now describe scan-then-commit, `--safe-paths`, and the `held back {path}` line. The GUTD fields in req-002, ADR-005, and `design.md` drop `title`. The risk register statuses match the outcomes. In shipped text, the held-back fixture acts out the unstage. Hard Limit 7 points at scan-then-commit, and Step 10 reuses a PR only when `state` is `OPEN`. 12 long sentences are split.
 - Setup re-run (P6): the cross-model fixes changed two skills and the standard after the end-of-P6 setup, so `setup.sh claude-code --strict-orchestrator` ran again. It exited 0 with no warning, and the drift check reports all 21 skills matching.
 - Revalidation (P6): P4 steps 0 to 5, pass, cycle 3: 142 of 142 suites pass, and the consistency check is clean.
+- Cross-model review (P6, iteration 2): APPROVE, 0 critical, 0 major, 5 minor. Loop closed as `done` at 2026-10-24T11:09:42Z.
+- Fix (P6, after the loop): Hard Limit 7 now limits scan-then-commit to P7 to P9 and names `--pathspec-from-file` (n-3). req-001 and ADR-002 name the `state` field (n-1). The glossary drops `title` and the old staging text (n-2). Two long sentences are split (n-4), and three req-003 test names match the new rule (n-5).
+- Decision (P6): the P8 guard keeps "Refused files stay uncommitted, so a refused file stays uncommitted even after the guard runs" (m-4 leftover) / reason: the req-013 pair and the req-003 suite each assert one of the two phrases.
+- Setup re-run (P6, final): exit 0, drift check 21 skills matching. Revalidation (P6): P4 steps 0 to 5, pass, cycle 4: 142 of 142 suites pass, and the consistency check is clean.
+- Gate summary (P6): every living doc and both manifests updated, recommendations and changelog written, the 0.35.0 migration applied with its record, and the post-P6 revalidation green. The deviation review classed 3 deviations as altering, logged as exceptions. The cross-model review approved on iteration 2.
+Progress: P6 done at 2026-10-24T11:15:33Z: docs complete, cross-model review approved, 3 exceptions waiting
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).

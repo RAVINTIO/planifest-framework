@@ -458,7 +458,7 @@ assert_contains "index blob" "$STD_SEC" "req-003: standard names the index blob"
 assert_contains "working-tree file" "$STD_SEC" "req-003: standard names the working-tree file"
 assert_contains 'exit `1` or `2`' "$STD_SEC" "req-003: standard stops on exit 1 or 2"
 assert_contains "no \`git commit\` and no \`git push\`" "$STD_SEC" "req-003: standard holds back commit and push"
-assert_contains "stay staged" "$STD_SEC" "req-003: standard keeps files staged"
+assert_contains "stay staged" "$STD_SEC" "req-003: standard keeps clean staged files staged"
 assert_contains 'Credential scan (P{N}): held back {path}' "$STD_SEC" "req-003: standard names the held-back log line"
 assert_contains 'git restore --staged -- {path}' "$STD_SEC" "req-003: standard takes a held-back file out of the index"
 assert_contains 'Exception waiting (P{N}, 7): credential sighting in {path}:{line}' "$STD_SEC" "req-003: standard names the exception line"
@@ -480,7 +480,7 @@ assert_contains "stays uncommitted" "$GUARD" "req-003: P8 guard leaves the file 
 STEP10B="$(awk '/^### Step 10b/ { on = 1 } on && /^## / { exit } on { print }' "$SHIP")"
 assert_contains "credential-scan.mjs" "$STEP10B" "req-003: Step 10b guard calls the script"
 
-echo "req-003: a held-back file stays staged and shows in the clean-tree check"
+echo "req-003: a held-back file shows in the clean-tree check, then leaves the index"
 R="$(new_repo heldback)"
 # One base commit, so HEAD exists and step 4 uses git restore --staged.
 printf 'base\n' >"$R/base.txt"
@@ -493,7 +493,7 @@ assert_equals "1" "$RC" "req-003: the scan holds back a staged file with a crede
 lacks "$SECRET" "$OUT" "req-003: the held-back report prints no matched value"
 CLEAN="$(cd "$R" && git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**')"
 assert_contains "docs/leak.md" "$CLEAN" "req-003: the held-back file shows in the clean-tree check"
-assert_equals "A " "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: the held-back file stays staged"
+assert_equals "A " "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: the scan alone leaves the held-back file staged"
 # Act out scan-then-commit step 4: the agent unstages the held-back file.
 (cd "$R" && git --literal-pathspecs restore --staged -- docs/leak.md)
 RC=$?
