@@ -29,9 +29,12 @@ lacks() {
 # now_ms: wall-clock milliseconds, portable across macOS and Linux.
 now_ms() { perl -MTime::HiRes=time -e 'printf "%d\n", time * 1000'; }
 
-# run_hook <stdin>: sets OUT, CODE, and MS for one hook call.
+# run_hook <stdin>: sets OUT, CODE, and MS for one hook call. One untimed
+# warm-up call comes first and warms disk caches. The hook still starts as a
+# fresh Node process each time. The timed call runs once and never retries.
 run_hook() {
   local start end
+  printf '%s' "$1" | node "$HOOK" >/dev/null 2>&1
   start=$(now_ms)
   OUT=$(printf '%s' "$1" | node "$HOOK" 2>/dev/null)
   CODE=$?

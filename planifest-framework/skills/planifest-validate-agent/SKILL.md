@@ -47,7 +47,7 @@ Run the project's CI checks in this strict order:
    - If logic exists without a covering test, semantic validation fails.
 2. **Lint** - code style and static analysis
 3. **Type-check** - type system verification
-4. **Test** - unit tests, integration tests, contract tests (MUST pass and report the tracked req-IDs)
+4. **Test** - unit tests, integration tests, contract tests (MUST pass and report the tracked req-IDs). Run the full suite with `bash planifest-framework/tests/run-tests.sh --quiet`. If a suite fails, rerun only the failing suite in full with `bash {suite}`.
 5. **Build** - confirm the project compiles and builds cleanly
 
 6. **Verify by execution** (toggle `verify_by_execution`, default off; ADR-003): after all CI checks pass, load the `planifest-verify-by-execution` skill and verify acceptance criteria by running the software (browser click-through, real API calls, CLI invocation, log/file inspection). Reading test output alone never counts. A behavioural `failed` outcome is a validation failure and enters the self-correct cycle below (in `report-only` mode it is reported but does not gate). Results go to `plan/current/verification-report.md`. In `autonomous`, the toggle reads as `on` when absent, and this step runs after CI passes as the P4 checker (`standards/autonomous-run-standards.md`).

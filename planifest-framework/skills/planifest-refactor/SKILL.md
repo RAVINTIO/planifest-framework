@@ -16,7 +16,7 @@ hooks:
 
 1. Do **not** add new behaviour. Not even "useful" behaviour you notice is missing.
 2. Do **not** change test files, only implementation code.
-3. All tests MUST pass after your changes. Run the full suite. Confirm all green.
+3. All tests MUST pass after your changes. Run the full suite with `bash planifest-framework/tests/run-tests.sh --quiet`. If a suite fails, rerun only the failing suite in full with `bash {suite}`. Confirm all green.
 4. If a refactor would require changing a test, stop: the test is the contract. Escalate to the codegen-agent.
 5. Credentials are never in your context.
 6. Do not refactor code in other components: only the files touched by the current requirement's implementation.
@@ -42,9 +42,10 @@ Quality improvements out of scope: extracting shared utilities used by only one 
 2. **Apply** improvements incrementally, one concern at a time.
 3. **Run the full test suite** after each significant change:
    ```
-   bash planifest-framework/tests/run-tests.sh
+   bash planifest-framework/tests/run-tests.sh --quiet
    # or the appropriate full suite command for the stack
    ```
+   Quiet mode prints only `FAIL` lines, the failed-suite list, and the totals. If a suite fails, rerun only the failing suite in full with `bash {suite}`.
 4. **Confirm ALL GREEN**: every test in the suite must pass, not just the current requirement's test. If any test breaks, revert the last change and try a different approach.
 5. **Report** the refactor completion:
    ```

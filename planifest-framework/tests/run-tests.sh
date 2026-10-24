@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test runner for planifest-framework tests
-# Usage: bash planifest-framework/tests/run-tests.sh
+# Usage: bash planifest-framework/tests/run-tests.sh [--quiet]
 
 set -uo pipefail
 
@@ -49,10 +49,108 @@ in_shard() {
   [ $(( (POSITION - 1) % SHARD_COUNT )) -eq $((SHARD_INDEX - 1)) ]
 }
 
+# Quiet mode (ADR-004 in feature 0000038). With --quiet each suite runs with
+# its output captured to a temporary file. The runner prints only FAIL lines,
+# the failed-suite list, and the totals. A suite counts as failed when it
+# exits non-zero (a signal or an outside timeout included), when it prints a
+# FAIL: line and exits 0, or when the capture cannot be made or read. The
+# runner adds no timeout of its own.
+QUIET=0
+for arg in "$@"; do
+  [ "$arg" = "--quiet" ] && QUIET=1
+done
+
+CAPTURE=""
+RUNNING=""
+CHILD_PID=""
+
+# Prints each FAIL: line of a capture file, prefixed with the suite label.
+quiet_fail_lines() {
+  awk -v label="$1" '/^[[:space:]]*FAIL:/ { sub(/^[[:space:]]+/, ""); print label ": " $0 }' "$2" 2>/dev/null
+}
+
+quiet_cleanup() {
+  if [ -n "$CAPTURE" ]; then rm -f "$CAPTURE"; fi
+}
+
+# Runs on INT or TERM so a stopped runner still shows the suite that was running.
+quiet_on_signal() {
+  trap '' INT TERM
+  if [ -n "$CHILD_PID" ]; then kill "$CHILD_PID" 2>/dev/null; fi
+  if [ -n "$RUNNING" ]; then
+    local fails=""
+    if [ -n "$CAPTURE" ] && [ -r "$CAPTURE" ]; then fails="$(quiet_fail_lines "$RUNNING" "$CAPTURE")"; fi
+    if [ -n "$fails" ]; then
+      printf '%s\n' "$fails"
+    else
+      echo "$RUNNING: FAIL: $RUNNING was running when the runner stopped"
+    fi
+    FAILED_SUITES+=("$RUNNING")
+  fi
+  quiet_cleanup
+  if [ "${#FAILED_SUITES[@]}" -gt 0 ]; then
+    echo ""
+    echo "Failed suites:"
+    for failed in "${FAILED_SUITES[@]}"; do
+      echo "  $failed"
+    done
+  fi
+  exit $((128 + $1))
+}
+
+if [ "$QUIET" -eq 1 ]; then
+  trap quiet_cleanup EXIT
+  trap 'quiet_on_signal 2' INT
+  trap 'quiet_on_signal 15' TERM
+fi
+
+# run_suite_quiet <label> <file>: returns 0 when the suite passed, 1 when it failed.
+run_suite_quiet() {
+  local label="$1" file="$2" rc fails
+  CAPTURE="$(mktemp 2>/dev/null)" || CAPTURE=""
+  if [ -z "$CAPTURE" ] || [ ! -w "$CAPTURE" ]; then
+    CAPTURE=""
+    echo "$label: FAIL: $label could not create its capture file"
+    return 1
+  fi
+  RUNNING="$label"
+  bash "$file" >"$CAPTURE" 2>&1 &
+  CHILD_PID=$!
+  { wait "$CHILD_PID"; } 2>/dev/null
+  rc=$?
+  CHILD_PID=""
+  if [ ! -r "$CAPTURE" ]; then
+    echo "$label: FAIL: $label capture file could not be read"
+    CAPTURE=""; RUNNING=""
+    return 1
+  fi
+  fails="$(quiet_fail_lines "$label" "$CAPTURE")"
+  rm -f "$CAPTURE"
+  CAPTURE=""; RUNNING=""
+  if [ -n "$fails" ]; then
+    printf '%s\n' "$fails"
+    return 1
+  fi
+  if [ "$rc" -ne 0 ]; then
+    echo "$label: FAIL: $label exited $rc with no FAIL line"
+    return 1
+  fi
+  return 0
+}
+
 run_suite() {
   local file="$1"
   local name
   name="$(basename "$file")"
+  if [ "$QUIET" -eq 1 ]; then
+    if run_suite_quiet "$name" "$file"; then
+      TOTAL_PASS=$((TOTAL_PASS + 1))
+    else
+      TOTAL_FAIL=$((TOTAL_FAIL + 1))
+      FAILED_SUITES+=("$name")
+    fi
+    return
+  fi
   echo ""
   echo "--- $name ---"
   if bash "$file"; then
@@ -82,15 +180,26 @@ done
 REGRESSION_PASS=0
 REGRESSION_FAIL=0
 
-echo ""
-echo "=== Regression Suite ==="
+if [ "$QUIET" -eq 0 ]; then
+  echo ""
+  echo "=== Regression Suite ==="
+fi
 
 if [ ! -e "${REGRESSION_TESTS[0]}" ]; then
-  echo "  No regression tests yet."
+  [ "$QUIET" -eq 0 ] && echo "  No regression tests yet."
 else
   for regression_test in "${REGRESSION_TESTS[@]}"; do
     in_shard || continue
     name="$(basename "$regression_test")"
+    if [ "$QUIET" -eq 1 ]; then
+      if run_suite_quiet "regression/$name" "$regression_test"; then
+        REGRESSION_PASS=$((REGRESSION_PASS + 1))
+      else
+        REGRESSION_FAIL=$((REGRESSION_FAIL + 1))
+        FAILED_SUITES+=("regression/$name")
+      fi
+      continue
+    fi
     echo ""
     echo "--- $name ---"
     if bash "$regression_test"; then
