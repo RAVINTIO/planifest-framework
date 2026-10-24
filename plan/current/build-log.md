@@ -167,14 +167,14 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T00:33:53Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T00:44:23Z` |
+| Wall-clock | `10` |
 | Streams | `4` |
 | Model tier | primary |
 | Skills loaded | planifest-adr-agent, planifest-loop-runner, planifest-design-critic |
-| Agents spawned | `pending` |
+| Agents spawned | `7` (4 ADR, 3 critics) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | One ADR agent per stream, because ADRs in a stream cite each other. ADR-001 records the unchanged stack. |
 
 - Rule breach (P2): the orchestrator ran `sed -i` on the four stream files, against the Write-or-Edit rule (boot Hard Limit 8). It reverted the change with `git checkout` before any commit and made it again through Edit.
@@ -191,3 +191,6 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 - Decision (P2): the P3 type check compares the declared type with a `# Verified by: {type}` header in the mapped suite, replacing the content-based method / reason: the content rule conflicts with the labels in req-001 to req-006 (critic F-5).
 - Decision (P2): with no `v*` tag at all, the req-008 check prints `SKIP: no v* tags fetched` / reason: a CI clone has no base tag to name.
 - Decision (P2): every 20-minute wait figure follows the longest-cap-plus-10 rule, noted in `design.md` with an `Amended (P2)` line / reason: the ratchet blocks editing the original design bullet.
+- Design critic P2 iteration 3: APPROVE (0 critical, 0 major, 3 minor). Loop closed as `done` at 2026-10-24T00:43:58Z. The orchestrator fixed all three minor findings after the loop disarmed.
+- Gate summary (P2): 14 ADRs, one per significant decision. ADR-001 records the unchanged stack. ADR-012, ADR-013, and ADR-014 amend 0000031 ADR 001 and, conditionally, 0000031 ADR 003. Join reconciled clean. Consistency check clean.
+Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic in 3 iterations

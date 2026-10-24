@@ -61,7 +61,7 @@ The setup-delivered definition follows what `setup.sh` copies, not the `bundle_t
 - The positive path against this repository has no test until the P6 migration exists. A fixture check covers the gap.
 
 **Risks:**
-- The check passes by skipping in CI without anyone noticing (R-017). Mitigation: the skip line names the tag, and the post-P6 revalidation runs the suite locally with tags present.
+- The check passes by skipping in CI without anyone noticing (R-017). Mitigation: each skip line states its cause, either `no v* tags fetched` or the missing tag's name, and the post-P6 revalidation runs the suite locally with tags present.
 - The filter drifts from the policy definition if setup changes what it copies. Mitigation: the fixture check covers each kept and dropped folder.
 
 ## Governs

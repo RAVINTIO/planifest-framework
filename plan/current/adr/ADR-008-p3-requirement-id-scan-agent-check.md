@@ -40,6 +40,7 @@ req-006 moves an equivalent scan to the end of P3. The design adds no new hook, 
 | A commit-time hook | Blocks without agent action | The design lists no new hook. A hook can't tell when P3 closes. | Out of scope and a poor fit |
 | Move the scan from P4 to P3 | One scan | P4 loses its independent check on the final tree | The P4 scan covers changes made after P3 |
 | No scan before P4 | No change | Untested requirements keep surfacing late | req-006 asks for the earlier check |
+| Tell types apart by what the test does | No header to maintain | Conflicts with the labels in req-001 to req-006, where text-reading suites carry both `unit` and `integration` | A mismatch would block P3 on about 14 correct criteria |
 
 ## Affected Components
 
@@ -57,6 +58,7 @@ req-006 moves an equivalent scan to the end of P3. The design adds no new hook, 
 **Negative:**
 - An agent check depends on the agent following the skill text, so it is less deterministic than a script.
 - The match logic now lives in two skill files and must change in both.
+- The `# Verified by:` header is self-declared. The check catches a missing or mismatched label, not a wrong one, so a suite can claim a type it doesn't test.
 
 **Risks:**
 - A requirement with no natural test, such as a docs-only one, blocks P3 (R-018). The `manual` value with a reason limits this.
