@@ -211,3 +211,5 @@ Progress: P3 done at 2026-10-24T20:33:10Z: seven requirements GREEN across four 
 | Notes | none |
 
 Decision (P4): raise a draft PR now so CI runs the Windows legs before P9 / reason: CI runs on `pull_request` only, and req-001 needs the Windows shard to prove the fix. P9 reuses the PR.
+Draft PR (P4): #65 https://github.com/RAVINTIO/planifest-framework/pull/65
+Decision (P4): `gh pr create` names `--repo RAVINTIO/planifest-framework` and `--head` / reason: the GitHub repository moved from `planifest/planifest-framework`, and the bare form failed with "Head sha can't be blank"
