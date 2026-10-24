@@ -279,14 +279,14 @@ Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T02:37:50Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T03:02:34Z` |
+| Wall-clock | `25` |
 | Streams | `n/a` (joined) |
 | Model tier | cheaper (semantic coverage), primary (verify by execution) |
 | Skills loaded | planifest-validate-agent, planifest-verify-by-execution |
-| Agents spawned | `pending` |
+| Agents spawned | `2` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` |
 | Notes | Library audit: skipped, no dependency manifest (Node built-ins only). |
 
 - Lint (P4): `node --check` passes on 27 of 27 `.mjs` files, and `bash -n` passes on 158 of 158 `.sh` files. The repository has no other linter, type checker, or build step.
@@ -297,3 +297,6 @@ Draft PR (P3): #64 https://github.com/planifest/planifest-framework/pull/64
 - Verify by execution (P4): 24 rows passed, 0 failed, 9 not verifiable here, in `plan/current/verification-report.md`. CI run 40053917957 at `5d43543` passes all 13 jobs. The real req-008 comparison skips until P6 writes `migrate-0.35.0-rerun-setup.md`. All 141 suites pass from the repository root, `planifest-framework/tests/`, and a temporary directory.
 - Cycle 2 (P4): Check: verify by execution. Error: real `gh pr checks` prints no JSON and `no checks reported` on stderr, exit 1, before checks register. Root cause: Step 10c and GUTD step 5 read that as unreadable output. Fix: both read it as an empty list, and the req-001 and req-002 suites assert it. Result: pass (req-001 58, req-002 34).
 - Backlog (P4): 0000215 filed by the verify agent, then closed in cycle 2 because the gap sat in this feature's own scope.
+- CI checks (P4, PR #64, head `75d5912`): all 13 checks pass.
+- Gate summary (P4): lint clean, 141 local suites pass, semantic coverage 30 covered, 3 deferred to verify by execution, 0 uncovered. Verify by execution: 24 rows passed, 0 failed. Two self-correct cycles. All four streams are done.
+Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every criterion covered or verified
