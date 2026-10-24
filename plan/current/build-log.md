@@ -348,5 +348,28 @@ Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every crit
 - Gate summary (P5): `plan/current/security-report.md` produced. Overall risk Medium, held by the pre-existing Windows gap 0000204. Every finding this feature introduced is closed, and six fresh-context re-reviews ran, the last two APPROVE. Approaches used: 2 of 3.
 Progress: P5 done at 2026-10-24T04:37:32Z: security report produced, every introduced finding closed after six re-reviews
 - Decision (P5): `planifest-framework/component.yml` stays at 0.35.0 / reason: the P3 bump already covers this feature's framework changes.
+
+---
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T04:38:05Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` (joined) |
+| Model tier | cheaper (living docs, recommendations), primary (migration) |
+| Skills loaded | planifest-docs-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | Gate A: `docs/` exists. Run mode from `run-mode.mjs`: autonomous. No `planifest-overrides/doc-checks.yml`, so post-P6 revalidation reruns P4 steps 0 to 5. |
+
+P6 Gate B: docs update assessment (continuous run, auto-accepted).
+The run adds a credential-scan script, a P9 CI check, a GUTD CI step, post-P6 revalidation, a Verified by field, a portability lint, and Windows Git Bash and PowerShell 5.1 CI legs.
+Auto-accepted: updating `docs/component-registry.md`, `docs/decisions-index.md`, `docs/dependency-graph.md`, `docs/architecture-overview.md`, both `component.yml` manifests, and `src/setup-hook-integration/docs/`. `docs/api-index.md` doesn't apply, because no component exposes an API.
+
+- Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, unclassified): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
 - Decision (P5): three fix agents, split by file owner, fix every High and Medium finding and the cheap Low ones / reason: the autonomous P5 gate re-reviews each fix in fresh context.
