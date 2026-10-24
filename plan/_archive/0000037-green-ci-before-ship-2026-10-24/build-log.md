@@ -16,7 +16,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
 | Run mode | `autonomous` |
-| Parallel streams | `pending` (resolved at P1 start) |
+| Parallel streams | `on` (autonomous default, resolved at P1 start, four streams) |
 
 ---
 
@@ -404,12 +404,12 @@ Progress: P6 done at 2026-10-24T11:15:33Z: docs complete, cross-model review app
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T11:16:09Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T11:18:49Z` |
+| Wall-clock | `3` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `0` |
 | MCP calls | `0` |
 | Parallel task batches | `1` |
 | Notes | Run mode from `run-mode.mjs`: autonomous. |
@@ -427,6 +427,46 @@ Progress: P6 done at 2026-10-24T11:15:33Z: docs complete, cross-model review app
 - Credential scan (P7): held back `plan/_archive/0000037-green-ci-before-ship-2026-10-24/security-review-credentials.md` on rule `private-key-block`, line 104.
 - Decision (P7): the held-back line is review prose that quotes a PGP private-key header line as evidence, with no key material. The orchestrator reworded it to describe the header without quoting it. The rescan exited 0 with 126 of 126 candidates safe / reason: a false positive from the stronger P5 rule, and an exception would leave the archive incomplete.
 - Decision (P7): don't promote `test-0000037-req-001-p9-ci-check.sh`, `test-0000037-req-002-gutd-ci-check.sh`, or `test-0000037-req-004-pr-body-scan.sh` / reason: they assert skill text, so a rewording breaks them without a behaviour change.
+- Step 7 (P7): scan-then-commit over 126 candidates, scan exit 0, committed as `e878f80`.
+Progress: P7 done at 2026-10-24T11:18:49Z: plan archived, product.yml and docs/about.md set to 0.35.0
+
+---
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T11:18:49Z` |
+| End | `2026-10-24T11:21:54Z` |
+| Wall-clock | `3` |
+| Streams | `n/a` |
+| Model tier | cheaper |
+| Skills loaded | planifest-build-assessment-agent |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | none |
+
+- P8: Complete. `build-report.md` written to the archive. It flags one touchpoint outside the exception list (the P6 pause) and four Write-or-Edit breaches.
+- Clean-tree check: clean for this run. Lines under the archive directory go to the P9 marker step. `plan/backlog/0000230-token-efficiency-from-claude-code-usage-profile/entry.md` came from another project's session, so the guard leaves it out (P6 Decision).
+Progress: P8 done at 2026-10-24T11:21:54Z: build report filed, clean tree
+
+---
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T11:21:54Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | Run mode from `run-mode.mjs` on the archived build log: autonomous. |
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
