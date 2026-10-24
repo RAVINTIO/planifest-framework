@@ -29,7 +29,7 @@ The setup-delivered definition follows what `setup.sh` copies, not the `bundle_t
 4. The check filters the diff to setup-delivered files, as `standards/framework-update-policy.md` defines them. It keeps `skills/*/` files that setup copies, `templates/`, `schemas/`, top-level `standards/`, named `bundle_standards` sub-paths, `hooks/enforcement/`, `hooks/adapters/`, and `workflows/`. It drops `standards/reference/` and the git hooks in `hooks/`.
 5. The check parses the Background section for backticked paths that start with a setup-delivered folder name. It resolves them against `planifest-framework/`.
 6. The comparison runs in both directions. The failure output names each path in the diff but not in the list, and each path in the list but not in the diff.
-7. If `git rev-parse -q --verify refs/tags/{base}` fails, the check prints `SKIP` with the tag name and exits 0.
+7. If no `v*` tag exists at all, as in a CI clone, the check prints `SKIP: no v* tags fetched` and exits 0. If the computed base tag doesn't verify with `git rev-parse -q --verify refs/tags/{base}`, it prints `SKIP` with that tag name and exits 0. A fixture case covers each skip.
 8. P3 proves the comparison with a fixture repository before the real migration exists. P6 writes `migrate-0.35.0-rerun-setup.md`. The positive path against this repository then runs locally in the post-P6 revalidation with tags present.
 
 ## Alternatives Considered

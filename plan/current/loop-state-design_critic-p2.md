@@ -15,7 +15,7 @@ status: "active"
 | Loop id | `design_critic` |
 | Owning phase | `P2` |
 | Toggle level | `on` |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `continue` |
@@ -32,6 +32,12 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Action:** fresh-context `planifest-design-critic` reviews the P1 and P2 set. Verdict to `plan/current/design-critic-p2.md`.
 - **Observation:** REJECT, 0 critical, 1 major, 3 minor. Mechanical check clean. Major: ADR-014's 20-minute branch has no mechanism, since `test-suite` sets one cap for the whole job, and the 0000031 suite asserts `10`. Minors: a malformed exception line in ADR-006, a poll window equal to the raised cap, and no method for the P3 type check.
 - **Decision:** continue: the orchestrator fixes ADR-002, ADR-006, ADR-008, ADR-014, req-001, req-005, and req-010 itself, since each fix is a few lines. A fresh critic instance then reviews.
+
+### Iteration 2
+- **Approach:** 1
+- **Action:** the orchestrator fixed the four iteration 1 findings. Then a fresh critic instance.
+- **Observation:** REJECT, 0 critical, 1 major, 3 minor, in `plan/current/design-critic-p2-iteration-2.md`. All 4 iteration 1 findings resolved. Major F-5: ADR-008's content-based type rule conflicts with the requirement labels. Minors: leftover 20-minute figures, ADR-014 decision 5 wording, and a skip line with no tag to name.
+- **Decision:** continue: the orchestrator switches the type check to a header comment, aligns the wait figures, and fixes ADR-010, ADR-014, and req-008. A fresh critic instance then reviews.
 
 ---
 

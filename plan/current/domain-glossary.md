@@ -19,7 +19,7 @@ version: "0.1.0"
 | P9 CI check | The check in the ship skill's Step 10. It waits for the PR's checks after `gh pr create` and reports each result before the final report. | P9 check | planifest-framework |
 | Last merged PR's checks | The check results of the most recent pull request merged into `main`. The GUTD check reads them through `gh pr list --state merged --base main --limit 10 --json number,url,title,mergedAt`, picking the newest `mergedAt`, and `gh pr checks`. | last merged PR checks | planifest-framework |
 | GUTD CI check | The step in the GUTD instruction that reads the last merged PR's checks and reports them. | | planifest-framework |
-| Pending check | A check that is still running when the P9 wait reaches 20 minutes. P9 reports it as pending, never as a pass. | | planifest-framework |
+| Pending check | A check that is still running when the P9 wait window ends, at 20 minutes, or 30 in ADR-014's 20 branch. P9 reports it as pending, never as a pass. | | planifest-framework |
 | Unknown check status | The state of a check whose bucket is `cancel`, a timed-out check, or any value outside the mapped buckets. It reads as unknown, never as a pass. | unknown | planifest-framework |
 | Red-check handling | The rule that P9 writes the PR number to the build log before it waits. On a failing check, P9 fixes the check on the feature branch and pushes again, up to three attempts. | | planifest-framework |
 | Exception-list item | The entry the ship or docs agent writes for the human on the loop when a step cannot finish. Items 6 and 7 cover a red check after three fix attempts and a credential sighting. A revalidation failure after three approaches also raises one. | | planifest-framework |
@@ -50,5 +50,5 @@ version: "0.1.0"
 
 ## Concepts without a clear name
 
-- **Timed-out check.** The design uses "timed-out" for a check whose job reaches its `timeout-minutes` limit. The design uses "pending" for a check that the P9 wait does not finish within 20 minutes. This glossary keeps the two terms separate.
+- **Timed-out check.** The design uses "timed-out" for a check whose job reaches its `timeout-minutes` limit. The design uses "pending" for a check that the P9 wait does not finish within its window. This glossary keeps the two terms separate.
 - **Unreadable status.** The requirements report an unreadable status as its own result, `could not be read`. It is separate from the unknown check status, so this glossary keeps the two terms apart.

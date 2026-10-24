@@ -36,7 +36,7 @@ Functional requirements are split into individual files, one user story per file
 
 | ID | Category | Requirement | Target | Measurement |
 |----|----------|------------|--------|-------------|
-| NFR-001 | Performance | P9 waits for the PR's checks for a bounded time | At most 20 minutes, polling every 30 seconds | Step 10c text and the req-001 suite |
+| NFR-001 | Performance | P9 waits for the PR's checks for a bounded time | At most 20 minutes, or 30 in ADR-014's 20 branch, polling every 30 seconds | Step 10c text and the req-001 suite |
 | NFR-002 | Performance | Each new CI job finishes within its cap | `timeout-minutes: 10` on every new job | Workflow file and the req-010 and req-011 suites |
 | NFR-003 | Security | New CI jobs hold no secrets and read only | `permissions: contents: read`, no `secrets.` reference, `pull_request` trigger only (0000031 ADR 003) | Workflow file and the req-010 and req-011 suites |
 | NFR-004 | Security | The credential scan never prints a matched value | 0 matched values in script output, build-log lines, or PR text | req-003 and req-004 suites with a planted test credential |

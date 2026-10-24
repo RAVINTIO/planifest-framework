@@ -26,7 +26,7 @@ P2 writes this decision now so P3 needs no return to P2. This is a conditional d
 2a. In the 20 branch, the P3, P4, and P9 poll window grows to 30 minutes, the longest job cap plus 10. In the 10 branch it stays at 20 minutes. So a leg that runs to its cap still reads before the poll ends.
 3. The ubuntu leg, the macOS leg, `setup-powershell`, and `setup-powershell-51` keep `timeout-minutes: 10`. Every other part of 0000031 ADR 003 holds, including `permissions: contents: read`, no secrets, and the `pull_request` trigger.
 4. If the leg does not pass 10 minutes, this ADR does not apply. Every job keeps 10, and 0000031 ADR 003 stands unamended.
-5. P3 records which branch applied. It writes one build-log line, `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}`. When the cap is 20, the static test `test-0000037-req-010-windows-git-bash-leg.sh` expects 20 for the `windows-latest` leg only.
+5. P3 records which branch applied. It writes one build-log line, `Decision (P3): git bash leg cap: 10|20 / reason: {measured minutes}`. When the cap is 20, the static test `test-0000037-req-010-windows-git-bash-leg.sh` expects the expression `${{ matrix.os == 'windows-latest' && 20 || 10 }}` from decision 2.
 6. Sharding is the second fallback. If 20 minutes is not enough, or the macOS leg nears its cap, P3 shards the suite across jobs. This ADR rejects sharding for now because it changes the job layout and the check names.
 
 ## Alternatives Considered
@@ -57,6 +57,8 @@ P2 writes this decision now so P3 needs no return to P2. This is a conditional d
 - If the condition fires, the cost per PR for the two new Windows legs rises from 20 to 30 minutes per PR in the worst case (R-013).
 - A reader must check the build log to know which branch applied.
 - A 20-minute cap weakens the runaway-job stop for that leg.
+- The 20 branch also edits the line 45 assertion in `test-0000031-req-001-003-ci-jobs.sh`, so an earlier feature's suite changes with it.
+- The 20 branch lengthens the P3, P4, and P9 poll window from 20 to 30 minutes (decision 2a).
 
 **Risks:**
 - A leg that runs under 10 minutes on the first run can pass 10 later as suites grow. The cap check then repeats on a later red run.

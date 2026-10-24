@@ -187,3 +187,7 @@ Progress: P1 done at 2026-10-24T00:32:32Z: 11 requirements approved by the desig
 - Deviation (P2, unclassified): the P9 poll window becomes the longest job cap plus 10 minutes, so 30 minutes in ADR-014's 20 branch. The design's 20-minute NFR holds in the 10 branch / reason: a leg that runs to a 20-minute cap would otherwise read as pending.
 - Decision (P2): the revalidation exception line reads `Exception waiting (P6, 6)` / reason: it keeps the `(P{N}, {item})` format.
 - Decision (P2): the P3 type check tells types apart by what the mapped test does, and defers `execution` and `manual` to P4 / reason: P4 step 1 matches IDs only, so the type needs its own method.
+- Design critic P2 iteration 2: REJECT (0 critical, 1 major, 3 minor). All 4 iteration 1 findings resolved.
+- Decision (P2): the P3 type check compares the declared type with a `# Verified by: {type}` header in the mapped suite, replacing the content-based method / reason: the content rule conflicts with the labels in req-001 to req-006 (critic F-5).
+- Decision (P2): with no `v*` tag at all, the req-008 check prints `SKIP: no v* tags fetched` / reason: a CI clone has no base tag to name.
+- Decision (P2): every 20-minute wait figure follows the longest-cap-plus-10 rule, noted in `design.md` with an `Amended (P2)` line / reason: the ratchet blocks editing the original design bullet.

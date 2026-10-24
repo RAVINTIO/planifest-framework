@@ -102,7 +102,7 @@ Unchanged from 0000036.
 
 | NFR | Target | Measurement |
 |-----|--------|-------------|
-| CI wait | P9 waits at most 20 minutes for checks | `gh pr checks --json` polled every 30 seconds |
+| CI wait | P9 waits at most 20 minutes for checks, or 30 if the Git Bash leg's cap rises to 20 (ADR-014) | `gh pr checks --json` polled every 30 seconds |
 | CI job time | Each new job keeps `timeout-minutes: 10` | Workflow file |
 | Security | No secrets in CI and `permissions: contents: read` | Workflow file, per 0000031-ADR-003 |
 

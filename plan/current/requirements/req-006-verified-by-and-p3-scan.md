@@ -35,6 +35,7 @@ As the human on the loop, I see each acceptance criterion name its test type at 
 - Before the codegen agent commits P3 and reports it complete, it scans every file in `plan/current/requirements/`.
 - For each requirement ID, it looks for that ID in the test descriptions or structured comments of the test files. This is the same match the validate agent makes at P4 step 1.
 - For each criterion, it checks that a test of the type named in its `Verified by` field exists. It reads the field under the precedence rule in the `Verified by` field section. A criterion whose field reads as `unspecified`, or has no field, skips the type check and keeps the ID check.
+- The type check compares the declared type with a `# Verified by: {type}` header comment in the mapped suite (ADR-008). Each new suite carries one such line per type it covers. `execution` and `manual` need no header and are deferred to P4. An existing suite without a header is never rewritten, and a criterion mapped only to one reads as `unspecified`.
 - A requirement ID with no mapped test blocks P3 closing. The codegen agent runs the TDD loop for the missing test. The existing attempt limit applies. In `autonomous`, the existing approach rules apply, and a requirement still unmapped after 3 approaches becomes an exception-list item.
 - The agent writes one build-log line: `Requirement-ID scan (P3): {N} requirements, {M} unmapped`.
 - The P4 scan stays as it is. The P3 scan adds an earlier check and replaces nothing.

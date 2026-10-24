@@ -21,13 +21,13 @@ req-006 moves an equivalent scan to the end of P3. The design adds no new hook, 
 
 - **Agent check:** The codegen agent runs the scan before it commits P3 and reports it complete. No script is added. This mirrors P4, which runs the same match by agent today.
 - **Input:** The agent reads every file in `plan/current/requirements/`. For each requirement ID, it looks for that ID in test descriptions or structured comments in the test files. This is the same match as P4 step 1.
-- **Type check:** For each criterion, the agent checks that a test of the type in its `Verified by` field exists, under the precedence rule in ADR-007. The agent tells the types apart by what the mapped test does, not by its name:
-  - `unit`: the suite reads files or calls one function, with no workspace.
-  - `integration`: the suite runs a script, hook, or setup in a temporary workspace.
-  - `contract`: the suite checks an interface shape, such as hook stdin or JSON output.
-  - `e2e`: a CI job or a full setup run exercises the path.
-  - `execution` and `manual`: P3 can't check these. It logs them as `deferred to P4`, and P4 verify by execution or the human on the loop confirms them.
-  - A mismatch blocks P3 as an unmapped criterion does. A criterion that reads as `unspecified`, or has no field, skips the type check and keeps the ID check.
+- **Type check:** For each criterion, the agent checks that a test of the type in its `Verified by` field exists, under the precedence rule in ADR-007. The agent compares the declared type with a header comment in the mapped test, not with a judgement of what the test does:
+  - Each new suite carries one comment line near the top, `# Verified by: {type}`, naming the type its author claims. A suite that covers criteria of two types carries one line per type.
+  - The check passes when the mapped suite's header names the criterion's declared type.
+  - `execution` and `manual` need no header. P3 logs them as `deferred to P4`, and P4 verify by execution or the human on the loop confirms them.
+  - A mismatch, or a mapped suite with no header, blocks P3 as an unmapped criterion does.
+  - An existing suite without a header is never rewritten. A criterion mapped only to such a suite reads as `unspecified` for the type check.
+  - Rejected: telling types apart by what the test does. The critic found that rule conflicts with the labels in req-001 to req-006, where text-reading suites carry both `unit` and `integration`. A criterion that reads as `unspecified`, or has no field, skips the type check and keeps the ID check.
 - **Blocking:** An ID with no mapped test blocks P3 closing. The agent runs the TDD loop for the missing test under the existing attempt limit. In `autonomous`, the approach rules apply, and a requirement unmapped after 3 approaches becomes an exception-list item.
 - **Log line:** The agent writes `Requirement-ID scan (P3): {N} requirements, {M} unmapped`.
 - **P4 unchanged:** The P4 scan stays as it is. The P3 scan adds an earlier check and replaces nothing.

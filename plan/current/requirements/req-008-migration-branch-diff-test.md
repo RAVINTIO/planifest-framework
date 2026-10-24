@@ -25,6 +25,7 @@ As a framework maintainer, I run a test that compares a re-run-setup migration's
   - top-level `standards/` files, and sub-path files that a `bundle_standards` entry names
   - `hooks/enforcement/`, `hooks/adapters/`, and `workflows/` files
   - The test drops `standards/reference/` and the git hooks in `hooks/`.
+- FR-008.5a: No tags. If no `v*` tag exists at all, as in a CI clone, the test prints `SKIP: no v* tags fetched` and exits 0. A fixture repository with no tags covers this case.
 - FR-008.5: Skip. If the base tag is absent (`git rev-parse -q --verify refs/tags/{base}` fails), the test prints `SKIP` with the tag name and exits 0. A shallow clone passes this way. The skip is never a failure and never silent.
 - FR-008.6: List parsing. The test reads the migration's Background section and takes each backticked path that starts with a setup-delivered folder name. It resolves the path against `planifest-framework/`.
 - FR-008.7: Failure output names each path in the diff but missing from the list, and each path in the list but missing from the diff.

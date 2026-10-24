@@ -59,13 +59,13 @@ P9 gains Step 10c, after Step 10b and before Step 11.
 - The tag names a head that CI read.
 
 **Negative:**
-- P9 can wait 20 minutes on a slow runner.
+- P9 can wait 20 minutes on a slow runner, or 30 minutes in ADR-014's 20 branch.
 - The Step 11 push of `final-report.md` starts a CI run that nobody reads. Backlog 0000193 covers it.
 - A fix attempt adds commits after the archive step.
 
 **Risks:**
-- A queued runner reads as pending after 20 minutes. The run blocks, which is the safe result.
-- If the Git Bash leg passes 10 minutes, the 20 minute window needs review. R-023 tracks this.
+- A queued runner reads as pending when the window ends. The run blocks, which is the safe result.
+- If the Git Bash leg passes 10 minutes, ADR-014 decision 2a sets the window to 30 minutes. R-023 tracks the cap.
 
 ## Related ADRs
 
