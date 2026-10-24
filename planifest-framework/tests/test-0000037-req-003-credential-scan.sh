@@ -24,11 +24,23 @@ GIT_BIN="$(command -v git)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) IS_WIN=yes ;;
+  *) IS_WIN=no ;;
+esac
+
 # A PATH that holds node and git only, so gitleaks is absent unless a test adds it.
+# Under Git Bash a link is a copy of node.exe or git.exe under a name with no
+# extension. The copy cannot start (git needs its install folder), so the scan
+# gets the runner PATH there. The runner has no gitleaks.
 BIN="$WORK/bin"
-mkdir -p "$BIN"
-ln -s "$NODE_BIN" "$BIN/node"
-ln -s "$GIT_BIN" "$BIN/git"
+if [ "$IS_WIN" = "yes" ]; then
+  BIN="$PATH"
+else
+  mkdir -p "$BIN"
+  ln -s "$NODE_BIN" "$BIN/node"
+  ln -s "$GIT_BIN" "$BIN/git"
+fi
 
 # The fixture credential is assembled at run time so this file holds no secret.
 SECRET="AKIA""ABCDEFGHIJKLMNOP"
@@ -114,22 +126,28 @@ assert_contains ".env:" "$OUT" "req-003: .env is reported by path"
 assert_contains "server.pem:" "$OUT" "req-003: *.pem is reported by path"
 
 # gitleaks on PATH.
-FAKE="$WORK/fakebin"
-mkdir -p "$FAKE"
-ln -s "$NODE_BIN" "$FAKE/node"
-ln -s "$GIT_BIN" "$FAKE/git"
-printf '#!/bin/sh\nexit 0\n' >"$FAKE/gitleaks"
-chmod +x "$FAKE/gitleaks"
-R="$(new_repo gl-clean)"
-printf 'hello\n' >"$R/a.txt"
-(cd "$R" && git add a.txt)
-run_scan "$R" "$FAKE"
-assert_equals "0" "$RC" "req-003: clean file with gitleaks present exits 0"
-assert_contains "scan mode: regex and gitleaks" "$OUT" "req-003: gitleaks mode is announced"
+if [ "$IS_WIN" = "yes" ]; then
+  # Node starts gitleaks without a shell, so it finds only gitleaks.exe. A shell
+  # script stand-in is never found, and the scan stays in regex-only mode.
+  echo "  SKIP (windows): the gitleaks stand-in is a shell script, and node starts only a gitleaks.exe without a shell"
+else
+  FAKE="$WORK/fakebin"
+  mkdir -p "$FAKE"
+  ln -s "$NODE_BIN" "$FAKE/node"
+  ln -s "$GIT_BIN" "$FAKE/git"
+  printf '#!/bin/sh\nexit 0\n' >"$FAKE/gitleaks"
+  chmod +x "$FAKE/gitleaks"
+  R="$(new_repo gl-clean)"
+  printf 'hello\n' >"$R/a.txt"
+  (cd "$R" && git add a.txt)
+  run_scan "$R" "$FAKE"
+  assert_equals "0" "$RC" "req-003: clean file with gitleaks present exits 0"
+  assert_contains "scan mode: regex and gitleaks" "$OUT" "req-003: gitleaks mode is announced"
 
-printf '#!/bin/sh\nexit 1\n' >"$FAKE/gitleaks"
-run_scan "$R" "$FAKE"
-assert_equals "1" "$RC" "req-003: a gitleaks finding exits 1"
+  printf '#!/bin/sh\nexit 1\n' >"$FAKE/gitleaks"
+  run_scan "$R" "$FAKE"
+  assert_equals "1" "$RC" "req-003: a gitleaks finding exits 1"
+fi
 
 # Exit 2 when the scan cannot run.
 NOREPO="$WORK/norepo"

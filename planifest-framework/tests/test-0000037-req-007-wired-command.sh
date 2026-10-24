@@ -139,8 +139,17 @@ if wired_command "auto-trigger-orchestrator" UserPromptSubmit '.*' auto-trigger-
   BARE="$(settings_command "$SETTINGS" UserPromptSubmit '.*' auto-trigger-orchestrator.mjs bare)"
   assert_equals "yes" "$(yes_no test -n "$BARE")" "req-007 AC-007.3: bare-path fixture was built"
   assert_equals "no" "$([[ "$BARE" == node* ]] && echo yes || echo no)" "req-007 AC-007.3: bare-path fixture has no node prefix"
-  run_wired "$BARE" "$(payload prompt "$WS_N" "hello")"
-  assert_equals "yes" "$(yes_no test "$CODE" -ne 0)" "req-007 AC-007.3: bare .mjs path with no node prefix exits non-zero (got $CODE)"
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      # Git Bash runs a bare .mjs path through its #!/usr/bin/env node line, with no
+      # execute bit needed, so the path runs and exits 0. The wrong-directory fixture still runs.
+      echo "  SKIP (windows): Git Bash runs a bare .mjs path through its node shebang, so the missing node prefix does not fail"
+      ;;
+    *)
+      run_wired "$BARE" "$(payload prompt "$WS_N" "hello")"
+      assert_equals "yes" "$(yes_no test "$CODE" -ne 0)" "req-007 AC-007.3: bare .mjs path with no node prefix exits non-zero (got $CODE)"
+      ;;
+  esac
 
   WRONG="$(settings_command "$SETTINGS" UserPromptSubmit '.*' auto-trigger-orchestrator.mjs wrongdir)"
   assert_equals "yes" "$(yes_no test -n "$WRONG")" "req-007 AC-007.3: wrong-directory fixture was built"
