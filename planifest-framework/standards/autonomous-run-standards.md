@@ -124,7 +124,7 @@ Scan-then-commit is the one procedure that every `autonomous` commit in P7 to P9
 6. Otherwise, commit with `[ -s "{out-file}" ] && git --literal-pathspecs commit -m "{message}" --pathspec-from-file="{out-file}" --pathspec-file-nul`. The `[ -s ]` test repeats step 5 in the command itself, because an empty pathspec file makes git commit the whole index. If the step has not staged its paths yet, run `git --literal-pathspecs add --pathspec-from-file="{out-file}" --pathspec-file-nul` first. Git then commits exactly the safe list and nothing else.
 7. Remove the folder after the commit or the skip.
 
-Git reads each line of a pathspec file as a pathspec, so a glob in a name such as `a*.js` or `pages[id].js` would also match a held-back tracked file. The `--literal-pathspecs` option makes git match each line as a plain path. Use it on every `git add`, `git commit`, `git restore --staged`, and `git rm --cached` in this procedure, and on any command that lists candidate paths.
+Git reads each line of a pathspec file as a pathspec. A glob in a name such as `a*.js` or `pages[id].js` would therefore also match a held-back tracked file. The `--literal-pathspecs` option makes git match each line as a plain path. Use it on every `git add`, `git commit`, `git restore --staged`, and `git rm --cached` in this procedure, and on any command that lists candidate paths.
 
 The report line shows a path with `?` in place of unusual characters. Take the exact bytes of a held-back path from your candidate list, not from the report. The out-file keeps the raw bytes, so a non-ASCII or colon path reaches the commit unchanged. The script reads every path from the starting directory.
 

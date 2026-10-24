@@ -482,6 +482,9 @@ assert_contains "credential-scan.mjs" "$STEP10B" "req-003: Step 10b guard calls 
 
 echo "req-003: a held-back file stays staged and shows in the clean-tree check"
 R="$(new_repo heldback)"
+# One base commit, so HEAD exists and step 4 uses git restore --staged.
+printf 'base\n' >"$R/base.txt"
+(cd "$R" && git add base.txt && git -c user.name=t -c user.email=t@example.com commit -q -m base)
 mkdir -p "$R/docs"
 printf 'key %s\n' "$SECRET" >"$R/docs/leak.md"
 (cd "$R" && git add docs/leak.md)
@@ -491,6 +494,15 @@ lacks "$SECRET" "$OUT" "req-003: the held-back report prints no matched value"
 CLEAN="$(cd "$R" && git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**')"
 assert_contains "docs/leak.md" "$CLEAN" "req-003: the held-back file shows in the clean-tree check"
 assert_equals "A " "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: the held-back file stays staged"
+# Act out scan-then-commit step 4: the agent unstages the held-back file.
+(cd "$R" && git --literal-pathspecs restore --staged -- docs/leak.md)
+RC=$?
+assert_equals "0" "$RC" "req-003: step 4 unstages the held-back new file"
+CLEAN="$(cd "$R" && git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/**')"
+assert_equals "??" "$(printf '%s' "$CLEAN" | cut -c1-2)" "req-003: after step 4 the clean-tree check lists the file as untracked"
+assert_contains "docs/leak.md" "$CLEAN" "req-003: after step 4 the clean-tree check names the file"
+HELD="$(cd "$R" && git log --all --name-only --format= 2>/dev/null)"
+lacks "docs/leak.md" "$HELD" "req-003: no commit holds the held-back file"
 
 echo "req-003: an indexed name that starts with a colon scans (P5 N-16)"
 if [ "$IS_WIN" = "yes" ]; then

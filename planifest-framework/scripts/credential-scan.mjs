@@ -46,7 +46,7 @@ const NAME_RULES = [
 
 const CONTENT_RULES = [
   ['aws-access-key', /AKIA[0-9A-Z]{16}/],
-  // Split so that this file does not match its own rule.
+  // The character class means the pattern text in this file does not match its own rule.
   ['aws-temporary-key', /ASIA[0-9A-Z]{16}/],
   // A bounded class keeps the match linear on one long line.
   ['private-key-block', new RegExp('-----BEGIN [A-Z ]{0,40}PRIVATE KEY')],

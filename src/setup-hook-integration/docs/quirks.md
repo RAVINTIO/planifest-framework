@@ -20,7 +20,7 @@ Before any external skills are added, `external-skills.json` does not exist. `cm
 
 `mktemp -d` on Windows/Git Bash creates directories under a path that git treats as having "dubious ownership". `git init` in these directories succeeds but subsequent `git config` calls fail with exit 128. This affects the integration tests that create a temporary repo.
 
-**Updated in 0000037.** The Git Bash leg of the CI `test-suite` job (0000037-ADR-013) found a second effect. Under Git Bash, `mktemp -d` returns a `/tmp/...` path, and Node reads it as `C:\tmp\...`, outside the fixture root. The ratchet and write-gate suites then saw `expected 2, actual 0`. The fixtures now resolve the folder with `pwd -W`. The Windows run passes in seven shards, and a suite that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`.
+**Updated in 0000037.** The Git Bash leg of the CI `test-suite` job (0000037-ADR-013) found a second effect. Under Git Bash, `mktemp -d` returns a `/tmp/...` path, and Node reads it as `C:\tmp\...`, outside the fixture root. The ratchet and write-gate suites then saw `expected 2, actual 0`. The fixtures now resolve the folder with `pwd -W`. The Windows run passes in seven shards. A suite that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`.
 
 ## Q-006: `Write-SetupFlagsMarker` (0000020) verified statically only, no pwsh in this dev environment
 
@@ -64,7 +64,7 @@ The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), th
 
 **Partly resolved in 0000031.** The Windows CI job now runs `setup.ps1` live on a fresh install, which exercises `Write-SettingsFile` and the clean-up pass with nothing to remove. No live test yet seeds stale entries or passes a retired flag under PowerShell.
 
-**Resolved in 0000037.** The req-011 section of `test_setup.ps1` seeds a stale hook folder and a stale `settings.json` entry, passes a retired flag, and checks the clean-up, the removal notice, the surviving hand-added hook, and the marker. It runs under PowerShell 7 and under Windows PowerShell 5.1 in the `setup-powershell-51` job (0000037-ADR-012). Under 5.1, the test relaxes `$ErrorActionPreference` to `Continue` around the setup call, because 5.1 turns merged native stderr into a terminating error. The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
+**Resolved in 0000037.** The req-011 section of `test_setup.ps1` seeds a stale hook folder and a stale `settings.json` entry, and passes a retired flag. It then checks the clean-up, the removal notice, the surviving hand-added hook, and the marker. It runs under PowerShell 7 and under Windows PowerShell 5.1 in the `setup-powershell-51` job (0000037-ADR-012). Under 5.1, the test relaxes `$ErrorActionPreference` to `Continue` around the setup call, because 5.1 turns merged native stderr into a terminating error. The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
 
 ## Q-014: `Write-SettingsFile` writes UTF-8 without a BOM (0000030)
 

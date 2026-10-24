@@ -404,7 +404,7 @@ Ship writes the PR title and body to files, scans each with `--file`, and sends 
 
 P9 gains Step 10c (0000037-ADR-002). It runs `gh pr checks {n} --json name,bucket,link` every 30 seconds for 20 minutes, or 30 minutes while the Windows 20-minute cap applies. It judges from the JSON and never from the exit status. `cancel`, a timed-out check, an empty list, and any unmapped bucket read as unknown, never as a pass. In `autonomous`, a red check gets up to 3 fix attempts on the feature branch. Each attempt commits under scan-then-commit and pushes without force. After the third failure, the agent writes `Exception waiting (P9, 6)` and runs `gh pr ready --undo`. Any result other than all passed writes `Progress: P9 blocked`.
 
-Step 10 first looks for an open PR with `gh pr view --json number,url,isDraft`. If the P3 draft PR exists, Step 10 updates it with `gh pr edit --body-file` and never raises a second. A resumed P9 reads `PR: #{n}` from the archived build log.
+Step 10 first looks for an open PR with `gh pr view --json number,url,isDraft,state`. If the P3 draft PR exists and its `state` is `OPEN`, Step 10 updates it with `gh pr edit --body-file` and never raises a second. A resumed P9 reads `PR: #{n}` from the archived build log.
 
 ### GUTD step 5
 
@@ -412,15 +412,15 @@ Step 10 first looks for an open PR with `gh pr view --json number,url,isDraft`. 
 
 ### Post-P6 revalidation
 
-The docs agent revalidates after the P6 commit and before it reports P6 complete (0000037-ADR-006). It runs the `command` from `planifest-overrides/doc-checks.yml` when valid, else P4 steps 0 to 5. It writes one `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}` line. In `autonomous`, the revalidation runs as a loop with a cap of 3 cycles and then up to 3 approaches before it becomes exception item 6. Outside `autonomous`, the cap stays at 5 with the `VALIDATION BLOCKED` escalation.
+The docs agent revalidates after the P6 commit and before it reports P6 complete (0000037-ADR-006). It runs the `command` from `planifest-overrides/doc-checks.yml` when valid, else P4 steps 0 to 5. It writes one `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}` line. In `autonomous`, the revalidation runs as a loop with a cap of 3 cycles. It then tries up to 3 approaches before it becomes exception item 6. Outside `autonomous`, the cap stays at 5 with the `VALIDATION BLOCKED` escalation.
 
 ### Verified by field and P3 scan
 
-Each acceptance criterion carries `Verified by` with one of six types: `unit`, `integration`, `contract`, `e2e`, `execution`, or `manual` (0000037-ADR-007). An indented `Verified by:` line governs over inline text. A requirement file without the field stays valid and reads as `unspecified`. Before P3 closes, the codegen agent maps each requirement ID to a test and checks the declared type against the `# Verified by: {type}` header comment of the mapped suite (0000037-ADR-008). `execution` and `manual` are deferred to P4. The P4 coverage table gains a `Type` column.
+Each acceptance criterion carries `Verified by` with one of six types: `unit`, `integration`, `contract`, `e2e`, `execution`, or `manual` (0000037-ADR-007). An indented `Verified by:` line governs over inline text. A requirement file without the field stays valid and reads as `unspecified`. Before P3 closes, the codegen agent maps each requirement ID to a test. It also checks the declared type against the `# Verified by: {type}` header comment of the mapped suite (0000037-ADR-008). `execution` and `manual` are deferred to P4. The P4 coverage table gains a `Type` column.
 
 ### Portability lint
 
-A lint suite flags tool use that differs between GNU and BSD systems, such as `grep -r` without `-H` and bare `shasum` (0000037-ADR-011). A rule matches only in command position. A `# portable-ok: {reason}` marker silences one line. `helpers/assert.sh` gains `sha256_of`, which tries `sha256sum` and falls back to `shasum -a 256`. Two further suites test the installed hook commands verbatim through `bash -c` (0000037-ADR-009) and compare the re-run-setup migration's file list with the diff since the previous `v*` tag (0000037-ADR-010).
+A lint suite flags tool use that differs between GNU and BSD systems, such as `grep -r` without `-H` and bare `shasum` (0000037-ADR-011). A rule matches only in command position. A `# portable-ok: {reason}` marker silences one line. `helpers/assert.sh` gains `sha256_of`, which tries `sha256sum` and falls back to `shasum -a 256`. Two further suites test the installed hook commands verbatim through `bash -c` (0000037-ADR-009). They also compare the re-run-setup migration's file list with the diff since the previous `v*` tag (0000037-ADR-010).
 
 ---
 
