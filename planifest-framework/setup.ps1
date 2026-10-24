@@ -172,7 +172,7 @@ function Copy-PlanifestSkills {
 
             # Rewrite relative paths to match bundled directory structure
             $skillMdPath = Join-Path $destDir "SKILL.md"
-            $skillContent = Get-Content -Path $skillMdPath -Raw
+            $skillContent = Get-Content -Path $skillMdPath -Raw -Encoding UTF8
             $skillContent = $skillContent -replace '\.\./templates/', './assets/templates/'
             $skillContent = $skillContent -replace '\.\./standards/reference/', './references/reference/'
             $skillContent = $skillContent -replace '\.\./standards/', './references/'
@@ -195,7 +195,7 @@ function Copy-PlanifestSkills {
                 Get-ChildItem -Path $srcRefsDir -Recurse -File -Filter '*.md' | ForEach-Object {
                     $relPath = $_.FullName.Substring($srcRefsDir.Length).TrimStart('\', '/')
                     $destRef = Join-Path (Join-Path $destDir "references") $relPath
-                    $refContent = Get-Content -Path $destRef -Raw
+                    $refContent = Get-Content -Path $destRef -Raw -Encoding UTF8
                     $refContent = $refContent -replace '\.\./standards/reference/', './reference/'
                     $refContent = $refContent -replace '\.\./standards/', './'
                     Set-Content -Path $destRef -Value $refContent -NoNewline -Encoding UTF8
