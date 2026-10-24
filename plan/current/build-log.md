@@ -178,3 +178,9 @@ Decision (P3): stream-02 adds the floor as one `**Size floor:**` paragraph, iden
 Decision (P3): stream-02 declares no cross-stream artifact. Its two proposed declarations are used only inside its own files / reason: a declaration with no other consumer is a reconciliation finding
 Decision (P3): stream-02 leaves `component.yml` unbumped, and the ship agent bumps it at P9 / reason: one owner for the version
 Process note (P3): stream-02 tried a `git stash` in the shared tree. The permission system denied it, and `git stash list` is empty.
+Stream (P3): stream-03-tests at join. req-001 RED exit 1, GREEN exit 0. req-003 RED exit 1, GREEN exit 0. Commit `3402922`. Local warm timings: 53 to 97 ms.
+Decision (P3): the quiet runner starts each suite in the background and uses `wait` / reason: bash defers a trap until a foreground child ends, so a hung suite would never show
+Decision (P3): the quiet trap stops the running suite and exits 128 plus the signal number / reason: no orphan suite, and the exit is non-zero
+Decision (P3): every quiet FAIL line reads `{suite}: FAIL: ...`, with `regression/{name}` for regression suites / reason: the suite-name prefix is the only marker ADR-004 allows
+Decision (P3): quiet mode omits the regression suite header / reason: ADR-004 allows no suite header
+Decision (P3): no existing suite prints `FAIL:` on a pass, so stream-03 changed no suite text / reason: a scan found none
