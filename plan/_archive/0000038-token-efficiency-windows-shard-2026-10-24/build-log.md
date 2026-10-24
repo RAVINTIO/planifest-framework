@@ -355,4 +355,5 @@ Decision (P9): PR #65 stays a draft / reason: the build log holds one `Exception
 CI checks (P9): all passed (13 of 13 checks, head f8e3143)
 Clean-tree check: clean
 Progress: P9 done at 2026-10-24T22:33:06Z: tag v0.36.0 pushed, CI all passed, PR #65 draft with one exception waiting
+Exception cleared (P6, 3): the human on the loop approved the req-005 criterion edit in commit `0411efd` on 2026-10-25. PR #65 marked ready.
 
