@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic_p2"
 summary: "Persisted state for the P2 design-critic loop."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic_p2
 
@@ -12,11 +12,11 @@ status: "active"
 | Loop id | `design_critic_p2` |
 | Owning phase | `P2` |
 | Toggle level | `on` |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` |
-| Last decision | `continue` |
-| Last updated | `2026-10-24T22:00:00Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-24T22:30:00Z` |
 
 ---
 
@@ -33,6 +33,12 @@ status: "active"
 - **Action:** Fresh-context critic ran the mechanical check, confirmed the seven iteration 1 fixes, and reapplied the rubric over the combined P1 and P2 set.
 - **Observation:** Mechanical check clean. Iteration 1 findings fixed. One new major: ADR-002 rule 4a edits the Phase 0 gate checklist, which sits inside the block that must move byte for byte. One minor on the byte margin. Verdict in `plan/current/critic-verdict-p2-2.md`.
 - **Decision:** continue: REJECT, the ADR agent revises ADR-002, a fresh critic re-reviews at iteration 3.
+
+### Iteration 3 (2026-10-24T22:30:00Z)
+- **Approach:** 1
+- **Action:** Fresh-context critic ran the mechanical check, confirmed the iteration 2 fixes, measured the moved blocks, and reapplied the rubric over the combined P1 and P2 set.
+- **Observation:** Mechanical check clean. All earlier findings fixed. The byte margin holds at 1,799 bytes with 169 spare. One minor note on the thin spare. Verdict in `plan/current/critic-verdict-p2-3.md`.
+- **Decision:** done: APPROVE, the pass condition is met.
 
 ---
 
