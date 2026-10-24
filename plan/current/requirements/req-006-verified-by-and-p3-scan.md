@@ -21,11 +21,12 @@ As the human on the loop, I see each acceptance criterion name its test type at 
 
 - `planifest-framework/templates/requirement.template.md` adds a `Verified by:` field to each line in `## Acceptance Criteria`. The line form is:
   - `- [ ] {{criterion}}. Verified by: {{unit | integration | contract | e2e | execution | manual}}`
-- The field is valid in two places. Use either form, or both:
+- The field is valid in two places. Use either form:
   - On the criterion line: `- [ ] {{criterion}}. Verified by: {{type}}`.
   - As an indented line directly under the criterion: `  - Verified by: {{type}} - {{detail}}`. The ` - {{detail}}` part is optional.
-- The P3 and P4 scans read either form. The optional detail after ` - ` is free text. The scans read only the type.
-- If a criterion carries both forms, both must name the same type.
+- The optional detail after ` - ` is free text. The scans read only the type.
+- When a criterion has an indented `Verified by:` line, that line governs. The P3 and P4 scans ignore any inline `Verified by` text on that criterion.
+- Inline text counts only when no indented line exists. It counts only in the form `Verified by: {type}`, with a type from the enum. Any other inline form reads as `unspecified`.
 - The values come from the test types in `planifest-framework/standards/testing-standards.md`, plus `execution` for P4 verify by execution and `manual` for a check no test can run. A `manual` value needs a one-line reason after it.
 - The spec agent fills the field for every new criterion. Its Functional requirements rules in `planifest-framework/skills/planifest-spec-agent/SKILL.md` say so.
 
@@ -33,7 +34,7 @@ As the human on the loop, I see each acceptance criterion name its test type at 
 
 - Before the codegen agent commits P3 and reports it complete, it scans every file in `plan/current/requirements/`.
 - For each requirement ID, it looks for that ID in the test descriptions or structured comments of the test files. This is the same match the validate agent makes at P4 step 1.
-- For each criterion, it checks that a test of the type named in its `Verified by` field exists. It reads the field in either form. A criterion with no `Verified by` field skips the type check and keeps the ID check.
+- For each criterion, it checks that a test of the type named in its `Verified by` field exists. It reads the field under the precedence rule in the `Verified by` field section. A criterion whose field reads as `unspecified`, or has no field, skips the type check and keeps the ID check.
 - A requirement ID with no mapped test blocks P3 closing. The codegen agent runs the TDD loop for the missing test. The existing attempt limit applies. In `autonomous`, the existing approach rules apply, and a requirement still unmapped after 3 approaches becomes an exception-list item.
 - The agent writes one build-log line: `Requirement-ID scan (P3): {N} requirements, {M} unmapped`.
 - The P4 scan stays as it is. The P3 scan adds an earlier check and replaces nothing.
@@ -49,6 +50,7 @@ As the human on the loop, I see each acceptance criterion name its test type at 
   - Verified by: unit - a text test over the template and the skill.
 - [ ] The codegen agent scans `plan/current/requirements/` for unmapped requirement IDs before P3 closes, blocks closing on a gap, and writes `Requirement-ID scan (P3): {N} requirements, {M} unmapped`. Verified by: integration (a fixture requirement set with one unmapped ID).
   - Verified by: integration - a fixture requirement set with one unmapped ID.
+  - Amended (P1): the fixture also holds one criterion whose inline `Verified by:` text differs from its indented line. The scan must use the indented line.
 - [ ] A requirement file with no `Verified by` field passes both the P3 scan and the P4 coverage table, and the table reports its type as `unspecified`. Verified by: integration (a fixture file without the field).
   - Verified by: integration - a fixture file without the field.
 
