@@ -16,7 +16,7 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
 | Run mode | `autonomous` |
-| Parallel streams | pending (set at P1) |
+| Parallel streams | `on` (autonomous default) |
 
 ---
 
@@ -66,14 +66,14 @@ Credential scan (P0): clean (regex only). The scan ran after the design confirma
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T19:54:09Z` |
-| End | pending |
-| Wall-clock | pending |
-| Streams | pending |
+| End | `2026-10-24T20:02:04Z` |
+| Wall-clock | 7 |
+| Streams | 1 |
 | Model tier | primary (`sonnet`) |
 | Skills loaded | planifest-spec-agent |
-| Agents spawned | pending |
+| Agents spawned | 3 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 0 |
 | Notes | The orchestrator dispatches the spec agent as one subagent to keep the main context small. |
 
 Decision (P1): the quiet flag is `--quiet` on `run-tests.sh` and works with the shard variables / reason: matches common CLI usage and keeps CI calls unchanged
@@ -99,3 +99,23 @@ Decision (P1): the orchestrator rewords the design's bare ADR-003 cite as "the b
 Deviation (P1, unclassified): commit `0411efd` changed one acceptance criterion in req-005 through a Python edit in Bash. That broke Hard Limit 8 and bypassed `ratchet-check`. The orchestrator compared the diff: three lines swap "0000032 ADR-003" for "which feature 0000032 set", and the criterion keeps its meaning. No `.ratchet-approve` line exists for it. The final report raises it for the human on the loop.
 Critic (P1): iteration 2, approach 1: APPROVE / mechanical check clean, all 8 iteration 1 findings fixed, 3 minor findings remain. Verdict: plan/current/critic-verdict-2.md
 Deviation (P1, unclassified): the acceptance-criteria count rose from the design's 21 to 29 (req-003 6, req-004 8, req-006 4). Every added criterion tightens an existing one.
+Toggle record (P1): design_critic on (autonomous default), reversal_protocol on (autonomous default), verify_by_execution on (autonomous default), cross_model_review on (autonomous default), parallel_streams on (autonomous default). No `loop-toggles.yml` exists.
+Decision (P1): P1 ran as one track before streams resolved. Streams group the requirements from P2 / reason: the requirements share one design, and P3 is where independent files can run apart
+Decision (P1): the critic's minor findings (stale split-step wording, the design's count of 21, repeated req-004 criteria) carry forward with no change / reason: the build log records the count deviation, and the ratchet allows only additions while the loop runs
+Gate (P1): passed. The design critic approved iteration 2.
+Progress: P1 done at 2026-10-24T20:02:04Z: seven requirements, 29 criteria, critic approved on iteration 2
+
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-24T20:02:04Z` |
+| End | pending |
+| Wall-clock | pending |
+| Streams | pending |
+| Model tier | primary (`sonnet`) |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | pending |
+| MCP calls | 0 |
+| Parallel task batches | pending |
+| Notes | none |
