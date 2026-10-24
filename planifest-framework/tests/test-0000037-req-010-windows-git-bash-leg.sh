@@ -10,7 +10,7 @@
 #
 # Cap rule (ADR-014): the first pass kept timeout-minutes 10. P3 measured a Git Bash
 # run over 10 minutes (about 38 suites), so the job uses the expression named in
-# WINDOWS_CAP_EXPR and the Windows leg is sharded four ways (second fallback).
+# WINDOWS_CAP_EXPR and the Windows leg is sharded seven ways (second fallback).
 # req-010: a test of the shard selection in run-tests.sh runs against dummy suites.
 # req-010: every SKIP (windows) guard has a skip table row, and every row has a guard.
 #
@@ -76,8 +76,9 @@ assert_equals "yes" "$(yes_no '^## Windows skip table' "$(cat "$TESTS_README")")
 assert_equals "yes" "$(yes_no '^\|[[:space:]]*Suite[[:space:]]*\|[[:space:]]*Reason[[:space:]]*\|[[:space:]]*Date[[:space:]]*\|' "$(cat "$TESTS_README")")" "req-010: skip table has Suite, Reason, and Date columns"
 
 echo "== req-010: shard entries in the workflow (ADR-014 second fallback) =="
-assert_equals "4" "$(grep -cE '^[[:space:]]+shard:[[:space:]]*[0-9]+[[:space:]]*$' <<<"$SUITE")" "req-010: the test-suite job holds four shard entries"
-assert_equals "4" "$(grep -cE '^[[:space:]]+-[[:space:]]*os:[[:space:]]*windows-latest' <<<"$SUITE")" "req-010: four include entries run on windows-latest"
+assert_equals "7" "$(grep -cE '^[[:space:]]+shard:[[:space:]]*[0-9]+[[:space:]]*$' <<<"$SUITE")" "req-010: the test-suite job holds seven shard entries"
+assert_equals "yes" "$(yes_no "matrix.shard && 7 " "$SUITE")" "req-010: the step passes a shard count of 7"
+assert_equals "7" "$(grep -cE '^[[:space:]]+-[[:space:]]*os:[[:space:]]*windows-latest' <<<"$SUITE")" "req-010: seven include entries run on windows-latest"
 assert_equals "yes" "$(yes_no 'PLANIFEST_SHARD_INDEX:' "$SUITE")" "req-010: the step sets PLANIFEST_SHARD_INDEX"
 assert_equals "yes" "$(yes_no 'PLANIFEST_SHARD_COUNT:' "$SUITE")" "req-010: the step sets PLANIFEST_SHARD_COUNT"
 assert_equals "no" "$(yes_no 'os:[[:space:]]*\[[^]]*windows-latest' "$SUITE")" "req-010: windows-latest is not in the plain os list, only in the shard includes"
