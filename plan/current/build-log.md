@@ -119,3 +119,18 @@ Progress: P1 done at 2026-10-24T20:02:04Z: seven requirements, 29 criteria, crit
 | MCP calls | 0 |
 | Parallel task batches | pending |
 | Notes | none |
+
+Decision (P2): keep the stack unchanged for all seven requirements / reason: no requirement needs a capability that Bash, Node built-ins, or Markdown lack. (ADR-001)
+Decision (P2): two reference files in the orchestrator's `references/` folder, loaded at P0 start and on resume at P0 / reason: setup already copies that folder, the hook needs no change, and each block stays byte-identical. (ADR-002)
+Decision (P2): `SKILL.md` keeps a pointer section with a heading that differs from the moved headings / reason: the absence test would otherwise fail on the pointer itself. (ADR-002)
+Decision (P2): the Claude Code value set is `sonnet`, `opus`, `haiku`, `fable`, checked by allowlist / reason: it matches the values the Agent tool accepts, and an allowlist catches ids the team has not seen yet. (ADR-003)
+Decision (P2): Windsurf and other tool rows keep their full ids / reason: they are not Claude Code, and the requirement keeps those rows as they are. (ADR-003)
+Decision (P2): in quiet mode a suite fails on a non-zero exit, a signal or timeout, or a `^[[:space:]]*FAIL:` line with exit 0 / reason: it makes hiding the stream unable to hide a failure. (ADR-004)
+Decision (P2): the runner adds no timeout of its own / reason: a runner timeout is a new gate behaviour and the requirement asks only that an external timeout counts as failed. (ADR-004)
+Decision (P2): a capture error counts as a failed suite / reason: unknown never reads as a pass. (ADR-004)
+Decision (P2): one untimed warm-up and one timed call under 200 ms, no retry, in all three suites and their regression copies / reason: it removes the cold-start sample and keeps the limit and the no-retry rule. (ADR-005)
+Decision (P2): the timing pattern goes into each suite's helper, not a shared file / reason: the suites run alone and the three helpers already differ. (ADR-005)
+Decision (P2): the size floor is qualitative ("needs its own reads or many tool calls") with nine named exemptions / reason: a number has no measured basis, and the named list protects every fresh-context role. (ADR-006)
+Decision (P2): custom-002 and the dispatch template carry the floor and exemptions in the same words / reason: the override reaches installs through the boot file and the standard reaches skills, so one text prevents drift. (ADR-006)
+Decision (P2): ship `migrate-0.36.0-rerun-setup.md` in the 0.35.0 format and recheck its list at the end of P6 / reason: installs need setup to receive the skills, references, standard, and boot text, and the diff check needs an exact list. (ADR-007)
+Decision (P2): the migration names the two new reference files explicitly / reason: a list that omits new files fails the two-way diff check. (ADR-007)
