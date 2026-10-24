@@ -52,7 +52,7 @@ The workflow is the only infrastructure file. Its new jobs follow 0000031 ADR 00
 | Re-review 3 | REJECT | N-09 |
 | Re-review 4 (approach 2) | REJECT | N-12 |
 | Re-review 5 | APPROVE | none (N-15 and N-16 Low) |
-| Re-review 6 | see `security-rereview-6.md` | N-15 and N-16 fixes |
+| Re-review 6 | APPROVE | none (N-17 Low, deferred as backlog 0000223) |
 
 ## Summary
 

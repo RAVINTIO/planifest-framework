@@ -308,14 +308,14 @@ Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every crit
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T03:03:12Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T04:37:32Z` |
+| Wall-clock | `94` |
 | Streams | `n/a` (joined) |
 | Model tier | primary |
-| Skills loaded | planifest-security-agent |
-| Agents spawned | `pending` |
+| Skills loaded | planifest-security-agent, planifest-codegen-agent |
+| Agents spawned | `16` (2 reviewers, 6 re-reviewers, 8 fix agents) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` |
 | Notes | Scope: the diff from `c8b1036` to HEAD outside `plan/`, 69 files. Two reviewers in parallel: the credential and PR-text surface, and the CI, setup, and test-skip surface. |
 
 - Review (P5, credentials): Medium overall. 1 High (a NUL byte skips every content rule), 4 Medium (a quadratic private-key regex, index blobs over 1 MB skipped silently, a held-back rule that deadlocks or can be swept into a commit, and unscanned P9 commits), and 7 Low.
@@ -343,6 +343,10 @@ Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every crit
 - Rule breach (P5): the iteration 2 fix agent ran `sed -i` on `test-0000037-req-003-archive-held-back.sh`, against the Write-or-Edit rule (boot Hard Limit 8), and removed the `.bak` it left. `git status` showed only the four intended files changed.
 - Re-review (P5, approach 2 iteration 2): APPROVE. N-12, N-13, and N-14 closed, with 0 key lines across every glob, magic-pathspec, and regression case. New Lows N-15 (the P9 marker block has no in-command empty-list guard) and N-16 (a `:`-led indexed name makes the scan exit 2).
 - Fix (P5, orchestrator): every `git --literal-pathspecs commit --pathspec-from-file` line in the ship skill and the standard starts with `[ -s "{out-file}" ] &&`, and the scan reads blobs as `:./{path}`. New assertions cover both: the held-back suite passes 143, and the scan suite passes 161. The full suite passes all 142 suites.
+- Re-review (P5, approach 2 iteration 3): APPROVE. N-15 and N-16 closed. The empty-list guard commits nothing, and `bash -e` doesn't abort. New Low N-17: an empty-list skip leaves a block's exit code at 1.
+- Backlog filed (P5): 0000223 (empty-list guard leaves a block's exit code at 1).
+- Gate summary (P5): `plan/current/security-report.md` produced. Overall risk Medium, held by the pre-existing Windows gap 0000204. Every finding this feature introduced is closed, and six fresh-context re-reviews ran, the last two APPROVE. Approaches used: 2 of 3.
+Progress: P5 done at 2026-10-24T04:37:32Z: security report produced, every introduced finding closed after six re-reviews
 - Decision (P5): `planifest-framework/component.yml` stays at 0.35.0 / reason: the P3 bump already covers this feature's framework changes.
 - Deviation (P5, unclassified): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
 - Decision (P5): three fix agents, split by file owner, fix every High and Medium finding and the cheap Low ones / reason: the autonomous P5 gate re-reviews each fix in fresh context.
