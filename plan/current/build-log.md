@@ -220,3 +220,4 @@ Validate (P4, CI on `e8f86fb`): 4 of 13 jobs failed. The req-004 and req-005 tes
 Fix (P4, batch 2): commit `cf87eed` replaces the baseline commit reads with SHA-256 values of the same bytes. It also gives the 10-link ratchet check one untimed warm-up call, with the 500 ms limit kept and no retry.
 Deviation (P4, unclassified): the warm-up pattern now also covers the 0000035 req-005 10-link ratchet check. The design scoped it to three 0000032 suites.
 Decision (P4): the req-004 and req-005 tests hold baseline hashes, not a commit reference / reason: the squash merge drops commit `5966840` from `main`, so a commit read would fail forever after merge
+Verify (P4): 18 verified, 0 failed, 5 not-verifiable (unit criteria not re-run). Haiku probe reported `claude-haiku-5-5`. A stray `setup.sh` run touched the repo and the tracked file was restored by Edit. See `plan/current/verification-report.md`.
