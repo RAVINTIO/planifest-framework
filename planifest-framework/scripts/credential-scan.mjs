@@ -75,15 +75,17 @@ function gitleaksAvailable() {
 
 // Texts to scan for one Buffer. Nothing is skipped. NUL bytes are removed, which
 // also turns ASCII UTF-16 without a BOM into plain text. A UTF-16 BOM adds a
-// properly decoded copy. A BOM file that cannot decode throws, so it exits 2.
-function textsFor(buf, name) {
+// properly decoded copy when the body has an even length. An odd-length BOM file
+// is binary, so only the NUL-stripped text is scanned. Exit 2 stays for read errors.
+function textsFor(buf) {
   const texts = [Buffer.from(buf.filter((b) => b !== 0)).toString('utf8')];
   const le = buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe;
   const be = buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff;
   if (le || be) {
     const body = buf.subarray(2);
-    if (body.length % 2 !== 0) throw new ScanError(`cannot decode UTF-16 file ${safePath(name)}`);
-    texts.push((be ? Buffer.from(body).swap16() : body).toString('utf16le'));
+    if (body.length % 2 === 0) {
+      texts.push((be ? Buffer.from(body).swap16() : body).toString('utf16le'));
+    }
   }
   return texts;
 }
@@ -91,7 +93,7 @@ function textsFor(buf, name) {
 // Content hits: [{line, rule}] for a Buffer.
 function contentHits(buf, name) {
   const hits = [];
-  for (const whole of textsFor(buf, name)) {
+  for (const whole of textsFor(buf)) {
     whole.split('\n').forEach((text, i) => {
       for (const [rule, re] of CONTENT_RULES) {
         if (re.test(text)) hits.push({ line: i + 1, rule });

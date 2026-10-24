@@ -100,8 +100,12 @@ assert_equals "yes" "$(yes_no 'git config core\.hooksPath planifest-framework/ho
 echo "== req-011: a failed git config warns and skips the success lines (security review F-02) =="
 assert_equals "yes" "$(yes_no 'LASTEXITCODE' "$GUARD_FN")" "req-011: guardrails read LASTEXITCODE after git config"
 assert_equals "yes" "$(yes_no 'LASTEXITCODE[[:space:]]+-ne[[:space:]]+0' "$GUARD_FN")" "req-011: guardrails test for a non-zero git config exit"
-assert_equals "yes" "$(yes_no '! Warning: not in a git repository' "$GUARD_FN")" "req-011: guardrails print the setup.sh warning on failure"
-assert_equals "yes" "$(yes_no 'skipping core\.hooksPath config' "$GUARD_FN")" "req-011: the warning says core.hooksPath config is skipped"
+assert_equals "yes" "$(yes_no '! Warning: could not set core\.hooksPath, the commit-msg hook is not active' "$GUARD_FN")" "req-011: the warning is true for any cause, not only a missing repository"
+assert_equals "no" "$(yes_no 'not in a git repository' "$GUARD_FN")" "req-011: the warning does not name one cause"
+# N-05: a stale LASTEXITCODE must not read as success when git is absent.
+RESET_LINE="$(grep -nE 'LASTEXITCODE[[:space:]]*=[[:space:]]*0' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"
+assert_equals "yes" "$([ -n "$RESET_LINE" ] && [ -n "$GIT_LINE_NO" ] && [ "$RESET_LINE" -lt "$GIT_LINE_NO" ] && echo yes || echo no)" "req-011: LASTEXITCODE is reset before git config runs"
+assert_equals "yes" "$(yes_no 'Get-Command git' "$GUARD_FN")" "req-011: guardrails check git exists before reading its exit code"
 # The success lines must sit in the else branch of the exit-code test.
 HOOKS_OK_LINE="$(grep -n '+ git config core\.hooksPath' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"
 EXIT_TEST_LINE="$(grep -n 'LASTEXITCODE' <<<"$GUARD_FN" | head -1 | cut -d: -f1)"

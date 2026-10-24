@@ -199,6 +199,7 @@ mkfix() {
     else if (k === "lenobom") b = Buffer.from(s, "utf16le");
     else if (k === "be") b = Buffer.concat([Buffer.from([0xfe, 0xff]), Buffer.from(s, "utf16le").swap16()]);
     else if (k === "badle") b = Buffer.from([0xff, 0xfe, 0x41, 0x00, 0x42]);
+    else if (k === "oddbin") b = Buffer.concat([Buffer.from([0xff, 0xfe, 0x01, 0x02, 0x03]), Buffer.from(s + "\n")]);
     else if (k === "bigline") b = Buffer.from("-----BEGIN ".repeat(95000));
     else if (k === "bigblob") b = Buffer.from(s + "a".repeat(1500000) + "\n");
     fs.writeFileSync(process.env.OUTFILE, b);
@@ -210,9 +211,15 @@ for K in nul nulfirst le lenobom be; do
   assert_equals "1" "$RC" "req-003: a $K file with a credential exits 1"
   assert_contains "fx-$K.txt:1 aws-access-key" "$OUT" "req-003: a $K file reports the rule"
 done
+# N-03: an odd-length file that starts with a BOM is binary, not a read error.
+# It is scanned as NUL-stripped bytes, so a key inside it still exits 1.
+mkfix oddbin "$WORK/fx-oddbin.txt"
+run_scan "$WORK" "$BIN" --file fx-oddbin.txt
+assert_equals "1" "$RC" "req-003: an odd-length BOM binary file with a credential exits 1, not 2"
+assert_contains "fx-oddbin.txt:1 aws-access-key" "$OUT" "req-003: an odd-length BOM binary file reports the rule"
 mkfix badle "$WORK/fx-badle.txt"
 run_scan "$WORK" "$BIN" --file fx-badle.txt
-assert_equals "2" "$RC" "req-003: an undecodable UTF-16 file exits 2, not 0"
+assert_equals "0" "$RC" "req-003: an odd-length BOM file with no credential exits 0"
 
 # F-02: one 1 MB line scans in linear time.
 mkfix bigline "$WORK/fx-bigline.txt"

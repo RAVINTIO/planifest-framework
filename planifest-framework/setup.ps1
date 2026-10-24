@@ -790,14 +790,18 @@ function Invoke-PlanifestGuardrails {
     $ErrorActionPreference = 'Continue'
     $hooksPathSet = $false
     try {
-        git config core.hooksPath planifest-framework/hooks 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { $hooksPathSet = $false } else { $hooksPathSet = $true }
+        # Reset first so a stale exit code from an earlier native command cannot read as success.
+        $global:LASTEXITCODE = 0
+        if (Get-Command git -ErrorAction SilentlyContinue) {
+            git config core.hooksPath planifest-framework/hooks 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { $hooksPathSet = $false } else { $hooksPathSet = $true }
+        }
     } finally {
         $ErrorActionPreference = $savedErrorAction
     }
     if (-not $hooksPathSet) {
         # Match setup.sh: warn and carry on, but never report guardrails as active.
-        Write-Host "  ! Warning: not in a git repository, skipping core.hooksPath config"
+        Write-Host "  ! Warning: could not set core.hooksPath, the commit-msg hook is not active"
     } else {
         Write-Host "  + git config core.hooksPath planifest-framework/hooks"
     }
