@@ -64,7 +64,7 @@ The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), th
 
 **Partly resolved in 0000031.** The Windows CI job now runs `setup.ps1` live on a fresh install, which exercises `Write-SettingsFile` and the clean-up pass with nothing to remove. No live test yet seeds stale entries or passes a retired flag under PowerShell.
 
-**Resolved in 0000037.** The req-011 section of `test_setup.ps1` seeds a stale hook folder and a stale `settings.json` entry, passes `--context-mode-mcp`, and checks the clean-up, the removal notice, the surviving hand-added hook, and the marker. It runs under PowerShell 7 and under Windows PowerShell 5.1 in the `setup-powershell-51` job (0000037-ADR-012). Under 5.1, the test relaxes `$ErrorActionPreference` to `Continue` around the setup call, because 5.1 turns merged native stderr into a terminating error. The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
+**Resolved in 0000037.** The req-011 section of `test_setup.ps1` seeds a stale hook folder and a stale `settings.json` entry, passes a retired flag, and checks the clean-up, the removal notice, the surviving hand-added hook, and the marker. It runs under PowerShell 7 and under Windows PowerShell 5.1 in the `setup-powershell-51` job (0000037-ADR-012). Under 5.1, the test relaxes `$ErrorActionPreference` to `Continue` around the setup call, because 5.1 turns merged native stderr into a terminating error. The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
 
 ## Q-014: `Write-SettingsFile` writes UTF-8 without a BOM (0000030)
 
