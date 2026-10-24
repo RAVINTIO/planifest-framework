@@ -317,3 +317,8 @@ Progress: P4 done at 2026-10-24T03:02:34Z: CI green on all 13 checks, every crit
 | MCP calls | `0` |
 | Parallel task batches | `pending` |
 | Notes | Scope: the diff from `c8b1036` to HEAD outside `plan/`, 69 files. Two reviewers in parallel: the credential and PR-text surface, and the CI, setup, and test-skip surface. |
+
+- Review (P5, credentials): Medium overall. 1 High (a NUL byte skips every content rule), 4 Medium (a quadratic private-key regex, index blobs over 1 MB skipped silently, a held-back rule that deadlocks or can be swept into a commit, and unscanned P9 commits), and 7 Low.
+- Review (P5, CI and setup): Medium overall. 4 Medium (the shard parser fails open, `setup.ps1` reports guardrails active after a failed `git config`, lost coverage in the rewritten 0000033 req-013 assertions, and backlog 0000204), and 6 Low. Backlog 0000218 and 0000219 filed.
+- Decision (P5): 0000204 stays open at Medium and 0000209 at Low, and neither blocks this release / reason: the CI and setup reviewer judged Write and Edit safe on Windows, and the 0000209 race needs a symlink privilege and a microsecond window.
+- Decision (P5): three fix agents, split by file owner, fix every High and Medium finding and the cheap Low ones / reason: the autonomous P5 gate re-reviews each fix in fresh context.
