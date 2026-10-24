@@ -257,14 +257,14 @@ Progress: P5 done at 2026-10-24T21:15:55Z: risk Low, one low finding fixed and r
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T21:15:55Z` |
-| End | pending |
-| Wall-clock | pending |
+| End | `2026-10-24T22:10:09Z` |
+| Wall-clock | 54 |
 | Streams | n/a |
-| Model tier | cheaper (`haiku`) for docs, primary for the checks |
-| Skills loaded | planifest-docs-agent |
-| Agents spawned | pending |
+| Model tier | primary (`sonnet`) for docs and fixes, `opus` for the cross-model review |
+| Skills loaded | planifest-docs-agent, planifest-reversal-assessor, planifest-loop-runner |
+| Agents spawned | 6 |
 | MCP calls | 0 |
-| Parallel task batches | pending |
+| Parallel task batches | 0 |
 | Notes | none |
 
 P6 Gate B: docs update assessment (autonomous, auto-accepted). Feature 0000038 changed the orchestrator layout, the model tiers, the test runner, and setup. Auto-accepted: updating `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, and `docs/dependency-graph.md`. No component exposes an API, so `docs/api-index.md` stays absent.
@@ -287,3 +287,9 @@ Process note (P6): the fix agent confirmed M-1 RED by stashing `SKILL.md` for on
 Cross-model review (P6, iteration 2): REJECT on `claude-opus-5-5` (implementers `claude-sonnet-5-5`), 0 critical, 1 major, 2 minor. M-1: the per-gate Skill Map update and the interactive `Gate accepted:` line still load only at P0. Iteration 1 M-2, m-1, m-2, m-3, and m-5 are fixed. Suite 152 of 152. See `plan/current/cross-model-review-iteration-2.md`.
 Fix (P6, cross-model iteration 2): commit `4f9347a` adds the Skill Map update and the interactive `Gate accepted` line to the pointer, drops "Read nothing else", and moves the "above" note out of the rule list. RED 3 failed, GREEN 43 passed. `SKILL.md` is 41,391 bytes. The full quiet suite passes 152 of 152. An orchestrator scan of the moved text found two more after-P0 rules, the per-phase build-log block and the STOP gates. `SKILL.md` already states both, in Hard Limit 8 and Phase Conventions.
 Cross-model review (P6, iteration 3): APPROVE on `claude-opus-5-5` (implementers `claude-sonnet-5-5`), 0 critical, 0 major, 4 minor. Iteration 2 M-1, m-1, and m-2 are fixed. The CRLF size-check fix in `2875f40` doesn't weaken the check. Moved blocks byte-identical, `SKILL.md` 41,391 bytes, suite 152 of 152. Loop done.
+Fix (P6, CI): Windows shard 4 measured `SKILL.md` at 41,725 bytes, because Git for Windows checks it out with CRLF (444 lines, 444 bytes). Commit `2875f40` makes the size check count bytes with carriage returns stripped. The limit stays at 41,500. Iteration 3 judged that it doesn't weaken the check.
+Decision (P6): the docs agent ran on `sonnet`, not `haiku` / reason: P6 also held the migration recheck and the revalidation loop, which need judgement
+Backlog filed (P6): 0000236 holds the four iteration 3 minor findings. 0000235 (drift check skips reference files) came from iteration 1.
+Setup re-sync (P6): `setup.sh claude-code --strict-orchestrator` ran again after the review fixes and exited 0 with no warning. The drift check reports all 21 skills matching, and the installed `SKILL.md` is 41,391 bytes.
+Gate (P6): passed. Docs updated, revalidation passed, deviation review done, and the cross-model review approved on iteration 3.
+Progress: P6 done at 2026-10-24T22:10:09Z: docs and migration done, cross-model review approved on iteration 3, three backlog entries filed
