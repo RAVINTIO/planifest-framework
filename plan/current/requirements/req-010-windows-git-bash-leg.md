@@ -22,7 +22,7 @@ As a framework maintainer, I see the suite run on Windows under Git Bash, so tha
 - Run time risk: Git Bash forks slowly, so the Windows leg may pass 10 minutes. Run 40012567385 shows `Test suite (macos-latest)` at 7 minutes 36 seconds and ubuntu at 3 minutes 28 seconds. The new suites from req-007 to req-011 also add time to the macOS leg, which has about 2.5 minutes of headroom.
 - Measurement and fallback for P3:
   - The workflow runs only on `pull_request`, so no CI run exists before a PR. The orchestrator raises a draft PR once P3 pushes its first code commit (see "CI before P4" in `design.md`). Each later push runs CI on that PR.
-  - P3 measures the Git Bash leg's run time on the draft PR's first CI run, and also reads the macOS leg's time.
+  - P3 measures the Git Bash leg's run time on the draft PR's first CI run that holds the `windows-latest` leg, and also reads the macOS leg's time. The orchestrator raises the draft PR after the push that adds the leg, per "CI before P4" in `design.md`.
   - "Green before P4" means the `Test suite (windows-latest)` check is green on the draft PR's CI run for the P4 head commit.
   - If the Git Bash leg passes 10 minutes, P3 raises that one leg's `timeout-minutes` to 20. P2 writes the amending ADR now as a conditional decision. It amends 0000031 ADR 003 for that leg only. P3 needs no return to P2. The ubuntu and macOS legs keep 10.
   - If 20 minutes is not enough, or the macOS leg nears its cap, P3 shards the suite across jobs. Sharding is the second fallback.

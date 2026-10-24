@@ -20,6 +20,7 @@ As the human on the loop, I know that the PR body cites paths and never raw outp
 - Step 10 of the ship skill writes the PR title and body to files outside the repository with the Write tool. It runs `node planifest-framework/scripts/credential-scan.mjs --file {path}` over each file before `gh pr create`.
 - `credential-scan.mjs` (req-003) gains a `--file {path}` mode. It scans that file's content with the same rules and prints a line number only.
 - Step 10 raises the PR with `--title "{title}"`, using the scanned title, and `--body-file {body-path}`. The heredoc `--body` form is removed, so the scanned text is the text sent.
+- The same rule covers every PR text that this run sends, including the run-level draft PR at P3 ("CI before P4" in `design.md`) and the `gh pr edit --body-file` update at P9 Step 10 (req-001).
 - On a match, the agent regenerates the body once, citing paths and results only, and scans again. If the second scan matches or exits `2`, the agent does not run `gh pr create`.
 - When the PR is held back, the agent takes Option [2] without the description. It writes `Exception waiting (P9, 7): credential sighting in PR text at line {n}`. The final report names the line, never the text.
 - A scan writes `Credential scan (P9): PR text clean ({scan mode})` or `Credential scan (P9): PR text held back`. A regex-only scan says so.

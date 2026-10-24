@@ -139,6 +139,10 @@ Streams (start commit `c8b1036`):
 - P1 iteration 2 fixes: req-001 reuses an open PR, pushes the tag after Step 10c, and commits the Step 10c log lines. req-006 lets the indented line govern. req-009 matches in command position only, with exact counts (31 lines today, 0 after P3). req-010, req-011, and the risk register verify the Windows legs on the draft PR.
 - Decision (P1): the lint treats a quote as a possible command position, scopes the path rule to assignments, and skips its own file by name / reason: payload strings sit in quotes, and 40 legitimate path lines run inside a temporary workspace.
 - Decision (P1): P2 writes the 20-minute Git Bash cap ADR now, as a conditional decision / reason: P3 then needs no return to P2.
+- Design critic P1 iteration 3: REJECT (0 critical, 2 major, 2 minor). 6 of 8 iteration 2 findings resolved, 2 partly. Loop changes approach (approach 2 of 3).
+- Deviation (P1, unclassified): `design.md` gains the run-level "CI before P4" step, owned by the orchestrator, with a scanned path-only body and a `Draft PR (P3):` build-log row. The shipped framework text doesn't change.
+- Decision (P1): P9 marks a reused draft PR ready only when no exception waits / reason: ship Step 10 keeps the PR draft while an exception waits (0000033 D-003).
+- Decision (P1): the design's original `- Deferred: nothing deferred` line stays, with the amended deferred items under it / reason: the armed ratchet blocks removing a bullet under `## Scope`.
 - Stream 04 returned req-010 and req-011, three criteria each. No backlog entry filed.
 - Decision (P1): split step for req-010: keep / reason: one shippable outcome, a green Git Bash leg.
 - Decision (P1): split step for req-011: keep / reason: 0000092 and 0000094 form one outcome, and the clean-up test proves 5.1 only inside the 5.1 leg.

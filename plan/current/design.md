@@ -29,7 +29,14 @@
 
 ## Architecture Layer
 - Latency target: P9 waits at most 20 minutes for checks, then reports them as pending
-- CI before P4 (run decision, P1): the workflow runs only on `pull_request`, so the orchestrator raises a draft PR for this branch once P3 pushes its first code commit. Each later push runs CI on it, so P3 and P4 see the Windows legs. P9 Step 10 reuses the open PR for the branch and marks it ready. It never raises a second PR.
+- CI before P4 (run decision, P1): the workflow runs only on `pull_request`, so the orchestrator raises a draft PR for this branch during P3. Each later push runs CI on it, so P3 and P4 see the Windows legs. The orchestrator owns this step for this run only. The shipped framework text doesn't change. The steps:
+  1. P3 builds req-003 first, so `credential-scan.mjs` exists before the draft PR.
+  2. After the first P3 push that holds the req-010 and req-011 workflow edits, the orchestrator writes the title and body to files outside the repository. The body reads "Draft. Feature 0000037 is in progress at P3. P4 to P9 follow. See `plan/current/design.md`." It cites paths only.
+  3. `node planifest-framework/scripts/credential-scan.mjs --file` scans both files. A match or exit 2 stops the step, under exception item 7.
+  4. The orchestrator runs `gh pr create --draft --title "{title}" --body-file {body}`.
+  5. The orchestrator writes `Draft PR (P3): #{n} {url}` to the P3 build-log block and commits it.
+  6. P3 and P4 read the checks for their head with `gh pr checks {n} --json name,bucket,link`, under the req-001 bucket rules. The measurement in req-010 uses the first run that holds the `windows-latest` leg.
+  7. P9 Step 10 reuses the PR, per req-001.
 - Red-check handling (confirmed at P0): P9 writes the PR number to the build log before it waits. On a failing check, P9 fixes it on the feature branch and pushes again, up to 3 attempts, then raises an exception-list item. A `cancelled` or timed-out check reads as unknown, never as a pass. A status that can't be read is reported, and the run doesn't read as done.
 - Availability target: not applicable (local tooling)
 - Scalability target: not applicable

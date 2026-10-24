@@ -15,8 +15,8 @@ status: "active"
 | Loop id | `design_critic` |
 | Owning phase | `P1` |
 | Toggle level | `on` |
-| Iteration | `3` of cap `3` |
-| Approach | `1 of 3 (autonomous only)` |
+| Iteration | `1` of cap `3` |
+| Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
 | Last decision | `continue` |
 | Last updated | `2026-10-24T00:15:11Z` |
@@ -38,6 +38,12 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Action:** five fix agents in parallel by file owner, plus orchestrator fixes to `design.md`, the brief, and the glossary. Then a fresh critic instance.
 - **Observation:** REJECT, 1 critical, 2 major, 5 minor, in `plan/current/design-critic-p1-iteration-2.md`. Mechanical check clean. 18 of 20 iteration 1 findings resolved, 3 partly. Critical C1: CI runs only on `pull_request`, and no PR exists before P9, so no Windows run can happen at P3 or P4. Major J1: two `grep -rn` payload lines and the lint's own fixtures break AC-009.3. Major J2: req-006's same-type rule flags the inline free text in 9 of 11 files.
 - **Decision:** continue: the orchestrator records a run decision to raise a draft PR at P3 so CI runs before P4, and four fix agents take req-001, req-006, req-009, and req-010 with req-011 and the risk register. A fresh critic instance then reviews.
+
+### Iteration 3 (2026-10-24T00:55:00Z)
+- **Approach:** 1
+- **Action:** four fix agents in parallel (req-001, req-006, req-009, and req-010 with req-011 and the risk register). Then a fresh critic instance.
+- **Observation:** REJECT, 0 critical, 2 major, 2 minor, in `plan/current/design-critic-p1-iteration-3.md`. 6 of 8 iteration 2 findings resolved, 2 partly. M1: the P3 draft PR has no owner, commands, record, or scan. M2: req-001 marks the reused PR ready even while an exception waits, against ship Step 10 (0000033 D-003).
+- **Decision:** change-approach: the iteration cap is hit with approach count 1 of 3. Approach 2 differs in method. The orchestrator fixes the remaining findings itself as one owner across files, because both majors span the design, two requirements, and the risk register. Approach 1 split fixes by file owner, which left the cross-file draft-PR rule without an owner.
 
 ---
 
