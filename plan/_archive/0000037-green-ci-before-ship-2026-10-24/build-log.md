@@ -458,8 +458,8 @@ Progress: P8 done at 2026-10-24T11:21:54Z: build report filed, clean tree
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-24T11:21:54Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-24T11:34:10Z` |
+| Wall-clock | `12` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-ship-agent |
@@ -477,6 +477,9 @@ PR: #64 https://github.com/planifest/planifest-framework/pull/64
 - Clean-tree check (P9, Step 10b): committed 1 file (`build-log.md`) through scan-then-commit as `532f983`. `plan/backlog/0000230-...` stays out (P6 Decision).
 CI checks (P9): all passed
 - Step 10c (P9): 13 of 13 checks pass on `532f983`, the head that P9 read, after 526 seconds of polling in a 30-minute window. No fix attempt was needed, so the tag stays on `31b6ae9`.
+- Tag push (P9): `v0.35.0` pushed to origin after Step 10c.
+- Step 11 (P9): final report written to the archive and committed through scan-then-commit.
+Progress: P9 done at 2026-10-24T11:34:10Z: v0.35.0 tagged and pushed, draft PR #64 updated, CI all passed, 3 exceptions waiting
 - Decision (P6): the deviation review and the cross-model review gate run in parallel, both on `claude-opus-5-5`, and both finish before P7 / reason: neither reads the other's output, and the implementing agents ran on `claude-sonnet-5-5`.
 - Decision (P6): three agents in one batch: living docs and manifests, recommendations and changelog with backlog filing, and the 0.35.0 re-run-setup migration / reason: the three share no file.
 - Deviation (P5, altering): the accepted cross-session Scope Lock answer said a stopped commit leaves the files staged. A held-back file now leaves the index, and the build log records its path. The change fixes a deadlock and a sweep-in path the credential reviewer found (F-04).
