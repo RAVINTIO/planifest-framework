@@ -88,6 +88,7 @@ assert_contains '`cancel`' "$S10C" "req-001: cancel reads as unknown"
 assert_contains "Unknown never counts as a pass" "$S10C" "req-001: unknown is never a pass"
 assert_contains "no checks reported" "$S10C" "req-001: empty list note"
 assert_contains 'CI checks (P9): {all passed | {n} failed: {names} | pending after {window} minutes | unknown: {names}}' "$S10C" "req-001: CI checks log line"
+# portable-ok: search string, not a command
 lacks 'timeout 1' "$S10C" "req-001: no timeout command"
 assert_contains "does not use the \`timeout\` command" "$S10C" "req-001: states the timeout command is not used"
 
