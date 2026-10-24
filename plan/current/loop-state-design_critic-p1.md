@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic-p1"
 summary: "Persisted state for one loop instance; survives context resets and session interrupts."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic-p1
 
@@ -18,8 +18,8 @@ status: "active"
 | Iteration | `1` of cap `3` |
 | Approach | `2 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` (shared across all loops; feature-wide) |
-| Last decision | `continue` |
-| Last updated | `2026-10-24T00:15:11Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-24T00:32:07Z` |
 
 ---
 
@@ -44,6 +44,13 @@ Append-only: one record per iteration. Never rewrite a prior record.
 - **Action:** four fix agents in parallel (req-001, req-006, req-009, and req-010 with req-011 and the risk register). Then a fresh critic instance.
 - **Observation:** REJECT, 0 critical, 2 major, 2 minor, in `plan/current/design-critic-p1-iteration-3.md`. 6 of 8 iteration 2 findings resolved, 2 partly. M1: the P3 draft PR has no owner, commands, record, or scan. M2: req-001 marks the reused PR ready even while an exception waits, against ship Step 10 (0000033 D-003).
 - **Decision:** change-approach: the iteration cap is hit with approach count 1 of 3. Approach 2 differs in method. The orchestrator fixes the remaining findings itself as one owner across files, because both majors span the design, two requirements, and the risk register. Approach 1 split fixes by file owner, which left the cross-file draft-PR rule without an owner.
+
+### Iteration 1 of approach 2 (2026-10-24T00:32:07Z)
+- **Approach:** 2
+- **Action:** the orchestrator fixed both majors and both minors across `design.md`, req-001, req-004, req-010, and the risk register. Then a fresh critic instance.
+- **Observation:** APPROVE, 0 critical, 0 major, 3 minor, in `plan/current/design-critic-p1-approach-2.md`. Mechanical check clean. All 4 iteration 3 findings resolved.
+- **Decision:** done: the pass condition holds. The orchestrator fixes the three minor findings after the loop disarms.
+- **Correction:** the iteration 2 and 3 timestamps above (00:40 and 00:55) were estimates, not `date -u` readings. This record's timestamp comes from `date -u`. Both earlier iterations ran before it.
 
 ---
 
