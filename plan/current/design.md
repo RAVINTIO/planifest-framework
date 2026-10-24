@@ -22,7 +22,7 @@
   - US-002 uses only `sonnet`, `opus`, `haiku`, or `fable`, the values the Claude Code Agent tool accepts. The tier for each task type doesn't change. A new test fails on any other value in the Claude Code column, the dispatch skeleton, or a skill's `model:` line.
   - US-003 adds a quiet mode to `run-tests.sh`. It prints only FAIL lines, the failed-suite list, and the totals. A suite that exits non-zero with no FAIL line still appears in the failed-suite list, and the run still exits non-zero. Full output stays the default, so CI output doesn't change. On a failure, the skills rerun only the failing suite in full.
   - US-004 moves Phase 0 and Adoption Modes, word for word, into reference files that the orchestrator loads at P0. The Framework Index lists them. Resume Detection loads them again when a resumed run is still at P0. Each test assertion that greps the moved text points to the new file. A new test checks that the moved text no longer sits in `SKILL.md`, so no grep passes on the wrong file.
-  - US-005 stays advisory and never blocks a phase. The blocking reset after P9 (0000032 ADR-003) doesn't change. The prompt names `plan/current/` and the build log as the resume state, and works when no `pause.md` exists.
+  - US-005 stays advisory and never blocks a phase. The blocking reset after P9, which feature 0000032 set, doesn't change. The prompt names `plan/current/` and the build log as the resume state, and works when no `pause.md` exists.
   - US-006 keeps the parallel critics and the Scope Lock drafts as they are.
 - Integrations: the Claude Code Agent tool `model` parameter
 

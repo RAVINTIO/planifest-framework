@@ -90,3 +90,4 @@ Decision (P1): NFR-002 sets the orchestrator size target at under 41,500 bytes /
 Decision (P1): ship-agent split recorded as deferred in scope / reason: backlog 0000230 named it but the design scope omits it
 Verified (P1): the design and backlog cites differ in four places. Orchestrator is 77,635 bytes (cited 77,393), ship-agent is 42,318 (cited 42,158), the suite count is 111 top-level plus 33 regression files (cited 116), and orchestrator lines 675 and 721 hold no model ids. The execution plan lists them.
 Critic (P1): iteration 1, approach 1: REJECT / mechanical check failed on ADR-003 in design.md and req-005, plus 3 major findings (req-003, req-004, req-006). Verdict: plan/current/critic-verdict-1.md
+Decision (P1): the orchestrator rewords the design's bare ADR-003 cite as "the blocking reset after P9, which feature 0000032 set" / reason: a cosmetic fix in place under the mid-pipeline change rule, and the meaning doesn't change
