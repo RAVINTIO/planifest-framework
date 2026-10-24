@@ -91,6 +91,27 @@ The maker always writes `unclassified`. In its pre-P7 review, the assessor repla
 
 ---
 
+## Pre-commit credential scan
+
+This is a standing rule (0000037 ADR-003). In `autonomous`, every commit runs the credential scan first.
+
+```bash
+node planifest-framework/scripts/credential-scan.mjs [-- {path} ...]
+```
+
+- **What it scans:** For every path in the commit, the script scans the index blob and the working-tree file. A match in either counts. The paths come from `git diff --cached --name-only` plus any path after `--` in the commit command. The framework commit form `git commit -m ... -- {path}` commits the working-tree content, so the scan must read both.
+- **What it applies:** The script applies the P8 refused file names and credential patterns. It also runs `gitleaks` when `gitleaks` is on PATH, and says which scan mode ran.
+- **Exit codes:** `0` is clean. `1` is at least one match. `2` means the scan could not run. Stop on exit `1` or `2`.
+- **Who stops the commit:** The agent does. The script only sets the exit code. Nothing in this feature adds a git hook.
+- **On a match:** Run no `git commit` and no `git push` for that change. The files stay staged. Do not unstage them, and do not edit them to hide the match.
+- **Log lines:** Write `Credential scan (P{N}): held back {n} file(s)` and `Exception waiting (P{N}, 7): credential sighting in {path}:{line}`. Then finish the work that does not depend on those files.
+- **Final report:** List each path and line. Never print the secret.
+- **Clean scan:** Write `Credential scan (P{N}): clean ({scan mode})`. A regex-only scan says so in the line.
+- **Resume:** A resumed run does not commit, push, or unstage a held-back staged file. It reruns the scan before any commit. A file that now scans clean commits in the normal way.
+- **Outside `autonomous`:** The script is available and the commit flow is unchanged.
+
+---
+
 ## Gates as loops
 
 In `autonomous`, each P1 to P6 gate runs as a loop under `planifest-loop-runner`. A checker stands in for the human on the loop (ADR-004, execution-plan D-001).
@@ -159,7 +180,7 @@ In `autonomous`, the ship agent writes one final report in place of the P9 Step 
 1. **What shipped:** a short summary from the feature brief and the changelog.
 2. **Decisions and deviations:** every `Decision` and `Deviation` line from the build log, including each P7 regression-candidate decision.
 3. **Version:** the version from the Step 9 tag.
-4. **PR:** the PR URL and its CI result, from `gh pr checks`. If CI hasn't finished, the result reads `pending`. If a `local-git-only` override applies, this part holds the PR title and description instead.
+4. **PR:** the PR URL and its CI result, from `gh pr checks`. If CI hasn't finished, the result reads `pending`. The part lists each non-passing check by name and link, with its result word: red, pending, skipped, or unknown. An unreadable status reads "CI status could not be read". The result covers the head that P9 read, so the report words it as "the head that P9 read". Names and links come from `gh` fields only. If a `local-git-only` override applies, this part holds the PR title and description instead.
 5. **Clean tree:** the clean-tree result of the scoped `git status --porcelain` check at the end of P9 (req-013). It names each file left over or committed, or reads `clean`.
 6. **Exceptions waiting:** every `Exception waiting` line from the build log. If there are none, the part reads `none`.
 

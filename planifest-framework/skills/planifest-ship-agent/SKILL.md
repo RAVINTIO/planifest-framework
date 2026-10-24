@@ -185,20 +185,17 @@ git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/
 
 The `--untracked-files=all` flag lists each untracked file, not just its directory. Leave out lines under `{archive-dir}`, because the P9 marker step commits them. Treat every other line as a leftover. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
-**P8 credential guard (0000033 P5):** In `autonomous`, check every leftover before you stage it. Refuse these files:
+**P8 credential guard (0000033 P5, 0000037 ADR-003):** In `autonomous`, check every leftover before you stage it. Run the credential scan over the leftover paths:
 
-- any file named `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `.npmrc`, `credentials.json`, `*.keystore`, or `.netrc`
-- any file whose content matches a credential pattern:
-  ```bash
-  grep -lE -e 'AKIA[0-9A-Z]{16}|-----BEGIN .*PRIVATE KEY-----|ghp_[A-Za-z0-9]{36}|xox[baprs]-|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|AIza[0-9A-Za-z_-]{35}' -- {path} ...
-  ```
-- any file that `gitleaks` flags, if `gitleaks` is on PATH. Run it over each candidate file:
-  ```bash
-  if command -v gitleaks >/dev/null; then gitleaks detect --no-git --source {path} --no-banner --redact; fi
-  ```
-  A non-zero exit refuses that file.
+```bash
+node planifest-framework/scripts/credential-scan.mjs -- {path} ...
+```
 
-Refused files stay uncommitted. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
+The script holds the one list of credential patterns. It also runs `gitleaks` when `gitleaks` is on PATH. Exit `1` or `2` refuses the files it names. Treat exit `2` as a match.
+
+The script refuses these file names: `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.p12`, `.npmrc`, `credentials.json`, `*.keystore`, and `.netrc`. If this list and the script differ, the script wins.
+
+Refused files stay uncommitted. A refused file stays uncommitted, and a refused file that is staged stays staged. The clean-tree check lists it as a leftover again, and the guard refuses it again. Record each one as an exception item in the final report, by path only. Never copy the matched content. This follows the credentials rule (orchestrator Hard Limit 6). The guard keeps the scope to `plan/`, `docs/`, and `src/**/docs/`.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P8 build-log block and continue to P9.
 - **`autonomous`:** Apply the credential guard above. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body:
@@ -299,19 +296,39 @@ Who pushes the branch and raises the PR?
 ```
 
 **Option [1] (Agent pushes):**
+Step 10 pushes the branch only. Step 10c pushes the `v{version}` tag with `git push origin v{version}` after it reads the checks.
+
 ```bash
 git push -u origin HEAD
-git push origin v{version}
-gh pr create \
-  --title "{feature-id}: {one-line feature summary}" \
-  --body "$(cat <<'EOF'
-{PR description, see template below}
-EOF
-)"
+gh pr view --json number,url,isDraft
 ```
-Capture the PR URL. Update the changelog (`## PR` field) with the URL.
 
-Push only the branch and the `v{version}` tag. No step in any mode uses `--force` or `--force-with-lease`.
+**PR text scan (0000037 ADR-004):** Before any `gh pr create` or `gh pr edit`, write the PR title and the PR description to files outside the repository with the Write tool, such as `{tmp-dir}/pr-title.txt` and `{tmp-dir}/pr-body.md`. The body is the PR description, see template below. A file outside the repository cannot reach a commit. Scan each file:
+
+```bash
+node planifest-framework/scripts/credential-scan.mjs --file {path}
+```
+
+- **Clean:** Exit `0` means clean. Write `Credential scan (P9): PR text clean ({scan mode})` in the P9 block. A regex-only scan says so in the line.
+- **Match:** On exit `1`, the agent regenerates the body once. The new text cites paths and results only. Then it scans again.
+- **Held back:** If the second scan matches, or any scan ends with exit `2`, the agent does not run `gh pr create` and does not run `gh pr edit`. It takes Option [2] without the description. It writes `Credential scan (P9): PR text held back` and `Exception waiting (P9, 7): credential sighting in PR text at line {n}`. The final report names the line, never the text.
+- **No edit after the scan:** Make no edit between the scan and the send. The sent text is the scanned text.
+
+**PR text rule:** The PR title and body cite file paths, requirement IDs, ADR IDs, check names, counts, and result words. They never include pasted command output, log lines, file contents, diff hunks, or error text. The check lists in the body use the req-001 fields name, bucket, and link. A draft PR body names each exception by item number and path only. The rule covers every PR text the run sends, including a draft PR that the orchestrator raises and the `gh pr edit` update in this step. Option [2] output passes the same scan and follows the same rule.
+
+**Existing PR (0000037 ADR-002):** A draft PR for the branch may already exist, raised at P3. If `gh pr view` prints one, update that PR. Step 10 never raises a second PR. Update its title and body with `gh pr edit {n} --title "{title}" --body-file {body-path}`, after the scan. Run `gh pr ready {n}` only when the build log holds no `Exception waiting` line. Otherwise the PR stays draft and its body lists every waiting exception (0000033 D-003).
+
+**No PR yet:** Raise it with the scanned files.
+
+```bash
+gh pr create --title "{title}" --body-file {body-path}
+```
+
+`{title}` is the scanned title, `{feature-id}: {one-line feature summary}`. The heredoc `--body` form is not used.
+
+**Record the PR:** As soon as `gh pr create` returns, or the existing PR is found, write `PR: #{n} {url}` in the P9 block of `{archive-dir}/build-log.md`. Write it before any wait. Step 10b commits the line with the other leftovers. Update the changelog (`## PR` field) with the URL.
+
+Push only the branch in Step 10. No step in any mode uses `--force` or `--force-with-lease`.
 
 **Option [2] (Human pushes):**
 
@@ -348,12 +365,72 @@ git status --porcelain --untracked-files=all -- plan/ docs/ ':(glob)src/**/docs/
 Leave out nothing. Treat every line as a leftover. This catches the Step 10 changelog PR-URL edit and any other late change. Read the run mode with `node planifest-framework/scripts/run-mode.mjs {archive-dir}/build-log.md`. The script reads the `Run mode` row of that log.
 
 - **No leftovers:** Log `Clean-tree check: clean` in the P9 build-log block.
-- **`autonomous`:** Apply the P8 credential guard first. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
+- **`autonomous`:** Apply the P8 credential guard first, which runs `node planifest-framework/scripts/credential-scan.mjs -- {path} ...`. Then stage each remaining leftover by its explicit path. Commit with the paths after `--` and the feature ID in the body. If Step 10 pushed the branch, push this commit too.
   ```bash
   git add -- {path} ...
   git commit -m "plan(p9): commit close-out leftovers" -m "{feature-id}" -- {path} ...
   ```
 - **Other modes:** Carry each leftover into the Step 11 gate summary.
+
+### Step 10c: CI check (0000037 ADR-002)
+
+Run this step after Step 10b and before Step 11. It reads the PR's checks and reports the result. The PR number comes from the `PR: #{n}` line in the P9 block.
+
+If the `local-git-only` override applies, no PR exists. Log `CI checks (P9): not run, no PR raised`, write the progress line as `done`, and push no tag.
+
+**Read the checks:**
+
+```bash
+gh pr checks {n} --json name,bucket,link
+```
+
+- **Poll:** Run it every 30 seconds for at most 20 minutes. When ADR-014's 20-minute Git Bash cap applies, the window is 30 minutes. This step does not use the `timeout` command, which macOS lacks.
+- **End:** Polling ends when the list is non-empty and no check is pending, or when the window passes. After the first non-empty list, the agent waits 30 seconds and rereads once more. A late-registering job then never reads as "all passed".
+- **Judge from the data:** Judge the result from the JSON, not from the exit status. `gh pr checks` exits 1 when a check fails and exits 8 when a check is pending. It still prints the data. A non-zero exit with valid JSON is data.
+- **Unreadable:** If `gh` is missing, auth fails, or the output is not valid JSON, report "CI status could not be read" with the reason. The run does not read as done.
+
+**Map each check to one result:**
+
+- `pass` is a pass.
+- `fail` is red.
+- `pending` is pending.
+- `skipping` is skipped.
+- `cancel`, a timed-out check, and any other value read as unknown.
+- An empty list at the end of the window reads as unknown, with the note "no checks reported".
+
+Unknown never counts as a pass.
+
+**Log the result:** Write one line in the P9 block of `{archive-dir}/build-log.md`:
+
+```
+CI checks (P9): {all passed | {n} failed: {names} | pending after {window} minutes | unknown: {names}}
+```
+
+Names and links come from `gh` fields only. Never paste raw check output or log text.
+
+**Red check:**
+
+- **`autonomous`:** Start a fix attempt on the feature branch. Fix the cause, run the credential scan, commit, push without force, and reread the checks. After 3 attempts, write `Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts` and run `gh pr ready --undo {n}`. The PR then no longer shows as ready.
+- **`interactive` and `continuous`:** Put the red check in the Step 11 message with a question about fixing it. Push no fix without that answer.
+
+**Progress line:** Any result other than all passed (red, pending, unknown, or unreadable) writes `Progress: P9 blocked at {End}: CI {result}`. The step never writes `P9 done` for it.
+
+**Commit the log:** Stage the archived build log by explicit path and commit it on its own before Step 11. The commit carries the `CI checks (P9)` lines, the progress line, and each fix attempt line. Step 11 then commits only `final-report.md`.
+
+```bash
+git add -- "{archive-dir}/build-log.md"
+git commit -m "plan(p9): record CI result" -m "{feature-id}" -- "{archive-dir}/build-log.md"
+```
+
+**Push the tag:** After the step ends, push the tag. If fix commits landed, delete the local tag and create it again at the new head first. A pushed tag never moves, so no force push happens.
+
+```bash
+git push origin v{version}
+```
+
+The tag then names the head that CI passed, or the last head if CI stays red. The final report names any fix commits.
+
+**Coverage:** The check covers the head that P9 read. The Step 11 push of `final-report.md` starts a CI run that nobody reads. Backlog 0000193 covers that gap. The final report words the result as "the head that P9 read".
 
 ### Step 11: Confirm to human
 
@@ -371,6 +448,7 @@ P9: Ship complete.
 
 Git tag: v{version} ({if Option [1] was chosen: "already pushed" | "push with: git push origin v{version}"})
 PR: {URL if agent raised it | "See PR description above"}
+CI: {all passed | each non-passing check by name and link, with its result word | pending | unknown | CI status could not be read} (the head that P9 read)
 Archive: {archive-dir}/
 Changelog: plan/changelog/{feature-id}-{YYYY-MM-DD}.md
 Build report: {archive-dir}/build-report.md

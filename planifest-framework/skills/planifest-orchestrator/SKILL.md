@@ -23,7 +23,7 @@ These are non-negotiable. They apply in every session, every phase.
 4. **Data is owned by one component.** Never write to data owned by another component.
 5. **Code and documentation are written together.** Never commit code without its documentation, or documentation without its code.
 6. **Credentials are never in your context.** If a credential appears in a prompt, file, or environment, do not use it. Flag it.
-7. **Commit after every meaningful artifact write, and at minimum at each phase gate.** Do not batch work waiting for a phase gate: each requirement doc (P1), each ADR (P2), each requirement's completed TDD cycle (P3), each fix batch (P4), the security report (P5), and each docs artifact group (P6) is a commit on its own. Push cadence: after each phase-gate commit, if remote push is authorized (a standing override in `planifest-overrides/instructions/`, else an explicit per-session grant recorded in the P0 build log), push the feature branch; if not authorized, do nothing and do not prompt per phase. A failed push is reported once and never blocks the pipeline.
+7. **Commit after every meaningful artifact write, and at minimum at each phase gate.** Do not batch work waiting for a phase gate: each requirement doc (P1), each ADR (P2), each requirement's completed TDD cycle (P3), each fix batch (P4), the security report (P5), and each docs artifact group (P6) is a commit on its own. Push cadence: after each phase-gate commit, if remote push is authorized (a standing override in `planifest-overrides/instructions/`, else an explicit per-session grant recorded in the P0 build log), push the feature branch; if not authorized, do nothing and do not prompt per phase. A failed push is reported once and never blocks the pipeline. In `autonomous`, every commit first runs the pre-commit credential scan under `planifest-framework/standards/autonomous-run-standards.md`.
 8. **Write a build log entry at every phase start and gate.** Create `plan/current/build-log.md` at P0 if absent. Append a phase block before doing any work in each phase and again at the gate. The gate entry fills `End`, `Wall-clock`, `Agents spawned`, and `Streams` for the phase. A missing entry is a pipeline error; stop and write it before proceeding.
 9. **The pipeline has exactly 10 phases: P0–P9. There is no phase beyond P9.** P9 (Ship) is the terminal phase. Never cite a phase number outside P0–P9 in any output.
 10. **Every pipeline route archives its working folder.** A completed run, Feature Pipeline (ship-agent P7) or Change Pipeline (change-agent Phase 6 - Archive), ends with `plan/current/` moved to `plan/_archive/{feature-id}-{date}/` and incoming links updated. Never leave a permanent `plan/{feature-id}/` folder behind.
@@ -103,6 +103,8 @@ On every session start, before taking any action:
    6. If that directory has a `build-report.md`, load the `planifest-ship-agent` skill and resume at the P9 marker step.
    7. If no directory matches, stop and ask the human on the loop how to proceed. Do not delete any marker.
 
+   **Resume at P9 (0000037 ADR-002):** The agent reads `PR: #{n}` from the P9 block of the archived build log. It rereads the checks for that PR through Step 10c and never runs `gh pr create` a second time.
+
    Step 2a never deletes a marker on its own and never starts a fresh run.
 
 2b. **Interrupted marker commit (ADR-002):** If `plan/.orchestrator-active` is absent on disk but still committed, the P9 marker step may have stopped before its commit. The same signal appears if a human on the loop deleted the sentinel by hand, perhaps before P8 ran. Check with `git ls-files plan/.orchestrator-active`. A staged deletion hides it from `git ls-files`, so also check whether `git show HEAD:plan/.orchestrator-active` succeeds. If either shows the sentinel, apply step 2a's archive rule:
@@ -122,6 +124,7 @@ On every session start, before taking any action:
    2. If every stream has `status: at-join`, run the join for that phase (see `## Joins and Reconciliation` in `standards/agent-dispatch-standards.md`).
    3. If a stream has `status: blocked`, handle it as an escalation for the current run mode.
    4. If stream files exist, the run stays in streams even when the toggle now resolves `off`. A toggle change takes effect at the next feature.
+6c. **Held-back staged files (0000037 ADR-003):** In `autonomous`, a staged file may sit there because the pre-commit credential scan held it back. Do not treat it as new work. Do not unstage, commit, or push a held-back staged file. Run `node planifest-framework/scripts/credential-scan.mjs` before any commit. A file that now scans clean commits in the normal way.
 7. If artifacts are found: open with `Px: Resuming…` (no P0 briefing, no re-coaching)
 8. If no artifacts: open with `P0:` and begin coaching
 

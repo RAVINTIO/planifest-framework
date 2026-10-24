@@ -225,3 +225,8 @@ Progress: P2 done at 2026-10-24T00:44:23Z: 14 ADRs approved by the design critic
 - Decision (P3): the req-011 clean-up section sets `$ErrorActionPreference = 'Continue'` around the setup call and restores it / reason: under `Stop`, 5.1 turns merged native stderr into a terminating error.
 - Decision (P3): the req-010 skip-guard against table-row check waits for batch 2 / reason: no guard exists yet.
 - Deviation (P3, unclassified): `setup.ps1` replaces one `` `u{2705} `` escape with `$([char]0x2705)`, because 5.1 prints the escape literally. PowerShell 7 output doesn't change.
+- W1 returned req-003, req-001, req-004, and req-002. RED exit 1 and GREEN exit 0 for each (37, 56, 32, and 33 assertions). `test-0000025-req-001` and `regression/test-0000033-req-005` pass after W1 restored two phrases in the ship skill.
+- Decision (P3): `credential-scan.mjs` prints `{path}:{line} {rule}`, any hit gives exit 1, exit 2 means the scan couldn't run with no hit, and a `gitleaks` exit 1 counts as a finding / reason: one deterministic contract for every caller.
+- Decision (P3): the req-001 and req-002 execution tests run the documented `gh` commands against a stub `gh` / reason: no script runs the poll (ADR-001).
+- Deviation (P3, unclassified): the P8 guard now calls `credential-scan.mjs` in place of its inline `grep` and `gitleaks` commands (req-003). Five assertions in `test-0000033-req-013-clean-close-out.sh` and its regression copy still expect the inline commands, so both suites fail until the orchestrator moves those assertions to the script.
+- Deviation (P3, unclassified): the req-001 execution check covers the read command and the exit-1-with-JSON case, not the whole poll, because no script runs the poll.
