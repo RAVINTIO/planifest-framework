@@ -33,7 +33,7 @@ As a human on the loop with a consumer repo on an older version, I get older mig
 ## Acceptance Criteria
 - [ ] In a fixture consumer repo on 0.36.0 with unrecorded older migrations, the migrator runs them in file-name order against `ravintio-framework/` and `ravintio-overrides/` paths and never reads `.ravintio-backup/`. Verified by: integration
 - [ ] After the helper has run, the migrator confirms the rename migration with a no-op helper rerun and writes an `applied` record. Verified by: integration
-- [ ] In this source repo, the migrator reads `Applies when:` as false, reports `Skipped:`, and writes a `not applicable` record. Verified by: integration
+- [ ] In this source repo and in a fresh consumer install, the migrator reads `Applies when:` as false, reports `Skipped:`, and writes a `not applicable` record. Verified by: integration
 
 ## Dependencies
 - req-006 (consumer-migration) provides the migration file, its `Applies when:` line, and the helpers.

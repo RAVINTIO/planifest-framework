@@ -78,8 +78,7 @@
   - `plan/_archive/`, `plan/changelog/`, `plan/_migrations/` records, and shipped migration bodies
   - sibling repos, including RAVINTIO Zero and `planifest-docs`
   - the local clone folder and the `C:\d\planifest\framework\` path in the refresh script
-  - every other backlog entry
-    - This means picking up no other entry. Live backlog entries still change their brand words, per req-004.
+  - picking up any other backlog entry. Live backlog entries still change their brand words, per req-004.
 - Deferred:
   - `gh repo rename ravintio-framework` and the `origin` update run after the human on the loop merges the PR. Repo links resolve once the repo rename runs.
   - The old-name reads go at 1.0.0.

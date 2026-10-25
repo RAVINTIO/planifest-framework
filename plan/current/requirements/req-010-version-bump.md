@@ -20,7 +20,7 @@ As a human on the loop, I see version 0.37.0 in `product.yml`, the pack manifest
 - P6 writes 0.37.0 to `product.yml`, `ravintio-framework/component.yml`, and the `docs/about.md` frontmatter and table.
 - `node ravintio-framework/scripts/product-version.mjs` derives 0.37.0 from the component manifests after P6.
 - No live file names 1.0.0 as this release. Old-name reads go at 1.0.0, per the design.
-- Split step: this requirement came from the split of req-004 at its fourth criterion. req-004's fourth criterion and the version clause in its third criterion cover the same outcome. They stay in req-004 while the ratchet is active.
+- Split step: this requirement came from the split of req-004 at its fourth criterion. req-004's version criteria moved here once the P1 critic loop closed.
 
 ## Acceptance Criteria
 - [ ] After P6, `product.yml`, `ravintio-framework/component.yml`, and `docs/about.md` each read 0.37.0, and `product-version.mjs` prints 0.37.0. Verified by: integration
@@ -28,4 +28,4 @@ As a human on the loop, I see version 0.37.0 in `product.yml`, the pack manifest
 
 ## Dependencies
 - req-001 (pack-paths-and-identifiers) renames `component.yml` into `ravintio-framework/`.
-- req-004 (brand-prose) holds the two version criteria that this requirement owns.
+- req-004 (brand-prose) is the requirement this one split from.

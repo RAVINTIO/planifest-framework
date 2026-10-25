@@ -49,7 +49,7 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
 
 ## Acceptance Criteria
 - [ ] In a scratch consumer repo, the helper moves the overrides, renames the workflow and rewrites only pack-owned names, removes the markers, moves the old pack to `.ravintio-backup/planifest-framework/`, and prints the setup command and the branch protection warning, in both `.sh` and `.ps1`. Verified by: integration
-- [ ] A rerun changes nothing and exits 0. Each stop condition (no `ravintio-framework/`, both override folders, an existing `ravintio.yml` beside `planifest.yml`, an existing backup, a staged pack edit) exits non-zero before any move. Verified by: integration
+- [ ] A rerun changes nothing and exits 0. Each stop condition (no `ravintio-framework/`, both override folders, an existing `ravintio.yml` beside `planifest.yml`, an existing backup while the old pack also still exists, a staged pack edit other than a deletion) exits non-zero before any move. Verified by: integration
 - [ ] A link or junction at `planifest-framework`, `planifest-overrides`, `ravintio-overrides`, or `.ravintio-backup`, or at either workflow file, makes the helper refuse and leave the link and its target untouched. Verified by: integration
 - [ ] The `.ps1` helper parses and gives the same output and exit codes as the `.sh` helper on Windows PowerShell 5.1 and PowerShell 7. Verified by: integration
 - [ ] A helper stopped after any single step, then rerun, completes the remaining steps and ends in the same state as an uninterrupted run. Verified by: integration

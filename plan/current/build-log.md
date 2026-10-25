@@ -78,14 +78,14 @@ Credential scan (P0): clean (regex only)
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T02:14:07Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T02:30:43Z` |
+| Wall-clock | `16` |
 | Streams | `1` |
-| Model tier | primary (orchestrator), cheaper (drafting subagents) |
-| Skills loaded | planifest-spec-agent |
-| Agents spawned | `pending` |
+| Model tier | primary (orchestrator), cheaper (all 14 subagents, sonnet) |
+| Skills loaded | planifest-spec-agent, planifest-design-critic, planifest-loop-runner (toggle rules) |
+| Agents spawned | `14` (10 drafters, 3 critics, 1 revision agent) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` (the 10 drafters) |
 | Notes | `none` |
 
 Toggle record (P1): design_critic on (autonomous default), reversal_protocol on (autonomous default), verify_by_execution on (autonomous default), cross_model_review on (autonomous default), parallel_streams on (autonomous default). No `loop-toggles.yml` exists.
@@ -104,8 +104,16 @@ Decision (P1): critic iteration 1 rejected with one critical, nine major, and fo
 Deviation (P1, unclassified): the critic revision agent edited nine `plan/current/` files with a Python one-liner, not Edit, so `ratchet-check` never ran (Hard Limit 8). The orchestrator read the diff. No `- [ ]` line or in-scope line was removed or changed. The removed lines were three template lines, one nested Verified-by bullet, one reworded stop condition, and three risk rows rewritten as the critic asked. Backlog 0000238 now cites this case.
 Decision (P1): the next dispatch prompts name the ban on interpreters and shell writers explicitly / reason: the shared brief said "Edit" only through the critic prompt, which the agent read as advice.
 Decision (P1): the two split lines stay `unclassified` until the pre-P7 deviation review / reason: the maker never classifies its own deviation (autonomous-run standards).
+Decision (P1): after the critic loop closed, the deferred moves ran through Edit. req-004's version criteria moved to req-010, req-004's heredoc range now reads 811 to 958 plus line 1322, req-006's backup stop criterion names its condition, req-009's skip criterion covers a fresh consumer, and the superseded scope lines are gone / reason: critic iteration 3 minor findings m1 to m5, all held by the ratchet until the loop closed.
+Decision (P1): the loop-state timestamps were first estimated, then corrected to the commit times / reason: Phase Conventions take every timestamp from `date -u`.
 Decision (P1): no new component manifest at P1. The pack manifest id changes in the req-001 pass, and its version and contract change at P6 / reason: both components already exist, and the feature adds none.
 Decision (P1): no OpenAPI spec, operational model, SLO definitions, or cost model / reason: the feature adds no API, no deployed service, and no spend.
 Decision (P1): `src/setup-hook-integration/component.yml` keeps its id and name / reason: neither carries the old name, so the design's "component.yml ids" applies only to the pack manifest.
 Decision (P1): the pack folder after the rename is `ravintio-framework/`, and the brand guard lives at `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh` / reason: the design's rename map fixes the folder name.
 Decision (P1): the two `test-0000030` telemetry-absence suites keep `PLANIFEST_TELEMETRY*` / reason: they model a stale consumer, so they must check the old name.
+Backlog filed (P1): 0000250 (stale copied-folder docs), 0000251 (broken feature-structure links in the setup heredoc), 0000252 (consistency check reads cross-feature ADR references as local). 0000238 gained 0000039 evidence.
+Credential scan (P1): clean (regex only), every P1 commit.
+Skill Map (P1 gate): re-checked. REQ-008, REQ-009, and REQ-010 rows added for the three splits. No other change.
+Gate (P1): passed. The design critic approved iteration 3 with five minor findings, all fixed after the loop closed. Ten requirements, 34 criteria. Consistency check clean, with criteria-count warnings on req-002 (4) and req-006 (5), both with recorded keep answers.
+Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 34 criteria, critic approved on iteration 3
+

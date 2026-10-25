@@ -37,14 +37,13 @@ As a human on the loop, I read "RAVINTIO Framework" in every doc, skill, templat
   - If a line cannot change without touching those bytes, leave the whole line unchanged and add a brand-guard allowlist entry for it.
 - Path tokens inside those lines, such as `planifest-framework/`, belong to req-001. This requirement covers the brand word only.
 - Split step, in two answers. At drafting the answer was keep: prose and links come from the same replace rules and the same guard check. At the fourth criterion the answer was split: the version bump is its own outcome, so req-010 takes it.
-- The version clause in the third criterion and the whole fourth criterion belong to req-010. They stay here while the ratchet is active, and req-010 cross-refers to them. Moving them waits until no loop-state file is active.
-- The heredoc range in req-005 governs. It runs from line 811 to 958 and writes `plan/feature-structure.md`. Line 1322 also holds a banner bar. Lines 788 and 957 are stale links outside the mojibake lines. The 788 to 957 range in AC3 reads as that range.
+- The version clause and the version criterion moved to req-010 once the P1 critic loop closed.
+- The heredoc range in req-005 governs. It runs from line 811 to 958 and writes `plan/feature-structure.md`. Line 1322 also holds a banner bar. Lines 788 and 957 hold stale links, which backlog 0000251 tracks.
 
 ## Acceptance Criteria
 - [ ] After the pass, no brand-word "Planifest" remains in prose outside history, `_reference/` documents, vendored text, and the allowlist. The brand guard from req-007 passes. Verified by: integration
 - [ ] `git grep -n 'github.com/planifest'` lists only `planifest-docs` links and allowlisted history. Every repo link points to `github.com/RAVINTIO/ravintio-framework`. Verified by: integration
-- [ ] A diff of the `setup.sh` heredoc, lines 788 to 957, changes only brand words, and every mojibake byte matches the previous commit. `docs/about.md` shows 0.37.0 after ship. Verified by: execution
-- [ ] `product.yml` and `ravintio-framework/component.yml` read version 0.37.0 after P6. Verified by: integration
+- [ ] A diff of the `setup.sh` heredoc, lines 811 to 958, plus line 1322, changes only brand words, and every mojibake byte matches the previous commit. Verified by: execution
 
 ## Dependencies
 - req-001 (pack-paths-and-identifiers) provides the renamed paths that links and layout text refer to.
