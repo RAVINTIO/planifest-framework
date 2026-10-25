@@ -49,6 +49,8 @@ while IFS= read -r f; do
     docs/decisions-index.md|ravintio-framework/standards/reference/backend-stack-evaluation.md) continue ;;
     ravintio-framework/migrations/migrate-remove-context-mode-and-telemetry.md) continue ;;
     ravintio-framework/tests/test-0000030-*) continue ;;
+    # The 0.37.0 rename migration and its helpers name the retired telemetry variable to keep it unrenamed.
+    ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.*) continue ;;
     # Feature 0000039 suites name the retired telemetry variable on purpose, to prove the rename keeps it.
     ravintio-framework/tests/test-0000039-*) continue ;;
   esac

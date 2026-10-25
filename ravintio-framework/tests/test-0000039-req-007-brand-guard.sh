@@ -50,7 +50,7 @@ EXCLUDED_PREFIXES=(
 
 # Bodies of migrations shipped before 0.37.0 are history. The 0.37.0 rename
 # migration and its helpers stay in scope and carry allowlist entries.
-HISTORY_MIGRATIONS_DIR="ravintio-framework/migrations/"
+HISTORY_MIGRATIONS_DIR="ravintio-framework/migrations/" # portable-ok: repo-relative path literal that matches git ls-files output
 LIVE_MIGRATION_RE='^ravintio-framework/migrations/migrate-0\.37\.0-ravintio-rename\.'
 
 ALLOWLIST=(
@@ -63,14 +63,16 @@ ALLOWLIST=(
   '^ravintio-framework/hooks/adapters/opencode/index\.ts$|PLANIFEST_SESSION_ID|Legacy fallback for the old session variable, removed at 1.0.0.'
 
   # --- Tests that simulate a consumer who holds the retired name (req-003) ---
-  '^ravintio-framework/tests/test-0000030-req-(003-telemetry-pipeline-text-removal|004-install-clean-up-and-retired-flags)\.sh$|PLANIFEST_TELEMETRY|They simulate a consumer who holds the retired telemetry variable.'
+  '^ravintio-framework/tests/test-0000030-req-00[34]-[a-z-]+\.sh$|PLANIFEST_TELEMETRY|They simulate a consumer who holds the retired telemetry variable.'
 
   # --- Tests that protect split names (req-005) ---
   '^ravintio-framework/tests/test-0000036-req-001[^/]*\.sh$|.|The protected needles test split names.'
 
   # --- The 0.37.0 rename migration, its helpers, and its tests (req-006) ---
   '^ravintio-framework/migrations/migrate-0\.37\.0-ravintio-rename\.[a-z0-9]+$|.|The migration and its helpers name the old pack on purpose.'
-  '^ravintio-framework/tests/test-0000039-req-006[^/]*\.sh$|.|The migration tests plant and check the old pack.'
+  # The 0000039 suites plant old-name fixtures and assert the old name is gone, so they name it.
+  '^ravintio-framework/tests/(regression/)?test-0000039-req-00[2-9][^/]*\.sh$|.|The 0000039 suites plant old-name fixtures and assert the old name is gone.'
+  '^ravintio-framework/tests/fixtures/0000039-rename-exceptions\.txt$|^planifest-framework/|Old paths of the delete-plus-add files.'
 
   # --- Documents that stay as written ---
   # Backlog reference documents are frozen source material.
@@ -79,7 +81,10 @@ ALLOWLIST=(
   '^ravintio-framework/external-skills/|.|Vendored text stays as written.'
 
   # --- Sibling repo links ---
-  '^(README\.md|docs/.+)$|planifest-docs|Sibling documentation repo keeps its name.'
+  '^README\.md$|planifest-docs|Sibling documentation repo keeps its name.'
+  '^ravintio-framework/standards/reference/|planifest|Reference files keep the sibling docs repo file names.'
+  '^plan/backlog/[^/]+/entry\.md$|planifest-zero|Sibling repo name in a backlog entry.'
+  '^plan/backlog/0000215-[^/]+/entry\.md$|feat/planifest-framework-v0\.7|Old branch name quoted from a past command.'
 
   # =====================================================================
   # STAGE 3 ADDS ENTRIES BELOW THIS LINE. Pin each to a real post-pass path
@@ -89,6 +94,25 @@ ALLOWLIST=(
   # fixtures (req-002, req-008), migrator mapping lines (req-009), and live
   # backlog lines that quote the old name.
   # =====================================================================
+
+  # The old marker stays ignored through 0.x.
+  '^\.gitignore$|^\.planifest-setup-flags$|Old flags marker stays ignored through 0.x.'
+
+  # Held back by the credential scan: git still lists the old vendored paths.
+  '^planifest-framework/external-skills/|.|Held back by the P3 credential scan until the human on the loop clears it.'
+
+  # Old-name reads in setup, kept through 0.x and removed at 1.0.0 (ADR-004).
+  '^ravintio-framework/setup\.[a-z0-9]+$|planifest-(framework|overrides)|Old pack folder stop check.'
+  '^ravintio-framework/setup\.[a-z0-9]+$|planifest-overrides:instructions:(start|end)|Old boot marker strip.'
+  '^ravintio-framework/setup\.[a-z0-9]+$|Planifest - (Token Reduction|Indexing Exclusions)|Old ignore header strip.'
+  '^ravintio-framework/setup\.[a-z0-9]+$|\.planifest-(setup-flags|manifest)|Old marker read.'
+  '^ravintio-framework/setup\.[a-z0-9]+$|planifest-\*|Old skill folder match.'
+  '^ravintio-framework/hooks/enforcement/em-dash-guard\.mjs$|planifest-em-dash-allow|Old sentinel read.'
+  '^ravintio-framework/scripts/archive-current\.mjs$|\.planifest-session|Old marker delete.'
+  '^ravintio-framework/skills/ravintio-migrator/SKILL\.md$|planifest-|Old-path mapping for pre-0.37.0 migrations.'
+  '^ravintio-framework/skills/ravintio-refresh-setup/SKILL\.md$|\.planifest-setup-flags|Old marker read note.'
+  # The test reads a migration shipped before 0.37.0, whose body is history.
+  '^ravintio-framework/tests/test-0000032-req-011-rerun-setup-migration\.sh$|planifest-refresh-setup|Asserts text of a past migration.'
 
   # The refresh script keeps the old local checkout path.
   '^refresh-ravintio-framework-dir\.ps1$|C:.d.planifest.framework|Local checkout path on the maintainer machine keeps the old text.'

@@ -265,7 +265,13 @@ SWEEP=""
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   case "$f" in */test-0000039-*) continue ;; esac
-  hit="$(grep -nE "${OLD}-\\$|${OLD}-\\{|${OLD}-\\*|\\[${OLD}\\]|\\.${OLD}-tmp-" "$f" 2>/dev/null | head -1)"
+  hit="$(grep -nE "${OLD}-\\$|${OLD}-\\{|${OLD}-\\*|\\[${OLD}\\]|\\.${OLD}-tmp-" "$f" 2>/dev/null || true)"
+  # Old skill folder matches in the setup scripts are old-name reads the brand guard allowlists (ADR-004).
+  case "$f" in
+    "$FW/setup.sh"|"$FW/setup.ps1")
+      hit="$(grep -vE "(-like '|== )${OLD}-\\*" <<< "$hit" || true)" ;;
+  esac
+  hit="$(head -1 <<< "$hit")"
   [ -n "$hit" ] && SWEEP="$SWEEP$f: $hit"$'\n'
 done <<< "$(find "$FW" -type f -not -path "$FW/external-skills/*" -not -path "$FW/migrations/*" -not -path '*/node_modules/*' | sort)"
 assert_equals "" "$SWEEP" "req-005: no ${OLD}-\$, ${OLD}-{, ${OLD}-*, [${OLD}], or .${OLD}-tmp- form remains in live files"

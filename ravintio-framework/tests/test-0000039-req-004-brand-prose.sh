@@ -52,6 +52,11 @@ AC1_HITS=""
 while IFS= read -r f; do
   [ -n "$f" ] || continue
   h="$(grep -nI 'Planifest' "$ROOT/$f" || true)"
+  # Old-name reads the brand guard allowlists (ADR-004): the setup scripts strip the old ignore headers.
+  case "$f" in
+    ravintio-framework/setup.sh|ravintio-framework/setup.ps1)
+      h="$(grep -vE 'Planifest - (Token Reduction|Indexing Exclusions)' <<< "$h" || true)" ;;
+  esac
   [ -n "$h" ] && AC1_HITS="${AC1_HITS}${f}: ${h}"$'\n'
 done <<< "$LIVE"
 if [ -z "$AC1_HITS" ]; then
@@ -100,8 +105,14 @@ if git -C "$ROOT" show "${BASE}:planifest-framework/setup.sh" > "$OLD" 2>/dev/nu
       -e 's/RAVINTIO/@@/g' -e 's/Ravintio/@@/g' -e 's/ravintio/@@/g'
   }
   NEW="$ROOT/ravintio-framework/setup.sh"
-  { sed -n '811,958p' "$OLD"; sed -n '1322p' "$OLD"; } | norm > "$SCRATCH/old.norm"
-  { sed -n '811,958p' "$NEW"; sed -n '1322p' "$NEW"; } | norm > "$SCRATCH/new.norm"
+  # Locate the heredoc start and the banner line by content, since line numbers shift
+  # when setup.sh gains code. The base file holds them at 811 and 1322.
+  anchor_heredoc() { grep -nF "cat << 'EOF' > \"\$plan_dir/feature-structure.md\"" "$1" | head -1 | cut -d: -f1; }
+  anchor_banner() { LC_ALL=C grep -n $'^echo "\xc3\x83' "$1" | head -1 | cut -d: -f1; }
+  OH="$(anchor_heredoc "$OLD")"; OB="$(anchor_banner "$OLD")"
+  NH="$(anchor_heredoc "$NEW")"; NB="$(anchor_banner "$NEW")"
+  { sed -n "${OH},$((OH + 147))p" "$OLD"; sed -n "${OB}p" "$OLD"; } | norm > "$SCRATCH/old.norm"
+  { sed -n "${NH},$((NH + 147))p" "$NEW"; sed -n "${NB}p" "$NEW"; } | norm > "$SCRATCH/new.norm"
   if [ -s "$SCRATCH/old.norm" ] && cmp -s "$SCRATCH/old.norm" "$SCRATCH/new.norm"; then
     ok "req-004 AC3: setup.sh heredoc 811-958 and line 1322 differ only in brand words"
   else
@@ -109,8 +120,8 @@ if git -C "$ROOT" show "${BASE}:planifest-framework/setup.sh" > "$OLD" 2>/dev/nu
     diff "$SCRATCH/old.norm" "$SCRATCH/new.norm" | cut -c1-160 | head -10
   fi
   # Mojibake bytes survive: count of the lead byte sequence matches.
-  OLDM="$(sed -n '811,958p;1322p' "$OLD" | LC_ALL=C grep -o $'\xc3\xa2' | wc -l | tr -d ' ')"
-  NEWM="$(sed -n '811,958p;1322p' "$NEW" | LC_ALL=C grep -o $'\xc3\xa2' | wc -l | tr -d ' ')"
+  OLDM="$(sed -n "${OH},$((OH + 147))p;${OB}p" "$OLD" | LC_ALL=C grep -o $'\xc3\xa2' | wc -l | tr -d ' ')"
+  NEWM="$(sed -n "${NH},$((NH + 147))p;${NB}p" "$NEW" | LC_ALL=C grep -o $'\xc3\xa2' | wc -l | tr -d ' ')"
   if [ "$OLDM" = "$NEWM" ]; then
     ok "req-004 AC3: mojibake byte count unchanged ($OLDM)"
   else
