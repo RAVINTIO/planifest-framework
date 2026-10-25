@@ -275,15 +275,15 @@ Progress: P5 done at 2026-10-25T05:45:22Z: three Mediums fixed and re-reviewed c
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T05:46:54Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T13:05:39Z` |
+| Wall-clock | `7h 18m 45s` |
 | Streams | `1` |
-| Model tier | cheaper (docs subagents) |
-| Skills loaded | ravintio-docs-agent |
-| Agents spawned | `pending` |
+| Model tier | cheaper (docs subagents), full model for the reopened TDD and reviews, `claude-sonnet-5-5` for the cross-model review |
+| Skills loaded | ravintio-docs-agent, ravintio-test-writer, ravintio-implementer, ravintio-refactor, ravintio-security-agent, ravintio-verify-by-execution, ravintio-reversal-assessor, ravintio-loop-runner |
+| Agents spawned | `29` |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
-| Notes | `none` |
+| Parallel task batches | `11` |
+| Notes | The human on the loop directed the marker rename at P6, which reopened P3 to P5 for req-002 and req-006. |
 
 P6 Gate A: `docs/` exists.
 P6 Gate B: docs update assessment (autonomous, auto-accepted). Feature 0000039 renamed the pack, its skills, paths, variables, and markers, and added a consumer migration. Auto-accepted: updating `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, and `docs/dependency-graph.md`. No component exposes an API, so `docs/api-index.md` stays absent. `docs/about.md` already reads 0.37.0 from P3.
@@ -325,6 +325,9 @@ Deviation (P5, process): the third re-review agent changed one line with `sed -i
 Cross-model review (P6, cycle 1 of 3): REJECT (fcf259e1). Reviewer `claude-sonnet-5-5`, implementer `claude-opus-5-5`. Nine of ten requirements met. X-001 High: nothing runs or parses the `.ps1` helper under Windows PowerShell 5.1, which req-006 AC4 requires. X-002 Medium: the verification report predates the D-1 and strict-name fixes. X-003 to X-006 Low: two stale doc lines, the old-folder stop differs between shells, the req-006 step 8 body, and a shared test fixture folder.
 Decision (P6): fix all six in one parallel batch of three streams. X-001 and X-006 change the req-006 suite and the 5.1 CI job. X-004 changes both setups test first. X-002 re-verifies at HEAD. The orchestrator fixed X-003 and X-005 in d2a79606 / reason: the streams share no files. A fresh cross-model reviewer then runs cycle 2.
 Progress (P6, cross-model fixes): X-003 and X-005 d2a79606. X-004 RED 4a3ae470, GREEN 6c5582c3. X-006 01374ccc, though concurrent runs didn't reproduce the collision. X-001 a19f3b1d: the 5.1 CI job parses the helper and runs the req-006 `.ps1` cases under `powershell.exe`. X-002 0e872066: the re-verification at HEAD passes every check. Defect D-2, in the req-003 command text, is fixed in 4928eba9. Backlog filed: 0000272 (the setup manifest lists folders setup didn't install). Agents spawned: 3. CI run 40195111057 is the first real run of the helper under 5.1. Cross-model cycle 2 runs alongside it.
+Cross-model review (P6, cycle 2 of 3): APPROVE (22e1232c). X-001 to X-006 closed. Y-001 Low, a stale verification row, was closed in 673a161e. CI run 40195111057 at a19f3b1d passed every job, including the first helper parse and run under Windows PowerShell 5.1.
+Gate (P6): passed. Docs match the built code, the deviation review has classified every line, and the cross-model gate approved. The full suite passes 162 of 162.
+Progress: P6 done at 2026-10-25T13:05:39Z: the marker rename the human directed shipped through reopened P3 to P5, and cross-model review approved on cycle 2.
 Drift (P6): the old setup never read `.opencode/.planifest-setup-flags`, so an OpenCode consumer kept a stale old marker. The helper now covers `.opencode/` as well.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
