@@ -48,8 +48,17 @@
 # allowlist entry.
 #
 # The .ps1 pass runs on pwsh when present. Otherwise it prints SKIP with a
-# reason. CI runs both PowerShell legs (Windows PowerShell 5.1 and 7).
-# Junction cases need Windows and run in the CI Windows leg only.
+# reason. Junction cases need Windows and run in the CI Windows leg only.
+#
+# Environment (0000039 P6 X-001):
+#   RAVINTIO_TEST_PWSH        the PowerShell binary for the .ps1 pass. The
+#                             default is pwsh. When set, a missing binary
+#                             fails the suite instead of printing SKIP.
+#   RAVINTIO_TEST_REQ006_ONLY  set to ps1 to skip the .sh pass. The .ps1 pass,
+#                             the parity cases, and the CI check still run.
+# The test-suite CI job runs the whole suite on pwsh (PowerShell 7). The
+# setup-powershell-51 job parses the helper and runs the .ps1 pass under
+# powershell.exe (Windows PowerShell 5.1) with RAVINTIO_TEST_REQ006_ONLY=ps1.
 
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -64,6 +73,9 @@ OLDU="PLAN""IFEST"
 OLDC="Plan""ifest"
 OLDPACK="$OLD-framework"
 OLDOVR="$OLD-overrides"
+PS_BIN="${RAVINTIO_TEST_PWSH:-pwsh}"
+ONLY="${RAVINTIO_TEST_REQ006_ONLY:-}"
+WORKFLOW="$FW_DIR/../.github/workflows/ravintio.yml"
 
 # WS is the only fixture root. Every repo, shim, link target, and victim
 # folder lives under it, and GIT_CEILING_DIRECTORIES stops git at it. mktemp
@@ -131,12 +143,12 @@ if ln -s "$WS/link-probe-target" "$WS/link-probe" 2>/dev/null && [ -L "$WS/link-
 fi
 
 # run_helper DIR [ENV=VAL...]: run the helper for the current KIND from DIR.
-# pwsh on Windows ends each line with CRLF, so the ps1 branch drops the CR.
-# pipefail keeps the helper's exit code.
+# The ps1 branch runs PS_BIN. PowerShell on Windows ends each line with
+# CRLF, so the ps1 branch drops the CR. pipefail keeps the helper's exit code.
 run_helper() {
   local d="$1"; shift
   if [ "$KIND" = ps1 ]; then
-    ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" pwsh -NoProfile -NonInteractive -File "$PS_HELPER" 2>&1 | tr -d '\r' )
+    ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" "$PS_BIN" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PS_HELPER" 2>&1 | tr -d '\r' )
   else
     ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" bash "$SH_HELPER" 2>&1 )
   fi
@@ -981,7 +993,30 @@ assert_equals "yes" "$(exists "$SH_HELPER")" "req-006: migrate-0.37.0-ravintio-r
 assert_equals "yes" "$(exists "$PS_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.ps1 exists"
 assert_equals "yes" "$(exists "$MIG_DIR/migrate-0.37.0-ravintio-rename.md")" "req-006: migrate-0.37.0-ravintio-rename.md exists"
 
-if [ -f "$SH_HELPER" ]; then
+# req-006 AC4 (0000039 P6 X-001): CI parses and runs the helper under 5.1.
+# job_block ID prints one job from the workflow, up to the next job.
+job_block() {
+  awk -v id="  $1:" '
+    $0 == id { on = 1; print; next }
+    on && /^  [^ ]/ { exit }
+    on { print }
+  ' "$WORKFLOW"
+}
+in_text() { grep -E -- "$1" <<< "$2" >/dev/null && echo yes || echo no; }
+
+echo "=== req-006 AC4: the 5.1 CI job parses and runs the .ps1 helper ==="
+J51="$(job_block setup-powershell-51)"
+assert_equals "yes" "$(in_text 'Parser\]::ParseFile' "$J51")" "req-006 AC4: the 5.1 job parses a file with Parser ParseFile"
+assert_equals "yes" "$(in_text 'migrations[\\/]+migrate-0\.37\.0-ravintio-rename\.ps1' "$J51")" "req-006 AC4: the 5.1 job names the .ps1 helper"
+assert_equals "yes" "$(in_text 'RAVINTIO_TEST_PWSH:[[:space:]]*powershell\.exe$' "$J51")" "req-006 AC4: the 5.1 job sets RAVINTIO_TEST_PWSH to powershell.exe"
+assert_equals "yes" "$(in_text 'RAVINTIO_TEST_REQ006_ONLY:[[:space:]]*ps1$' "$J51")" "req-006 AC4: the 5.1 job runs the .ps1 subset"
+assert_equals "yes" "$(in_text 'bash ravintio-framework/tests/test-0000039-req-006-consumer-migration\.sh$' "$J51")" "req-006 AC4: the 5.1 job runs the req-006 suite"
+assert_equals "yes" "$(in_text 'shell:[[:space:]]*bash$' "$J51")" "req-006 AC4: the 5.1 job runs the suite through Git Bash"
+assert_equals "no" "$(in_text 'secrets\.' "$J51")" "req-006 AC4: the 5.1 job references no secrets"
+
+if [ "$ONLY" = ps1 ]; then
+  echo "  SKIP: req-006: the .sh pass, because RAVINTIO_TEST_REQ006_ONLY=ps1"
+elif [ -f "$SH_HELPER" ]; then
   run_suite sh
   check_early_stops sh
   run_marker_suite sh
@@ -992,7 +1027,8 @@ else
 fi
 
 echo "=== req-006 AC4: .ps1 helper ==="
-if command -v pwsh >/dev/null 2>&1; then
+if command -v "$PS_BIN" >/dev/null 2>&1; then
+  echo "  PowerShell: $PS_BIN $("$PS_BIN" -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.ToString()' 2>&1 | tr -d '\r')"
   if [ -f "$PS_HELPER" ]; then
     run_suite ps1
     check_early_stops ps1
@@ -1025,6 +1061,8 @@ if command -v pwsh >/dev/null 2>&1; then
   else
     echo "  FAIL: req-006 AC4: the .ps1 helper is missing"; ((FAIL++)) || true
   fi
+elif [ -n "${RAVINTIO_TEST_PWSH:-}" ]; then
+  echo "  FAIL: req-006 AC4: RAVINTIO_TEST_PWSH names $PS_BIN, which is not on PATH"; FAIL=$((FAIL + 1))
 else
   echo "  SKIP: req-006 AC4: pwsh is not installed here. CI runs the Windows PowerShell 5.1 and PowerShell 7 legs."
 fi

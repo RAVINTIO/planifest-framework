@@ -135,6 +135,8 @@ jobs:
   setup-powershell-51:
     name: Setup under Windows PowerShell 5.1
     runs-on: windows-latest
+    # The cap stays at 10 (0000039 X-001). The req-006 step runs only the
+    # .ps1 pass, which took about 2 minutes under pwsh on windows-latest.
     timeout-minutes: 10
     permissions:
       contents: read
@@ -153,3 +155,34 @@ jobs:
       - name: Run test_setup.ps1
         shell: powershell
         run: ./ravintio-framework/tests/test_setup.ps1
+
+      # 0000039 req-006 AC4 (X-001): the migration helper must parse and
+      # match the .sh helper under Windows PowerShell 5.1 as well as 7.
+      - name: Parse the migration helper under 5.1
+        shell: powershell
+        run: |
+          $path = Join-Path $PWD 'ravintio-framework\migrations\migrate-0.37.0-ravintio-rename.ps1'
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            foreach ($e in $errors) { Write-Host "Line $($e.Extent.StartLineNumber): $($e.Message)" }
+            Write-Host "The helper has $($errors.Count) parse errors under $($PSVersionTable.PSVersion)."
+            exit 1
+          }
+          Write-Host "The helper parses under $($PSVersionTable.PSVersion)."
+
+      # Git Bash runs the suite. The .ps1 cases call powershell.exe, which
+      # is Windows PowerShell 5.1. The .sh pass already runs in test-suite.
+      - name: Run the req-006 .ps1 cases under 5.1
+        shell: bash
+        env:
+          RAVINTIO_TEST_PWSH: powershell.exe
+          RAVINTIO_TEST_REQ006_ONLY: ps1
+        run: |
+          major=$(powershell.exe -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.Major' | tr -d '\r')
+          if [ "$major" != 5 ]; then
+            echo "powershell.exe reports major version $major, not 5."
+            exit 1
+          fi
+          bash ravintio-framework/tests/test-0000039-req-006-consumer-migration.sh

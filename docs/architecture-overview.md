@@ -152,7 +152,7 @@ Self-modification sequencing (ADR-004) governs how such a change is applied to h
 | `self-description-check` | `ubuntu-latest` | The README matches the repository structure (0000019) |
 | `test-suite` | `ubuntu-latest`, `macos-latest`, and `windows-latest` under Git Bash in seven shards, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
 | `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.ravintio-setup-flags` marker checks |
-| `setup-powershell-51` | `windows-latest`, Windows PowerShell 5.1 | `test_setup.ps1` passes under 5.1, including the live stale clean-up and retired-flag checks (0000037) |
+| `setup-powershell-51` | `windows-latest`, Windows PowerShell 5.1 | `test_setup.ps1` passes under 5.1, including the live stale clean-up and retired-flag checks (0000037). The 0.37.0 migration helper parses under 5.1, and the req-006 suite's `.ps1` cases pass on `powershell.exe` (0000039) |
 
 These three test jobs are repository-only (0000031-ADR-002). The consumer copy at `ravintio-framework/hooks/ravintio.yml` doesn't carry them. Each declares `permissions: contents: read`, no secrets, and the `pull_request` trigger (0000031-ADR-003).
 
