@@ -61,7 +61,7 @@
 - Bulk rename method (human decision, 2026-10-25): one scripted pass in P3, a recorded exception to Hard Limit 8.
   1. **Write** creates the script in the scratchpad, never in the repo.
   2. The script uses `git mv` for paths and a replace that skips the protected list.
-  3. The human on the loop approves the script before it runs.
+  3. The human on the loop approved the scripted pass at P0 on 2026-10-25. The run doesn't stop for it. The script runs once P1 has listed the protected names and their tests are in place.
   4. It runs once. Its output, the `setup.sh claude-code` re-run, and the build-log update land in one commit.
   5. Every follow-up fix uses **Edit**.
 - Before the pass: P1 lists every split or built name, every history-reading suite, and the `setup.sh` mojibake lines. Each one gets a test or a protected-list entry.
@@ -122,4 +122,4 @@ Five files in `planifest-overrides/instructions/`, read at P0. They move to `rav
 - `custom-005-p9-push-and-raise-pr.md`: at P9, push and raise the PR without asking. Never merge.
 
 ## Confirmation
-Human confirmed this design before proceeding: no // Date and Time confirmed: pending
+Human confirmed this design before proceeding: yes // Date and Time confirmed: 25 Oct 2026 @ 02:12 AM GMT

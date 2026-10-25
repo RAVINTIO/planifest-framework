@@ -15,8 +15,8 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Tool | `claude-code` |
 | Primary model | `claude-opus-5-5` |
 | Cheaper model | `claude-sonnet-5-5` |
-| Run mode | `pending` |
-| Parallel streams | `pending` |
+| Run mode | `autonomous` |
+| Parallel streams | `pending` (set at P1 from the toggle) |
 
 ---
 
@@ -27,17 +27,17 @@ summary: "Working log file maintained by the orchestrator throughout the pipelin
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T01:58:32Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T02:12:50Z` |
+| Wall-clock | `14` |
 | Streams | `n/a` |
 | Model tier | primary |
 | Skills loaded | planifest-orchestrator |
-| Agents spawned | `2` (Explore surveys, sonnet) |
+| Agents spawned | `6` (2 Explore surveys and 4 Scope Lock drafts, sonnet) |
 | MCP calls | `0` |
-| Parallel task batches | `1` |
-| P0 questions asked | `pending` |
-| Brief complete | `pending` |
-| Stack unchanged | `pending` |
+| Parallel task batches | `2` |
+| P0 questions asked | `3` |
+| Brief complete | `no` |
+| Stack unchanged | `yes` |
 | Notes | `Pre-P0 triage happened before the step -1 context reset. See the pre-P0 notes below.` |
 
 P0 references loaded: .claude/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md, .claude/skills/planifest-orchestrator/references/adoption-modes.md
@@ -60,3 +60,14 @@ Scope Lock (error path): a half-moved consumer helper stops at the failed step, 
 Scope Lock (cross-session path): only uncommitted work is at risk, the rename and setup re-run land in one commit, and an interrupted migration re-runs safely. [source: agent-draft-accepted]
 Scope Lock complete. All four scenario paths captured.
 P0 exchange (combined confirmation): Q: design, four Scope Lock drafts, and run mode / A: design accepted, all four drafts accepted, run mode [3] autonomous. The orchestrator had recommended [1].
+P0 exchange (script approval in autonomous): Q: the design had a mid-run approval of the rename script, which autonomous doesn't stop for. Keep the stop or use a reviewer? / A: neither. The human on the loop approved the scripted pass now and said to run it at the right time. The design now records that approval and drops the stop.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-25
+Version confirmed: 0.37.0
+P0 questions asked: 3
+Brief complete: no
+Stack unchanged: yes
+Skills inbox (P0 to P1): `planifest-framework/skills-inbox/` absent, nothing to take in.
+Gate check (P0 to P1): every checklist item passes. Problem, three stories, unchanged stack, two components, data ownership, scope in, out, and deferred, NFRs with targets, security, risks, adoption mode, version, Scope Lock, discovery, and feature ID.
+Progress: P0 done at 2026-10-25T02:12:50Z: design confirmed for the RAVINTIO rename, 0.37.0, autonomous run.
+
+Run mode confirmed: autonomous (2026-10-25T02:12:50Z)
