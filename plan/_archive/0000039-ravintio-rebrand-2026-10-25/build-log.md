@@ -363,5 +363,42 @@ About (P7): `docs/about.md` already reads 0.37.0, `0000039-ravintio-rebrand`, an
 Full suite (P7): 163 suites, 126 feature suites and 36 regression suites pass. The req-005 suite failed one assertion, because the uncommitted changelog edit showed under `plan/changelog/`. The P7 commit clears it, and P8 reruns the suite.
 Test report (P7): `plan/changelog/0000039-ravintio-rebrand-test-report-2026-10-25.md`.
 Archive (P7): `archive-current.mjs` exited 0. It moved 29 items, removed `plan/current/.feature-id`, and printed `archive-dir: plan/_archive/0000039-ravintio-rebrand-2026-10-25`. `plan/current/` is empty.
+Credential scan (P7): clean (regex only). 97 candidates, all safe. Commit 6dfe98e0.
 Progress: P7 done at 2026-10-25T13:21:29Z: changelog updated, brand guard promoted, plan/current archived
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:22:10Z` |
+| End | `2026-10-25T13:26:23Z` |
+| Wall-clock | `4` |
+| Streams | `1` |
+| Model tier | cheaper (build-assessment-agent, haiku) |
+| Skills loaded | ravintio-build-assessment-agent (in a subagent) |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | `none` |
+
+Rerun (P8): `test-0000039-req-005-history-and-split-name-protection.sh` passes 178 of 178 after the P7 commit, so the full suite stands at 163 of 163.
+Build report (P8): `build-report.md` written. 11 h 22 min 57 s from P0 start to P7 end, 88 agents, 5 self-corrections, 3 touchpoints, none outside the exception list.
+Clean-tree check: clean (the only changes sit under the archive directory, and the P9 marker step commits them)
+Progress: P8 done at 2026-10-25T13:26:23Z: build report filed, tree clean outside the archive
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:26:23Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (ship agent) |
+| Skills loaded | ravintio-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | `none` |
+
 
