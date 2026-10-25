@@ -26,6 +26,7 @@ version: "0.1.0"
 - The 0.37.0 minor version bump in `product.yml`, `ravintio-framework/component.yml`, and `docs/about.md`, with old-name reads kept through 0.x. Maps to req-010-version-bump (US-004).
 
 - P2 clarification for the runtime-names line: setup also reads `.planifest-manifest` once and removes it. The helper removes only `.planifest-session` (ADR-004, req-006).
+- P2 clarification for the consumer-migration line: "remove old markers" there means `.planifest-session` only, as above.
 
 ## Out of Scope
 
