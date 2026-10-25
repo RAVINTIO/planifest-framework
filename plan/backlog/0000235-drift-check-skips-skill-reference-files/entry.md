@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/skill-drift-check.mjs` compares each installed `SKILL.md` with its source and nothing else. Feature 0000038 moved about 37 KB of orchestrator rules into `skills/planifest-orchestrator/references/phase-0-assess-and-coach.md` and `references/adoption-modes.md`. A stale installed copy of either file passes the drift check, so Resume Detection can't warn that the P0 rules are out of date.
+`ravintio-framework/scripts/skill-drift-check.mjs` compares each installed `SKILL.md` with its source and nothing else. Feature 0000038 moved about 37 KB of orchestrator rules into `skills/ravintio-orchestrator/references/phase-0-assess-and-coach.md` and `references/adoption-modes.md`. A stale installed copy of either file passes the drift check, so Resume Detection can't warn that the P0 rules are out of date.
 
 ## Suggested Action
 

@@ -20,7 +20,7 @@ The two questions any adopter asks are whether defect escape rate falls, and wha
 
 ## Suggested Action
 
-Publish a measured comparison of a fixed task set built three ways: baseline agent with no framework, Planifest fast-path, Planifest full pipeline. Minimum five tasks of varied size, with the task definitions published. Measure defects reaching pull request, rework cycles, total tokens and wall-clock duration. Publish the method and the raw results, including results unfavourable to the framework. Link it from the README Limitations section, replacing the "no comparative benchmarks yet" note.
+Publish a measured comparison of a fixed task set built three ways: baseline agent with no framework, RAVINTIO Framework fast-path, RAVINTIO full pipeline. Minimum five tasks of varied size, with the task definitions published. Measure defects reaching pull request, rework cycles, total tokens and wall-clock duration. Publish the method and the raw results, including results unfavourable to the framework. Link it from the README Limitations section, replacing the "no comparative benchmarks yet" note.
 
 Small and honest beats large and delayed — five tasks published is worth more than fifty planned.
 

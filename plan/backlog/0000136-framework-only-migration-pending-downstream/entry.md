@@ -14,9 +14,9 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/migrations/retroactive-release-tags.md` tags historical commits of the framework repo with Planifest release versions. It only makes sense in the framework source repo.
+`ravintio-framework/migrations/retroactive-release-tags.md` tags historical commits of the framework repo with RAVINTIO Framework release versions. It only makes sense in the framework source repo.
 
-Under req-007 of 0000035, the file returns from `_done/` to the top level, and no downstream project holds a record for it. After a refresh, every downstream project sees it as pending. The migrator then reads the project's own `git log` for Planifest version anchors and may propose tags on unrelated commits. The human on the loop confirms each batch, so nothing tags without consent, but the prompt is noise.
+Under req-007 of 0000035, the file returns from `_done/` to the top level, and no downstream project holds a record for it. After a refresh, every downstream project sees it as pending. The migrator then reads the project's own `git log` for RAVINTIO version anchors and may propose tags on unrelated commits. The human on the loop confirms each batch, so nothing tags without consent, but the prompt is noise.
 
 0000035 has no field for a migration to say which kind of project it targets. The two downstream-only migrations have the same gap in the other direction, and this repo records them `not applicable` by hand.
 

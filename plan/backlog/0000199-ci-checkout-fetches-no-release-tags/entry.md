@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-The `test-suite` job in `.github/workflows/planifest.yml` uses `actions/checkout@v4` with its defaults. That fetches one commit and no tags. The migration branch-diff test (req-008 of 0000037) needs the previous release tag. It skips when the tag is absent, so it never compares anything in CI. A wrong migration file list then fails only on a local run.
+The `test-suite` job in `.github/workflows/ravintio.yml` uses `actions/checkout@v4` with its defaults. That fetches one commit and no tags. The migration branch-diff test (req-008 of 0000037) needs the previous release tag. It skips when the tag is absent, so it never compares anything in CI. A wrong migration file list then fails only on a local run.
 
 ## Suggested Action
 

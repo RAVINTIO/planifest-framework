@@ -25,7 +25,7 @@ The build-assessment agent at P8 reports efficiency, not failure causes. The val
 
 ## Proposed change
 
-Add a `planifest-postmortem` skill:
+Add a `ravintio-postmortem` skill:
 
 - **Trigger:** any P4 self-correction that a P3 test should have caught, any failed deploy, CI failure, rollback, or escaped defect, or a human request.
 - **Method:** blameless rules, a timeline with evidence, and 5 whys that stop at a gap in a process, check, standard, or tool, not a person or agent.
@@ -38,9 +38,9 @@ Also:
 - Have the orchestrator invoke it under continuous runs, after the failure is fixed and before the P9 report.
 - Have P8's build report list the run's postmortems.
 
-`ovelunor`'s version, at `planifest-overrides/capability-skills/blameless-postmortem/SKILL.md` in that repository, is a starting point.
+`ovelunor`'s version, at `ravintio-overrides/capability-skills/blameless-postmortem/SKILL.md` in that repository, is a starting point.
 
 ## Related
 
-- `gate-write` blocks `planifest-overrides/` once P7 removes the sentinel, so a product can't install a capability skill after a run without a design. 0000077 covers governance lapsing after P7.
+- `gate-write` blocks `ravintio-overrides/` once P7 removes the sentinel, so a product can't install a capability skill after a run without a design. 0000077 covers governance lapsing after P7.
 - 0000084: `gate-write` also blocked this entry's write to the framework repository.

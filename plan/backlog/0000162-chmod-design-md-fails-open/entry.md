@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-An agent can run `chmod 000 plan/current/design.md`. The write gate in `planifest-framework/hooks/enforcement/path-rules.mjs` finds a regular file with `lstatSync`. Its guarded open then throws `EACCES`, and the gate fails open under 0000003 ADR 005. Any `src/` write then passes. The bypass needs no race.
+An agent can run `chmod 000 plan/current/design.md`. The write gate in `ravintio-framework/hooks/enforcement/path-rules.mjs` finds a regular file with `lstatSync`. Its guarded open then throws `EACCES`, and the gate fails open under 0000003 ADR 005. Any `src/` write then passes. The bypass needs no race.
 
 Feature 0000036 ADR-002 keeps this behaviour. It narrows 0000003 ADR 005 only for non-regular files and a throwing `lstatSync`.
 

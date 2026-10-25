@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/credential-scan.mjs` applies regular expressions to decoded text. Three inputs pass in regex-only mode. A key split across two lines or string pieces. A key held in base64 or another encoding. A key whose prefix uses a homoglyph character. The P5 fix for F-01 closed NUL-byte and UTF-16 bypasses only. The credentials review (F-11) lists these three as not detected.
+`ravintio-framework/scripts/credential-scan.mjs` applies regular expressions to decoded text. Three inputs pass in regex-only mode. A key split across two lines or string pieces. A key held in base64 or another encoding. A key whose prefix uses a homoglyph character. The P5 fix for F-01 closed NUL-byte and UTF-16 bypasses only. The credentials review (F-11) lists these three as not detected.
 
 ## Suggested Action
 

@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/credential-scan.mjs` replaces unusual path characters with `?` when it prints a `{path}:{line} {rule}` line. A non-ASCII name such as `plan/current/é.txt` prints as `plan/current/?.txt`. Scan-then-commit (`planifest-framework/standards/autonomous-run-standards.md`) tells the run to pass that printed path to `git restore --staged --`. Git reads `?` as a one-byte glob. A two-byte UTF-8 character does not match, so the restore fails with `did not match` and the scan exits 1 on every rescan. A path with a colon prints as `a?b.txt`, which also breaks the `{path}:{line}` split. The failure is closed, since nothing commits, but the run stalls with no cap on the repeat step.
+`ravintio-framework/scripts/credential-scan.mjs` replaces unusual path characters with `?` when it prints a `{path}:{line} {rule}` line. A non-ASCII name such as `plan/current/é.txt` prints as `plan/current/?.txt`. Scan-then-commit (`ravintio-framework/standards/autonomous-run-standards.md`) tells the run to pass that printed path to `git restore --staged --`. Git reads `?` as a one-byte glob. A two-byte UTF-8 character does not match, so the restore fails with `did not match` and the scan exits 1 on every rescan. A path with a colon prints as `a?b.txt`, which also breaks the `{path}:{line}` split. The failure is closed, since nothing commits, but the run stalls with no cap on the repeat step.
 
 ## Suggested Action
 

@@ -16,7 +16,7 @@ status: "open"
 
 The orchestrator's P0 asks one question at a time and applies recommend-then-confirm to every decision. That includes adoption mode, version, stack, component split, NFRs, risks, and the feature ID. Most of these are derivable, so each question only restates the recommendation and waits for "yes".
 
-The `ovelunor` product hit this on feature 0000013, whose P0 asked about twelve one-at-a-time confirmations. It added a repo override, `planifest-overrides/instructions/p0-ask-only-real-forks.md`, to stop it. The human still reports too many P0 questions, so the framework default remains the problem for every other product.
+The `ovelunor` product hit this on feature 0000013, whose P0 asked about twelve one-at-a-time confirmations. It added a repo override, `ravintio-overrides/instructions/p0-ask-only-real-forks.md`, to stop it. The human still reports too many P0 questions, so the framework default remains the problem for every other product.
 
 The override reads:
 

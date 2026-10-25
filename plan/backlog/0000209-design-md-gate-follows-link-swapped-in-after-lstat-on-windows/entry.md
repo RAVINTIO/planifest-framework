@@ -16,7 +16,7 @@ status: "open"
 
 On the `windows-latest` Git Bash leg, `test-0000036-req-008-non-regular-design-md.sh` (swap mode `link`) swapped `plan/current/design.md` for a symbolic link after `lstatSync`. `gate-write` then exited 0 and admitted `src/a.js`. The suite expects exit 2 with the no-design reason. CI run 40049089808 shows it.
 
-The cause is in `planifest-framework/hooks/enforcement/path-rules.mjs`. The open uses `O_NOFOLLOW ?? 0`, and Windows defines no `O_NOFOLLOW`. The open follows the link. The later `fstatSync` sees a regular file, so the check passes.
+The cause is in `ravintio-framework/hooks/enforcement/path-rules.mjs`. The open uses `O_NOFOLLOW ?? 0`, and Windows defines no `O_NOFOLLOW`. The open follows the link. The later `fstatSync` sees a regular file, so the check passes.
 
 A link already in place is caught by `lstatSync`. The hole is the race between `lstatSync` and the open. Reaching it needs a process that writes into `plan/current/` at the right moment. This is an enforcement gap on Windows, so the suite skip is not a fix.
 

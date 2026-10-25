@@ -1,6 +1,6 @@
 ---
 title: "Backlog Entry: 0000064 - Playwright MCP as a setup flag, used comprehensively when configured"
-summary: "Planifest has no first-class browser-automation integration. Add a --playwright-mcp setup flag alongside the existing --structured-telemetry-mcp gate, and when it is configured, route every Playwright-shaped requirement through the MCP rather than leaving each run to improvise with whatever browser tooling the host happens to expose."
+summary: "RAVINTIO Framework has no first-class browser-automation integration. Add a --playwright-mcp setup flag alongside the existing --structured-telemetry-mcp gate, and when it is configured, route every Playwright-shaped requirement through the MCP rather than leaving each run to improvise with whatever browser tooling the host happens to expose."
 status: "open"
 ---
 # Backlog Entry: 0000064 - Playwright MCP as a setup flag, used comprehensively when configured
@@ -14,12 +14,12 @@ status: "open"
 
 ## Problem
 
-Planifest has no first-class integration with browser automation, and no declared position on how a feature
+RAVINTIO has no first-class integration with browser automation, and no declared position on how a feature
 whose acceptance criteria are browser-shaped should be verified.
 
 Three things are true today and pull against each other:
 
-1. **`planifest-verify-by-execution` demands real execution.** The P4 skill explicitly requires acceptance
+1. **`ravintio-verify-by-execution` demands real execution.** The P4 skill explicitly requires acceptance
    criteria to be verified by running the software, naming "browser click-throughs" first among its methods,
    and forbids verification by reading test output alone. It does not say what drives the browser.
 
@@ -40,18 +40,18 @@ that filed this entry. It is absent from the session's tool set, and `search_mcp
 results for `playwright`, `browser automation`, `e2e testing` and `web testing`. What was available was the
 in-app Browser (`mcp__Claude_Browser__*`, offering navigate, read_page, computer, console and network reads)
 and Claude in Chrome (`mcp__claude-in-chrome__*`). So this entry is not blocked on a missing feature in
-Planifest alone; at pickup someone must first establish how the target Playwright MCP is obtained and
+RAVINTIO alone; at pickup someone must first establish how the target Playwright MCP is obtained and
 registered, because it was not installable from the registry on the machine where this was filed.
 
 ## Suggested Action
 
 Add a `--playwright-mcp` flag to `setup.sh` and `setup.ps1` mirroring the `--structured-telemetry-mcp`
 pattern: recorded in the flags-used marker, detectable by the orchestrator at P0, surfaced in `discovery.md`
-alongside the other capability signals, and reconstructable by `planifest-refresh-setup`.
+alongside the other capability signals, and reconstructable by `ravintio-refresh-setup`.
 
 When the flag is configured, make its use comprehensive rather than optional. That means at minimum: the P0
 discovery pass records it as an available capability; the spec-agent may write browser-driven acceptance
-criteria knowing a deterministic driver exists; `planifest-verify-by-execution` prefers the MCP over ad hoc
+criteria knowing a deterministic driver exists; `ravintio-verify-by-execution` prefers the MCP over ad hoc
 browser tooling for any criterion needing a click-through; and the codegen-agent generates Playwright specs
 rather than hand-rolled browser scripts. When the flag is absent, behaviour is exactly as today, with no
 prompt and no degradation, matching how the telemetry signal behaves when genuinely absent.

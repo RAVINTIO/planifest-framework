@@ -15,7 +15,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/consistency-check.mjs` resolves an `ADR-nnn` reference only against
+`ravintio-framework/scripts/consistency-check.mjs` resolves an `ADR-nnn` reference only against
 `plan/current/adr/`. Every ADR from a shipped feature lives in `plan/_archive/{feature}/adr/`, so
 any artifact citing an inherited decision is reported as referencing an ADR that does not exist.
 

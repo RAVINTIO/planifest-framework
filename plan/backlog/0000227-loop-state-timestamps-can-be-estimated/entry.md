@@ -18,7 +18,7 @@ status: "open"
 
 ## Suggested Action
 
-In `planifest-loop-runner`, make the orchestrator run `date -u +%Y-%m-%dT%H:%M:%SZ` in the same step that appends each iteration, and paste the output. Add a loop-close check that each iteration timestamp falls between the commit times of the previous and next iteration artifacts (`git log --format=%cI`). Flag a round number such as `:00:00Z` for review.
+In `ravintio-loop-runner`, make the orchestrator run `date -u +%Y-%m-%dT%H:%M:%SZ` in the same step that appends each iteration, and paste the output. Add a loop-close check that each iteration timestamp falls between the commit times of the previous and next iteration artifacts (`git log --format=%cI`). Flag a round number such as `:00:00Z` for review.
 
 ## Why Deferred
 

@@ -1,6 +1,6 @@
 ---
 title: "Backlog Entry: 0000020 - Decompose the orchestrator skill"
-summary: "planifest-orchestrator/SKILL.md is 12,204 words — 39% of the entire skills corpus — loaded in full before any work begins; make it a router with phase detail loaded on demand."
+summary: "ravintio-orchestrator/SKILL.md is 12,204 words — 39% of the entire skills corpus — loaded in full before any work begins; make it a router with phase detail loaded on demand."
 status: "open"
 ---
 # Backlog Entry: 0000020 - Decompose the orchestrator skill
@@ -14,9 +14,9 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/skills/planifest-orchestrator/SKILL.md` is 83,699 bytes, 12,204 words, roughly 21k tokens, loaded in full before work begins.
+`ravintio-framework/skills/ravintio-orchestrator/SKILL.md` is 83,699 bytes, 12,204 words, roughly 21k tokens, loaded in full before work begins.
 
-The distribution matters more than the absolute figure. Across all twenty skills, `SKILL.md` files total 30,968 words. The orchestrator alone is **39% of that**. The next largest is `planifest-codegen-agent` at 2,521 words; the median skill is 772 words. This is not systemic bloat — it is one file.
+The distribution matters more than the absolute figure. Across all twenty skills, `SKILL.md` files total 30,968 words. The orchestrator alone is **39% of that**. The next largest is `ravintio-codegen-agent` at 2,521 words; the median skill is 772 words. This is not systemic bloat — it is one file.
 
 Long instruction sets degrade instruction adherence, which is precisely the failure mode the framework exists to prevent.
 

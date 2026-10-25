@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-A Planifest run delivers one feature in one release. The framework has no unit of work for an initiative that delivers a series of related features across several releases. Waves split a large feature, but each wave needs a human to start a new run. The orchestrator also stops at the context clear after P9, so nothing carries an initiative across cleared sessions.
+A RAVINTIO Framework run delivers one feature in one release. The framework has no unit of work for an initiative that delivers a series of related features across several releases. Waves split a large feature, but each wave needs a human to start a new run. The orchestrator also stops at the context clear after P9, so nothing carries an initiative across cleared sessions.
 
 ## Suggested Action
 

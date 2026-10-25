@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/stream-reconcile.mjs` counts a join record's listed file as a use only if `git log {start-commit}..HEAD` shows it changed. The range holds every stream's commits, not only the join's own. A join record can therefore list a file that another stream changed, and the consumer check passes with no real use of the artifact. The P5 re-review reproduced it. The orchestrator writes join records, so the risk is Low.
+`ravintio-framework/scripts/stream-reconcile.mjs` counts a join record's listed file as a use only if `git log {start-commit}..HEAD` shows it changed. The range holds every stream's commits, not only the join's own. A join record can therefore list a file that another stream changed, and the consumer check passes with no real use of the artifact. The P5 re-review reproduced it. The orchestrator writes join records, so the risk is Low.
 
 ## Suggested Action
 

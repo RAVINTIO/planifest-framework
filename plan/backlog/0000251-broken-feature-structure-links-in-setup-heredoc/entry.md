@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-The heredoc that `setup.sh` writes links to `../planifest/spec/feature-structure.md` at lines 788 and 957. `setup.ps1` has the same link at lines 894 and 1065. No `planifest/spec/` folder exists, so the links are already broken. The heredoc lines also hold mojibake bytes, so 0000039 changes only the brand word in them.
+The heredoc that `setup.sh` writes links to `../ravintio/spec/feature-structure.md` at lines 788 and 957. `setup.ps1` has the same link at lines 894 and 1065. No `ravintio/spec/` folder exists, so the links are already broken. The heredoc lines also hold mojibake bytes, so 0000039 changes only the brand word in them.
 
 ## Suggested Action
 

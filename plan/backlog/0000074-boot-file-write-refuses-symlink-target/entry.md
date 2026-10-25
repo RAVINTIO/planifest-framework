@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`write_boot_file` (setup.sh) and `Write-PlanifestBootFile` (setup.ps1) write through a symlink at the boot-file path. Feature 0000029 made these writes unconditional on every run (previously an existing file, symlink included, was skipped), so a symlink planted at `CLAUDE.md`/`AGENTS.md` redirects the template write to any user-writable path on every setup run. Exploitability is limited (requires prior repo write access; content written is template plus overrides, not attacker free text) but the write-through is silent. See 0000029 security-report SEC-001.
+`write_boot_file` (setup.sh) and `Write-RavintioBootFile` (setup.ps1) write through a symlink at the boot-file path. Feature 0000029 made these writes unconditional on every run (previously an existing file, symlink included, was skipped), so a symlink planted at `CLAUDE.md`/`AGENTS.md` redirects the template write to any user-writable path on every setup run. Exploitability is limited (requires prior repo write access; content written is template plus overrides, not attacker free text) but the write-through is silent. See 0000029 security-report SEC-001.
 
 ## Suggested Action
 

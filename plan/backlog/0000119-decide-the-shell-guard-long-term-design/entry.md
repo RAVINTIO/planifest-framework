@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/hooks/enforcement/shell-write-guard.mjs` is a heuristic shell reader of about 830 lines (ADR-006). The 0000032 P5 loop took three fix rounds. Each fix to the reader opened new edge cases:
+`ravintio-framework/hooks/enforcement/shell-write-guard.mjs` is a heuristic shell reader of about 830 lines (ADR-006). The 0000032 P5 loop took three fix rounds. Each fix to the reader opened new edge cases:
 
 - The F2 fix (judge against both `cd` bases) led to N-1, which blocked `cd X && relative-write`.
 - The F5 fix (read arithmetic as one unit) led to N-2, an unclosed `((` read as arithmetic.

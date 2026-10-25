@@ -1,4 +1,4 @@
-# Planifest Component Manifest
+# RAVINTIO Component Manifest
 id: "setup-hook-integration"
 name: "Setup Hook Integration"
 feature: "0000037-green-ci-before-ship"
@@ -6,7 +6,7 @@ version: "0.7.0"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"
-summary: "setup.sh/ps1 and supporting scripts that install enforcement hooks, commit standards, and external skill management into any Planifest-managed project."
+summary: "setup.sh/ps1 and supporting scripts that install enforcement hooks, commit standards, and external skill management into any RAVINTIO-managed project."
 systemContext: "Core setup infrastructure. Runs once per tool target and on re-runs. Installs hooks to .claude/hooks/, wires settings.json, registers the blocking commit-msg hook, writes Tier 1 adapter hook registrations for Cursor/Windsurf/Cline, and syncs external skills via skill-sync.sh."
 
 responsibilities:
@@ -18,8 +18,8 @@ responsibilities:
   - "Own the removal of plan/.telemetry-failures and plan/.telemetry-receipts (0000030-ADR-005)"
   # END retired-integrations (0000030)
   - "Register shell-write-guard.mjs on a Bash PreToolUse matcher for Claude Code, idempotently, in setup.sh and setup.ps1 (0000032-ADR-006)"
-  - "Relocate cline.sh/cline.ps1's boot file into .clinerules/00-planifest-boot.md so it no longer collides with the .clinerules/skills directory (0000027-req-002)"
-  - "Run setup.ps1 under Windows PowerShell 5.1 as well as PowerShell 7: ConvertTo-PlanifestHashtable replaces ConvertFrom-Json -AsHashtable, and the native-command stderr hazards are contained (0000037-ADR-012)"
+  - "Relocate cline.sh/cline.ps1's boot file into .clinerules/00-ravintio-boot.md so it no longer collides with the .clinerules/skills directory (0000027-req-002)"
+  - "Run setup.ps1 under Windows PowerShell 5.1 as well as PowerShell 7: ConvertTo-RavintioHashtable replaces ConvertFrom-Json -AsHashtable, and the native-command stderr hazards are contained (0000037-ADR-012)"
   - "Check the exit code of git config core.hooksPath in setup.ps1, warn when it fails, and never print the guardrails-activated line after a failure, matching setup.sh (0000037-ADR-012)"
 
 exceptions:
@@ -61,7 +61,7 @@ contract:
 data:
   ownsData: true
   dataContract: "src/setup-hook-integration/docs/data-contract.md"
-  tables: [".claude/.planifest-setup-flags"]
+  tables: [".claude/.ravintio-setup-flags"]
   schemaVersion: "1.0.0"
   migrationPath: "src/setup-hook-integration/docs/data-contract.md#migration-history"
 
@@ -70,7 +70,7 @@ scope:
     - "setup.sh and setup.ps1 hook installation and settings.json merge"
     - "setup/claude-code.sh and setup/claude-code.ps1 hook path declarations"
     - "Claude Code only"
-    - "setup.sh/setup.ps1 write .claude/.planifest-setup-flags at install time, in parity (0000020-setup-refresh-skill, REQ-008)"
+    - "setup.sh/setup.ps1 write .claude/.ravintio-setup-flags at install time, in parity (0000020-setup-refresh-skill, REQ-008)"
     - "cline.sh/cline.ps1 boot-file/skills-dir path collision fix (0000027-req-002)"
     - "Retired integration flags accepted as no-ops, and the always-on retired-integration clean-up (0000030-ADR-003, ADR-004, ADR-005)"
     - "Windows PowerShell 5.1 support in setup.ps1 and the live stale clean-up and retired-flag checks in test_setup.ps1 (0000037-ADR-012, req-011)"
@@ -127,7 +127,7 @@ metadata:
   # Updated by 0000037 (docs-agent) P6: recorded Windows PowerShell 5.1
   # support, the git config exit check, and the live req-011 clean-up checks.
   # Updated by 0000027 (codegen-agent) P3: cline.sh/.ps1 boot file
-  # relocated to .clinerules/00-planifest-boot.md (req-002), verified via a
+  # relocated to .clinerules/00-ravintio-boot.md (req-002), verified via a
   # new regression test (RED before fix, GREEN after) that also confirmed
   # test-0000023-req-003's previously-failing "setup.sh all" assertion now
   # passes.
@@ -140,6 +140,6 @@ metadata:
   # PreToolUse registration of shell-write-guard.mjs in both setup scripts.
   createdBy: "agent"
   lastModifiedBy: "agent"
-  skill: "planifest-codegen-agent"
+  skill: "ravintio-codegen-agent"
   tool: "claude-code"
   model: "claude-sonnet-4-6"

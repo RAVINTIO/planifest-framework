@@ -9,7 +9,7 @@ Last updated: 0000038-token-efficiency-windows-shard (24 Oct 2026)
 
 ## System Summary
 
-Planifest is a CLI tooling framework that enforces a structured design pipeline for agentic coding agents. It installs enforcement hooks into agentic IDEs (Claude Code, Cursor, Windsurf, GitHub Copilot, Codex) that gate writes to `src/` behind a confirmed design document, and provides a suite of pipeline skills (spec, ADR, codegen, validate, security, docs, ship) that guide development from brief to merged PR.
+RAVINTIO Framework is a CLI tooling framework that enforces a structured design pipeline for agentic coding agents. It installs enforcement hooks into agentic IDEs (Claude Code, Cursor, Windsurf, GitHub Copilot, Codex) that gate writes to `src/` behind a confirmed design document, and provides a suite of pipeline skills (spec, ADR, codegen, validate, security, docs, ship) that guide development from brief to merged PR.
 
 ---
 
@@ -17,8 +17,8 @@ Planifest is a CLI tooling framework that enforces a structured design pipeline 
 
 | Component | Type | Purpose | Status |
 |-----------|------|---------|--------|
-| `setup-hook-integration` | component-pack | setup.sh/ps1 and skill-sync: installs enforcement hooks, commit standards, external skill management, and (0000020) a per-tool flags-used marker into any Planifest-managed project | active |
-| `planifest-refresh-setup` | skill (standalone, not a src/ component) | Detects a Planifest install's target tool, reconstructs the setup flags in effect from the flags-used marker or hook wiring, confirms with the human on the loop, and safely re-invokes setup.sh/setup.ps1; see `planifest-framework/skills/planifest-refresh-setup/SKILL.md` | active |
+| `setup-hook-integration` | component-pack | setup.sh/ps1 and skill-sync: installs enforcement hooks, commit standards, external skill management, and (0000020) a per-tool flags-used marker into any RAVINTIO-managed project | active |
+| `ravintio-refresh-setup` | skill (standalone, not a src/ component) | Detects a RAVINTIO install's target tool, reconstructs the setup flags in effect from the flags-used marker or hook wiring, confirms with the human on the loop, and safely re-invokes setup.sh/setup.ps1; see `ravintio-framework/skills/ravintio-refresh-setup/SKILL.md` | active |
 
 ---
 
@@ -31,7 +31,7 @@ flowchart TD
         HookRunner["Hook Runner\n(PreToolUse / UserPromptSubmit)"]
     end
 
-    subgraph Adapters["Hook Adapters (planifest-framework/hooks/adapters/)"]
+    subgraph Adapters["Hook Adapters (ravintio-framework/hooks/adapters/)"]
         CUR["cursor.mjs"]
         CPL["copilot.mjs"]
         WS["windsurf.mjs"]
@@ -44,11 +44,11 @@ flowchart TD
         PR["path-rules.mjs\n(shared gated-path rules, repository root,\nlink resolution, scope record, 0000032/0000035)"]
         CD["check-design.mjs\n(scope injection)"]
         RC["ratchet-check.mjs\n(criteria/scope weakening block,\narmed while a loop is active,\nshared root rules, 0000035)"]
-        ED["em-dash-guard.mjs\n(U+2014 rejected in Planifest prose,\nsentinel bypass, 0000028)"]
+        ED["em-dash-guard.mjs\n(U+2014 rejected in RAVINTIO prose,\nsentinel bypass, 0000028)"]
         SHE["read-stdin.mjs\n(shared module, always installed)"]
     end
 
-    subgraph Scripts["Scripts (planifest-framework/scripts/, 0000033)"]
+    subgraph Scripts["Scripts (ravintio-framework/scripts/, 0000033)"]
         ARC["archive-current.mjs\n(P7 archive by explicit path)"]
         SRC["stream-reconcile.mjs\n(join reconciliation)"]
         RMD["run-mode.mjs\n(effective run mode)"]
@@ -56,21 +56,21 @@ flowchart TD
         SDC["skill-drift-check.mjs\n(warn-only drift check, 0000036)"]
     end
 
-    subgraph Setup["Setup (planifest-framework/)"]
+    subgraph Setup["Setup (ravintio-framework/)"]
         SH["setup.sh / setup.ps1"]
         SS["skill-sync.sh / skill-sync.ps1"]
     end
 
     subgraph Skills["Pipeline Skills (P0–P9)"]
-        ORCH["planifest-orchestrator\n(P0)"]
-        SPEC["planifest-spec-agent\n(P1)"]
-        ADR["planifest-adr-agent\n(P2)"]
-        CG["planifest-codegen-agent\n(P3)"]
-        VAL["planifest-validate-agent\n(P4)"]
-        SEC["planifest-security-agent\n(P5)"]
-        DOCS["planifest-docs-agent\n(P6)"]
-        SHIP["planifest-ship-agent\n(P7–P9)"]
-        BA["planifest-build-assessment-agent\n(P8, sub-agent of ship-agent)"]
+        ORCH["ravintio-orchestrator\n(P0)"]
+        SPEC["ravintio-spec-agent\n(P1)"]
+        ADR["ravintio-adr-agent\n(P2)"]
+        CG["ravintio-codegen-agent\n(P3)"]
+        VAL["ravintio-validate-agent\n(P4)"]
+        SEC["ravintio-security-agent\n(P5)"]
+        DOCS["ravintio-docs-agent\n(P6)"]
+        SHIP["ravintio-ship-agent\n(P7–P9)"]
+        BA["ravintio-build-assessment-agent\n(P8, sub-agent of ship-agent)"]
     end
 
     Agent -->|"plans Write/Edit"| HookRunner
@@ -120,17 +120,17 @@ flowchart TD
 
 ## Governance Loops (0000016)
 
-The pipeline has an optional loop layer, entirely toggle-gated via `planifest-overrides/loop-toggles.yml`. An absent file or key turns a loop off, with one exception. Outside `autonomous`, an absent `design_critic` key or an absent file reads as `report-only` (0000036 ADR-009):
+The pipeline has an optional loop layer, entirely toggle-gated via `ravintio-overrides/loop-toggles.yml`. An absent file or key turns a loop off, with one exception. Outside `autonomous`, an absent `design_critic` key or an absent file reads as `report-only` (0000036 ADR-009):
 
 | Loop | Seam | Verifier | Deterministic guard |
 |------|------|----------|--------------------|
 | P0 completeness | P0 exit | Gate checklist re-evaluated per coaching round | 2-rounds-per-gap escalation |
-| Design critic | End of P1/P2 | Fresh-context `planifest-design-critic` (REJECT-default) + `scripts/consistency-check.mjs` | Cap 3, no-progress halt |
-| Governed reversal | P3–P6 blocked by upstream P0–P6 artifact | Fresh-context `planifest-reversal-assessor` (DENY-default) | Budget 2/feature, cascade >3 human gate, ratchet-check.mjs on writes |
-| Verify-by-execution | P4 after CI | `planifest-verify-by-execution` (runs the software) | Feeds existing P4 cap-5 loop |
+| Design critic | End of P1/P2 | Fresh-context `ravintio-design-critic` (REJECT-default) + `scripts/consistency-check.mjs` | Cap 3, no-progress halt |
+| Governed reversal | P3–P6 blocked by upstream P0–P6 artifact | Fresh-context `ravintio-reversal-assessor` (DENY-default) | Budget 2/feature, cascade >3 human gate, ratchet-check.mjs on writes |
+| Verify-by-execution | P4 after CI | `ravintio-verify-by-execution` (runs the software) | Feeds existing P4 cap-5 loop |
 | Cross-model review | End of P6, strictly pre-P7-archive | Fresh-context reviewer on a different model id (REJECT-default) | Cap 3; blocks P7 on cap-without-approval |
 
-Shared mechanics (state file, append-only run log, stop rules, escalation format) live in `planifest-loop-runner`. P7 remains the lock line: no loop or reversal touches archived state (`plan/backlog/` is the governed home for deferred work instead).
+Shared mechanics (state file, append-only run log, stop rules, escalation format) live in `ravintio-loop-runner`. P7 remains the lock line: no loop or reversal touches archived state (`plan/backlog/` is the governed home for deferred work instead).
 
 ---
 
@@ -144,24 +144,24 @@ Self-modification sequencing (ADR-004) governs how such a change is applied to h
 
 ## Continuous integration (0000031)
 
-`.github/workflows/planifest.yml` runs five jobs on every pull request to `main`.
+`.github/workflows/ravintio.yml` runs five jobs on every pull request to `main`.
 
 | Job | Runner | What it checks |
 |-----|--------|----------------|
 | `validate-branch` | `ubuntu-latest` | A change under `src/` also touches `plan/`, `docs/`, or a `component.yml` |
 | `self-description-check` | `ubuntu-latest` | The README matches the repository structure (0000019) |
 | `test-suite` | `ubuntu-latest`, `macos-latest`, and `windows-latest` under Git Bash in seven shards, `fail-fast: false` | `run-tests.sh` passes. On failure, the log lists each failed suite by file name. |
-| `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.planifest-setup-flags` marker checks |
+| `setup-powershell` | `windows-latest`, PowerShell 7 | `test_setup.ps1` passes, including the live `.ravintio-setup-flags` marker checks |
 | `setup-powershell-51` | `windows-latest`, Windows PowerShell 5.1 | `test_setup.ps1` passes under 5.1, including the live stale clean-up and retired-flag checks (0000037) |
 
-These three test jobs are repository-only (0000031-ADR-002). The consumer copy at `planifest-framework/hooks/planifest.yml` doesn't carry them. Each declares `permissions: contents: read`, no secrets, and the `pull_request` trigger (0000031-ADR-003).
+These three test jobs are repository-only (0000031-ADR-002). The consumer copy at `ravintio-framework/hooks/ravintio.yml` doesn't carry them. Each declares `permissions: contents: read`, no secrets, and the `pull_request` trigger (0000031-ADR-003).
 
 Feature 0000037 changed the platform matrix (ADR-012, ADR-013, and ADR-014 of that feature):
 
 - Windows PowerShell 5.1 is a supported runtime for `setup.ps1`, tested by `setup-powershell-51`.
-- The suite runs on Windows under Git Bash. `run-tests.sh` reads `PLANIFEST_SHARD_INDEX` and `PLANIFEST_SHARD_COUNT`, so the Windows leg runs in seven shards.
+- The suite runs on Windows under Git Bash. `run-tests.sh` reads `RAVINTIO_SHARD_INDEX` and `RAVINTIO_SHARD_COUNT`, so the Windows leg runs in seven shards.
 - Each Windows shard has `timeout-minutes: 20`. Every other job keeps 10.
-- A suite check that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `planifest-framework/tests/README.md`.
+- A suite check that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `ravintio-framework/tests/README.md`.
 
 A red check doesn't block a merge until branch protection marks it as required. Only the human on the loop can change that setting.
 
@@ -187,7 +187,7 @@ Resume Detection in the orchestrator reads archive evidence to finish an interru
 
 ### Blocking context clear after P9
 
-Ship Step 12 asks the human on the loop to run `/clear` or start a new session (0000032-ADR-003). The orchestrator refuses new work in the same session until that happens. In the next session, `auto-trigger-orchestrator.mjs` says no Planifest run is active, and the agent must triage the request before it acts. A ship Hard Limit makes every P9 handover note route each next step through a track.
+Ship Step 12 asks the human on the loop to run `/clear` or start a new session (0000032-ADR-003). The orchestrator refuses new work in the same session until that happens. In the next session, `auto-trigger-orchestrator.mjs` says no RAVINTIO run is active, and the agent must triage the request before it acts. A ship Hard Limit makes every P9 handover note route each next step through a track.
 
 ### Shared path rules and repository root
 
@@ -196,7 +196,7 @@ Ship Step 12 asks the human on the loop to run `/clear` or start a new session (
 The module finds the repository root with a marker walk that spawns no process:
 
 1. It walks up from `CLAUDE_PROJECT_DIR`, then from `cwd`, and takes the first walk that finds a marker.
-2. In each walk, the nearest folder holding `planifest-framework/` wins. Failing that, the nearest folder holding `.git` wins.
+2. In each walk, the nearest folder holding `ravintio-framework/` wins. Failing that, the nearest folder holding `.git` wins.
 3. A marked folder inside `plan/` or `docs/` of a higher marked folder is never the root.
 4. With no marker found, the root is `cwd`.
 
@@ -239,15 +239,15 @@ In `autonomous`, the run stops for the human on the loop only on a declared exce
 - A human-only input.
 - An exhausted budget.
 
-A product adds items through `planifest-overrides/` using `templates/exception-list.template.yml`. Merging pull requests stays human-only in every mode. The ship agent ships without asking and ends P9 with one final report.
+A product adds items through `ravintio-overrides/` using `templates/exception-list.template.yml`. Merging pull requests stays human-only in every mode. The ship agent ships without asking and ends P9 with one final report.
 
 ### Gates as loops
 
-In `autonomous`, every phase gate runs as a loop under `planifest-loop-runner` with a fresh-context checker (0000033-ADR-004). Existing caps stay. At a cap, the run tries a different approach, up to 3 approaches per loop instance (0000033-ADR-005). The fourth becomes an exception. The reversal budget stays at 2 per feature. Each phase writes a one-line progress entry to the build log, and the P8 report flags the human-touchpoint count.
+In `autonomous`, every phase gate runs as a loop under `ravintio-loop-runner` with a fresh-context checker (0000033-ADR-004). Existing caps stay. At a cap, the run tries a different approach, up to 3 approaches per loop instance (0000033-ADR-005). The fourth becomes an exception. The reversal budget stays at 2 per feature. Each phase writes a one-line progress entry to the build log, and the P8 report flags the human-touchpoint count.
 
 ### P0 questions and release sizing
 
-`standards/p0-question-policy.md` limits P0 to real forks (0000033-ADR-007). Adoption mode, version, stack, and similar items go into the design draft for one confirmation. The design, the Scope Lock batch, and the run mode confirm in one turn. The build log records the question count. When a design depends on existing records, discovery samples recent rows and the design states the usable rate as an assumption. `standards/release-sizing.md` sizes each requirement as small (1), medium (2), or large (3). P0 fills the release from the backlog up to the target in `planifest-overrides/release-budget.yml` (0000033-ADR-008). Without that file, the three-story rule applies.
+`standards/p0-question-policy.md` limits P0 to real forks (0000033-ADR-007). Adoption mode, version, stack, and similar items go into the design draft for one confirmation. The design, the Scope Lock batch, and the run mode confirm in one turn. The build log records the question count. When a design depends on existing records, discovery samples recent rows and the design states the usable rate as an assumption. `standards/release-sizing.md` sizes each requirement as small (1), medium (2), or large (3). P0 fills the release from the backlog up to the target in `ravintio-overrides/release-budget.yml` (0000033-ADR-008). Without that file, the three-story rule applies.
 
 ### Fast Path for changes with no src target
 
@@ -284,7 +284,7 @@ A link loop, a chain past 40 links, or a resolution error blocks with exit 2 whe
 
 ### Planted markers
 
-`markedRoot` distrusts a `.git` or `planifest-framework` marker that sits below an always-permitted name, such as `plan/w/.git` (0000035-ADR-008). The walk goes on to the next trusted marker above, so a moved folder can't become a new root.
+`markedRoot` distrusts a `.git` or `ravintio-framework` marker that sits below an always-permitted name, such as `plan/w/.git` (0000035-ADR-008). The walk goes on to the next trusted marker above, so a moved folder can't become a new root.
 
 ### Fast Path scope record
 
@@ -319,7 +319,7 @@ Each script counts only with the arguments its skill step shows. No other script
 
 ### Migration run state
 
-Migration files never move (0000035-ADR-015). Every migration sits at the top level of `planifest-framework/migrations/`, and the old completed-migrations folder is gone. Each project records each run at `plan/_migrations/{stem}.md` (0000035-ADR-016). A record holds one outcome: `applied`, `not applicable`, or `skipped`.
+Migration files never move (0000035-ADR-015). Every migration sits at the top level of `ravintio-framework/migrations/`, and the old completed-migrations folder is gone. Each project records each run at `plan/_migrations/{stem}.md` (0000035-ADR-016). A record holds one outcome: `applied`, `not applicable`, or `skipped`.
 
 A migration is pending when its record is missing or can't be read (0000035-ADR-018). Orchestrator resume detection reads the records, and the migrator is their only writer (0000035-ADR-017). Each record comes from a scan, never from seeding (0000035-ADR-019).
 
@@ -339,7 +339,7 @@ This release adds no language, runtime, or library (0000036-ADR-001). The new ga
 
 The script uses Node built-ins, starts no process, and never writes. It never follows a link. It exits 0 when every copy matches, 1 when a copy is stale or missing or nothing is installed, and 2 when it can't compare.
 
-The orchestrator runs it in Resume Detection step 1b, after the framework update check in step 1a. On exit 1, the orchestrator names each stale or missing skill to the human on the loop and recommends `planifest-refresh-setup`. It never runs setup itself. It loads source copies of the stale skills only after step 1a found no update or the human on the loop confirmed the update.
+The orchestrator runs it in Resume Detection step 1b, after the framework update check in step 1a. On exit 1, the orchestrator names each stale or missing skill to the human on the loop and recommends `ravintio-refresh-setup`. It never runs setup itself. It loads source copies of the stale skills only after step 1a found no update or the human on the loop confirmed the update.
 
 ### Setup-delivered files and the 0.34.0 migration
 
@@ -408,11 +408,11 @@ Step 10 first looks for an open PR with `gh pr view --json number,url,isDraft,st
 
 ### GUTD step 5
 
-`planifest-overrides/instructions/custom-003-git-up-to-date-shorthand.md` gains step 5 (0000037-ADR-005). After the untracked-files report, it reads the checks of the newest merged PR into `main` and reports them as "the last merged PR's checks". It is read-only and does not wait. It never says "main is green". The workflow trigger stays `pull_request`.
+`ravintio-overrides/instructions/custom-003-git-up-to-date-shorthand.md` gains step 5 (0000037-ADR-005). After the untracked-files report, it reads the checks of the newest merged PR into `main` and reports them as "the last merged PR's checks". It is read-only and does not wait. It never says "main is green". The workflow trigger stays `pull_request`.
 
 ### Post-P6 revalidation
 
-The docs agent revalidates after the P6 commit and before it reports P6 complete (0000037-ADR-006). It runs the `command` from `planifest-overrides/doc-checks.yml` when valid, else P4 steps 0 to 5. It writes one `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}` line. In `autonomous`, the revalidation runs as a loop with a cap of 3 cycles. It then tries up to 3 approaches before it becomes exception item 6. Outside `autonomous`, the cap stays at 5 with the `VALIDATION BLOCKED` escalation.
+The docs agent revalidates after the P6 commit and before it reports P6 complete (0000037-ADR-006). It runs the `command` from `ravintio-overrides/doc-checks.yml` when valid, else P4 steps 0 to 5. It writes one `Revalidation (P6): {command | P4 steps 0-5}, {pass | fail | skipped, no P6 edits}` line. In `autonomous`, the revalidation runs as a loop with a cap of 3 cycles. It then tries up to 3 approaches before it becomes exception item 6. Outside `autonomous`, the cap stays at 5 with the `VALIDATION BLOCKED` escalation.
 
 ### Verified by field and P3 scan
 
@@ -430,7 +430,7 @@ Feature 0000038 cuts the tokens each run reads and fixes a flaky Windows timing 
 
 ### Orchestrator reference files
 
-Phase 0 and Adoption Modes moved out of `skills/planifest-orchestrator/SKILL.md` into two files in `skills/planifest-orchestrator/references/` (0000038-ADR-002):
+Phase 0 and Adoption Modes moved out of `skills/ravintio-orchestrator/SKILL.md` into two files in `skills/ravintio-orchestrator/references/` (0000038-ADR-002):
 
 - `phase-0-assess-and-coach.md`
 - `adoption-modes.md`
@@ -461,17 +461,17 @@ Each timing check makes one untimed warm-up call and one timed call under 200 ms
 
 ## Data Ownership
 
-No components own persistent data. Planifest operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.planifest-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `planifest-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `planifest-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
+No components own persistent data. RAVINTIO operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.ravintio-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `ravintio-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `ravintio-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
 
-Clarified in 0000033: `planifest-framework` owns `plan/.run-mode`, `plan/current/`, and `plan/current/streams/`. The human on the loop owns `planifest-overrides/` (exception list, release budget, doc checks), and the framework only reads it (0000033-ADR-015).
+Clarified in 0000033: `ravintio-framework` owns `plan/.run-mode`, `plan/current/`, and `plan/current/streams/`. The human on the loop owns `ravintio-overrides/` (exception list, release budget, doc checks), and the framework only reads it (0000033-ADR-015).
 
 New in 0000035 (plain Markdown and text):
 
-- `plan/_migrations/` run records: owned by `planifest-migrator`, read by orchestrator resume detection, git-tracked, never archived (0000035-ADR-017).
+- `plan/_migrations/` run records: owned by `ravintio-migrator`, read by orchestrator resume detection, git-tracked, never archived (0000035-ADR-017).
 - `plan/.fast-path-scope`: owned by the Fast Path workflow, read by `gate-write.mjs` and the shell-write guard, gitignored and removed before each Fast Path commit.
 - `product.yml`: the ship agent owns it and writes it only through `set-product-release.mjs`. `product-version.mjs` reads it.
 
-Clarified in 0000032: `planifest-framework` owns the three committed session markers, `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`. The orchestrator writes them at P0, and the ship skill deletes them in the P9 marker step. Hooks read them only.
+Clarified in 0000032: `ravintio-framework` owns the three committed session markers, `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode`. The orchestrator writes them at P0, and the ship skill deletes them in the P9 marker step. Hooks read them only.
 
 ---
 
@@ -482,7 +482,7 @@ Clarified in 0000032: `planifest-framework` owns the three committed session mar
 | Node.js (built-ins only: fs, path, child_process, os, url, crypto) | Runtime | All hook adapters, enforcement scripts, and `scripts/` (`crypto` in `set-product-release.mjs` only, 0000035) |
 | Bash | Runtime | setup.sh, test scripts, hook install scripts |
 | PowerShell 7+ | Runtime | setup.ps1, test_setup.ps1, PowerShell hook scripts |
-| GitHub Actions hosted runners | CI | `ubuntu-latest`, `macos-latest`, and `windows-latest` jobs in `.github/workflows/planifest.yml` (0000031) |
+| GitHub Actions hosted runners | CI | `ubuntu-latest`, `macos-latest`, and `windows-latest` jobs in `.github/workflows/ravintio.yml` (0000031) |
 | git (core.hooksPath) | CLI | setup.sh/ps1 (commit-msg hook installation) |
 
 ---
@@ -497,13 +497,13 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-003 (0000011):** Hook adapter architecture: delegating pattern; adapters translate envelopes, enforcement logic lives only in shared scripts
 - **ADR-003 (0000018):** discovery.md elevated to Hard Limit status: matches the enforcement pattern of the build-log rule (orchestrator Hard Limit 8)
 - **ADR-001 (0000020):** Hardcoded, non-extensible deletion allowlist for the refresh skill, enforced in a dedicated script, not prose alone (P5 security finding)
-- **ADR-002 (0000020):** Single marker file (`.planifest-setup-flags`) serves as both install-time record and refresh retry cache, not two separate files
+- **ADR-002 (0000020):** Single marker file (`.ravintio-setup-flags`) serves as both install-time record and refresh retry cache, not two separate files
 - **ADR-003 (0000020):** Mandatory human confirmation gate before any refresh action, regardless of flag-reconstruction confidence
 - **ADR-004 (0000020):** Tool selection is explicit input to the refresh skill, never silently auto-resolved when multiple installs are present
 - **ADR-005 (0000020):** No automatic retry on a failed setup re-invocation; retry is always human-initiated
 - **ADR-001 (0000024):** `product.yml` extended to single-component projects as the declared product id home (stable name for versioning and for attributing archived runs): extends, not supersedes, 0000016 ADR-002's versioning-only scope
-- **ADR-001 (0000025):** Ship-agent PR footer defaults off; restorable only via a `planifest-overrides/instructions/` opt-in file
-- **ADR-002 (0000025):** `planifest-overrides/setup-config/{tool}.md` (tracked) is source of truth over the gitignored `.planifest-setup-flags` marker; reconciled on setup/refresh; `.orchestrator-strict` explicitly out of scope
+- **ADR-001 (0000025):** Ship-agent PR footer defaults off; restorable only via a `ravintio-overrides/instructions/` opt-in file
+- **ADR-002 (0000025):** `ravintio-overrides/setup-config/{tool}.md` (tracked) is source of truth over the gitignored `.ravintio-setup-flags` marker; reconciled on setup/refresh; `.orchestrator-strict` explicitly out of scope
 - **ADR-003 (0000025):** Scope Lock Challenge defaults to always-drafted, batch-presented answers: supersedes **ADR-003 (0000017)**, scoped narrowly against `0000014-ADR-008`'s one-question-at-a-time convention (unchanged everywhere else)
 - **ADR-002 (0000028):** Shared hook modules live inside the existing `hooks/enforcement/` tree, which installs unconditionally, never in a new top-level `shared/` directory
 - **ADR-003 (0000028):** The em dash guard attaches as a `PreToolUse(Write, Edit)` sibling of `gate-write.mjs`, not a git hook, with a reusable in-content sentinel as the bypass so the exemption is visible in the artifact's own diff

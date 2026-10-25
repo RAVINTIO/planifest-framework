@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Two informational gaps sit in `planifest-framework/scripts/promote-to-regression.sh`:
+Two informational gaps sit in `ravintio-framework/scripts/promote-to-regression.sh`:
 - The idempotency check treats a manifest that won't parse as "not promoted". The test copy lands, then the manifest update exits 1 and prints a Node stack trace. A re-run after the manifest is repaired recovers.
 - The script checks the source with `lstat`, then `sed` reads it by path. A process that swaps the source for a symlink between the two steps could copy an outside file into the pack. Not reproduced.
 

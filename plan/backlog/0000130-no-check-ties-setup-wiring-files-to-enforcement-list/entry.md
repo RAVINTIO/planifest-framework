@@ -14,9 +14,9 @@ status: "open"
 
 ## Problem
 
-In 0000035, req-001 adds `FAST_PATH_ENFORCEMENT_PATHS` to `planifest-framework/hooks/enforcement/path-rules.mjs`. It lists the hook wiring files that `setup.sh` and `setup.ps1` write, such as `.claude/settings.json` and `.windsurf/hooks.json`. The req-001 suite checks the constant against the `planifest-framework/workflows/fast-path.md` prerequisites only.
+In 0000035, req-001 adds `FAST_PATH_ENFORCEMENT_PATHS` to `ravintio-framework/hooks/enforcement/path-rules.mjs`. It lists the hook wiring files that `setup.sh` and `setup.ps1` write, such as `.claude/settings.json` and `.windsurf/hooks.json`. The req-001 suite checks the constant against the `ravintio-framework/workflows/fast-path.md` prerequisites only.
 
-Nothing checks the constant against the paths the setup scripts write. The per-tool scripts under `planifest-framework/setup/` set those paths. If a later change adds a supported tool or moves a wiring file, the constant can miss it. A Fast Path scope record could then list the new wiring file and unwire `gate-write`.
+Nothing checks the constant against the paths the setup scripts write. The per-tool scripts under `ravintio-framework/setup/` set those paths. If a later change adds a supported tool or moves a wiring file, the constant can miss it. A Fast Path scope record could then list the new wiring file and unwire `gate-write`.
 
 0000035 ADR 004 records this gap as a risk.
 

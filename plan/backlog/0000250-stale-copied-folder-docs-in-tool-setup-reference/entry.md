@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/tool-setup-reference.md` says setup copies supporting files into each skill directory as `_planifest-*` folders, such as `_planifest-templates/` and `_planifest-standards/` (around lines 39 and 73). `setup.sh` never creates these folders. The 0000039 rename changes the folder names in the text, but the text stays wrong.
+`ravintio-framework/tool-setup-reference.md` says setup copies supporting files into each skill directory as `_ravintio-*` folders, such as `_ravintio-templates/` and `_ravintio-standards/` (around lines 39 and 73). `setup.sh` never creates these folders. The 0000039 rename changes the folder names in the text, but the text stays wrong.
 
 ## Suggested Action
 

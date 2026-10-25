@@ -1,5 +1,5 @@
 ﻿
-# Planifest - Token Reduction (keeps agent semantic search from bloating context)
+# RAVINTIO - Token Reduction (keeps agent semantic search from bloating context)
 plan/_archive/
 node_modules/
 dist/

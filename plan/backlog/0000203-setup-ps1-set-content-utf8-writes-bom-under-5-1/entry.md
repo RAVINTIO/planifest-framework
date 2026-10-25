@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-While P3 removed the PowerShell 6+ only `ConvertFrom-Json -AsHashtable` call from `planifest-framework/setup.ps1`, a scan of the file found a second 5.1 and 7 difference. Several writes use `Set-Content -Encoding UTF8` or `Add-Content -Encoding UTF8`. These include the boot files, the tracked config file, the setup-flags marker, and the ignore files (lines near 309, 1024, 1138, 1161, 1361, and 1392).
+While P3 removed the PowerShell 6+ only `ConvertFrom-Json -AsHashtable` call from `ravintio-framework/setup.ps1`, a scan of the file found a second 5.1 and 7 difference. Several writes use `Set-Content -Encoding UTF8` or `Add-Content -Encoding UTF8`. These include the boot files, the tracked config file, the setup-flags marker, and the ignore files (lines near 309, 1024, 1138, 1161, 1361, and 1392).
 
 Under Windows PowerShell 5.1, `-Encoding UTF8` writes a byte order mark. Under PowerShell 7 it writes none. `Write-SettingsFile` already avoids this for `settings.json` by writing bytes directly. The other files do not.
 

@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/consistency-check.mjs` matches every `ADR-\d{3}` in `plan/current/` and expects a local file in `adr/`. A reference such as `0000035 ADR-010` or `RAVINTIO Zero 0000160 ADR-003` names another feature's ADR, but the check reports it as missing. In 0000039 P1 it raised seven false findings. Authors work around it by writing `ADR 010` without the hyphen. RAVINTIO Zero 0000160 hit the same fault.
+`ravintio-framework/scripts/consistency-check.mjs` matches every `ADR-\d{3}` in `plan/current/` and expects a local file in `adr/`. A reference such as `0000035 ADR-010` or `RAVINTIO Zero 0000160 ADR-003` names another feature's ADR, but the check reports it as missing. In 0000039 P1 it raised seven false findings. Authors work around it by writing `ADR 010` without the hyphen. RAVINTIO Zero 0000160 hit the same fault.
 
 ## Suggested Action
 

@@ -29,7 +29,7 @@ Rewrite Step 6 so it needs no glob delete:
 - Delete any untracked leftovers by explicit path only, never by glob.
 - Keep each step a separate command, so a refused step does not take the earlier ones with it.
 
-Consider a small script in `planifest-framework/scripts/` that performs the archive and prints what it moved.
+Consider a small script in `ravintio-framework/scripts/` that performs the archive and prints what it moved.
 
 ## Why Deferred
 

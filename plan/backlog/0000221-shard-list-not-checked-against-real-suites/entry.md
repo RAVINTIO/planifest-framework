@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-The Windows leg runs seven shards. A text test counts seven shard entries in `.github/workflows/planifest.yml` and the literal `7`. Nothing proves the shards cover every real suite. After F-01 a shard that selects zero suites fails, but a drifted count that still gives each shard one suite would pass. The test file is `planifest-framework/tests/test-0000037-req-010-windows-git-bash-leg.sh`.
+The Windows leg runs seven shards. A text test counts seven shard entries in `.github/workflows/ravintio.yml` and the literal `7`. Nothing proves the shards cover every real suite. After F-01 a shard that selects zero suites fails, but a drifted count that still gives each shard one suite would pass. The test file is `ravintio-framework/tests/test-0000037-req-010-windows-git-bash-leg.sh`.
 
 ## Suggested Action
 

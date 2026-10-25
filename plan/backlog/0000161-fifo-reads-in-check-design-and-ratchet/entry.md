@@ -16,8 +16,8 @@ status: "open"
 
 Req-008 of 0000036 stops the write gate from opening a non-regular `plan/current/design.md`. Two other hooks still open plan files with a plain `readFileSync` and no file-type check:
 
-- `planifest-framework/hooks/enforcement/check-design.mjs:58-62` reads `plan/current/design.md` on every prompt. A FIFO there makes the `UserPromptSubmit` hook wait until its timeout ends it.
-- `planifest-framework/hooks/enforcement/ratchet-check.mjs` reads loop-state files at `:78`, the approval marker at `:136`, and the write target at `:240`. A FIFO at any of those paths makes the hook wait in the same way.
+- `ravintio-framework/hooks/enforcement/check-design.mjs:58-62` reads `plan/current/design.md` on every prompt. A FIFO there makes the `UserPromptSubmit` hook wait until its timeout ends it.
+- `ravintio-framework/hooks/enforcement/ratchet-check.mjs` reads loop-state files at `:78`, the approval marker at `:136`, and the write target at `:240`. A FIFO at any of those paths makes the hook wait in the same way.
 
 Neither case admits a write the gate would block. Each one delays the session.
 

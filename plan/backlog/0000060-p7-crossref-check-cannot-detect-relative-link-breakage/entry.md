@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`skills/planifest-ship-agent/SKILL.md:39` defines the pre-archive check:
+`skills/ravintio-ship-agent/SKILL.md:39` defines the pre-archive check:
 
 > *"**Cross-reference check (run first, before Step 1):** Before writing the changelog, search the repo for links pointing at `plan/current/...` — `docs/*.md` (especially `docs/decisions-index.md`'s ADR links), `src/*/docs/*.md`, and any other living doc. Update every found reference to the post-archive path… A moved folder with stale incoming links silently breaks navigation for the next reader."*
 
@@ -40,7 +40,7 @@ Every one was correct when written and broken by the move. None was reported. Th
 `templates/requirement.template.md:9`, and likewise `execution-plan.template.md` and `iteration-log.template.md`:
 
 ```markdown
-**Skill:** [spec-agent](../skills/planifest-spec-agent/SKILL.md)
+**Skill:** [spec-agent](../skills/ravintio-spec-agent/SKILL.md)
 ```
 
 From `plan/current/requirements/req-001.md` that resolves to `plan/skills/…`; from the archived `plan/_archive/{feature}-{date}/requirements/req-001.md` it resolves to `plan/_archive/{feature}-{date}/skills/…`. **Neither exists.** The template link is wrong in both locations, before archiving and after.
@@ -70,7 +70,7 @@ Consider applying the walk repository-wide rather than only to the archive. The 
 
 ## Why Deferred
 
-Filed from a downstream repo that does not maintain this framework. The fix belongs to `skills/planifest-ship-agent/SKILL.md` and possibly a small companion script under `scripts/`, neither of which the filing project modifies.
+Filed from a downstream repo that does not maintain this framework. The fix belongs to `skills/ravintio-ship-agent/SKILL.md` and possibly a small companion script under `scripts/`, neither of which the filing project modifies.
 
 The downstream project is not blocked — it repaired its ten links by hand and now runs the resolution check manually at P7. But it will recur at every archive, in every project, until this is fixed here.
 

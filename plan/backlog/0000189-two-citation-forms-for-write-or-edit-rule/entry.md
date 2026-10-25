@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-ADR-010 sets the citation form `the {name} rule ({source} Hard Limit N)`. The dispatch-template sentence that req-005 fixes word for word reads "(the Write-or-Edit rule, boot Hard Limit 8)" instead. The suite `planifest-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh` accepts both forms, so a reader meets two shapes for the same rule in `planifest-framework/standards/agent-dispatch-standards.md`.
+ADR-010 sets the citation form `the {name} rule ({source} Hard Limit N)`. The dispatch-template sentence that req-005 fixes word for word reads "(the Write-or-Edit rule, boot Hard Limit 8)" instead. The suite `ravintio-framework/tests/test-0000036-req-005-hard-limits-cited-by-name.sh` accepts both forms, so a reader meets two shapes for the same rule in `ravintio-framework/standards/agent-dispatch-standards.md`.
 
 ## Suggested Action
 

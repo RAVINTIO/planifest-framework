@@ -14,7 +14,7 @@ status: "closed"
 
 ## Problem
 
-The P8 credential guard in `planifest-framework/skills/planifest-ship-agent/SKILL.md` (about line 198) says a refused file that is staged stays staged. The pre-commit scan rule in `planifest-framework/standards/autonomous-run-standards.md` now takes a held-back file out of the index with `git restore --staged -- {path}`. The two rules differ. The suite `test-0000033-req-013-clean-close-out.sh` asserts the P8 guard wording "stay uncommitted", and the clean-tree check relies on a staged leftover showing as a leftover.
+The P8 credential guard in `ravintio-framework/skills/ravintio-ship-agent/SKILL.md` (about line 198) says a refused file that is staged stays staged. The pre-commit scan rule in `ravintio-framework/standards/autonomous-run-standards.md` now takes a held-back file out of the index with `git restore --staged -- {path}`. The two rules differ. The suite `test-0000033-req-013-clean-close-out.sh` asserts the P8 guard wording "stay uncommitted", and the clean-tree check relies on a staged leftover showing as a leftover.
 
 The new PR temp folder flow also uses a shell variable, `PRTMP`. Shell state does not persist between Bash calls in some hosts, so the ship skill should say that the `mktemp -d`, the scans, and the `gh` call run in one shell call.
 

@@ -5,20 +5,20 @@
 #
 # components[] revised 2026-08-08: holds {id, path} pointers to each
 # component's own component.yml, not a cached version — versions are read
-# live at derivation time (node planifest-framework/scripts/product-version.mjs),
+# live at derivation time (node ravintio-framework/scripts/product-version.mjs),
 # so this list
 # only needs editing when a component is added or removed, never on a
 # version bump. See docs/decisions-index.md's Feature 0000016 ADR-002 entry.
 
-id: "planifest-framework"
-name: "Planifest Framework"
+id: "ravintio-framework"
+name: "RAVINTIO Framework"
 version: "0.36.0"
 feature: "0000038-token-efficiency-windows-shard"
 
 versionPolicy: "max-component-version"
 
 components:
-  - id: "planifest-framework"
-    path: "planifest-framework/component.yml"
+  - id: "ravintio-framework"
+    path: "ravintio-framework/component.yml"
   - id: "setup-hook-integration"
     path: "src/setup-hook-integration/component.yml"

@@ -18,7 +18,7 @@ In monkey-vs-gulls, P4's first browser play-through dispatched pointer events st
 
 ## Suggested Action
 
-In `planifest-verify-by-execution`, require UI checks to drive input through the real pointer and keyboard path, such as Playwright `page.mouse` or `locator.click`. Allow dispatched events only for setup, never as evidence that a criterion passed.
+In `ravintio-verify-by-execution`, require UI checks to drive input through the real pointer and keyboard path, such as Playwright `page.mouse` or `locator.click`. Allow dispatched events only for setup, never as evidence that a criterion passed.
 
 ## Why Deferred
 

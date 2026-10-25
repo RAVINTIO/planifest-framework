@@ -33,7 +33,7 @@ The 2026-08-08 session lost these facts at the reset:
 
 The human on the loop recovered them only by re-pasting the transcript. A reset that loses decisions is lossy rather than hygienic.
 
-Step -1 now lives in `planifest-framework/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md`. The Context Hygiene section of `planifest-framework/skills/planifest-orchestrator/SKILL.md` defines the procedure. Neither file persists pre-reset state as of 2026-10-25.
+Step -1 now lives in `ravintio-framework/skills/ravintio-orchestrator/references/phase-0-assess-and-coach.md`. The Context Hygiene section of `ravintio-framework/skills/ravintio-orchestrator/SKILL.md` defines the procedure. Neither file persists pre-reset state as of 2026-10-25.
 
 ## Suggested Action
 

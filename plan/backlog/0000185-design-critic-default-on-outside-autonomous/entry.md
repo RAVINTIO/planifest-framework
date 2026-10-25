@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Feature 0000036 (req-006) made an absent `design_critic` key, or an absent `loop-toggles.yml`, read as `report-only` outside `autonomous`. In `autonomous` it still reads as `on`. The critic only reports outside `autonomous`, so a false positive never stops a phase, but a true positive does not stop one either. The default files are `planifest-framework/skills/planifest-loop-runner/SKILL.md` and `planifest-framework/templates/loop-toggles.template.yml`.
+Feature 0000036 (req-006) made an absent `design_critic` key, or an absent `loop-toggles.yml`, read as `report-only` outside `autonomous`. In `autonomous` it still reads as `on`. The critic only reports outside `autonomous`, so a false positive never stops a phase, but a true positive does not stop one either. The default files are `ravintio-framework/skills/ravintio-loop-runner/SKILL.md` and `ravintio-framework/templates/loop-toggles.template.yml`.
 
 ## Suggested Action
 

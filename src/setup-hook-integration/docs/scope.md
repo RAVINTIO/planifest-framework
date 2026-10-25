@@ -4,10 +4,10 @@
 
 - `setup.sh` and `setup.ps1` — all flag processing and tool dispatch
 - `setup/<tool>.sh` and `setup/<tool>.ps1` — per-tool configuration stubs
-- `planifest-framework/hooks/` — all hook scripts installed by setup
-- `planifest-framework/scripts/skill-sync.sh` and `skill-sync.ps1` — external skill lifecycle management
-- `planifest-framework/standards/commit-standards.md` — normative commit message rules
-- `planifest-framework/templates/standard-boot.md` — source template for generated boot files
+- `ravintio-framework/hooks/` — all hook scripts installed by setup
+- `ravintio-framework/scripts/skill-sync.sh` and `skill-sync.ps1` — external skill lifecycle management
+- `ravintio-framework/standards/commit-standards.md` — normative commit message rules
+- `ravintio-framework/templates/standard-boot.md` — source template for generated boot files
 - `external-skills.json` manifest — records installed external skills
 - Claude Code, Cursor, Windsurf, Cline, Codex, OpenCode, Copilot, Antigravity, Roo Code tool targets
 - Acceptance of the three retired integration flags as no-ops (0000030-ADR-003)
@@ -15,7 +15,7 @@
 - The always-on clean-up of the retired integrations, including deleting `plan/.telemetry-failures/` and `plan/.telemetry-receipts/` (0000030-ADR-004, ADR-005)
 <!-- END retired-integrations (0000030) -->
 - `setup/opencode.sh` registration of the plugin in `opencode.json` through Node
-- `<tool-dir>/.planifest-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
+- `<tool-dir>/.ravintio-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
 
 ## Out of Scope
 

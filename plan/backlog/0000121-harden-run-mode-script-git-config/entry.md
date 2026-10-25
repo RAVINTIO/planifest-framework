@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/run-mode.mjs` decides whether a run is `autonomous` from git history. It ignores textconv, external diff, replace refs, and inherited `GIT_*` variables, and it blocks system git config. User and repo config still load. These paths are untested: `core.fsmonitor`, `includeIf`, an alternate object store (`objects/info/alternates`), grafts (`info/grafts`), and a shallow file. Each would need deliberate, multi-step tampering. The script's header already says it is an integrity check, not a security boundary, and the hard limits never depend on the run mode. The P5 verifier rated it Low.
+`ravintio-framework/scripts/run-mode.mjs` decides whether a run is `autonomous` from git history. It ignores textconv, external diff, replace refs, and inherited `GIT_*` variables, and it blocks system git config. User and repo config still load. These paths are untested: `core.fsmonitor`, `includeIf`, an alternate object store (`objects/info/alternates`), grafts (`info/grafts`), and a shallow file. Each would need deliberate, multi-step tampering. The script's header already says it is an integrity check, not a security boundary, and the hard limits never depend on the run mode. The P5 verifier rated it Low.
 
 ## Suggested Action
 

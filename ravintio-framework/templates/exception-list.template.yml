@@ -1,0 +1,16 @@
+# exception-list.yml: extra exception-list items (ADR-003, feature 0000033)
+#
+# COPY THIS FILE to ravintio-overrides/exception-list.yml to add items.
+# The product's human on the loop owns ravintio-overrides/. The framework
+# never writes there, and neither do its agents.
+#
+# In an autonomous run, only exception-list items wait for the human on the
+# loop. The seven framework items always apply. This file can only add items. It
+# can't remove any. Absent file = the seven framework items alone.
+# See ravintio-framework/standards/autonomous-run-standards.md (## Exception list).
+#
+# Each item is one line of free text naming what waits for the human on the loop.
+
+additional:
+  # - Any change to the billing provider configuration
+  # - Sending email to real customer addresses

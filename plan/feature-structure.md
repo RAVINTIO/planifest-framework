@@ -1,6 +1,6 @@
-# Planifest - Repository Structure
+# RAVINTIO Framework - Repository Structure
 
-> The canonical layout for a Planifest-managed repository. Three top-level folders, three concerns.
+> The canonical layout for a RAVINTIO-managed repository. Three top-level folders, three concerns.
 
 ---
 
@@ -8,7 +8,7 @@
 
 ```
 repo/
-+-- planifest-framework/        <- The framework (skills, templates, schemas, standards)
++-- ravintio-framework/        <- The framework (skills, templates, schemas, standards)
 |                                  Drop this in. Don't modify it per-project.
 |
 +-- plan/                       <- The specifications (organized by feature)
@@ -22,12 +22,12 @@ repo/
 
 ---
 
-## `planifest-framework/` - The Framework
+## `ravintio-framework/` - The Framework
 
-This folder is the Planifest framework itself. It is the same across every project. You do not modify it per-feature - you update it when the framework evolves.
+This folder is the RAVINTIO framework itself. It is the same across every project. You do not modify it per-feature - you update it when the framework evolves.
 
 ```
-planifest-framework/
+ravintio-framework/
 +-- skills/           <- Agent instructions (orchestrator + phase skills)
 +-- templates/        <- File format templates for every artifact
 +-- schemas/          <- JSON Schema validation definitions
@@ -103,7 +103,7 @@ src/
 2. **component.yml is mandatory** - every component has one. Read it before any work; update it after every build.
 3. **Component-specific docs** live with the component at `src/{component-id}/docs/`. These describe the component's data contract, migrations, and technical specifics.
 4. **Feature-level docs** live in `plan/`. The component's `component.yml` references the feature via the `feature` field.
-5. **Existing components** that predate Planifest are retrofitted by adding a `component.yml` at their root.
+5. **Existing components** that predate RAVINTIO are retrofitted by adding a `component.yml` at their root.
 
 ---
 
@@ -131,11 +131,11 @@ The relationship is bidirectional:
 
 ---
 
-## Retrofit — Adding Planifest to an Existing Repo
+## Retrofit — Adding RAVINTIO to an Existing Repo
 
 If the repo already has code:
 
-1. Drop `planifest/` into the repo root
+1. Drop `ravintio/` into the repo root
 2. Create `plan/` for the first feature
 3. Move existing components under `src/` (or leave them if they're already there)
 4. Add a `component.yml` to each existing component
@@ -143,4 +143,4 @@ If the repo already has code:
 
 ---
 
-*Templates for each file are in [planifest/templates/](../templates/). Skills reference these paths.*
+*Templates for each file are in [ravintio/templates/](../templates/). Skills reference these paths.*

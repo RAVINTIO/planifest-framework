@@ -5,13 +5,13 @@
 | Type | Coverage | Notes |
 |---|---|---|
 | Unit | 0% | No unit tests for individual bash functions |
-| Integration | Partial | Setup tests under `planifest-framework/tests/` cover flag handling and hook wiring |
+| Integration | Partial | Setup tests under `ravintio-framework/tests/` cover flag handling and hook wiring |
 | E2E | Partial | `test_setup.sh` / `test_setup.ps1` validate basic setup paths for tool targets |
 
 ## What is tested
 
 - Basic tool target setup (claude-code, cursor, etc.) — covered by `test_setup.sh`
-- `.planifest-setup-flags` marker write, content, per-tool directory, no-write-on-failure (REQ-008, 0000020), 21 live-invocation assertions, `test-0000020-req-008-install-time-marker-write.sh`
+- `.ravintio-setup-flags` marker write, content, per-tool directory, no-write-on-failure (REQ-008, 0000020), 21 live-invocation assertions, `test-0000020-req-008-install-time-marker-write.sh`
 - Install clean-up and retired flags (0000030 REQ-004, NFR-002), 220 live-invocation assertions, `test-0000030-req-004-install-clean-up-and-retired-flags.sh`. It covers the retired-flag notice and exit 0, the marker without retired flags, every clean-up step and its output, the malformed-file byte-identical skip, the Node-missing skip, the parent-path containment check (F3), failed delete and rename (F4), the exclusive temporary file and mode (F5), the opencode `opencode.json` skip (F1), and static checks of the PowerShell source (F2)
 - Windows PowerShell 5.1 and the stale clean-up (0000037 req-011), `test-0000037-req-011-windows-powershell-coverage.sh` (29 assertions) and the req-011 section of `test_setup.ps1`, which runs live under PowerShell 7 and 5.1. It covers the retired-flag notice, the stale folder and entry removal, the surviving hand-added hook, and the marker.
 - Installed hook commands (0000037 req-007), `test-0000037-req-007-wired-command.sh` (22 assertions). It runs the generated `settings.json` commands for `gate-write`, `shell-write-guard`, and `auto-trigger-orchestrator` verbatim through `bash -c`.
@@ -32,7 +32,7 @@ The feature deleted every test of the removed telemetry and context-mode integra
 
 - `skill-sync.sh` operations (add, remove, preserve, sync) — no automated tests
 - `commit-msg` hook warning output — no automated tests
-- `gate-write.mjs` enforcement: covered by the `planifest-framework` suites, including the 0000032 req-006, req-007, and req-009 suites. The 0000035 req-001, req-003, req-004, req-006, and req-009 suites cover the Fast Path scope record, links, a deleted working folder, planted root markers, and the enforcement list.
+- `gate-write.mjs` enforcement: covered by the `ravintio-framework` suites, including the 0000032 req-006, req-007, and req-009 suites. The 0000035 req-001, req-003, req-004, req-006, and req-009 suites cover the Fast Path scope record, links, a deleted working folder, planted root markers, and the enforcement list.
 - The text of the Write-or-Edit rule (boot Hard Limit 8): `test-0000032-req-012-write-or-edit-boot-rule.sh` runs `setup.sh claude-code` and checks it in the generated `CLAUDE.md`. `test-0000035-req-008-sanctioned-scripts.sh` checks the sanctioned-scripts sentence in both boot templates.
 - `check-design.mjs` enforcement: no automated tests
 - Setup.ps1 correctness — partially covered by `test_setup.ps1`

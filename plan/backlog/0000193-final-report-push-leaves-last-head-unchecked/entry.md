@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-P9 Step 11 commits `{archive-dir}/final-report.md` and pushes it after the PR exists. That push starts a new `pull_request` run on the PR head. The CI check in Step 10c reads the earlier head, and the final report records that result. The last head of the PR therefore ships with no CI result read. See `planifest-framework/skills/planifest-ship-agent/SKILL.md` Steps 10c and 11.
+P9 Step 11 commits `{archive-dir}/final-report.md` and pushes it after the PR exists. That push starts a new `pull_request` run on the PR head. The CI check in Step 10c reads the earlier head, and the final report records that result. The last head of the PR therefore ships with no CI result read. See `ravintio-framework/skills/ravintio-ship-agent/SKILL.md` Steps 10c and 11.
 
 ## Suggested Action
 

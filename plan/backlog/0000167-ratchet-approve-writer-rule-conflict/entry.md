@@ -16,8 +16,8 @@ status: "open"
 
 Two framework texts give opposite rules for who may write `plan/current/.ratchet-approve`:
 
-- `planifest-framework/templates/standard-boot.md:32` and the root `CLAUDE.md:32` say the line must be human-written and that "Agents must never write that marker."
-- `planifest-framework/skills/planifest-loop-runner/SKILL.md:19` lets an agent write it on explicit, in-the-moment instruction from the human on the loop. That rule follows 0000017 ADR 001, which amended 0000016 ADR 004.
+- `ravintio-framework/templates/standard-boot.md:32` and the root `CLAUDE.md:32` say the line must be human-written and that "Agents must never write that marker."
+- `ravintio-framework/skills/ravintio-loop-runner/SKILL.md:19` lets an agent write it on explicit, in-the-moment instruction from the human on the loop. That rule follows 0000017 ADR 001, which amended 0000016 ADR 004.
 
 `docs/decisions-index.md` records 0000017 ADR 001 as accepted. The boot text still states the older 0000016 ADR 004 rule. An agent that reads only the boot file refuses an instruction the loop runner allows. An agent that reads only the loop runner may write a marker that the boot file forbids.
 

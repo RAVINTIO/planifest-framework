@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Three hardening gaps sit in `.github/workflows/planifest.yml` and in the consumer copy at `planifest-framework/hooks/planifest.yml`.
+Three hardening gaps sit in `.github/workflows/ravintio.yml` and in the consumer copy at `ravintio-framework/hooks/ravintio.yml`.
 
 - The `validate-branch` job (line 8) and the `self-description-check` job (line 52) set no `permissions:` block. They take the repository default token scope. The newer jobs set `permissions: contents: read`.
 - `actions/checkout@v4` is pinned to a moving tag on every checkout (lines 11, 55, 94, 110, 136).

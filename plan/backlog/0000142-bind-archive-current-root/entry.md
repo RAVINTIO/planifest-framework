@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/archive-current.mjs` takes a free `--root` argument and defaults to the current folder (line 86). It doesn't check the root against the one the write gate uses. As a sanctioned script, it moves files past the gate, so a wrong or crafted root moves content to a place no gate judges. Risk R-023 in the 0000035 risk register records this.
+`ravintio-framework/scripts/archive-current.mjs` takes a free `--root` argument and defaults to the current folder (line 86). It doesn't check the root against the one the write gate uses. As a sanctioned script, it moves files past the gate, so a wrong or crafted root moves content to a place no gate judges. Risk R-023 in the 0000035 risk register records this.
 
 ## Suggested Action
 
