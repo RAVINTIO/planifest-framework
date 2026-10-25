@@ -3,7 +3,7 @@
 > Living document. Index of all ADRs across all features. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000038-token-efficiency-windows-shard (24 Oct 2026). Adds 7 ADRs. They cover the orchestrator reference files, the model aliases, quiet test output, the timing warm-up, the decomposition size floor, and the 0.36.0 migration. Earlier: 0000037 added 14 ADRs. They cover the P9 CI check, the credential scan, the GUTD CI step, and post-P6 revalidation. They also cover the `Verified by` field, the wired-command test, the migration diff, the portability lint, and the Windows CI legs. ADR-012 and ADR-013 amend 0000031 ADR-001, and ADR-014 amends 0000031 ADR-003 for the Windows shards. Earlier: 0000036 added 12 ADRs. They cover the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, and the run-mode anchor. They also cover the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
+Last updated: 0000039-ravintio-rebrand (25 Oct 2026). Adds 10 ADRs. They cover the rename map, the 0.37.0 release, the old-name reads, the consumer migration, the brand guard, and the history rule. Earlier: 0000038-token-efficiency-windows-shard (24 Oct 2026) added 7 ADRs. They cover the orchestrator reference files, the model aliases, quiet test output, the timing warm-up, the decomposition size floor, and the 0.36.0 migration. Earlier: 0000037 added 14 ADRs. They cover the P9 CI check, the credential scan, the GUTD CI step, and post-P6 revalidation. They also cover the `Verified by` field, the wired-command test, the migration diff, the portability lint, and the Windows CI legs. ADR-012 and ADR-013 amend 0000031 ADR-001, and ADR-014 amends 0000031 ADR-003 for the Windows shards. Earlier: 0000036 added 12 ADRs. They cover the drift check, the 0.34.0 re-run-setup migration, the `design.md` read rules, `shown()`, and the run-mode anchor. They also cover the report-only critic default, hard-limit citations, the split step, and commit subjects. ADR-002 narrows 0000003 ADR-005. ADR-009 amends 0000016 ADR-003 and 0000033 ADR-004. Earlier: 0000035 added 16 ADRs, and ADR-015 partly supersedes 0000005 ADR-005. Feature 0000034 recorded no ADRs.
 
 > **Note:** ADR titles for features 0000001–0000010 were inferred from filenames at bootstrap time. Human review recommended for accuracy.
 
@@ -401,6 +401,23 @@ ADR files: [plan/_archive/0000038-token-efficiency-windows-shard-2026-10-24/adr/
 | ADR-005 | Timing checks make one untimed warm-up and one timed call | accepted | The timed call must finish under 200 ms. No retry and no best-of-three. |
 | ADR-006 | Decomposition size floor with named exemptions | accepted | Small independent units run as parallel tool calls in the main thread. Nine roles stay exempt. |
 | ADR-007 | A re-run-setup migration for release 0.36.0 | accepted | `migrate-0.36.0-rerun-setup.md` lists the changed setup-delivered files. A branch-diff test checks the list. |
+
+### Feature 0000039: ravintio-rebrand
+
+ADR files: [plan/_archive/0000039-ravintio-rebrand-2026-10-25/adr/](../plan/_archive/0000039-ravintio-rebrand-2026-10-25/adr/)
+
+| ADR | Title | Status | Summary |
+|-----|-------|--------|---------|
+| ADR-001 | Stack unchanged | accepted | No new language, runtime, or package. The brand guard is a Bash suite, the migration helpers are Bash and PowerShell, and the bulk rename is a throwaway script outside the repo. |
+| ADR-002 | Rename map | accepted | Prose writes RAVINTIO, and paths, file names, skill names, and ids use lowercase `ravintio`. The `RAVINTIO_` prefix replaces the old prefix in environment variables. |
+| ADR-003 | Ship the rename as 0.37.0 and remove old-name reads at 1.0.0 | accepted | The rename is a minor bump from 0.36.0. The old-name reads stay through the 0.x line and 1.0.0 removes them. |
+| ADR-004 | Old name reads | accepted | The old session ID variable, the old boot-file markers, and the old setup flags and manifest files stay readable through 0.x. The old session marker is not read. Every other variable renames with no fallback. |
+| ADR-005 | Consumer migration backs up, never deletes | accepted | `migrate-0.37.0-ravintio-rename.sh` and `.ps1` move the old pack into `.ravintio-backup/` with a plain rename. Setup stops while the old pack or overrides folder exists. |
+| ADR-006 | Migrator old-path mapping and Applies when | accepted | The migrator maps old paths and skill names to the new ones without editing shipped migrations. An `**Applies when:**` line lets it skip a migration and record `not applicable`. |
+| ADR-007 | Brand guard with a path and line allowlist | accepted | `test-0000039-req-007-brand-guard.sh` fails on any match of the old brand name outside history paths unless an allowlist entry matches both path and line. A stale entry fails the suite. |
+| ADR-008 | One scripted rename pass | accepted | A scratchpad script renames paths with `git mv` and then replaces content, once, as a recorded exception to Hard Limit 8. Every follow-up fix uses **Edit**. |
+| ADR-009 | History stays as written | accepted | Archives, changelogs, migration records, backlog references, shipped migration bodies, and old ids stay byte-identical. Each protected line gets an allowlist entry. |
+| ADR-010 | Pack owns consumer marker files | accepted | `ravintio-framework` owns `.ravintio-session`, `.ravintio-manifest`, `.ravintio-setup-flags`, the boot-file blocks, and the migration records. Consumers never write them by hand. |
 
 ---
 

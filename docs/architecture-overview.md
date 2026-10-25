@@ -3,7 +3,7 @@
 > Living document. Reflects current system state. Updated after every pipeline run.
 > Do not archive this file; update it in place.
 
-Last updated: 0000038-token-efficiency-windows-shard (24 Oct 2026)
+Last updated: 0000039-ravintio-rebrand (25 Oct 2026). The pack, the overrides folder, and every skill now carry the RAVINTIO name, with a consumer migration and a brand guard. Earlier: 0000038-token-efficiency-windows-shard (24 Oct 2026)
 
 ---
 
@@ -459,6 +459,26 @@ Each timing check makes one untimed warm-up call and one timed call under 200 ms
 
 ---
 
+## RAVINTIO rebrand (0000039)
+
+Release 0.37.0 renames the pack to `ravintio-framework/` and the overrides folder to `ravintio-overrides/`. Every skill takes a `ravintio-*` name. Prose writes RAVINTIO, paths and ids write `ravintio`, and environment variables use the `RAVINTIO_` prefix (0000039-ADR-002). The release is a minor bump from 0.36.0 (0000039-ADR-003). One scripted pass did the rename and kept history byte-identical (0000039-ADR-008, ADR-009).
+
+### Consumer migration
+
+`migrate-0.37.0-ravintio-rename.md` ships with the helpers `migrate-0.37.0-ravintio-rename.sh` and `.ps1`, which behave the same (0000039-ADR-005). The consumer copies the new pack in, runs the helper from the project root, and then runs setup. The helper moves the overrides folder and the workflow file. It stops git tracking of the old pack and moves it into `.ravintio-backup/` with a plain rename. It deletes nothing, and a rerun is safe. Setup stops while the old pack or the old overrides folder exists.
+
+The migrator maps old pack, overrides, and skill names to the new ones when it runs an older migration, and it never edits a shipped file (0000039-ADR-006). It reads an `**Applies when:**` line near the top of a migration. If the condition is false, it skips the migration and records `not applicable`. This source repo and a fresh consumer take that path, so the rename migration never shows as pending there. The orchestrator reports every skipped migration.
+
+### Old-name reads
+
+Through the 0.x line, the pack still reads the old session ID variable, the old boot-file markers, and the old setup flags and manifest files (0000039-ADR-004). Setup reads each marker once, writes the `.ravintio-*` form, and removes the old file. The old session marker is not read. Version 1.0.0 removes every old-name read (0000039-ADR-003). The `ravintio-framework` component owns the new marker files (0000039-ADR-010).
+
+### Brand guard
+
+`test-0000039-req-007-brand-guard.sh` reads `git ls-files` and fails on any match of the old brand name in a path or line (0000039-ADR-007). It skips history paths. An allowlist entry must match both path and line, and a stale entry fails the suite.
+
+---
+
 ## Data Ownership
 
 No components own persistent data. RAVINTIO operates on local filesystem artifacts (plan/ files, skill SKILL.md files) written and read during pipeline execution. No databases. New in 0000016 (all plain markdown/YAML, git-tracked): `plan/backlog/` entries (orchestrator-owned, filed by any phase agent), `product.yml` (ship-agent writes, orchestrator reads), and `plan/current/` loop-state/run-log/defect-report/revision-log artifacts (orchestrator-owned). New in 0000020 (local, gitignored, not version-tracked): `<tool-dir>/.ravintio-setup-flags`, owned by `setup-hook-integration`, written on every successful install and read/updated by `ravintio-refresh-setup`. New in 0000025 (git-tracked, additive to the 0000020 marker, not a replacement): `ravintio-overrides/setup-config/{tool}.md`, one file per AI tool, written by `setup.sh`/`setup.ps1` alongside the existing gitignored marker so the flags in effect at install time are versioned and reviewable, not only locally cached.
@@ -557,6 +577,11 @@ Reference `docs/decisions-index.md` for the full ADR list.
 - **ADR-012 (0000037):** Windows PowerShell 5.1 is a supported runtime. Amends **ADR-001 (0000031)**.
 - **ADR-013 (0000037):** The suite runs on Windows under Git Bash with a fix-or-skip rule. Amends **ADR-001 (0000031)**.
 - **ADR-014 (0000037):** The Windows shards get a 20-minute cap. Amends **ADR-003 (0000031)** for those shards.
+- **ADR-003 (0000039):** The rename ships as 0.37.0, and 1.0.0 removes the old-name reads.
+- **ADR-004 (0000039):** A closed list of old names stays readable through 0.x.
+- **ADR-005 (0000039):** The consumer migration moves the old pack to `.ravintio-backup/` and deletes nothing.
+- **ADR-006 (0000039):** The migrator maps old paths and skips a migration whose `Applies when:` condition is false.
+- **ADR-007 (0000039):** The brand guard allowlist matches on path and line.
 
 ---
 

@@ -1,6 +1,6 @@
 # Dependency Graph
 
-**Last updated:** 0000038-token-efficiency-windows-shard (24 Oct 2026). Feature 0000038 changed no component dependency. `run-tests.sh` gains a `--quiet` flag, and `ravintio-orchestrator` loads two files from its own `references/` folder. Earlier: 0000037 left `ravintio-framework` at 0.35.0. The new `credential-scan.mjs` depends on `git` and an optional `gitleaks`. `run-tests.sh` reads the shard variables. No component dependency changed.
+**Last updated:** 0000039-ravintio-rebrand (25 Oct 2026). Feature 0000039 renamed the pack to `ravintio-framework` (0.37.0) and changed no dependency. The new migration helpers sit inside the pack. Earlier: 0000038-token-efficiency-windows-shard (24 Oct 2026). Feature 0000038 changed no component dependency. `run-tests.sh` gains a `--quiet` flag, and `ravintio-orchestrator` loads two files from its own `references/` folder. Earlier: 0000037 left `ravintio-framework` at 0.35.0. The new `credential-scan.mjs` depends on `git` and an optional `gitleaks`. `run-tests.sh` reads the shard variables. No component dependency changed.
 **Maintained by:** ravintio-docs-agent
 
 ---
@@ -9,7 +9,7 @@
 
 ```mermaid
 graph TD
-    subgraph "ravintio-framework (component-pack, 0.36.0)"
+    subgraph "ravintio-framework (component-pack, 0.37.0)"
         SKILLS["skills/ (orchestrator + phase agents)"]
         STANDARDS["standards/, templates/"]
         ENFORCE["hooks/enforcement/\n(gate-write, check-design,\nem-dash-guard)"]
