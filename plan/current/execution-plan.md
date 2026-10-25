@@ -23,7 +23,7 @@ Each file follows the naming convention `req-{NNN}-{kebab-slug}.md` and the [Req
 | File | Requirement | Story |
 |------|------------|-------|
 | [req-001-pack-paths-and-identifiers.md](requirements/req-001-pack-paths-and-identifiers.md) | The scripted pass renames every pack path and identifier, and git records the moves as renames | US-001 |
-| [req-002-runtime-names.md](requirements/req-002-runtime-names.md) | Setup moves marker files, boot-file blocks, and installed skills to the new names, and stops while the old pack exists | US-001 |
+| [req-002-runtime-names.md](requirements/req-002-runtime-names.md) | Setup moves marker files, boot-file blocks, and installed skills to the new names, and stops while the old pack exists. P6 change: the migration helper renames the old flags and manifest files, and setup stops while either exists | US-001 |
 | [req-003-environment-variables.md](requirements/req-003-environment-variables.md) | `PLANIFEST_*` becomes `RAVINTIO_*`, with one fallback for `PLANIFEST_SESSION_ID` | US-001 |
 | [req-004-brand-prose.md](requirements/req-004-brand-prose.md) | Prose and repo links say RAVINTIO, and the `setup.sh` mojibake bytes stay as they are | US-001 |
 | [req-005-history-and-split-name-protection.md](requirements/req-005-history-and-split-name-protection.md) | The protected list and the split-name rules for the scripted pass, with every history reader still green | US-001 |

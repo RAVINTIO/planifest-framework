@@ -21,8 +21,7 @@ ADR-004 of feature 0000039 keeps these old-name reads through every 0.x release.
 - The old session ID variable (req-003). The OpenCode adapter reads it only when `RAVINTIO_SESSION_ID` is unset.
 - The old boot-file block markers (req-002). Setup replaces each block with the RAVINTIO form.
 - The old ignore-file headers (req-002). Setup replaces them the same way.
-- The old setup flags marker file (req-002). Setup and refresh-setup read it once, write the new marker, and remove it.
-- The old manifest marker file (req-002). Setup and refresh-setup read it once to prune old skill copies, then remove it.
+- The old setup flags and manifest marker files (req-002, req-006). Since the P6 change, setup reads neither file. It stops while either exists in a tool folder, and the migration helper renames both. At 1.0.0, decide whether the stop and the helper step stay.
 - The old em-dash guard sentinel (req-008). The guard accepts it beside the new sentinel.
 
 The exact names are in `plan/current/adr/ADR-004-old-name-reads.md` while that file is current, and in the archive after P7.

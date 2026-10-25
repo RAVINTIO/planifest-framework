@@ -17,7 +17,7 @@ The feature changes files and no database. Hard Limit 5 says one component owns 
 
 The marker files live in the consumer repo. They are `.ravintio-session`, `.ravintio-manifest`, and `.ravintio-setup-flags`. Setup writes them, and the refresh-setup skill reads the flags file. The rename also changes the generated boot-file blocks, which setup writes between the `ravintio-overrides` markers.
 
-The migration helper in `.sh` and `.ps1` form writes to the consumer repo. It moves `planifest-overrides/`, renames the workflow, removes the old `.planifest-session` marker, and moves the old pack to `.ravintio-backup/planifest-framework/`. The migrator skill records each outcome under `plan/_migrations/`.
+The migration helper in `.sh` and `.ps1` form writes to the consumer repo. It moves `planifest-overrides/`, renames the workflow, removes the old `.planifest-session` marker, and moves the old pack to `.ravintio-backup/planifest-framework/`. P6 change: it also renames the old setup flags and manifest files to their `.ravintio-*` names in each tool folder and rewrites the manifest entries (ADR-005). The migrator skill records each outcome under `plan/_migrations/`.
 
 Someone must own these files, or the rename cannot say who may change them.
 
@@ -32,7 +32,7 @@ The `ravintio-framework` component owns all of the following:
 
 Consumers read these files and never write them by hand.
 
-The migration helper is part of `ravintio-framework`. Its writes to consumer files stay inside this ownership. The helper moves and removes old-name files. Setup writes the new markers.
+The migration helper is part of `ravintio-framework`. Its writes to consumer files stay inside this ownership. The helper moves and removes old-name files. Setup writes the new markers. P6 change: the helper also renames two old marker files to their new names, so the consumer's setup config carries over.
 
 The `setup-hook-integration` component owns only its hook wiring tests under `src/setup-hook-integration/`. It writes no marker and no migration record.
 
@@ -72,7 +72,7 @@ This ADR governs req-002, req-006, req-008, and req-009.
 
 - ADR-005 - related-to (the helper moves the old pack to a backup and never deletes it)
 - ADR-006 - related-to (the migrator maps old paths and sets the Applies when check)
-- ADR-004 - related-to (setup reads the old marker names once)
+- ADR-004 - related-to (the old-name reads, and the P6 setup stop on the old marker files)
 
 ## Supersedes
 

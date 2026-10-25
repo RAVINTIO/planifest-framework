@@ -28,7 +28,7 @@
 | Scope Item | Recommendation | When to Address |
 |-----------|---------------|-----------------|
 | Run `gh repo rename ravintio-framework` and update `origin` after the PR merges | Backlog 0000260 | Right after the human on the loop merges the PR |
-| Remove the old-name reads at 1.0.0: `PLANIFEST_SESSION_ID`, the old boot-file markers and ignore-file headers, `.planifest-setup-flags`, `.planifest-manifest`, and the old em-dash sentinel | Backlog 0000261 | The 1.0.0 release |
+| Remove the old-name reads at 1.0.0: `PLANIFEST_SESSION_ID`, the old boot-file markers and ignore-file headers, and the old em-dash sentinel. Setup no longer reads `.planifest-setup-flags` or `.planifest-manifest`, so 1.0.0 decides only whether the setup stop on them and the helper rename step stay. | Backlog 0000261 | The 1.0.0 release |
 
 ## Tech Debt
 
