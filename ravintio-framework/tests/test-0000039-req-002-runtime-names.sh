@@ -213,6 +213,47 @@ else
   echo "  SKIP: req-002 AC3 setup.ps1 half, pwsh is not on PATH"
 fi
 
+# X-004 (P6 cross-model finding, 2026-10-25): both shells stop whenever the old
+# path exists in any form. A regular file and a dangling link count as well as
+# a folder, so setup.sh and setup.ps1 agree.
+# Run one AC3 non-folder case. Args: label, shell (sh or ps1), old name, kind (file or link).
+ac3_any_form_case() {
+  local label="$1" shell="$2" old="$3" kind="$4" repo
+  repo="$(make_repo "ac3x-$label")"
+  if [ "$kind" = "file" ]; then
+    echo "old" > "$repo/$old"
+  else
+    ln -s "$repo/missing-target" "$repo/$old"
+  fi
+  BEFORE="$(snapshot "$repo")"
+  if [ "$shell" = "ps1" ]; then run_setup_ps1 "$repo"; else run_setup "$repo"; fi
+  AFTER="$(snapshot "$repo")"
+  if [ "$RC" -ne 0 ]; then STOPPED="nonzero"; else STOPPED="zero"; fi
+  assert_equals "nonzero" "$STOPPED" "req-002 AC3 (X-004): setup.$shell exits non-zero with $old as a $kind"
+  assert_equals "$BEFORE" "$AFTER" "req-002 AC3 (X-004): setup.$shell writes nothing with $old as a $kind"
+  assert_contains "$MIGRATION_ID" "$OUT" "req-002 AC3 (X-004): setup.$shell names the migration with $old as a $kind"
+}
+
+echo "=== req-002 AC3 (X-004): an old path in any form stops setup ==="
+AC3X_SHELLS="sh"
+if command -v pwsh >/dev/null 2>&1; then
+  AC3X_SHELLS="sh ps1"
+else
+  echo "  SKIP: req-002 AC3 (X-004) setup.ps1 half, pwsh is not on PATH"
+fi
+for _shell in $AC3X_SHELLS; do
+  ac3_any_form_case "file-$_shell" "$_shell" planifest-overrides file
+  case "$(uname -s)" in
+    MINGW*|MSYS*|CYGWIN*)
+      # Git Bash ln -s copies the target instead of linking it, so no dangling link can be built.
+      echo "  SKIP (windows): ln -s makes a copy under Git Bash, so a dangling link cannot be built"
+      ;;
+    *)
+      ac3_any_form_case "link-$_shell" "$_shell" planifest-framework link
+      ;;
+  esac
+done
+
 echo "=== req-002 AC4: a fresh repo gets only RAVINTIO state ==="
 R4="$(make_repo ac4)"
 run_setup "$R4"
