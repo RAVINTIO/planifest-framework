@@ -253,6 +253,13 @@
       "promotionDate": "2026-10-24",
       "promotedBy": "agent",
       "filePath": "tests/regression/test-0000037-req-003-archive-held-back.sh"
+    },
+    {
+      "name": "test-0000039-req-007-brand-guard.sh",
+      "sourceFeature": "0000039-ravintio-rebrand",
+      "promotionDate": "2026-10-25",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000039-req-007-brand-guard.sh"
     }
   ]
 }

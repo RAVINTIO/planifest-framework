@@ -333,3 +333,35 @@ Decision (P4): the merge commit used a plain `git commit` / reason: a merge comm
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:08:00Z` |
+| End | `2026-10-25T13:21:29Z` |
+| Wall-clock | `13` |
+| Streams | `1` |
+| Model tier | primary (ship agent) |
+| Skills loaded | ravintio-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `1` (cross-reference search and regression-candidate scan) |
+| Notes | `none` |
+
+Run mode check (P7): `run-mode.mjs` printed `interactive`, with the reason "a merge commit changed plan/current/build-log.md, so the anchor is ambiguous". The P4 merge of `origin/main` (1fffd812) trips rule 5.
+Decision (P7): P7 to P9 follow the `autonomous` procedure: scan-then-commit, no prompts, and the final report / reason: the human on the loop chose `autonomous` at P0 (line `Run mode confirmed: autonomous`), the orchestrator's dispatch names `autonomous`, and the boot rules tell the ship agent to push and raise the PR without asking. The autonomous commit flow is the stricter one. Backlog 0000273 records the anchor defect.
+Cross-reference check (P7): no living doc links to a file in this feature's `plan/current/`. The `plan/current/` mentions in `docs/` describe the folder in general. The changelog's three `plan/current/` pointers now name the archive path.
+Regression candidates (P7): three tagged suites, `test-0000039-req-005-history-and-split-name-protection.sh`, `test-0000039-req-006-consumer-migration.sh`, and `test-0000039-req-007-brand-guard.sh`.
+Decision (P7): do not promote `test-0000039-req-005-history-and-split-name-protection.sh` / reason: it checks one rename pass against the pre-pass commit, so it guards a one-off event, not a standing rule.
+Decision (P7): do not promote `test-0000039-req-006-consumer-migration.sh` / reason: the helpers ship only through 0.x, the suite already runs on every CI leg, and the Windows PowerShell 5.1 job names its feature path.
+Decision (P7): promote `test-0000039-req-007-brand-guard.sh` with `promote-to-regression.sh`, promoted by `agent` / reason: it guards a standing rule, the retired brand word stays out of live paths and lines, and its allowlist already covers the regression copy. The copy passes 6 of 6, and `test-regression-pack.sh` passes 17 of 17.
+Backlog filed (P7): 0000273 (a merge from `main` into a feature branch un-anchors the autonomous run mode).
+Changelog (P7): `plan/changelog/0000039-ravintio-rebrand-2026-10-25.md` gains the late items: the second and third P5 re-reviews, N-006 (0000270), X-001 to X-006, D-2, Y-001, and backlog 0000266 to 0000273.
+Skips (P7): no `.skips` file, no phase skipped.
+Release fields (P7): product.yml: version "0.37.0", feature "0000039-ravintio-rebrand" (exit 0, no change, because P3 set both).
+About (P7): `docs/about.md` already reads 0.37.0, `0000039-ravintio-rebrand`, and 25 Oct 2026.
+Full suite (P7): 163 suites, 126 feature suites and 36 regression suites pass. The req-005 suite failed one assertion, because the uncommitted changelog edit showed under `plan/changelog/`. The P7 commit clears it, and P8 reruns the suite.
+Test report (P7): `plan/changelog/0000039-ravintio-rebrand-test-report-2026-10-25.md`.
+Archive (P7): `archive-current.mjs` exited 0. It moved 29 items, removed `plan/current/.feature-id`, and printed `archive-dir: plan/_archive/0000039-ravintio-rebrand-2026-10-25`. `plan/current/` is empty.
+Progress: P7 done at 2026-10-25T13:21:29Z: changelog updated, brand guard promoted, plan/current archived
+
