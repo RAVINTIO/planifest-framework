@@ -233,6 +233,10 @@ Cycle 3 (P4): Check: CI run 40160412670 on PR #71 / Errors and root causes:
 Human touchpoint (P4): the human on the loop asked what the held-back exception meant, then asked to see the two `cso/SKILL.md` lines [exception: 7]
 Decision (P4): the orchestrator showed `cso/SKILL.md` lines 919 and 936 at the human on the loop's request. Both are search patterns made of bare Slack token prefixes, with no token after them, so neither is a credential. The orchestrator waits for the human on the loop to clear the match before it moves the files / reason: only the human on the loop clears a held-back file.
 Backlog filed (P4): 0000254 (quality suite stops silently on its first miss).
+Human touchpoint (P4): the human on the loop cleared the held-back files: "They're just examples in the skill. They stay." [exception: 7]
+Credential scan (P4): cleared by the human on the loop on 2026-10-25 for the three held-back external-skills files. All four hits are false positives: two are the risk skill's folder name, and two are the security skill's example search patterns. The lines stay as written.
+Decision (P4): the three files move to `ravintio-framework/external-skills/` as R100 renames. The held-back fixture, req-001's held-back filter, and the two guard allowlist entries for the old paths go / reason: nothing is held back any more, and a kept entry would be stale.
+Exception cleared (P4, 7): the four `Exception waiting (P3, 7)` lines above.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.

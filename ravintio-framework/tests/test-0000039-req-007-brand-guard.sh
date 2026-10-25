@@ -73,7 +73,6 @@ ALLOWLIST=(
   # The 0000039 suites plant old-name fixtures and assert the old name is gone, so they name it.
   '^ravintio-framework/tests/(regression/)?test-0000039-req-00[2-9][^/]*\.sh$|.|The 0000039 suites plant old-name fixtures and assert the old name is gone.'
   '^ravintio-framework/tests/fixtures/0000039-rename-exceptions\.txt$|^planifest-framework/|Old paths of the delete-plus-add files.'
-  '^ravintio-framework/tests/fixtures/0000039-held-back-paths\.txt$|^planifest-framework/|Old paths of the files the P3 credential scan held back.'
 
   # --- Documents that stay as written ---
   # Backlog reference documents are frozen source material.
@@ -98,9 +97,6 @@ ALLOWLIST=(
 
   # The old marker stays ignored through 0.x.
   '^\.gitignore$|^\.planifest-setup-flags$|Old flags marker stays ignored through 0.x.'
-
-  # Held back by the credential scan: git still lists the old vendored paths.
-  '^planifest-framework/external-skills/|.|Held back by the P3 credential scan until the human on the loop clears it.'
 
   # Old-name reads in setup, kept through 0.x and removed at 1.0.0 (ADR-004).
   '^ravintio-framework/setup\.[a-z0-9]+$|planifest-(framework|overrides)|Old pack folder stop check.'

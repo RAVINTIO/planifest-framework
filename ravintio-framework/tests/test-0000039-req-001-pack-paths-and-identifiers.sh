@@ -34,14 +34,6 @@ TRACKED="$(git ls-files)"
 if [ -n "$DELETED_NOW" ]; then
   TRACKED="$(grep -vxF -f <(printf '%s\n' "$DELETED_NOW") <<< "$TRACKED" || true)"
 fi
-# A clean checkout still tracks the held-back files at their old paths. The fixture
-# lists them until the human on the loop clears the credential-scan match. Then the
-# pass moves them, and the fixture's paths go.
-HELD_FILE="$SCRIPT_DIR/fixtures/0000039-held-back-paths.txt"
-if [ -f "$HELD_FILE" ]; then
-  HELD="$(grep -v '^#' "$HELD_FILE" | grep . || true)"
-  [ -n "$HELD" ] && TRACKED="$(grep -vxE -f <(printf '%s\n' "$HELD") <<< "$TRACKED" || true)"
-fi
 
 # has_tracked <prefix>: succeeds when git tracks at least one path under the prefix.
 has_tracked() {
