@@ -223,6 +223,16 @@ Cycle 1 (P4): Check: CI / Error: no checks reported / Root cause: PR #70 merged 
 Verify (P4): 16 verified, 1 failed, 1 not verifiable. The full 0.36.0 consumer upgrade, the rerun, the setup stop, and a fresh install all behaved. See `plan/current/verification-report.md`.
 Cycle 2 (P4): Check: verify-by-execution / Error: req-001 AC1 found 3 old-name paths in a clean clone / Root cause: a clean checkout still tracks the three held-back files at their old paths. The local run had hidden them, because there they show as deleted / Fix: a fixture lists the held-back paths as regexes, req-001 AC1 skips them, and the guard allowlists the fixture. The list goes when the human on the loop clears the match / Result: req-001 and req-007 pass.
 Decision (P4): the migration doc gains a section telling consumers to check their own override files for old pack paths / reason: verify-by-execution saw consumer override text keep `planifest-framework/` paths, and that text belongs to the consumer, so the helper mustn't rewrite it.
+Cycle 3 (P4): Check: CI run 40160412670 on PR #71 / Errors and root causes:
+- the `.ps1` helper failed on every runner: PowerShell turned `$null` into an empty backup path for `File.Replace`
+- Windows `pwsh` ends lines with CRLF, so the parity text didn't match
+- Git Bash `ln -s` copies instead of linking
+- node read Git Bash `/d/a/...` paths as `C:\d\a`
+- the test job's shallow checkout hid the pre-pass commit
+- Fixes: `NullString` in the helper, CR stripped in the test, a link probe that skips link cases where links don't work, `pwd -W` and a file URL in the req-008 test, `fetch-depth: 0` in the workflow / Result: local suite green, CI to confirm.
+Human touchpoint (P4): the human on the loop asked what the held-back exception meant, then asked to see the two `cso/SKILL.md` lines [exception: 7]
+Decision (P4): the orchestrator showed `cso/SKILL.md` lines 919 and 936 at the human on the loop's request. Both are search patterns made of bare Slack token prefixes, with no token after them, so neither is a credential. The orchestrator waits for the human on the loop to clear the match before it moves the files / reason: only the human on the loop clears a held-back file.
+Backlog filed (P4): 0000254 (quality suite stops silently on its first miss).
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
