@@ -56,7 +56,7 @@ This mirrors RAVINTIO Zero 0000160 ADR 002. That ADR kept three consumer-facing 
 | Component | Impact |
 |-----------|--------|
 | ravintio-framework | The OpenCode adapter carries one fallback. Every other variable uses the new name only. |
-| setup-hook-integration | Setup and refresh-setup read the old markers, headers, and two marker files once, then replace or remove them. |
+| setup-hook-integration | Setup replaces the old boot-file markers and ignore-file headers. It reads neither old marker file and stops while one exists (P6 change). The migration helper renames them. |
 
 ## Consequences
 

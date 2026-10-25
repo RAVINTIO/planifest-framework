@@ -40,7 +40,7 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
        - Step 7 reads each `.ravintio-setup-flags`. If its `tool` value is a tool setup accepts, step 7 prints that setup command with the `--strict-orchestrator` and `--include-full-skill-library` flags the file holds. Otherwise it prints the generic command.
   6. Stop git tracking of the old pack with `git rm -r -q --cached -- planifest-framework`. Then move the folder to `.ravintio-backup/planifest-framework/` with a plain rename. Never delete it. Add `.ravintio-backup/` to `.git/info/exclude` once. Skip that write with a warning when `.git/info` or `info/exclude` is a link.
   7. Print the next step: run `ravintio-framework/setup.sh claude-code`, or the tool the project uses, before the next commit. Name `.ravintio-backup/` and tell the human on the loop to delete it after checking it.
-  8. Print a branch protection warning. A rule that requires the old check name must now require `RAVINTIO Strict Pipeline`.
+  8. Print a branch protection warning. A rule that requires the old check name must now require `RAVINTIO Strict Pipeline`. (Superseded by the P5 correction below.)
      - P5 correction (M-002): the required check is the job name `validate-branch`, which keeps its name. The warning says so, and a rule that requires `validate-branch` needs no change (design.md consumer migration step 6).
 - If a parent folder is a symbolic link, skip only the step that writes through it, print a warning, and carry on. A link at `.github` or `.github/workflows` skips step 4. A link at `.claude` or `.claude/skills` skips the marker under it.
 - Make each step skip work that is already done, so a rerun is safe. The helper reports each step it takes and each step it skips.

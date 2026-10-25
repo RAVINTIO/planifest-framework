@@ -48,8 +48,8 @@
 - Old names that setup still reads through 0.x, removed at 1.0.0:
   - `PLANIFEST_SESSION_ID`, read only when `RAVINTIO_SESSION_ID` is unset, with no warning
   - the old boot-file markers and ignore-file headers, which setup replaces so no block appears twice
-  - `.planifest-setup-flags`, which setup and refresh-setup read once and then remove
-  - `.planifest-manifest`, which setup reads once to prune the old skill copies and then removes (added at P2, ADR-004)
+  - `.planifest-setup-flags`, which setup and refresh-setup read once and then remove (superseded by the P6 change below)
+  - `.planifest-manifest`, which setup reads once to prune the old skill copies and then removes (added at P2, ADR-004, and superseded by the P6 change below)
   - P6 change, directed by the human on the loop on 2026-10-25: setup reads neither old marker file. The helper renames both in place (consumer migration step 3). Setup stops while either old marker file exists, and names the migration.
   - All other variables rename with no fallback, because only the pack sets them.
 - Consumer migration `migrate-0.37.0-ravintio-rename.md`, with `.sh` and `.ps1` helpers:
