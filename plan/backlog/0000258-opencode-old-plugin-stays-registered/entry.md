@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-After a 0.36.0 consumer upgrades, `ravintio-framework/setup/opencode.sh` and `.ps1` install the plugin under `@ravintio`. They leave the old `@planifest` plugin folder and its `opencode.json` registration in place, so OpenCode can load both. The 0000039 P5 fix (S-02) made the old plugin path an enforcement path again, so no agent can write to it, but the stale registration stays.
+After a 0.36.0 consumer upgrades, `ravintio-framework/setup/opencode.sh` and `.ps1` install the plugin under `@ravintio`. They leave the plugin folder under the old npm scope, and its `opencode.json` registration in place, so OpenCode can load both. The 0000039 P5 fix (S-02) made the old plugin path an enforcement path again, so no agent can write to it, but the stale registration stays.
 
 ## Suggested Action
 
