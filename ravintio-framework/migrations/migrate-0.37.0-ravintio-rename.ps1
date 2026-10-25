@@ -171,13 +171,31 @@ function Move-Entry([string]$Src, [string]$Dst, [string]$Step) {
     }
 }
 
+# Get-MarkerLink DIR: DIR/skills or the first marker file in DIR that is a
+# link, or an empty string.
+function Get-MarkerLink([string]$Dir) {
+    return (Get-FirstLink @(($Dir + '/skills'), ($Dir + '/' + $OldFlags), ($Dir + '/' + $NewFlags),
+        ($Dir + '/skills/' + $OldManifest), ($Dir + '/skills/' + $NewManifest)))
+}
+
 # Test-MarkerSkip DIR: true when step 5 leaves the markers in DIR alone. That
 # is when DIR is not a real folder, or DIR/skills or a marker file is a link.
 function Test-MarkerSkip([string]$Dir) {
     if ((-not (Test-Dir $Dir)) -or (Test-Link $Dir)) { return $true }
-    $link = Get-FirstLink @(($Dir + '/skills'), ($Dir + '/' + $OldFlags), ($Dir + '/' + $NewFlags),
-        ($Dir + '/skills/' + $OldManifest), ($Dir + '/skills/' + $NewManifest))
-    return ($link -ne '')
+    return ((Get-MarkerLink $Dir) -ne '')
+}
+
+# Rename-Marker SRC DST: step 5 renames the marker file SRC to DST, or warns
+# when SRC is present but not a regular file.
+function Rename-Marker([string]$Src, [string]$Dst) {
+    if (Test-File $Src) {
+        Move-Entry $Src $Dst '5'
+        Write-Host "Step 5: renamed $Src to $Dst."
+        $script:Moved += "$Src to $Dst"
+        $script:Changed = $true
+    } elseif (Test-Present $Src) {
+        Write-Host "WARNING: $Src is not a regular file. Left it in place."
+    }
 }
 
 # Get-RealPath FULL: FULL with every link resolved, part by part, or an empty
@@ -463,35 +481,17 @@ foreach ($t in $ToolDirs) {
         continue
     }
     if (-not (Test-Dir $t)) { continue }
-    $skipLink = Get-FirstLink @(($t + '/skills'), ($t + '/' + $OldFlags), ($t + '/' + $NewFlags),
-        ($t + '/skills/' + $OldManifest), ($t + '/skills/' + $NewManifest))
+    $skipLink = Get-MarkerLink $t
     if ($skipLink -ne '') {
         Write-Host "WARNING: $skipLink is a symlink. Skipped the markers in $t, so nothing is written through it."
         continue
     }
     # The flags file keeps its content.
-    $oldFlagsRel = $t + '/' + $OldFlags
-    $newFlagsRel = $t + '/' + $NewFlags
-    if (Test-File $oldFlagsRel) {
-        Move-Entry $oldFlagsRel $newFlagsRel '5'
-        Write-Host "Step 5: renamed $oldFlagsRel to $newFlagsRel."
-        $script:Moved += "$oldFlagsRel to $newFlagsRel"
-        $script:Changed = $true
-    } elseif (Test-Present $oldFlagsRel) {
-        Write-Host "WARNING: $oldFlagsRel is not a regular file. Left it in place."
-    }
+    Rename-Marker ($t + '/' + $OldFlags) ($t + '/' + $NewFlags)
     $skillsRel = $t + '/skills'
     if (-not (Test-Dir $skillsRel)) { continue }
-    $oldManRel = $skillsRel + '/' + $OldManifest
     $manRel = $skillsRel + '/' + $NewManifest
-    if (Test-File $oldManRel) {
-        Move-Entry $oldManRel $manRel '5'
-        Write-Host "Step 5: renamed $oldManRel to $manRel."
-        $script:Moved += "$oldManRel to $manRel"
-        $script:Changed = $true
-    } elseif (Test-Present $oldManRel) {
-        Write-Host "WARNING: $oldManRel is not a regular file. Left it in place."
-    }
+    Rename-Marker ($skillsRel + '/' + $OldManifest) $manRel
     if (-not (Test-File $manRel)) { continue }
     # Keep each entry inside the real skills folder, rename each listed old
     # skill folder, and write each kept entry as the real path.

@@ -125,15 +125,30 @@ first_link() {
     return 0
 }
 
+# marker_link DIR: print DIR/skills or the first marker file in DIR that is a
+# link, if any.
+marker_link() {
+    first_link "$1/skills" "$1/$OLD_FLAGS" "$1/$NEW_FLAGS" "$1/skills/$OLD_MANIFEST" "$1/skills/$NEW_MANIFEST"
+}
+
 # marker_skip DIR: true when step 5 leaves the markers in DIR alone. That is
 # when DIR is not a real folder, or DIR/skills or a marker file is a link.
 marker_skip() {
-    local p
     if [ ! -d "$1" ] || [ -L "$1" ]; then return 0; fi
-    for p in "$1/skills" "$1/$OLD_FLAGS" "$1/$NEW_FLAGS" "$1/skills/$OLD_MANIFEST" "$1/skills/$NEW_MANIFEST"; do
-        if [ -L "$p" ]; then return 0; fi
-    done
-    return 1
+    [ -n "$(marker_link "$1")" ]
+}
+
+# rename_marker SRC DST: step 5 renames the marker file SRC to DST, or warns
+# when SRC is present but not a regular file.
+rename_marker() {
+    if [ -f "$1" ]; then
+        move_path "$1" "$2" 5
+        echo "Step 5: renamed $1 to $2."
+        note_moved "$1 to $2"
+        CHANGED=1
+    elif present "$1"; then
+        echo "WARNING: $1 is not a regular file. Left it in place."
+    fi
 }
 
 # real_dir PATH: print the real path of the folder PATH, or nothing.
@@ -353,29 +368,15 @@ for t in $TOOL_DIRS; do
         continue
     fi
     if [ ! -d "$t" ]; then continue; fi
-    skip_link="$(first_link "$t/skills" "$t/$OLD_FLAGS" "$t/$NEW_FLAGS" "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST")"
+    skip_link="$(marker_link "$t")"
     if [ -n "$skip_link" ]; then
         echo "WARNING: $skip_link is a symlink. Skipped the markers in $t, so nothing is written through it."
         continue
     fi
     # The flags file keeps its content.
-    if [ -f "$t/$OLD_FLAGS" ]; then
-        move_path "$t/$OLD_FLAGS" "$t/$NEW_FLAGS" 5
-        echo "Step 5: renamed $t/$OLD_FLAGS to $t/$NEW_FLAGS."
-        note_moved "$t/$OLD_FLAGS to $t/$NEW_FLAGS"
-        CHANGED=1
-    elif present "$t/$OLD_FLAGS"; then
-        echo "WARNING: $t/$OLD_FLAGS is not a regular file. Left it in place."
-    fi
+    rename_marker "$t/$OLD_FLAGS" "$t/$NEW_FLAGS"
     if [ ! -d "$t/skills" ]; then continue; fi
-    if [ -f "$t/skills/$OLD_MANIFEST" ]; then
-        move_path "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST" 5
-        echo "Step 5: renamed $t/skills/$OLD_MANIFEST to $t/skills/$NEW_MANIFEST."
-        note_moved "$t/skills/$OLD_MANIFEST to $t/skills/$NEW_MANIFEST"
-        CHANGED=1
-    elif present "$t/skills/$OLD_MANIFEST"; then
-        echo "WARNING: $t/skills/$OLD_MANIFEST is not a regular file. Left it in place."
-    fi
+    rename_marker "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST"
     MANIFEST="$t/skills/$NEW_MANIFEST"
     if [ ! -f "$MANIFEST" ]; then continue; fi
     # Keep each entry inside the real skills folder, rename each listed old
