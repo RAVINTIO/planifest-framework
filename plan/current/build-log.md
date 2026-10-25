@@ -200,5 +200,24 @@ Credential scan (P3): clean (regex only) on every commit after the pass. The hel
 Skill Map (P3 gate): re-checked, no change.
 Gate (P3): passed. Every requirement is GREEN. In autonomous mode the P4 CI run is the checker.
 Progress: P3 done at 2026-10-25T03:59:35Z: pack renamed, ten requirements GREEN, 162 suites pass
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T04:00:12Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (orchestrator), cheaper (verify-by-execution) |
+| Skills loaded | ravintio-validate-agent, ravintio-verify-by-execution (in a subagent) |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+Library audit (P4): skipped. No dependency manifest changed, and the OpenCode `package.json` lists no dependency.
+Lint, typecheck, build (P4): not applicable as separate steps. The repo's lint rules run as suites (0000031, 0000037-req-009, 0000036-req-010) inside the test run, and nothing compiles.
+Deviation (P4, unclassified): the orchestrator opens the PR as a draft in P4, so CI runs the Windows shards and both PowerShell legs before P5 / reason: `pwsh` isn't installed locally, so the req-002 and req-006 PowerShell halves can only run in CI. CI runs on `pull_request` only (0000031 ADR 003). P9 marks the PR ready instead of creating it.
+
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
