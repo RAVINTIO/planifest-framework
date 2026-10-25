@@ -228,4 +228,52 @@ assert_equals "1" "$(count_in "RAVINTIO - Token Reduction" "$R4/.claudeignore")"
 assert_equals "0" "$(count_in "Planifest" "$R4/.claudeignore")" "req-002 AC4: .claudeignore has no old name"
 assert_equals "1" "$(count_in "RAVINTIO - Indexing Exclusions" "$R4/.cursorindexingignore")" "req-002 AC4: .cursorindexingignore has one RAVINTIO block"
 
+# D-1 (P4 defect, 2026-10-25): setup.sh writes each manifest entry as the real
+# skills folder joined with the folder name, as setup.ps1 and the migration
+# helper do. A helper rerun after setup then leaves the manifest unchanged,
+# which req-006 "A rerun changes nothing" needs.
+echo "=== req-002 AC1 (D-1) and req-006 rerun: manifest entries use the real path ==="
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*)
+    # Git Bash ln -s copies the folder instead of linking it, so no linked project path can be built.
+    echo "  SKIP (windows): ln -s makes a copy under Git Bash, so a linked project path cannot be built"
+    ;;
+  *)
+    RD1="$(make_repo d1)"
+    LINK_D1="$TMP/d1/link"
+    ln -s "$RD1" "$LINK_D1"
+    REAL_SKILLS="$(cd -P "$RD1" && pwd -P)/.claude/skills"
+    OUT="$(cd "$LINK_D1" && bash ravintio-framework/setup.sh claude-code 2>&1)" # portable-ok: repo-relative pack path
+    RC=$?
+    assert_exit_zero "$RC" "req-002 AC1 (D-1): setup exits 0 from a linked project path"
+    MAN_D1="$RD1/.claude/skills/.ravintio-manifest"
+    if [ -f "$MAN_D1" ]; then MAN_D1_OK="yes"; else MAN_D1_OK="no"; fi
+    assert_equals "yes" "$MAN_D1_OK" "req-002 AC1 (D-1): .ravintio-manifest exists"
+    BAD_LINES=0
+    TOTAL_LINES=0
+    if [ -f "$MAN_D1" ]; then
+      while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        TOTAL_LINES=$((TOTAL_LINES + 1))
+        case "$line" in
+          "$REAL_SKILLS"/*) ;;
+          *) BAD_LINES=$((BAD_LINES + 1)) ;;
+        esac
+      done <<< "$(cat "$MAN_D1")"
+    fi
+    if [ "$TOTAL_LINES" -gt 0 ]; then HAS_LINES="yes"; else HAS_LINES="no"; fi
+    assert_equals "yes" "$HAS_LINES" "req-002 AC1 (D-1): manifest lists at least one entry"
+    assert_equals "0" "$BAD_LINES" "req-002 AC1 (D-1): every manifest entry starts with the real skills folder $REAL_SKILLS"
+    MAN_COPY="$TMP/d1/manifest.before"
+    cp "$MAN_D1" "$MAN_COPY" 2>/dev/null
+    OUT="$(cd "$LINK_D1" && bash ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.sh 2>&1)" # portable-ok: repo-relative helper path
+    RC=$?
+    assert_exit_zero "$RC" "req-006 rerun (D-1): the helper exits 0 after setup"
+    if cmp -s "$MAN_COPY" "$MAN_D1"; then SAME="identical"; else SAME="changed"; fi
+    assert_equals "identical" "$SAME" "req-006 rerun (D-1): the helper leaves the manifest byte-identical"
+    if [[ "$OUT" == *"rewrote the entries"* ]]; then REWROTE="printed"; else REWROTE="absent"; fi
+    assert_equals "absent" "$REWROTE" "req-006 rerun (D-1): the helper prints no 'rewrote the entries' line"
+    ;;
+esac
+
 print_summary
