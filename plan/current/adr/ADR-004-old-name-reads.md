@@ -32,6 +32,7 @@ Exactly these old names stay readable through every 0.x release. Version 1.0.0 r
 - `PLANIFEST_SESSION_ID` (req-003). The OpenCode adapter reads `RAVINTIO_SESSION_ID` first. It reads the old name only when the new one is unset. It prints no warning.
 - The old boot-file markers and ignore-file headers (req-002). Setup recognises them and replaces each block with the RAVINTIO form, so no block appears twice.
 - `.planifest-setup-flags` and `.planifest-manifest` (req-002). Setup and refresh-setup read each once, write the new `.ravintio-*` marker, and remove the old file. The migration helper leaves both in place for setup to read (req-006 step 5).
+  - P6 change, directed by the human on the loop on 2026-10-25, replacing the item above: setup and refresh-setup read neither file. The migration helper renames both in place and rewrites the manifest entries (ADR-005). Setup stops while either old file exists in a tool folder, and names the migration. This drops two old-name reads from setup.
 - `.planifest-session` is not read. The helper removes it, and `archive-current.mjs` still deletes it as well as the new marker (req-005).
 - Added at P3: the em-dash guard still accepts the old `<!-- planifest-em-dash-allow -->` sentinel beside the new one, so consumer files that carry it keep their bypass.
 - Added at P5 (finding S-02): `FAST_PATH_ENFORCEMENT_PATHS` in `path-rules.mjs` still lists the old OpenCode plugin path and the old workflow file, so a Fast Path record can't admit writes to them.

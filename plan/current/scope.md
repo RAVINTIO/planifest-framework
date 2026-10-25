@@ -27,6 +27,7 @@ version: "0.1.0"
 
 - P2 clarification for the runtime-names line: setup also reads `.planifest-manifest` once and removes it. The helper removes only `.planifest-session` (ADR-004, req-006).
 - P2 clarification for the consumer-migration line: "remove old markers" there means `.planifest-session` only, as above.
+- P6 change, directed by the human on the loop on 2026-10-25, replacing both P2 clarifications: the helper removes `.planifest-session` and renames the other two markers in every tool folder. It renames the old skill folders the manifest lists and rewrites the entries. Setup reads neither old marker and stops while one exists (req-002, req-006).
 
 ## Out of Scope
 

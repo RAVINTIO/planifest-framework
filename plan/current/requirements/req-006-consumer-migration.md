@@ -29,6 +29,14 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
   3. Move `planifest-overrides/` to `ravintio-overrides/`. Use `git mv` when git tracks the folder.
   4. Rename `.github/workflows/planifest.yml` to `ravintio.yml`. Rewrite `planifest-framework/` to `ravintio-framework/` inside it. Rewrite only the pack-owned `PLANIFEST_` variable names it holds, as whole names. Leave every other `PLANIFEST_` name, such as a consumer secret. Write to a temporary file in the same folder, then rename it over the target.
   5. Remove any `.planifest-session` marker. Leave `.claude/.planifest-setup-flags` and `.claude/skills/.planifest-manifest` in place, because setup reads each once and then removes it (req-002, ADR-004). "Removes the markers" in the first criterion means this step.
+     - P6 change, directed by the human on the loop on 2026-10-25, replacing step 5 above. Step 5 moves the tool markers. It runs for each tool folder `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode` that is a real folder:
+       - Remove `.planifest-session` from `.claude/`, as before.
+       - Rename `{tool}/.planifest-setup-flags` to `{tool}/.ravintio-setup-flags` with its content unchanged. Use `git mv` when git tracks it.
+       - Rename `{tool}/skills/.planifest-manifest` to `{tool}/skills/.ravintio-manifest`. Then rewrite each entry. Keep an entry only when its parent resolves to the real skills folder and its last part is not empty, `.`, or `..`. For a kept entry named `planifest-X`, rename the folder or link to `ravintio-X` and write the new path. Write every kept entry as the real skills folder joined with its name. Warn and name each dropped entry. Write through a temporary file in the same folder, then rename it over the target.
+       - Step 2 gains three stop conditions. One tool folder holds both the old and new flags file. One skills folder holds both the old and new manifest. A listed `planifest-X` folder and its `ravintio-X` folder both exist.
+       - A link at the tool folder, its `skills` folder, or either marker file skips that tool folder with a warning.
+       - A rerun skips what is done. An entry whose `planifest-X` folder is gone and whose `ravintio-X` folder exists counts as renamed. A manifest with no `planifest-` entry needs no rewrite.
+       - Step 7 reads each `.ravintio-setup-flags`. If its `tool` value is a tool setup accepts, step 7 prints that setup command with the `--strict-orchestrator` and `--include-full-skill-library` flags the file holds. Otherwise it prints the generic command.
   6. Stop git tracking of the old pack with `git rm -r -q --cached -- planifest-framework`. Then move the folder to `.ravintio-backup/planifest-framework/` with a plain rename. Never delete it. Add `.ravintio-backup/` to `.git/info/exclude` once. Skip that write with a warning when `.git/info` or `info/exclude` is a link.
   7. Print the next step: run `ravintio-framework/setup.sh claude-code`, or the tool the project uses, before the next commit. Name `.ravintio-backup/` and tell the human on the loop to delete it after checking it.
   8. Print a branch protection warning. A rule that requires the old check name must now require `RAVINTIO Strict Pipeline`.
@@ -53,6 +61,8 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
 - [ ] A link or junction at `planifest-framework`, `planifest-overrides`, `ravintio-overrides`, or `.ravintio-backup`, or at either workflow file, makes the helper refuse and leave the link and its target untouched. Verified by: integration
 - [ ] The `.ps1` helper parses and gives the same output and exit codes as the `.sh` helper on Windows PowerShell 5.1 and PowerShell 7. Verified by: integration
 - [ ] A helper stopped after any single step, then rerun, completes the remaining steps and ends in the same state as an uninterrupted run. Verified by: integration
+- [ ] On a fixture with old markers in `.claude/` and `.opencode/`, the helper leaves only `.ravintio-setup-flags` and `.ravintio-manifest`. The flags file is byte-identical to the old one. The manifest lists the renamed `ravintio-*` folders, each entry exists, and a stray absolute, `..`, or linked-parent entry is dropped with its target untouched. Step 7 prints the setup command with the saved flags. A rerun changes nothing. Both `.sh` and `.ps1` pass. Verified by: integration
+  - Split step: keep. The criterion covers the same helper run, now with the markers it moves.
 
 ## Dependencies
 - req-001 (pack-paths-and-identifiers) provides the `ravintio-framework/` folder and the renamed `ravintio-migrator` skill.

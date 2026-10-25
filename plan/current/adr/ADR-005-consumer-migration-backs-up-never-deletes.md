@@ -44,8 +44,10 @@ The helper runs these steps:
 4. Rename the workflow to `ravintio.yml`. Rewrite only the pack-owned names in it. A consumer secret keeps its `PLANIFEST_` name.
 5. Remove the old marker files.
    - Of the old markers, the helper removes only `.planifest-session`. It leaves `.planifest-setup-flags` and `.planifest-manifest` for setup, which reads each once and then removes it (ADR-004, req-006 step 5).
+   - P6 change, directed by the human on the loop on 2026-10-25, replacing the item above. The helper still removes only `.planifest-session`. In every tool folder it renames `.planifest-setup-flags` to `.ravintio-setup-flags` unchanged. It renames `.planifest-manifest` to `.ravintio-manifest`, renames each listed `planifest-*` skill folder to its `ravintio-*` name, and rewrites the entries. It keeps only entries inside the real skills folder. The consumer's setup config stays on disk throughout, and setup needs no old-name read.
 6. Stop git tracking of the old pack. Move it to `.ravintio-backup/planifest-framework/` with a plain rename.
 7. Print the setup command and tell the human on the loop to delete the backup after checking it.
+   - P6 change: the command carries the flags each `.ravintio-setup-flags` holds, so the consumer runs setup with the same config.
 8. Print a branch protection warning. A rule that requires the old check name must now require `RAVINTIO Strict Pipeline`.
 
 The safety rules are:

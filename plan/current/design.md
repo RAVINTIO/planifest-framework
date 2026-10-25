@@ -50,12 +50,14 @@
   - the old boot-file markers and ignore-file headers, which setup replaces so no block appears twice
   - `.planifest-setup-flags`, which setup and refresh-setup read once and then remove
   - `.planifest-manifest`, which setup reads once to prune the old skill copies and then removes (added at P2, ADR-004)
+  - P6 change, directed by the human on the loop on 2026-10-25: setup reads neither old marker file. The helper renames both in place (consumer migration step 3). Setup stops while either old marker file exists, and names the migration.
   - All other variables rename with no fallback, because only the pack sets them.
 - Consumer migration `migrate-0.37.0-ravintio-rename.md`, with `.sh` and `.ps1` helpers:
   1. The consumer copies `ravintio-framework/` in, runs the helper, then runs setup.
   2. The helper moves `planifest-overrides/` to `ravintio-overrides/`. It renames the workflow and rewrites only the pack's own names in it.
   3. It removes the old marker files. It stops git tracking of the old pack and moves the pack to `.ravintio-backup/planifest-framework/`. It never deletes it.
      - P2 clarification: of the old markers, the helper removes only `.planifest-session`. It leaves `.planifest-setup-flags` and `.planifest-manifest` for setup to read and remove (req-006 step 5).
+     - P6 change, directed by the human on the loop on 2026-10-25: the helper renames `.planifest-setup-flags` to `.ravintio-setup-flags` with its content unchanged. It renames `.planifest-manifest` to `.ravintio-manifest`, renames each listed `planifest-*` skill folder to its `ravintio-*` name, and rewrites the entries to match. It keeps only entries inside the real skills folder. This covers every tool folder. The next-step message names the setup command with the flags the marker holds, so the consumer's setup config carries over.
   4. A clash, such as an existing `ravintio-overrides/` or `.ravintio-backup/`, stops the helper before it moves anything. Every step can run again safely.
   5. Setup stops while `planifest-framework/` or `planifest-overrides/` exists, and names the migration.
   6. The migration warns that branch protection must require `RAVINTIO Strict Pipeline` in place of the old check name.
