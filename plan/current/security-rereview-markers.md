@@ -86,3 +86,50 @@ Method:
 1. Fix N-001 before the P5 gate, and add a linked-worktree test for both twins.
 2. Fix backlog 0000255 in this feature. A guarded prune in both setups would stop any bad manifest line, including one the helper never wrote.
 3. Update the helper headers and the guide for N-002.
+
+## Second re-review
+
+Reviewer: fresh-context security agent, 2026-10-25. Scope: fix commit 00691244 and CI commit 5d3fde99.
+
+Overall rating for the marker rename work: **Low**. The fix closes N-001, N-002, N-003, and N-005. N-004 stays open on Windows only. The `\\` and `//` check misses other prefixes that Windows reads as a share path. No new finding comes from the fix. Backlog 0000255 still covers the unguarded prune in both setups.
+
+Method:
+
+- Read `git show` for both commits and the current helper files.
+- Ran both helpers with bash 3.2.57 and pwsh 7.6.8 on macOS, on scratch fixtures under `mktemp -d`. Nothing ran in the repo.
+- Fixture 1 held a manifest with device names, share prefixes, and a real skill. It also held leftover step 4 files of several shapes.
+- Fixture 2 ran step 6 in a linked git worktree and in a project below the git top level.
+- Fixture 3 made step 4 fail with a read-only workflows folder.
+- Fixture 4 stopped the `.sh` twin with TERM during a 400 MB workflow rewrite.
+- Windows, UNC paths, and Windows PowerShell 5.1 were not tested. No Windows host was available.
+
+### Status of N-001 to N-005
+
+| ID | Status | Evidence |
+|---|---|---|
+| N-001 | Closed | `Get-Full` now returns a rooted argument as is (`migrate-0.37.0-ravintio-rename.ps1:77-78`). In a linked worktree, both twins wrote `.ravintio-backup/` to the main repo's `.git/info/exclude`. No `exclude` file appeared inside the worktree, and `git status --porcelain` listed nothing. A rerun added no second line. Below the git top level, both twins wrote to `../.git/info/exclude`. |
+| N-002 | Closed | The headers at `migrate-0.37.0-ravintio-rename.sh:7-9` and `migrate-0.37.0-ravintio-rename.ps1:6-8` and the guide at `migrate-0.37.0-ravintio-rename.md:14` name the leftover temporary files and the Windows probe. The guide also describes the step 4 clean-up and the probe. |
+| N-003 | Closed | `.sh:183-186` and `.ps1:56`, `:294` drop a last part whose base before the first `.` is a device name, ignoring case. Both twins dropped `NUL`, `nul.txt`, `Com3.a.b`, and `LPT9`. They kept `CONX` and `console`. The check runs before any lookup. |
+| N-004 | Open (Low) | `.ps1:281` drops only an entry that starts with `\\` or `//`. On Windows, .NET and Win32 also read `\/host/share` and `/\host\share` as share paths, because both marks are separators there. `\??\UNC\host\share` is a device path that also reaches the share. For `\/host/share/sub/x`, the parent `\/host/share/sub` passes to `Get-RealPath`, which calls `Get-Item` on it (`.ps1:222`, `:238`). The probe check then calls `Test-Path` on the same host (`.ps1:299-303`). On macOS, both twins dropped all three forms, but there they fail only the parent compare. The Windows lookup was not run. |
+| N-005 | Closed | `.sh:353` and `.ps1:499` remove leftover `.ravintio.yml.XXXXXX` files before step 4 writes. The `.sh` twin traps INT and TERM and removes the file on each failure path (`.sh:371-375`). The `.ps1` twin removes it in a `finally` block unless `Replace` ran (`.ps1:543`). The fixture kept a five-character name, a seven-character name, a folder, a link, and `x.ravintio.yml.abc123`. Both twins removed only `.ravintio.yml.abc123`. A TERM stop during the rewrite left no file, and the exit code was 1. |
+
+### Checks on the fix
+
+- **`Get-Full` callers.** Every caller passes a fixed relative path, a path built from fixed names, or the `git` output in step 6. No caller passes raw manifest text. `Get-RealPath` resolves a manifest parent with `Combine` on its own (`.ps1:222`). The probe check already skipped `Get-Full` for a rooted parent (`.ps1:299`). So the rooted case changes only step 6.
+- **Device-name rule.** The `.sh` twin lists each letter in both cases. The `.ps1` twin upper-cases the base and uses `-cmatch` on an ASCII pattern. `NameRe` already rejects `$`, `:`, spaces, and superscript digits. So `CONIN$`, `CLOCK$`, `NUL:`, and `COM¹` never reach the rule. Some Microsoft docs also list `COM0` and `LPT0` as reserved names. Both twins kept them. This is not a finding, because a device path fails the prune and deletes nothing (N-003).
+- **Share-path drop.** The drop runs first in both twins, before the name rule and any lookup (`.sh:176`, `.ps1:281`). It misses the forms in N-004.
+- **Step 4 clean-up.** It skips step 4 when `.github` or `.github/workflows` is a link (`.ps1:415`, `.sh:274`). It skips links and folders inside the folder. The `.sh` twin sets the trap after `mktemp`, so a stop in that short gap can leave a file. The next run removes it.
+- **Parity.** Both twins printed the same lines and wrote the same manifest in fixture 1. In fixture 3, the error lines differ. The `.sh` twin prints `could not create a temporary file in .github/workflows/.`, and the `.ps1` twin prints `could not rewrite .github/workflows/ravintio.yml.`. Both stop at step 4, delete nothing, and leave no temporary file. The difference predates the fix and has no security effect.
+
+### Commit 5d3fde99
+
+`.github/workflows/ravintio.yml:73` raises the Linux and macOS job cap from 10 to 15 minutes. Windows keeps 20. The job keeps `permissions: contents: read`, and the triggers don't change. No new finding.
+
+### New findings
+
+None.
+
+### Top actions
+
+1. Close N-004 on Windows. Drop an entry when its first two characters are both `/` or `\`, or when it starts with `\??\`. Or keep a rooted parent only when `GetPathRoot` returns a drive root such as `C:\`.
+2. Fix backlog 0000255. A guarded prune in both setups would stop any bad manifest line, including one the helper never wrote.
