@@ -34,6 +34,14 @@ NEW_WF="$WF_DIR/ravintio.yml"
 BACKUP=".ravintio-backup"
 SESSION=".claude/.$OLD-session"
 STOP_AFTER="${RAVINTIO_MIGRATE_STOP_AFTER:-}"
+# Step 5 renames the markers in each of these tool folders.
+TOOL_DIRS=".claude .cursor .windsurf .clinerules .agents .github .gemini .opencode"
+OLD_FLAGS=".$OLD-setup-flags"
+NEW_FLAGS=".ravintio-setup-flags"
+OLD_MANIFEST=".$OLD-manifest"
+NEW_MANIFEST=".ravintio-manifest"
+# Step 7 prints a saved tool only when setup accepts it.
+SETUP_TOOLS="claude-code cursor codex antigravity copilot windsurf cline roo-code opencode"
 
 # Pack-owned variable names (the req-003 inventory, retired telemetry names
 # left out). Step 4 rewrites these whole names and no other.
@@ -117,6 +125,56 @@ first_link() {
     return 0
 }
 
+# marker_skip DIR: true when step 5 leaves the markers in DIR alone. That is
+# when DIR is not a real folder, or DIR/skills or a marker file is a link.
+marker_skip() {
+    local p
+    if [ ! -d "$1" ] || [ -L "$1" ]; then return 0; fi
+    for p in "$1/skills" "$1/$OLD_FLAGS" "$1/$NEW_FLAGS" "$1/skills/$OLD_MANIFEST" "$1/skills/$NEW_MANIFEST"; do
+        if [ -L "$p" ]; then return 0; fi
+    done
+    return 1
+}
+
+# real_dir PATH: print the real path of the folder PATH, or nothing.
+real_dir() {
+    (CDPATH= cd -P -- "$1" 2>/dev/null && pwd -P) || true
+}
+
+# kept_name ENTRY REAL_SKILLS: print the last part of a manifest entry when
+# the helper keeps it. It keeps an entry whose parent resolves to the real
+# skills folder and whose last part is not empty, . or ..
+kept_name() {
+    local parent last="${1##*/}"
+    case "$1" in
+        */*) parent="${1%/*}"; [ -z "$parent" ] && parent="/" ;;
+        *) parent="." ;;
+    esac
+    case "$last" in ""|.|..) return 0 ;; esac
+    if [ "$(real_dir "$parent")" = "$2" ]; then printf '%s' "$last"; fi
+    return 0
+}
+
+# flags_args DIR: print the setup arguments DIR's flags file holds, or
+# nothing when its tool is not one setup accepts. Only the two known flags
+# pass, in setup order.
+flags_args() {
+    local f="$1/$NEW_FLAGS" tool line t args
+    if [ ! -f "$f" ] || [ -L "$f" ]; then return 0; fi
+    tool="$(sed -n 's/^[[:space:]]*"tool"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$f" | head -n 1)"
+    line="$(sed -n 's/^[[:space:]]*"flags"[[:space:]]*:\(.*\)$/\1/p' "$f" | head -n 1)"
+    for t in $SETUP_TOOLS; do
+        if [ "$t" = "$tool" ]; then
+            args="$t"
+            case "$line" in *'"--include-full-skill-library"'*) args="$args --include-full-skill-library" ;; esac
+            case "$line" in *'"--strict-orchestrator"'*) args="$args --strict-orchestrator" ;; esac
+            printf '%s' "$args"
+            return 0
+        fi
+    done
+    return 0
+}
+
 # rewrite_names FILE: print FILE with the workflow name line, the pack path,
 # and the pack-owned variable names rewritten. A name counts only as a whole
 # name, and never after secrets. or vars., where it names a consumer secret
@@ -193,6 +251,38 @@ fi
 if [ "$IN_GIT" -eq 1 ] && git ls-files -s -- "$OLD_PACK" 2>/dev/null | grep '^160000 ' >/dev/null; then
     stop_at 2 "$OLD_PACK/ is a git submodule. Run git submodule deinit and git rm on it first, then run this helper again."
 fi
+# The marker clashes, for each tool folder step 5 works in.
+for t in $TOOL_DIRS; do
+    if marker_skip "$t"; then continue; fi
+    if present "$t/$OLD_FLAGS" && present "$t/$NEW_FLAGS"; then
+        stop_at 2 "both $t/$OLD_FLAGS and $t/$NEW_FLAGS exist. Keep one of them, then run this helper again."
+    fi
+    if present "$t/skills/$OLD_MANIFEST" && present "$t/skills/$NEW_MANIFEST"; then
+        stop_at 2 "both $t/skills/$OLD_MANIFEST and $t/skills/$NEW_MANIFEST exist. Keep one of them, then run this helper again."
+    fi
+    scan=""
+    if [ -f "$t/skills/$OLD_MANIFEST" ]; then
+        scan="$t/skills/$OLD_MANIFEST"
+    elif [ -f "$t/skills/$NEW_MANIFEST" ]; then
+        scan="$t/skills/$NEW_MANIFEST"
+    fi
+    if [ -n "$scan" ] && [ -d "$t/skills" ]; then
+        rs="$(real_dir "$t/skills")"
+        while IFS= read -r entry || [ -n "$entry" ]; do
+            entry="${entry%$'\r'}"
+            [ -z "$entry" ] && continue
+            name="$(kept_name "$entry" "$rs")"
+            case "$name" in
+                "$OLD"-*)
+                    nn="ravintio-${name#"$OLD"-}"
+                    if present "$t/skills/$name" && present "$t/skills/$nn"; then
+                        stop_at 2 "both $t/skills/$name and $t/skills/$nn exist. Keep one of them, then run this helper again."
+                    fi
+                    ;;
+            esac
+        done < "$scan"
+    fi
+done
 echo "Step 2: no stop condition found."
 hook 2
 
@@ -236,14 +326,12 @@ else
 fi
 hook 4
 
-# Step 5: remove the session marker. Setup removes the other two markers.
+# Step 5: remove the session marker, then rename the markers in each tool
+# folder.
 CLAUDE_LINK="$(first_link ".claude")"
 if [ -n "$CLAUDE_LINK" ]; then
     echo "WARNING: .claude is a symlink. Skipped the marker under it, so nothing is removed through it."
 else
-    if [ -L ".claude/skills" ]; then
-        echo "WARNING: .claude/skills is a symlink. Skipped the marker under it, so nothing is written through it."
-    fi
     if [ -L "$SESSION" ]; then
         echo "WARNING: $SESSION is a symlink. Left it in place."
     elif [ -f "$SESSION" ]; then
@@ -256,6 +344,77 @@ else
         echo "Step 5: skipped, $SESSION is not present."
     fi
 fi
+for t in $TOOL_DIRS; do
+    if [ -L "$t" ]; then
+        # The .claude warning above already names a linked .claude.
+        if [ "$t" != ".claude" ]; then
+            echo "WARNING: $t is a symlink. Skipped the markers in it, so nothing is written through it."
+        fi
+        continue
+    fi
+    if [ ! -d "$t" ]; then continue; fi
+    skip_link="$(first_link "$t/skills" "$t/$OLD_FLAGS" "$t/$NEW_FLAGS" "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST")"
+    if [ -n "$skip_link" ]; then
+        echo "WARNING: $skip_link is a symlink. Skipped the markers in $t, so nothing is written through it."
+        continue
+    fi
+    # The flags file keeps its content.
+    if [ -f "$t/$OLD_FLAGS" ]; then
+        move_path "$t/$OLD_FLAGS" "$t/$NEW_FLAGS" 5
+        echo "Step 5: renamed $t/$OLD_FLAGS to $t/$NEW_FLAGS."
+        note_moved "$t/$OLD_FLAGS to $t/$NEW_FLAGS"
+        CHANGED=1
+    elif present "$t/$OLD_FLAGS"; then
+        echo "WARNING: $t/$OLD_FLAGS is not a regular file. Left it in place."
+    fi
+    if [ ! -d "$t/skills" ]; then continue; fi
+    if [ -f "$t/skills/$OLD_MANIFEST" ]; then
+        move_path "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST" 5
+        echo "Step 5: renamed $t/skills/$OLD_MANIFEST to $t/skills/$NEW_MANIFEST."
+        note_moved "$t/skills/$OLD_MANIFEST to $t/skills/$NEW_MANIFEST"
+        CHANGED=1
+    elif present "$t/skills/$OLD_MANIFEST"; then
+        echo "WARNING: $t/skills/$OLD_MANIFEST is not a regular file. Left it in place."
+    fi
+    MANIFEST="$t/skills/$NEW_MANIFEST"
+    if [ ! -f "$MANIFEST" ]; then continue; fi
+    # Keep each entry inside the real skills folder, rename each listed old
+    # skill folder, and write each kept entry as the real path.
+    rs="$(real_dir "$t/skills")"
+    CONTENT=""
+    while IFS= read -r entry || [ -n "$entry" ]; do
+        entry="${entry%$'\r'}"
+        [ -z "$entry" ] && continue
+        name="$(kept_name "$entry" "$rs")"
+        if [ -z "$name" ]; then
+            echo "WARNING: dropped manifest entry $entry"
+            continue
+        fi
+        case "$name" in
+            "$OLD"-*)
+                nn="ravintio-${name#"$OLD"-}"
+                if present "$t/skills/$name"; then
+                    move_path "$t/skills/$name" "$t/skills/$nn" 5
+                    echo "Step 5: renamed $t/skills/$name to $t/skills/$nn."
+                    note_moved "$t/skills/$name to $t/skills/$nn"
+                    CHANGED=1
+                fi
+                name="$nn"
+                ;;
+        esac
+        CONTENT="$CONTENT$rs/$name"$'\n'
+    done < "$MANIFEST"
+    if ! printf '%s' "$CONTENT" | cmp -s - "$MANIFEST"; then
+        # Write to a temporary file in the same folder, then rename it over
+        # the target.
+        TMP="$(mktemp "$t/skills/$NEW_MANIFEST.XXXXXX")" || stop_at 5 "could not create a temporary file in $t/skills/."
+        printf '%s' "$CONTENT" > "$TMP" || stop_at 5 "could not rewrite $MANIFEST. The temporary file $TMP is left for you to check."
+        chmod 644 "$TMP"
+        mv -f "$TMP" "$MANIFEST" || stop_at 5 "could not replace $MANIFEST. The temporary file $TMP is left for you to check."
+        echo "Step 5: rewrote the entries in $MANIFEST."
+        CHANGED=1
+    fi
+done
 hook 5
 
 # Step 6: stop git tracking of the old pack, then rename it into the backup.
@@ -295,8 +454,20 @@ if [ "$CHANGED" -eq 0 ]; then
     echo "Nothing to do. This project already uses the RAVINTIO names."
 fi
 
-# Step 7: the next step.
-echo "Next step: run $NEW_PACK/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
+# Step 7: the next step, with the setup arguments each saved flags file
+# holds, or the generic command when none names a tool setup accepts.
+SAVED=0
+for t in $TOOL_DIRS; do
+    if [ -L "$t" ] || [ ! -d "$t" ]; then continue; fi
+    args="$(flags_args "$t")"
+    if [ -n "$args" ]; then
+        echo "Next step: run $NEW_PACK/setup.sh $args, or setup.ps1 with the same arguments, before the next commit."
+        SAVED=1
+    fi
+done
+if [ "$SAVED" -eq 0 ]; then
+    echo "Next step: run $NEW_PACK/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
+fi
 if [ -d "$BACKUP/$OLD_PACK" ]; then
     echo "The old pack is in $BACKUP/$OLD_PACK/. Delete $BACKUP/ after you check that nothing of yours is in it. git clean -x deletes it too."
 fi

@@ -2,7 +2,7 @@
 
 **Target:** every consumer project that still holds the 0.36.0 pack, its overrides folder, or the backup this helper leaves.
 **Applies when:** `planifest-framework/`, `planifest-overrides/`, or `.ravintio-backup/planifest-framework/` exists at the project root.
-**Scope:** the old pack folder, the old overrides folder, the installed CI workflow, the session marker, and `.git/info/exclude`. This migration never edits `plan/`, `docs/`, or application code.
+**Scope:** the old pack folder, the old overrides folder, the installed CI workflow, the session marker, the setup flags file and skills manifest in each tool folder, the skill folders a manifest lists, and `.git/info/exclude`. This migration never edits `plan/`, `docs/`, or application code.
 **Safe to skip:** No. Setup stops while the old pack or the old overrides folder exists, so the project can't take 0.37.0 until this migration runs.
 
 ---
@@ -41,6 +41,9 @@ The helper runs these steps in order. Each step skips work that is already done,
    - git holds a staged edit, other than a deletion, under the old pack.
    - The old pack, either overrides folder, `.ravintio-backup`, or either workflow file is a symbolic link or a junction.
    - git holds the old pack as a submodule. Run `git submodule deinit` and `git rm` on it first.
+   - A tool folder holds both `.planifest-setup-flags` and `.ravintio-setup-flags`.
+   - A skills folder holds both `.planifest-manifest` and `.ravintio-manifest`.
+   - A manifest lists a `planifest-X` skill folder, and both it and `ravintio-X` exist.
 
    Just before each move, the helper checks again that the target is absent. If the target appeared after step 2, the helper stops at that step with exit 1.
 3. Moves the old overrides folder to `ravintio-overrides/`. It uses `git mv` when git tracks the folder.
@@ -50,9 +53,16 @@ The helper runs these steps in order. Each step skips work that is already done,
    - each pack-owned variable name in the list below, as a whole name.
 
    A name that follows `secrets.` or `vars.` keeps its old prefix, even when it matches a pack-owned name. It names a consumer secret or variable. A name that is not on the list also keeps its old prefix.
-5. Removes the `.claude/` session marker. Setup reads and removes the setup flags file and the skills manifest itself.
+5. Removes the `.claude/` session marker. Then it renames the markers in each tool folder: `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode`.
+   - It renames `.planifest-setup-flags` to `.ravintio-setup-flags`. The content stays the same.
+   - It renames `skills/.planifest-manifest` to `skills/.ravintio-manifest`.
+   - It renames each `planifest-X` skill folder the manifest lists to `ravintio-X`.
+   - It rewrites the manifest through a temporary file in the same folder. Each kept entry becomes the real skills folder joined with its name.
+   - It drops an entry whose parent is not the real skills folder, or whose last part is empty, `.`, or `..`. It prints a `WARNING:` line for each dropped entry and never touches its target.
+
+   It uses `git mv` when git tracks a marker or a skill folder. If the tool folder, its `skills` folder, or a marker file is a symbolic link, it skips that tool folder with a warning.
 6. Stops git tracking of the old pack, then moves it to `.ravintio-backup/planifest-framework/`. It adds `.ravintio-backup/` to `.git/info/exclude` once.
-7. Prints the setup command to run next.
+7. Prints the setup command to run next. It prints one command for each `.ravintio-setup-flags` whose `tool` value is a tool setup accepts. That command carries the `--include-full-skill-library` and `--strict-orchestrator` flags the file holds, and no other flag. If no flags file names such a tool, it prints the generic command.
 8. Prints the branch protection warning.
 
 On any stop, the helper names the step and lists what it already moved. If a parent folder such as `.github` or `.claude` is a symbolic link, the helper skips only the step that writes through it. It prints a `WARNING:` line and carries on.

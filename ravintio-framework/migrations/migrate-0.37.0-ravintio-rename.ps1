@@ -36,6 +36,16 @@ $NewWf = $WfDir + '/ravintio.yml'
 $Backup = '.ravintio-backup'
 $Session = '.claude/.' + $Old + '-session'
 $StopAfter = [string]$env:RAVINTIO_MIGRATE_STOP_AFTER
+# Step 5 renames the markers in each of these tool folders.
+$ToolDirs = @('.claude', '.cursor', '.windsurf', '.clinerules', '.agents', '.github', '.gemini', '.opencode')
+$OldFlags = '.' + $Old + '-setup-flags'
+$NewFlags = '.ravintio-setup-flags'
+$OldManifest = '.' + $Old + '-manifest'
+$NewManifest = '.ravintio-manifest'
+# Step 7 prints a saved tool only when setup accepts it.
+$SetupTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'windsurf', 'cline', 'roo-code', 'opencode')
+$OnWindows = ($env:OS -eq 'Windows_NT')
+$Utf8 = New-Object System.Text.UTF8Encoding($false)
 
 # Pack-owned variable names (the req-003 inventory, retired telemetry names
 # left out). Step 4 rewrites these whole names and no other.
@@ -161,6 +171,115 @@ function Move-Entry([string]$Src, [string]$Dst, [string]$Step) {
     }
 }
 
+# Test-MarkerSkip DIR: true when step 5 leaves the markers in DIR alone. That
+# is when DIR is not a real folder, or DIR/skills or a marker file is a link.
+function Test-MarkerSkip([string]$Dir) {
+    if ((-not (Test-Dir $Dir)) -or (Test-Link $Dir)) { return $true }
+    $link = Get-FirstLink @(($Dir + '/skills'), ($Dir + '/' + $OldFlags), ($Dir + '/' + $NewFlags),
+        ($Dir + '/skills/' + $OldManifest), ($Dir + '/skills/' + $NewManifest))
+    return ($link -ne '')
+}
+
+# Get-RealPath FULL: FULL with every link resolved, part by part, or an empty
+# string when a part is missing or a link can't be resolved.
+function Get-RealPath([string]$Full) {
+    $seps = @([char]'/')
+    if ($OnWindows) { $seps = @([char]'/', [char]'\') }
+    $path = [System.IO.Path]::Combine($Root, $Full)
+    for ($round = 0; $round -lt 40; $round++) {
+        $rootPart = [System.IO.Path]::GetPathRoot($path)
+        if (-not $rootPart) { return '' }
+        $parts = $path.Substring($rootPart.Length).Split($seps, [System.StringSplitOptions]::RemoveEmptyEntries)
+        $cur = $rootPart
+        $next = ''
+        for ($i = 0; $i -lt $parts.Length; $i++) {
+            $part = $parts[$i]
+            if ($part -eq '.') { continue }
+            if ($part -eq '..') {
+                $up = [System.IO.Path]::GetDirectoryName($cur)
+                if ($up) { $cur = $up }
+                continue
+            }
+            $step = [System.IO.Path]::Combine($cur, $part)
+            $item = Get-Item -LiteralPath $step -Force -ErrorAction SilentlyContinue
+            if ($null -eq $item) { return '' }
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                $target = [string](@($item.Target) | Select-Object -First 1)
+                if (-not $target) { return '' }
+                $next = [System.IO.Path]::Combine($cur, $target)
+                for ($j = $i + 1; $j -lt $parts.Length; $j++) {
+                    $next = [System.IO.Path]::Combine($next, $parts[$j])
+                }
+                break
+            }
+            $cur = $step
+        }
+        if ($next -eq '') { return $cur }
+        $path = $next
+    }
+    return ''
+}
+
+function Test-SamePath([string]$A, [string]$B) {
+    if ($OnWindows) { return [string]::Equals($A, $B, [System.StringComparison]::OrdinalIgnoreCase) }
+    return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
+}
+
+# Get-KeptName ENTRY REAL_SKILLS: the last part of a manifest entry when the
+# helper keeps it, else an empty string. It keeps an entry whose parent
+# resolves to the real skills folder and whose last part is not empty, . or ..
+function Get-KeptName([string]$Entry, [string]$RealSkills) {
+    $idx = $Entry.LastIndexOf('/')
+    if ($OnWindows) { $idx = [Math]::Max($idx, $Entry.LastIndexOf('\')) }
+    if ($idx -lt 0) {
+        $parent = '.'
+        $last = $Entry
+    } else {
+        $parent = $Entry.Substring(0, $idx)
+        $last = $Entry.Substring($idx + 1)
+        if ($parent -eq '') { $parent = '/' }
+        if ($parent.EndsWith(':')) { $parent = $parent + '\' }
+    }
+    if (($last -eq '') -or ($last -eq '.') -or ($last -eq '..')) { return '' }
+    $real = Get-RealPath $parent
+    if (($real -ne '') -and (Test-SamePath $real $RealSkills)) { return $last }
+    return ''
+}
+
+# Get-Lines FILE: the lines of FILE, without a trailing carriage return.
+function Get-Lines([string]$Rel) {
+    $text = $Utf8.GetString([System.IO.File]::ReadAllBytes((Get-Full $Rel)))
+    $lines = @()
+    foreach ($line in $text.Split([char]10)) {
+        if ($line.EndsWith("`r")) { $line = $line.Substring(0, $line.Length - 1) }
+        $lines += $line
+    }
+    return $lines
+}
+
+# Get-FlagsArgs DIR: the setup arguments DIR's flags file holds, or an empty
+# string when its tool is not one setup accepts. Only the two known flags
+# pass, in setup order.
+function Get-FlagsArgs([string]$Dir) {
+    $rel = $Dir + '/' + $NewFlags
+    if ((-not (Test-File $rel)) -or (Test-Link $rel)) { return '' }
+    $tool = $null
+    $flagLine = $null
+    foreach ($line in (Get-Lines $rel)) {
+        if (($null -eq $tool) -and ($line -cmatch '^\s*"tool"\s*:\s*"([^"]*)"')) { $tool = $Matches[1] }
+        if (($null -eq $flagLine) -and ($line -cmatch '^\s*"flags"\s*:(.*)$')) { $flagLine = $Matches[1] }
+    }
+    foreach ($t in $SetupTools) {
+        if ($t -ceq $tool) {
+            $out = $t
+            if ("$flagLine".Contains('"--include-full-skill-library"')) { $out += ' --include-full-skill-library' }
+            if ("$flagLine".Contains('"--strict-orchestrator"')) { $out += ' --strict-orchestrator' }
+            return $out
+        }
+    }
+    return ''
+}
+
 # Get-Rewritten TEXT: TEXT with the workflow name line, the pack path, and
 # the pack-owned variable names rewritten, line by line, each line ending in a
 # newline. A name counts only as a whole name, and never after secrets. or
@@ -225,6 +344,35 @@ if ($InGit) {
         Stop-At '2' "$OldPack/ is a git submodule. Run git submodule deinit and git rm on it first, then run this helper again."
     }
 }
+# The marker clashes, for each tool folder step 5 works in.
+foreach ($t in $ToolDirs) {
+    if (Test-MarkerSkip $t) { continue }
+    if ((Test-Present ($t + '/' + $OldFlags)) -and (Test-Present ($t + '/' + $NewFlags))) {
+        Stop-At '2' "both $t/$OldFlags and $t/$NewFlags exist. Keep one of them, then run this helper again."
+    }
+    if ((Test-Present ($t + '/skills/' + $OldManifest)) -and (Test-Present ($t + '/skills/' + $NewManifest))) {
+        Stop-At '2' "both $t/skills/$OldManifest and $t/skills/$NewManifest exist. Keep one of them, then run this helper again."
+    }
+    $scan = ''
+    if (Test-File ($t + '/skills/' + $OldManifest)) {
+        $scan = $t + '/skills/' + $OldManifest
+    } elseif (Test-File ($t + '/skills/' + $NewManifest)) {
+        $scan = $t + '/skills/' + $NewManifest
+    }
+    if (($scan -ne '') -and (Test-Dir ($t + '/skills'))) {
+        $rs = Get-RealPath ($t + '/skills')
+        foreach ($entry in (Get-Lines $scan)) {
+            if ($entry -eq '') { continue }
+            $name = Get-KeptName $entry $rs
+            if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
+                $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
+                if ((Test-Present ($t + '/skills/' + $name)) -and (Test-Present ($t + '/skills/' + $nn))) {
+                    Stop-At '2' "both $t/skills/$name and $t/skills/$nn exist. Keep one of them, then run this helper again."
+                }
+            }
+        }
+    }
+}
 Write-Host 'Step 2: no stop condition found.'
 Invoke-Hook '2'
 
@@ -285,13 +433,11 @@ if ($WfParentLink -ne '') {
 }
 Invoke-Hook '4'
 
-# Step 5: remove the session marker. Setup removes the other two markers.
+# Step 5: remove the session marker, then rename the markers in each tool
+# folder.
 if (Test-Link '.claude') {
     Write-Host 'WARNING: .claude is a symlink. Skipped the marker under it, so nothing is removed through it.'
 } else {
-    if (Test-Link '.claude/skills') {
-        Write-Host 'WARNING: .claude/skills is a symlink. Skipped the marker under it, so nothing is written through it.'
-    }
     if (Test-Link $Session) {
         Write-Host "WARNING: $Session is a symlink. Left it in place."
     } elseif (Test-File $Session) {
@@ -306,6 +452,100 @@ if (Test-Link '.claude') {
         Write-Host "WARNING: $Session is not a regular file. Left it in place."
     } else {
         Write-Host "Step 5: skipped, $Session is not present."
+    }
+}
+foreach ($t in $ToolDirs) {
+    if (Test-Link $t) {
+        # The .claude warning above already names a linked .claude.
+        if ($t -ne '.claude') {
+            Write-Host "WARNING: $t is a symlink. Skipped the markers in it, so nothing is written through it."
+        }
+        continue
+    }
+    if (-not (Test-Dir $t)) { continue }
+    $skipLink = Get-FirstLink @(($t + '/skills'), ($t + '/' + $OldFlags), ($t + '/' + $NewFlags),
+        ($t + '/skills/' + $OldManifest), ($t + '/skills/' + $NewManifest))
+    if ($skipLink -ne '') {
+        Write-Host "WARNING: $skipLink is a symlink. Skipped the markers in $t, so nothing is written through it."
+        continue
+    }
+    # The flags file keeps its content.
+    $oldFlagsRel = $t + '/' + $OldFlags
+    $newFlagsRel = $t + '/' + $NewFlags
+    if (Test-File $oldFlagsRel) {
+        Move-Entry $oldFlagsRel $newFlagsRel '5'
+        Write-Host "Step 5: renamed $oldFlagsRel to $newFlagsRel."
+        $script:Moved += "$oldFlagsRel to $newFlagsRel"
+        $script:Changed = $true
+    } elseif (Test-Present $oldFlagsRel) {
+        Write-Host "WARNING: $oldFlagsRel is not a regular file. Left it in place."
+    }
+    $skillsRel = $t + '/skills'
+    if (-not (Test-Dir $skillsRel)) { continue }
+    $oldManRel = $skillsRel + '/' + $OldManifest
+    $manRel = $skillsRel + '/' + $NewManifest
+    if (Test-File $oldManRel) {
+        Move-Entry $oldManRel $manRel '5'
+        Write-Host "Step 5: renamed $oldManRel to $manRel."
+        $script:Moved += "$oldManRel to $manRel"
+        $script:Changed = $true
+    } elseif (Test-Present $oldManRel) {
+        Write-Host "WARNING: $oldManRel is not a regular file. Left it in place."
+    }
+    if (-not (Test-File $manRel)) { continue }
+    # Keep each entry inside the real skills folder, rename each listed old
+    # skill folder, and write each kept entry as the real path.
+    $rs = Get-RealPath $skillsRel
+    $sb = New-Object System.Text.StringBuilder
+    foreach ($entry in (Get-Lines $manRel)) {
+        if ($entry -eq '') { continue }
+        $name = Get-KeptName $entry $rs
+        if ($name -eq '') {
+            Write-Host "WARNING: dropped manifest entry $entry"
+            continue
+        }
+        if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
+            $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
+            if (Test-Present ($skillsRel + '/' + $name)) {
+                Move-Entry ($skillsRel + '/' + $name) ($skillsRel + '/' + $nn) '5'
+                Write-Host "Step 5: renamed $skillsRel/$name to $skillsRel/$nn."
+                $script:Moved += "$skillsRel/$name to $skillsRel/$nn"
+                $script:Changed = $true
+            }
+            $name = $nn
+        }
+        [void]$sb.Append([System.IO.Path]::Combine($rs, $name))
+        [void]$sb.Append("`n")
+    }
+    $manFull = Get-Full $manRel
+    $newBytes = $Utf8.GetBytes($sb.ToString())
+    $oldBytes = [System.IO.File]::ReadAllBytes($manFull)
+    $same = ($newBytes.Length -eq $oldBytes.Length)
+    if ($same) {
+        for ($k = 0; $k -lt $newBytes.Length; $k++) {
+            if ($newBytes[$k] -ne $oldBytes[$k]) { $same = $false; break }
+        }
+    }
+    if (-not $same) {
+        # Write to a temporary file in the same folder, then rename it over
+        # the target.
+        $tmpRel = $manRel + '.' + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
+        $tmpFull = Get-Full $tmpRel
+        try {
+            $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+            $fs.Write($newBytes, 0, $newBytes.Length)
+            $fs.Close()
+        } catch {
+            Stop-At '5' "could not rewrite $manRel. The temporary file $tmpRel is left for you to check."
+        }
+        # NullString passes a real null, so File.Replace makes no backup file.
+        try {
+            [System.IO.File]::Replace($tmpFull, $manFull, [System.Management.Automation.Language.NullString]::Value)
+        } catch {
+            Stop-At '5' "could not replace $manRel. The temporary file $tmpRel is left for you to check."
+        }
+        Write-Host "Step 5: rewrote the entries in $manRel."
+        $script:Changed = $true
     }
 }
 Invoke-Hook '5'
@@ -369,8 +609,20 @@ if (-not $script:Changed) {
     Write-Host 'Nothing to do. This project already uses the RAVINTIO names.'
 }
 
-# Step 7: the next step.
-Write-Host "Next step: run $NewPack/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
+# Step 7: the next step, with the setup arguments each saved flags file
+# holds, or the generic command when none names a tool setup accepts.
+$saved = $false
+foreach ($t in $ToolDirs) {
+    if ((Test-Link $t) -or (-not (Test-Dir $t))) { continue }
+    $flagArgs = Get-FlagsArgs $t
+    if ($flagArgs -ne '') {
+        Write-Host "Next step: run $NewPack/setup.sh $flagArgs, or setup.ps1 with the same arguments, before the next commit."
+        $saved = $true
+    }
+}
+if (-not $saved) {
+    Write-Host "Next step: run $NewPack/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
+}
 if (Test-Dir ($Backup + '/' + $OldPack)) {
     Write-Host "The old pack is in $Backup/$OldPack/. Delete $Backup/ after you check that nothing of yours is in it. git clean -x deletes it too."
 }
