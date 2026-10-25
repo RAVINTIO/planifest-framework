@@ -319,6 +319,9 @@ Backlog filed (P6): 0000266 and 0000267, by request of the human on the loop. Th
 Progress (P5 rerun): the second re-review rated the marker work Low, with N-004 open on Windows (371fd723). N-004 RED d5931685, GREEN 1e950fc4: both helpers drop an entry whose first two characters are both `/` or `\`, or that starts with `\??\`. Full suite 162 of 162, pushed. CI on 61be791e passed 13 of 13. The run on 5d4d9ac3 failed only the red N-004 cases, as expected.
 Deviation review (P6, late change): rows 12 to 15 classified (6cf8d745). Row 12, the marker rename, is altering and destructive. The human on the loop directed it, so it needs no new decision, and the final report lists it as a gross deviation. Exception waiting (P6, 1) is resolved by that direction.
 Decision (P6): one parallel batch of three: the N-004 confirmation review, the cross-model review, and CI on 1e950fc4 / reason: they read the same code and write different files.
+Security re-review (P5, third): N-004 closed, overall Low (92753fac). New N-006 (Low, older than the fix): a link inside the project that points to a share makes both helpers look up the remote path before they drop the entry.
+Decision (P5): file N-006 as backlog 0000270 and close the P5 loop / reason: it is Low, it deletes nothing, and it needs a Windows link setup that CI lacks. This was the fourth review round, and the loop rules favour a stop over another round.
+Deviation (P5, process): the third re-review agent changed one line with `sed -i` (Hard Limit 8). It reported the slip, and backlog 0000238 now cites it.
 Drift (P6): the old setup never read `.opencode/.planifest-setup-flags`, so an OpenCode consumer kept a stale old marker. The helper now covers `.opencode/` as well.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
