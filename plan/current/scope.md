@@ -25,6 +25,8 @@ version: "0.1.0"
 - The scripted bulk rename in P3. One pass uses `git mv` and a replace that skips the protected list. The script lives in the scratchpad and never in the repo. Follow-up fixes use Edit. Maps to req-001-pack-paths-and-identifiers (US-001), with the protected list owned by req-005-history-and-split-name-protection.
 - The 0.37.0 minor version bump in `product.yml`, `ravintio-framework/component.yml`, and `docs/about.md`, with old-name reads kept through 0.x. Maps to req-010-version-bump (US-004).
 
+- P2 clarification for the runtime-names line: setup also reads `.planifest-manifest` once and removes it. The helper removes only `.planifest-session` (ADR-004, req-006).
+
 ## Out of Scope
 
 - `plan/_archive/`, `plan/changelog/`, `plan/_migrations/` records, and the bodies of shipped migrations. These stay byte-identical.
@@ -39,4 +41,4 @@ version: "0.1.0"
 ## Deferred
 
 - The `gh repo rename ravintio-framework` command and the `origin` update run after the human on the loop merges the PR. Blocked until it runs: links to `github.com/RAVINTIO/ravintio-framework` do not resolve, because the repo still has the old name.
-- Removal of old-name reads at 1.0.0. That covers `PLANIFEST_SESSION_ID`, the old boot-file markers and ignore-file headers, and `.planifest-setup-flags`. Blocked until it ships: setup carries the old-name fallbacks, and the brand guard keeps allowlist entries for them.
+- Removal of old-name reads at 1.0.0. That covers `PLANIFEST_SESSION_ID`, the old boot-file markers and ignore-file headers, `.planifest-setup-flags`, and `.planifest-manifest`. Blocked until it ships: setup carries the old-name fallbacks, and the brand guard keeps allowlist entries for them.

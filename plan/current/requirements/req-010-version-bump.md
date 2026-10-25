@@ -20,6 +20,7 @@ As a human on the loop, I see version 0.37.0 in `product.yml`, the pack manifest
 - P6 writes 0.37.0 to `product.yml`, `ravintio-framework/component.yml`, and the `docs/about.md` frontmatter and table.
 - `node ravintio-framework/scripts/product-version.mjs` derives 0.37.0 from the component manifests after P6.
 - No live file names 1.0.0 as this release. Old-name reads go at 1.0.0, per the design.
+- The second criterion runs `git grep -n '1\.0\.0' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current'`. Every hit must name 1.0.0 as the removal point for old-name reads, or be a version field of a third-party file. A hit that names 1.0.0 as the current release fails.
 - Split step: this requirement came from the split of req-004 at its fourth criterion. req-004's version criteria moved here once the P1 critic loop closed.
 
 ## Acceptance Criteria

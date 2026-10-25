@@ -31,7 +31,8 @@ Exactly these old names stay readable through every 0.x release. Version 1.0.0 r
 
 - `PLANIFEST_SESSION_ID` (req-003). The OpenCode adapter reads `RAVINTIO_SESSION_ID` first. It reads the old name only when the new one is unset. It prints no warning.
 - The old boot-file markers and ignore-file headers (req-002). Setup recognises them and replaces each block with the RAVINTIO form, so no block appears twice.
-- `.planifest-setup-flags` and `.planifest-manifest` (req-002). Setup and refresh-setup read each once, write the new `.ravintio-*` marker, and remove the old file.
+- `.planifest-setup-flags` and `.planifest-manifest` (req-002). Setup and refresh-setup read each once, write the new `.ravintio-*` marker, and remove the old file. The migration helper leaves both in place for setup to read (req-006 step 5).
+- `.planifest-session` is not read. The helper removes it, and `archive-current.mjs` still deletes it as well as the new marker (req-005).
 
 Every other variable renames with no fallback, because only the pack sets it.
 

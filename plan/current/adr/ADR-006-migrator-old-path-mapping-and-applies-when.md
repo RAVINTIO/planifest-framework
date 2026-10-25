@@ -40,6 +40,7 @@ Keep file-name order for pending migrations. Resolve old paths in the migrator i
 - This source repo and a fresh consumer both read the condition as false. Both get the `not applicable` record, so the rename migration is never pending there. This follows 0000035 ADR 010 and RAVINTIO Zero 0000160 ADR 003.
 - The orchestrator reports every migration it skips for a false condition. It never skips one silently.
 - The migrator's framework source check reads `id: "ravintio-framework"` in the root `product.yml`.
+- The rename migration's `Applies when:` condition is true while `planifest-framework/`, `planifest-overrides/`, or `.ravintio-backup/planifest-framework/` exists. The backup keeps it true after a hand-run helper. The migrator checks only that the backup exists and never reads inside it.
 - A 0.36.0 consumer runs the rename helper by hand, from the upgrade steps, before setup. The helper writes no record. The new migrator then finds the rename migration pending, runs a no-op helper rerun as a check pass, and records `applied`.
 
 Decision (P2): keep file-name order and map old paths in the migrator / reason: it leaves shipped bodies and migration names untouched, and it keeps the backup out of every read.

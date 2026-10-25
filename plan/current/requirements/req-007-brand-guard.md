@@ -45,6 +45,8 @@ As a human on the loop, I get a failing test when a live file brings back the ol
   - req-002 and req-008: setup lines and test fixtures that plant `.planifest-*` markers, old boot-file markers, and old ignore-file headers. Reason: old-name detection through 0.x.
   - req-009: migrator lines that map `planifest-framework/` to `ravintio-framework/`. Reason: the old-path mapping.
   - Live backlog entries that quote the old name, namely 0000237 and entries filed during this feature. Reason: they describe the rename.
+  - Correction to the line above: 0000237 left the backlog at P0, and the pass rewrites brand words in live entries. Each entry for a live backlog file names that file's path and the exact line, so the list stays closed and a stale entry fails.
+- The guard and its regression copy share one entry. Its path regex is `^ravintio-framework/tests/(regression/)?test-0000039-req-007-brand-guard\.sh$`, so the entry matches before and after the P7 promotion and never goes stale.
 - Fail the suite when an allowlist entry matches no line or path. A stale entry must not stay.
 - Add a second case. Plant the old name in a scratch copy of `README.md` and expect the check to flag it with the file and line number.
 - Read lines with `done <<< "$(...)"` and skip empty lines. Never use `done < <(...)`, because macOS Bash 3.2 drops lines from that form.

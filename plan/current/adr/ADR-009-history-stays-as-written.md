@@ -41,7 +41,7 @@ The history-reading suites keep the old names on the lines that read history. Th
 
 The measurement is this command, which must print nothing:
 
-`git diff --name-status --diff-filter=MDR main...HEAD -- plan/_archive plan/changelog plan/_migrations`
+`git diff --name-status --diff-filter=MDR main...HEAD -- plan/_archive plan/changelog plan/_migrations ':(glob)plan/backlog/*/_reference/**'`
 
 Files this feature adds count as additions. That covers its archive folder, its changelog entry, and its migration record. Only modified, deleted, and renamed files fail the check.
 

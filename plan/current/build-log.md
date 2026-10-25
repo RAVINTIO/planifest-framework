@@ -134,4 +134,6 @@ Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 32 criteria, critic
 
 Skills inbox (P2): absent, nothing to take in.
 Decision (P2): ten ADRs, ADR-001 to ADR-010, one drafter each in one batch / reason: each ADR records one decision the design already fixed, so no drafter needs another's output.
+Decision (P2): NFR-003 and ADR-009 also check `plan/backlog/*/_reference/` / reason: the ADR-009 drafter found the measurement narrower than req-005.
+Deviation (P2, unclassified): the P2 critic found two design conflicts. The migration helper now leaves `.planifest-setup-flags` and `.planifest-manifest` for setup to read, and removes only `.planifest-session`. The `Applies when:` condition now also names `.ravintio-backup/planifest-framework/`, so a hand-run helper still ends in an `applied` record. design.md gains two clarifying sub-lines, and req-006, req-009, ADR-004, ADR-006, and scope.md follow.
 
