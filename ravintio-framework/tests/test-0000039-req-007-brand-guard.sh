@@ -73,6 +73,7 @@ ALLOWLIST=(
   # The 0000039 suites plant old-name fixtures and assert the old name is gone, so they name it.
   '^ravintio-framework/tests/(regression/)?test-0000039-req-00[2-9][^/]*\.sh$|.|The 0000039 suites plant old-name fixtures and assert the old name is gone.'
   '^ravintio-framework/tests/fixtures/0000039-rename-exceptions\.txt$|^planifest-framework/|Old paths of the delete-plus-add files.'
+  '^ravintio-framework/tests/fixtures/0000039-held-back-paths\.txt$|^planifest-framework/|Old paths of the files the P3 credential scan held back.'
 
   # --- Documents that stay as written ---
   # Backlog reference documents are frozen source material.

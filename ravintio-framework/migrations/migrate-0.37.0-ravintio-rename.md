@@ -94,6 +94,10 @@ Step 4 rewrites each of these names from the old `PLANIFEST_` prefix to the `RAV
 
 ---
 
+## Your own override files
+
+The helper moves `ravintio-overrides/` but doesn't rewrite the text inside it. Those files are yours. If an instruction or setup config there names a `planifest-framework/` path, change it to `ravintio-framework/`. Search with `grep -rn 'planifest-framework/' ravintio-overrides/`.
+
 ## Branch protection
 
 The CI check now reports as `RAVINTIO Strict Pipeline`. If a branch protection rule requires the old check name, change it to require `RAVINTIO Strict Pipeline`. Until you do, the old check never reports and pull requests stay blocked.
