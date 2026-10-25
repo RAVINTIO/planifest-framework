@@ -14,11 +14,11 @@ status: "open"
 
 ## Problem
 
-In 0000033 P3, five parallel work packages edited `planifest-orchestrator/SKILL.md`, the build-log template, and the build-assessment skill at the same time. One package rewrote the orchestrator with `sed -i` mid-wave. No edit was lost, but only the suites showed that. Shared files also stopped each package's work from landing in its own commit.
+In 0000033 P3, five parallel work packages edited `ravintio-orchestrator/SKILL.md`, the build-log template, and the build-assessment skill at the same time. One package rewrote the orchestrator with `sed -i` mid-wave. No edit was lost, but only the suites showed that. Shared files also stopped each package's work from landing in its own commit.
 
 ## Suggested Action
 
-Add a file-ownership rule to `planifest-framework/standards/agent-dispatch-standards.md`. Batch work units so no two concurrent agents own the same file, or name one owner per shared file and route other packages' edits through it. Ban whole-file rewrites of shared files during a wave.
+Add a file-ownership rule to `ravintio-framework/standards/agent-dispatch-standards.md`. Batch work units so no two concurrent agents own the same file, or name one owner per shared file and route other packages' edits through it. Ban whole-file rewrites of shared files during a wave.
 
 ## Why Deferred
 

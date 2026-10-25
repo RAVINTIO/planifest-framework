@@ -50,8 +50,8 @@ The P4 semantic check for 0000035 found every acceptance criterion and Input Val
   - `set-product-release.mjs` validating before it reads `product.yml`
 - `scopeVerdict` (req-009):
   - the enforcement check running before the stale-record check
-  - `.github/hooks/` entries other than `planifest.json`
-  - `planifest-framework/setup/windsurf.sh`
+  - `.github/hooks/` entries other than `ravintio.json`
+  - `ravintio-framework/setup/windsurf.sh`
 
 The `resolveRoot` doc comment also says it returns `null` when `realpathSync` throws. req-004 says it returns `null` only for a cwd that is not a non-empty string. The code fails open, which matches the wider rule, but the two texts disagree.
 

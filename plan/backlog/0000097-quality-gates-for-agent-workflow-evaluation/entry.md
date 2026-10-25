@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Planifest gates check artifacts at each phase, and P8 reports build efficiency. Nothing measures the quality of the agent workflows themselves. No gate scores whether a run followed its skills, how often it needed human correction, or whether governance held from P0 to P9. The 0000077 lapses were found by the human, not by a gate.
+RAVINTIO Framework gates check artifacts at each phase, and P8 reports build efficiency. Nothing measures the quality of the agent workflows themselves. No gate scores whether a run followed its skills, how often it needed human correction, or whether governance held from P0 to P9. The 0000077 lapses were found by the human, not by a gate.
 
 ## Suggested Action
 

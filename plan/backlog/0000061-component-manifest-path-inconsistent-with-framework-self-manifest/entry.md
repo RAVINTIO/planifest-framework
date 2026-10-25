@@ -1,6 +1,6 @@
 ---
 title: "Backlog Entry: 0000061 - Component manifest path is inconsistent with the framework's own self-manifest"
-summary: "spec-agent and docs-agent state src/{component-id}/ as the only location for a component manifest and per-component docs, while ship-agent and codegen-agent both read and write planifest-framework/component.yml — a schema-conformant component manifest outside src/. Downstream projects whose only component is not application code have no documented path."
+summary: "spec-agent and docs-agent state src/{component-id}/ as the only location for a component manifest and per-component docs, while ship-agent and codegen-agent both read and write ravintio-framework/component.yml — a schema-conformant component manifest outside src/. Downstream projects whose only component is not application code have no documented path."
 status: "open"
 ---
 # Backlog Entry: 0000061 - Component manifest path is inconsistent with the framework's own self-manifest
@@ -14,10 +14,10 @@ status: "open"
 
 ## Problem
 
-Two framework skills treat `planifest-framework/component.yml` as a first-class component manifest living outside `src/`:
+Two framework skills treat `ravintio-framework/component.yml` as a first-class component manifest living outside `src/`:
 
-- `skills/planifest-ship-agent/SKILL.md:159` — *"No `product.yml` and the project has exactly one component (exit 4) — read the `version` field from the single `component.yml` (**for this repo: `planifest-framework/component.yml`**)."*
-- `skills/planifest-codegen-agent/SKILL.md:163,166` — instructs P3 to bump `planifest-framework/component.yml` and include it in the commit so the ship-agent reads the right version at tag time.
+- `skills/ravintio-ship-agent/SKILL.md:159` — *"No `product.yml` and the project has exactly one component (exit 4) — read the `version` field from the single `component.yml` (**for this repo: `ravintio-framework/component.yml`**)."*
+- `skills/ravintio-codegen-agent/SKILL.md:163,166` — instructs P3 to bump `ravintio-framework/component.yml` and include it in the commit so the ship-agent reads the right version at tag time.
 
 That file is schema-conformant against `templates/component.template.yml` — every top-level key matches (`id, name, feature, version, status, type, domain, summary, systemContext, responsibilities, exceptions, stack, contract, data, scope, risk, quality, pipeline, metadata`), with `type: "component-pack"`, one of the template's three enumerated values. It carries `feature: 0000025-…`, so it is maintained by this repo's own pipeline runs.
 
@@ -25,13 +25,13 @@ Five lines in two other skills state the opposite:
 
 | File | Line | Text |
 |------|------|------|
-| `skills/planifest-spec-agent/SKILL.md` | 24 | "Write the component manifest to `src/{component-id}/component.yml`" |
-| `skills/planifest-spec-agent/SKILL.md` | 31 | Component Manifest → `src/{component-id}/component.yml` |
-| `skills/planifest-spec-agent/SKILL.md` | 73 | "Write the draft manifest to `src/{component-id}/component.yml`. Create the component folder if it doesn't exist." |
-| `skills/planifest-docs-agent/SKILL.md` | 83 | Input: "The implementation at `src/{component-id}/`" |
-| `skills/planifest-docs-agent/SKILL.md` | 90 | "For each component in the feature, write to `src/{component-id}/docs/`" |
+| `skills/ravintio-spec-agent/SKILL.md` | 24 | "Write the component manifest to `src/{component-id}/component.yml`" |
+| `skills/ravintio-spec-agent/SKILL.md` | 31 | Component Manifest → `src/{component-id}/component.yml` |
+| `skills/ravintio-spec-agent/SKILL.md` | 73 | "Write the draft manifest to `src/{component-id}/component.yml`. Create the component folder if it doesn't exist." |
+| `skills/ravintio-docs-agent/SKILL.md` | 83 | Input: "The implementation at `src/{component-id}/`" |
+| `skills/ravintio-docs-agent/SKILL.md` | 90 | "For each component in the feature, write to `src/{component-id}/docs/`" |
 
-**What the inconsistency costs downstream.** In `rapid-prototypes`, two consecutive features have produced a component that is not application code — a governance instruction under `planifest-overrides/instructions/`. Both times P1 and P6 demanded artifacts at `src/{component-id}/`, and both times producing them would have been actively wrong:
+**What the inconsistency costs downstream.** In `rapid-prototypes`, two consecutive features have produced a component that is not application code — a governance instruction under `ravintio-overrides/instructions/`. Both times P1 and P6 demanded artifacts at `src/{component-id}/`, and both times producing them would have been actively wrong:
 
 1. `gate-write` blocks the write, because `src/{component-id}/` is not in the confirmed design's `## Component Paths`; and
 2. more importantly, it would have created an unprefixed component directly in `src/` — which in that repo is precisely the outcome its own governance instruction exists to prevent.

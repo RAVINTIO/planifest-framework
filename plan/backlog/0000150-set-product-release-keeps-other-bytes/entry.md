@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/scripts/set-product-release.mjs` reads `product.yml` with `readFileSync(fd, "utf-8")`. Invalid UTF-8 becomes U+FFFD, and the script then writes the whole file back. A line the script should leave alone changes. For example, the bytes `ff fe 00` became `ef bf bd ef bf bd 00`. The script header promises to leave every other line as it is.
+`ravintio-framework/scripts/set-product-release.mjs` reads `product.yml` with `readFileSync(fd, "utf-8")`. Invalid UTF-8 becomes U+FFFD, and the script then writes the whole file back. A line the script should leave alone changes. For example, the bytes `ff fe 00` became `ef bf bd ef bf bd 00`. The script header promises to leave every other line as it is.
 
 A NEL (U+0085) inside a key line also passes and stays in the file. A YAML 1.1 reader treats NEL as a line break.
 

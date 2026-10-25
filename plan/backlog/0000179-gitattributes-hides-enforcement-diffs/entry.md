@@ -14,9 +14,9 @@ status: "open"
 
 ## Problem
 
-`ALWAYS_PERMITTED_FILES` in `planifest-framework/hooks/enforcement/path-rules.mjs` holds `.gitattributes`. The gate admits that name with no design in any folder outside `FAST_PATH_ENFORCEMENT_PATHS`, including the repository root and `planifest-framework/`.
+`ALWAYS_PERMITTED_FILES` in `ravintio-framework/hooks/enforcement/path-rules.mjs` holds `.gitattributes`. The gate admits that name with no design in any folder outside `FAST_PATH_ENFORCEMENT_PATHS`, including the repository root and `ravintio-framework/`.
 
-A line such as `planifest-framework/hooks/** -diff linguist-generated` makes `git diff` print `Binary files ... differ` for a hook change. GitHub also collapses generated files by default. An agent with a design that covers the hooks could land a hook change that the human on the loop doesn't read. The `.gitattributes` change still shows in the diff, which limits the risk.
+A line such as `ravintio-framework/hooks/** -diff linguist-generated` makes `git diff` print `Binary files ... differ` for a hook change. GitHub also collapses generated files by default. An agent with a design that covers the hooks could land a hook change that the human on the loop doesn't read. The `.gitattributes` change still shows in the diff, which limits the risk.
 
 The gap predates 0000036. See finding 6 in `plan/current/security-review-hooks.md` (0000036 P5).
 

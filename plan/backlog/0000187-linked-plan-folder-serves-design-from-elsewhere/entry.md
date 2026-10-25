@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-The hooks check `design.md` with `lstat`, but they do not check whether `plan/` or `plan/current/` is itself a symbolic link. A linked folder serves a `design.md` from outside the repository, and the gate reads it as the confirmed design. This is finding 3 in `plan/_archive/0000036-*/security-review-hooks.md`. It predates feature 0000036. The affected code is `readDesign` in `planifest-framework/hooks/enforcement/path-rules.mjs`.
+The hooks check `design.md` with `lstat`, but they do not check whether `plan/` or `plan/current/` is itself a symbolic link. A linked folder serves a `design.md` from outside the repository, and the gate reads it as the confirmed design. This is finding 3 in `plan/_archive/0000036-*/security-review-hooks.md`. It predates feature 0000036. The affected code is `readDesign` in `ravintio-framework/hooks/enforcement/path-rules.mjs`.
 
 ## Suggested Action
 

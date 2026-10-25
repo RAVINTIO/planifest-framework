@@ -14,16 +14,16 @@ status: "open"
 
 ## Problem
 
-`Copy-PlanifestSkills` in `planifest-framework/setup.ps1` copies each `SKILL.md` and then rewrites four relative paths:
+`Copy-RavintioSkills` in `ravintio-framework/setup.ps1` copies each `SKILL.md` and then rewrites four relative paths:
 
 - `setup.ps1:175` reads the copy with `Get-Content -Path $skillMdPath -Raw` and no `-Encoding`.
 - `setup.ps1:180` writes it back with `Set-Content ... -Encoding UTF8`.
 
 Windows PowerShell 5.1 reads a file with no byte order mark in the ANSI code page. Each UTF-8 multi-byte character becomes two or three wrong characters, and the UTF-8 write keeps them. PowerShell 7 reads such files as UTF-8, so it isn't affected.
 
-On 2026-10-22, 15 source skills in `planifest-framework/skills/` hold non-ASCII text. The orchestrator skill starts with a byte order mark, so PowerShell 5.1 reads it correctly. The other 14 install as double-encoded text. They include the design critic, loop runner, migrator, ship agent, and codegen agent.
+On 2026-10-22, 15 source skills in `ravintio-framework/skills/` hold non-ASCII text. The orchestrator skill starts with a byte order mark, so PowerShell 5.1 reads it correctly. The other 14 install as double-encoded text. They include the design critic, loop runner, migrator, ship agent, and codegen agent.
 
-The 0000036 drift check (`scripts/skill-drift-check.mjs`, ADR-005) reports these copies as stale after every `setup.ps1` run under PowerShell 5.1. That report is correct. `planifest-refresh-setup` can't clear it, because each re-run double-encodes the copies again.
+The 0000036 drift check (`scripts/skill-drift-check.mjs`, ADR-005) reports these copies as stale after every `setup.ps1` run under PowerShell 5.1. That report is correct. `ravintio-refresh-setup` can't clear it, because each re-run double-encodes the copies again.
 
 ## Suggested Action
 

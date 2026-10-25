@@ -28,4 +28,4 @@ The phases also wait on each other more than they need to. For example, P1 write
 
 ## Why Deferred
 
-The change needs its own design decision about how far phases may overlap and how the gates stay intact. It touches the orchestrator, the dispatch standards, and each phase skill in `planifest-framework/`. It fits with the pipeline-governance group in 0000095 to 0000098.
+The change needs its own design decision about how far phases may overlap and how the gates stay intact. It touches the orchestrator, the dispatch standards, and each phase skill in `ravintio-framework/`. It fits with the pipeline-governance group in 0000095 to 0000098.

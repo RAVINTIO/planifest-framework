@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/skills/planifest-ship-agent/SKILL.md` is 42,318 bytes. A session loads all of it for P7, P8, and P9, even when it needs only one of them. Backlog 0000230 change 3 named this file as the second split, after the orchestrator. Feature 0000038 split only the orchestrator, and its `scope.md` records the ship-agent split as deferred.
+`ravintio-framework/skills/ravintio-ship-agent/SKILL.md` is 42,318 bytes. A session loads all of it for P7, P8, and P9, even when it needs only one of them. Backlog 0000230 change 3 named this file as the second split, after the orchestrator. Feature 0000038 split only the orchestrator, and its `scope.md` records the ship-agent split as deferred.
 
 ## Suggested Action
 

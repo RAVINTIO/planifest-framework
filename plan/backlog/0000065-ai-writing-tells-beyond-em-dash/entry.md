@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Backlog `0000026` asked for a style guard covering the broader set of AI writing tells. At `0000028`'s P0 it was scoped hard to a single deterministic character check, U+2014, which shipped as `planifest-framework/hooks/enforcement/em-dash-guard.mjs`. Everything else on the original list is still unaddressed and still unspecified: which tells, which artifact classes, and whether a hook is even the right instrument.
+Backlog `0000026` asked for a style guard covering the broader set of AI writing tells. At `0000028`'s P0 it was scoped hard to a single deterministic character check, U+2014, which shipped as `ravintio-framework/hooks/enforcement/em-dash-guard.mjs`. Everything else on the original list is still unaddressed and still unspecified: which tells, which artifact classes, and whether a hook is even the right instrument.
 
 The em dash was the easy case precisely because it is decidable by scanning for one code point. Most writing tells are not: "delve", "it's not just X, it's Y", tricolon padding, and hedging openers are all context-dependent, and a deterministic scan for them would produce false positives on legitimate prose at a rate the em dash check does not.
 

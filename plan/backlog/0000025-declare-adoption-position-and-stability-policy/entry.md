@@ -20,11 +20,11 @@ The ambiguity deters the adopters most likely to benefit: anyone who needs forma
 
 ## Suggested Action
 
-State the current position and the stability commitment in the README. The Status section should say who the framework is currently for. Add a versioning and breaking-change policy, including how migrations are delivered — `planifest-framework/migrations/` and the `planifest-migrator` skill already exist, so the mechanism can be described rather than invented. Make the roadmap link reflect the same position.
+State the current position and the stability commitment in the README. The Status section should say who the framework is currently for. Add a versioning and breaking-change policy, including how migrations are delivered — `ravintio-framework/migrations/` and the `ravintio-migrator` skill already exist, so the mechanism can be described rather than invented. Make the roadmap link reflect the same position.
 
 ## Why Deferred
 
-Filed from an external review rather than an in-flight pipeline feature. This is a positioning decision, not a defect — it needs the human to decide what Planifest is before anything can be written down.
+Filed from an external review rather than an in-flight pipeline feature. This is a positioning decision, not a defect — it needs the human to decide what RAVINTIO Framework is before anything can be written down.
 
 ## Related
 

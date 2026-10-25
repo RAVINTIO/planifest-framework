@@ -8,7 +8,7 @@ The framework's `code-quality-standards.md` is strong on structure and patterns 
 
 ## What changes
 
-### 1. New file: `planifest-framework/standards/library-standards.md`
+### 1. New file: `ravintio-framework/standards/library-standards.md`
 
 Three sections:
 
@@ -34,21 +34,21 @@ Three sections:
 
 ---
 
-### 2. Modify: `planifest-framework/skills/planifest-codegen-agent/SKILL.md`
+### 2. Modify: `ravintio-framework/skills/ravintio-codegen-agent/SKILL.md`
 
 - Add `library-standards.md` to `bundle_standards` frontmatter array.
 - Add a pre-scaffold step: *"Check `library-standards.md` for the component's declared stack. Confirm every dependency is on the prefer list or not on the avoid list. Flag any avoid-list match and substitute the preferred alternative."*
 
 ---
 
-### 3. Modify: `planifest-framework/skills/planifest-validate-agent/SKILL.md`
+### 3. Modify: `ravintio-framework/skills/ravintio-validate-agent/SKILL.md`
 
 - Add `library-standards.md` to `bundle_standards` frontmatter array.
 - Add a library audit check alongside lint/typecheck/test/build: *"Scan the installed dependency manifest against the avoid list in `library-standards.md`. Fail and report substitutions if avoid-list libraries are present."*
 
 ---
 
-### 4. Modify: `planifest-framework/skills/planifest-orchestrator/SKILL.md`
+### 4. Modify: `ravintio-framework/skills/ravintio-orchestrator/SKILL.md`
 
 - Add `library-standards.md` to `bundle_standards` frontmatter array.
 - Reference during stack selection so the orchestrator can surface library preferences when coaching on stack choice.
@@ -59,14 +59,14 @@ Three sections:
 
 | Action | Path |
 |---|---|
-| **Create** | `planifest-framework/standards/library-standards.md` |
-| **Modify** | `planifest-framework/skills/planifest-codegen-agent/SKILL.md` |
-| **Modify** | `planifest-framework/skills/planifest-validate-agent/SKILL.md` |
-| **Modify** | `planifest-framework/skills/planifest-orchestrator/SKILL.md` |
+| **Create** | `ravintio-framework/standards/library-standards.md` |
+| **Modify** | `ravintio-framework/skills/ravintio-codegen-agent/SKILL.md` |
+| **Modify** | `ravintio-framework/skills/ravintio-validate-agent/SKILL.md` |
+| **Modify** | `ravintio-framework/skills/ravintio-orchestrator/SKILL.md` |
 
 ## Out of scope
 
-- `planifest-implementer` and `planifest-refactor` — inherit from codegen-agent, don't directly scaffold dependency manifests.
+- `ravintio-implementer` and `ravintio-refactor` — inherit from codegen-agent, don't directly scaffold dependency manifests.
 - Automated version freshness checks querying npm/PyPI at runtime — deferred.
 - An ADR — recommended but not blocking.
 
@@ -78,4 +78,4 @@ Three sections:
 2. Inspect each modified SKILL.md — confirm `library-standards.md` in `bundle_standards`.
 3. Confirm codegen-agent has the pre-scaffold check step in the correct phase.
 4. Confirm validate-agent has the library audit check in the CI loop.
-5. Run `setup.ps1` to sync — confirm `library-standards.md` appears in `.claude/skills/planifest-codegen-agent/references/`.
+5. Run `setup.ps1` to sync — confirm `library-standards.md` appears in `.claude/skills/ravintio-codegen-agent/references/`.

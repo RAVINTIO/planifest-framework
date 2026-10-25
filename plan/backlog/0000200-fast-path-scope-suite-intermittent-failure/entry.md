@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/tests/test-0000035-req-001-fast-path-scope-record.sh` failed once in the req-009 baseline run from `/tmp` (outside the repository). It passed on rerun with 171 passed and 0 failed.
+`ravintio-framework/tests/test-0000035-req-001-fast-path-scope-record.sh` failed once in the req-009 baseline run from `/tmp` (outside the repository). It passed on rerun with 171 passed and 0 failed.
 
 P3 diagnosed it under req-009 (FR-009.2) and could not reproduce it. The suite ran 22 times from `/tmp` with no failure: 6 and 16 in parallel, and 3 more under 12 busy node processes. The suite has no path that depends on the working directory. It builds `FRAMEWORK` from `$SCRIPT_DIR` and keeps every fixture under `mktemp -d`.
 

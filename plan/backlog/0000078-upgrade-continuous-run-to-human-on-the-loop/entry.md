@@ -23,14 +23,14 @@ These points still wait for the human, or tell the agent to:
 - The orchestrator's P7 gate is "always a confirmation stop", and `continuous_run: true` doesn't bypass it.
 - The ship skill's P9 Step 10 asks whether the agent or the human pushes and raises the PR.
 - The validate skill halts after 5 self-correct cycles and escalates to the human.
-- `planifest-loop-runner`'s stop rules escalate to the human on the iteration cap and on no-progress.
+- `ravintio-loop-runner`'s stop rules escalate to the human on the iteration cap and on no-progress.
 - The codegen skill escalates to the human after 3 failed TDD attempts on one requirement.
 - The Scope Lock Challenge needs a separate accept, edit, or reject per scenario path.
 - Every phase skill says "one question at a time" and recommend-then-confirm, with no rule for a run in which the human isn't present.
 
 ### How `ovelunor` overrides it today
 
-The product's `planifest-overrides/instructions/` holds these overrides:
+The product's `ravintio-overrides/instructions/` holds these overrides:
 
 | Override | What it does |
 |----------|--------------|
@@ -49,7 +49,7 @@ Upgrade `continuous` to a full loop engineering mode in which the human is on th
 
 1. **Run mode.** Add a mode, for example `autonomous`, that P0 records in `plan/.run-mode`. Keep `continuous` and `interactive` as they are.
 2. **P0 front-loads every human dependency.** Ask every real fork together, and settle anything a later phase will need from the human, such as a credential, an account action, or a publisher run. Confirm the design, the Scope Lock batch, and the run mode in one turn.
-3. **Gates become loops.** In this mode, no phase gate stops. Each gate's pass condition runs as a loop under `planifest-loop-runner`, with a fresh-context checker in place of the human:
+3. **Gates become loops.** In this mode, no phase gate stops. Each gate's pass condition runs as a loop under `ravintio-loop-runner`, with a fresh-context checker in place of the human:
    - The design critic at P1 and P2.
    - Verify-by-execution at P4.
    - The cross-model reviewer at the end of P6.
@@ -74,4 +74,4 @@ Upgrade `continuous` to a full loop engineering mode in which the human is on th
 
 ## Why Deferred
 
-Filed from a downstream product's session. The change touches the orchestrator, `planifest-loop-runner`, the validate, codegen, and ship skills, and the run-mode contract, so it needs its own design. Backlog 0000076 (P0 asks too many questions) and 0000077 (governance lapses after P7) overlap with steps 2 and 8 and should be considered alongside it.
+Filed from a downstream product's session. The change touches the orchestrator, `ravintio-loop-runner`, the validate, codegen, and ship skills, and the run-mode contract, so it needs its own design. Backlog 0000076 (P0 asks too many questions) and 0000077 (governance lapses after P7) overlap with steps 2 and 8 and should be considered alongside it.

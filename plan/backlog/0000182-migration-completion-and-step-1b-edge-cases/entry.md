@@ -16,7 +16,7 @@ status: "open"
 
 The second P5 re-review of 0000036 (`plan/_archive/0000036-*/security-rereview-2.md`) rated the feature Low and left three gaps:
 
-- M-1 (Low): if setup can't write a settings file, it prints `could not write ... left unchanged` and still exits 0. The drift check and the hook match then pass, so `planifest-framework/migrations/migrate-0.34.0-rerun-setup.md` step 7 counts the run as complete, and the migrator records `applied` with no hooks wired.
+- M-1 (Low): if setup can't write a settings file, it prints `could not write ... left unchanged` and still exits 0. The drift check and the hook match then pass, so `ravintio-framework/migrations/migrate-0.34.0-rerun-setup.md` step 7 counts the run as complete, and the migrator records `applied` with no hooks wired.
 - M-2 (Low): step 1b of the orchestrator's Resume Detection loads source copies when step 1a "found no framework update". A first session fits both that state and the excluded "no recorded previous version" state. Step 1a checks version strings only, so an unversioned change to a source `SKILL.md` also reads as no update. The step's "build log" names no file, and a session with no active feature has none.
 - M-3 (informational): a regular `design.md` whose open fails with `EIO` or `ETIMEDOUT` now blocks, which fails closed. The block message says the file is not a regular file, which is wrong for that case.
 

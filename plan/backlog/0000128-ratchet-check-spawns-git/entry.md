@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/hooks/enforcement/ratchet-check.mjs` calls `execFileSync("git", ["status", "--porcelain", ...])` in `isUncommitted`. That call backs the uncommitted-marker check from 0000017 ADR-001. Feature 0000035 states an NFR of Node built-ins only and no process spawn in hooks. 0000032 ADR-004 sets the same rule for `path-rules.mjs`.
+`ravintio-framework/hooks/enforcement/ratchet-check.mjs` calls `execFileSync("git", ["status", "--porcelain", ...])` in `isUncommitted`. That call backs the uncommitted-marker check from 0000017 ADR-001. Feature 0000035 states an NFR of Node built-ins only and no process spawn in hooks. 0000032 ADR-004 sets the same rule for `path-rules.mjs`.
 
 In 0000035, req-005 makes `ratchet-check.mjs` import `path-rules.mjs` but leaves the spawn in place. The suite source check for the no-spawn rule therefore can't cover `ratchet-check.mjs`. A slow or missing `git` also adds its own delay to every guarded write.
 

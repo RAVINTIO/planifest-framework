@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/migrations/migrate-adoption-mode-and-about-md.md` keeps its resume state in `planifest-framework/migrations/_progress/migrate-adoption-mode-and-about-md.json`. ADR-005 and ADR-006 in `docs/decisions-index.md` describe the same layout.
+`ravintio-framework/migrations/migrate-adoption-mode-and-about-md.md` keeps its resume state in `ravintio-framework/migrations/_progress/migrate-adoption-mode-and-about-md.json`. ADR-005 and ADR-006 in `docs/decisions-index.md` describe the same layout.
 
 That file is per-project run state inside the framework folder. It has the coupling that 0000126 removes for run records. A framework refresh can overwrite or drop it, and a progress file left in the framework repo would ship to every downstream project.
 

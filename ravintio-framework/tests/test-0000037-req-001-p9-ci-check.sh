@@ -1,0 +1,192 @@
+#!/usr/bin/env bash
+# Tests for feature 0000037-green-ci-before-ship.
+#
+# req-001: P9 reads the PR's CI checks after it raises the PR and reports the
+#          result before the final report (ship skill Step 10c).
+#
+# Verified by: integration
+# REGRESSION-CANDIDATE: covers the P9 CI check step and its result mapping, tagged by test-writer for human review at P7
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/helpers/assert.sh"
+
+FW="$SCRIPT_DIR/.."
+SHIP="$FW/skills/ravintio-ship-agent/SKILL.md"
+STD="$FW/standards/autonomous-run-standards.md"
+ORCH="$FW/skills/ravintio-orchestrator/SKILL.md"
+
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+# step <heading-prefix> <file>: prints one `### ` step, heading included.
+step() {
+  awk -v h="$1" 'index($0, h) == 1 { on = 1; print; next } on && /^##+ / { exit } on { print }' "$2"
+}
+
+# section <heading-prefix> <file>: prints one `## ` section, heading included.
+section() {
+  awk -v h="$1" 'index($0, h) == 1 { on = 1; print; next } on && /^## / { exit } on { print }' "$2"
+}
+
+lacks() {
+  assert_equals "absent" "$([[ "$2" == *"$1"* ]] && echo present || echo absent)" "$3"
+}
+
+line_of() {
+  grep -n -m1 -F -e "$1" "$2" | cut -d: -f1
+}
+
+S10="$(step '### Step 10: Push/PR decision' "$SHIP")"
+S10C="$(step '### Step 10c' "$SHIP")"
+S11="$(step '### Step 11' "$SHIP")"
+S9="$(step '### Step 9' "$SHIP")"
+
+echo "req-001: Step 10c position"
+
+L10B="$(line_of '### Step 10b' "$SHIP")"
+L10C="$(line_of '### Step 10c' "$SHIP")"
+L11="$(line_of '### Step 11' "$SHIP")"
+assert_equals "yes" "$([ -n "$L10C" ] && [ -n "$L10B" ] && [ "$L10C" -gt "$L10B" ] && [ "$L10C" -lt "$L11" ] && echo yes || echo no)" "req-001: Step 10c sits between Step 10b and Step 11"
+
+echo "req-001: Step 10 PR record and existing-PR path"
+
+assert_contains 'PR: #{n} {url}' "$S10" "req-001: Step 10 records the PR line"
+assert_contains "before any wait" "$S10" "req-001: the PR line lands before the wait"
+assert_contains 'gh pr view --json number,url,isDraft,state' "$S10" "req-001: Step 10 looks for an open PR and reads its state"
+assert_contains '`state` is `OPEN`' "$S10" "req-001: Step 10 reuses the PR only when its state is OPEN"
+assert_contains 'raises a new one' "$S10" "req-001: Step 10 raises a new PR when the old one is not open"
+assert_contains 'gh pr edit' "$S10" "req-001: Step 10 edits an existing PR"
+assert_contains '--body-file' "$S10" "req-001: the edit sends a body file"
+assert_contains 'gh pr ready' "$S10" "req-001: Step 10 marks a reused PR ready"
+assert_contains 'no `Exception waiting` line' "$S10" "req-001: ready only with no waiting exception"
+assert_contains "never raises a second PR" "$S10" "req-001: no second PR"
+
+echo "req-001: tag push after Step 10c"
+
+assert_contains "pushes the branch only" "$S10" "req-001: Step 10 pushes the branch only"
+assert_contains 'git push origin v{version}' "$S10C" "req-001: Step 10c pushes the tag"
+assert_contains "delete the local tag" "$S10C" "req-001: fix commits recreate the tag"
+assert_contains "no force push" "$S10C" "req-001: the tag push never forces"
+assert_equals "0" "$(grep -c '^git push origin v{version}' <<< "$S10")" "req-001: Step 10 runs no tag push command"
+lacks 'git push origin v{version}' "$S9" "req-001: Step 9 no longer pushes the tag"
+
+echo "req-001: polling and mapping"
+
+assert_contains 'gh pr checks {n} --json name,bucket,link' "$S10C" "req-001: Step 10c reads checks as JSON"
+assert_contains "every 30 seconds" "$S10C" "req-001: 30 second poll"
+assert_contains "20 minutes" "$S10C" "req-001: 20 minute window"
+assert_contains "30 minutes" "$S10C" "req-001: 30 minute window in the ADR-014 branch"
+assert_contains "ADR-014" "$S10C" "req-001: Step 10c cites ADR-014"
+assert_contains "rereads once" "$S10C" "req-001: one reread after the first non-empty list"
+assert_contains "not from the exit status" "$S10C" "req-001: judge from JSON"
+assert_contains "exits 1" "$S10C" "req-001: names exit 1"
+assert_contains "exits 8" "$S10C" "req-001: names exit 8"
+assert_contains '`fail` is red' "$S10C" "req-001: fail maps to red"
+assert_contains '`pending` is pending' "$S10C" "req-001: pending maps to pending"
+assert_contains '`skipping` is skipped' "$S10C" "req-001: skipping maps to skipped"
+assert_contains '`cancel`' "$S10C" "req-001: cancel reads as unknown"
+assert_contains "Unknown never counts as a pass" "$S10C" "req-001: unknown is never a pass"
+assert_contains "no checks reported" "$S10C" "req-001: empty list note"
+assert_contains 'CI checks (P9): {all passed | {n} failed: {names} | pending after {window} minutes | unknown: {names}}' "$S10C" "req-001: CI checks log line"
+# portable-ok: search string, not a command
+lacks 'timeout 1' "$S10C" "req-001: no timeout command"
+assert_contains "does not use the \`timeout\` command" "$S10C" "req-001: states the timeout command is not used"
+
+echo "req-001: build-log commit, fix loop, and results"
+
+assert_contains "explicit path" "$S10C" "req-001: Step 10c stages the build log by explicit path"
+assert_contains "before Step 11" "$S10C" "req-001: the build-log commit lands before Step 11"
+assert_contains "3 attempts" "$S10C" "req-001: three fix attempts"
+assert_contains "credential scan" "$S10C" "req-001: fix commits run the credential scan"
+assert_contains 'Exception waiting (P9, 6): CI check {name} still red after 3 fix attempts' "$S10C" "req-001: exception line"
+assert_contains 'gh pr ready --undo {n}' "$S10C" "req-001: PR returns to draft"
+assert_contains "interactive" "$S10C" "req-001: names interactive handling"
+assert_contains "continuous" "$S10C" "req-001: names continuous handling"
+assert_contains "CI status could not be read" "$S10C" "req-001: unreadable status wording"
+assert_contains 'Progress: P9 blocked at {End}: CI {result}' "$S10C" "req-001: blocked progress line"
+assert_contains 'never writes `P9 done`' "$S10C" "req-001: never done on a non-pass"
+assert_contains 'CI checks (P9): not run, no PR raised' "$S10C" "req-001: local-git-only line"
+assert_contains "the head that P9 read" "$S10C" "req-001: coverage wording"
+
+echo "req-001: Step 11, standards, resume"
+
+assert_contains 'CI:' "$S11" "req-001: Step 11 gains a CI line"
+FR="$(section '## Final report' "$STD")"
+assert_contains "name and link" "$FR" "req-001: report part 4 names each non-passing check and link"
+assert_contains "unknown" "$FR" "req-001: report part 4 states result words"
+assert_contains "the head that P9 read" "$FR" "req-001: report states the coverage wording"
+RES="$(section '## Resume Detection' "$ORCH")"
+assert_contains 'PR: #{n}' "$RES" "req-001: Resume Detection reads the PR line"
+assert_contains 'never runs `gh pr create`' "$RES" "req-001: Resume Detection never raises a second PR"
+assert_contains 'rereads the checks' "$RES" "req-001: Resume Detection rereads the checks"
+
+echo "req-001: stub gh execution"
+
+# The command comes from the skill text. A stub gh exits 1 with valid JSON.
+CMD="$(grep -o 'gh pr checks {n} --json name,bucket,link' "$SHIP" | head -1)"
+CMD="${CMD//\{n\}/42}"
+mkdir -p "$WORK/stub"
+cat >"$WORK/stub/gh" <<'STUB'
+#!/bin/sh
+if [ "$1" = "pr" ] && [ "$2" = "checks" ]; then
+  printf '[{"name":"Test suite (ubuntu-latest)","bucket":"fail","link":"https://example.test/1"},{"name":"lint","bucket":"pass","link":"https://example.test/2"}]\n'
+  exit 1
+fi
+exit 0
+STUB
+chmod +x "$WORK/stub/gh"
+OUT="$(PATH="$WORK/stub:$PATH" bash -c "$CMD" 2>&1)"
+RC=$?
+assert_equals "1" "$RC" "req-001: stub gh exits 1 with a failing check"
+assert_contains '"bucket":"fail"' "$OUT" "req-001: data still prints on exit 1"
+BUCKET="$(printf '%s' "$OUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{const j=JSON.parse(d);console.log(j.filter(c=>c.bucket==='fail').map(c=>c.name).join(','));});")"
+assert_equals "Test suite (ubuntu-latest)" "$BUCKET" "req-001: valid JSON with a fail bucket reads as red"
+
+# Real gh prints no JSON and "no checks reported" on stderr before checks register (P4).
+assert_contains "no checks reported" "$S10C" "req-001: Step 10c names the no-checks-yet stderr"
+assert_contains "Read that as an empty list and keep polling" "$S10C" "req-001: no checks yet keeps polling, not unreadable"
+
+echo "req-001: held-back rule is enforceable (P5 F-04)"
+PCS="$(section '## Pre-commit credential scan' "$STD")"
+assert_contains 'git restore --staged -- {path}' "$PCS" "req-001: a held-back file leaves the index"
+assert_contains "working-tree file untouched" "$PCS" "req-001: the working-tree file stays untouched"
+assert_contains 'Credential scan (P{N}): held back {path}' "$PCS" "req-001: held-back log line names the path"
+assert_contains 'Exception waiting (P{N}, 7)' "$PCS" "req-001: held-back file records an exception"
+assert_contains 'explicit paths after `--`' "$PCS" "req-001: commits name explicit paths"
+assert_contains 'plain `git commit`' "$PCS" "req-001: plain git commit is banned"
+assert_contains "never stages a path that a held-back line names" "$PCS" "req-001: resume never stages a held-back path"
+HL7="$(grep '^7\. \*\*Commit after every' "$ORCH")"
+assert_contains 'git restore --staged -- {path}' "$HL7" "req-001: Hard Limit 7 names the unstage step"
+assert_contains 'explicit paths after `--`' "$HL7" "req-001: Hard Limit 7 requires explicit paths"
+RESUME6C="$(grep '^6c\. ' "$ORCH")"
+assert_contains "held back {path}" "$RESUME6C" "req-001: resume reads the held-back lines"
+assert_contains "never stages" "$RESUME6C" "req-001: resume never stages a held-back path"
+
+echo "req-001: close-out commits run the scan (P5 F-05)"
+assert_contains 'credential-scan.mjs -- "{archive-dir}/build-log.md"' "$S10C" "req-001: Step 10c scans the build log commit"
+assert_contains 'credential-scan.mjs -- "{archive-dir}/final-report.md"' "$S11" "req-001: Step 11 scans the final report commit"
+assert_contains 'git diff --name-only' "$S10C" "req-001: the fix-attempt scan covers every changed path"
+assert_contains "exception item 7" "$S10C" "req-001: Step 10c stops under exception item 7"
+assert_contains "exception item 7" "$S11" "req-001: Step 11 stops under exception item 7"
+
+echo "req-001: P8 guard and P7 commit follow the held-back rule (P5 re-review N-01, N-02, N-04)"
+P8CHECK="$(step '### P8: Clean-tree check' "$SHIP")"
+STEP7="$(step '### Step 7' "$SHIP")"
+assert_contains 'git restore --staged -- {path}' "$P8CHECK" "req-001: the P8 guard unstages a refused file"
+assert_contains "stay uncommitted" "$P8CHECK" "req-001: the P8 guard keeps the stay uncommitted phrase"
+assert_contains 'Credential scan (P8): held back {path}' "$P8CHECK" "req-001: the P8 guard logs a held-back line"
+lacks "stays staged" "$P8CHECK" "req-001: the P8 guard no longer leaves a refused file staged"
+assert_contains 'held back {path}' "$STEP7" "req-001: Step 7 reads the held-back lines"
+assert_contains 'git restore --staged -- {path}' "$STEP7" "req-001: Step 7 unstages held-back paths"
+assert_contains 'credential-scan.mjs' "$STEP7" "req-001: Step 7 runs the credential scan"
+assert_contains 'exits 0' "$STEP7" "req-001: Step 7 commits only on exit 0"
+SCAN7="$(line_of 'credential-scan.mjs' <(printf '%s\n' "$STEP7"))"
+COMMIT7="$(line_of 'git commit -m "plan(p7)' <(printf '%s\n' "$STEP7"))"
+assert_equals "yes" "$([[ -n "$SCAN7" && -n "$COMMIT7" && "$SCAN7" -lt "$COMMIT7" ]] && echo yes || echo no)" "req-001: Step 7 scans before it commits"
+assert_contains 'git rm --cached -- {path}' "$PCS" "req-001: a repository with no commit uses git rm --cached"
+assert_contains 'could not resolve HEAD' "$PCS" "req-001: the standard names the no-HEAD failure"
+assert_contains 'one shell call' "$(step '**PR text scan' "$SHIP")" "req-001: PR text steps run in one shell call"
+
+print_summary

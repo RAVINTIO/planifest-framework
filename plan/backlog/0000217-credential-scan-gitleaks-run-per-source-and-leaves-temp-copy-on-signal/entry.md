@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`gitleaksHits` in `planifest-framework/scripts/credential-scan.mjs` copies each source into a `mkdtempSync` directory and starts one `gitleaks` process for it. Three behaviours follow. A large commit pays one process start per file. A signal skips the `finally` cleanup and leaves a copy of staged content in the temp directory. A `gitleaks` usage error exits 1 and reads as a finding at line 1. The credentials review (F-13) notes these and the branch was not run against a real `gitleaks`.
+`gitleaksHits` in `ravintio-framework/scripts/credential-scan.mjs` copies each source into a `mkdtempSync` directory and starts one `gitleaks` process for it. Three behaviours follow. A large commit pays one process start per file. A signal skips the `finally` cleanup and leaves a copy of staged content in the temp directory. A `gitleaks` usage error exits 1 and reads as a finding at line 1. The credentials review (F-13) notes these and the branch was not run against a real `gitleaks`.
 
 ## Suggested Action
 

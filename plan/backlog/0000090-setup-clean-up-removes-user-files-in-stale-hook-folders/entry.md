@@ -22,8 +22,8 @@ The path match is case-sensitive, so it misses mixed-case Windows paths. It also
 
 ## Suggested Action
 
-Delete only the file names Planifest shipped in those folders, then remove each folder only if it is empty. Remove settings entries only when they run one of those shipped file names.
+Delete only the file names RAVINTIO Framework shipped in those folders, then remove each folder only if it is empty. Remove settings entries only when they run one of those shipped file names.
 
 ## Why Deferred
 
-The P5 security review rated it Low. The folders are Planifest-owned install locations, and setup prints every removal. The human on the loop asked for a continuous run, so this is recorded rather than redesigned mid-run.
+The P5 security review rated it Low. The folders are RAVINTIO-owned install locations, and setup prints every removal. The human on the loop asked for a continuous run, so this is recorded rather than redesigned mid-run.

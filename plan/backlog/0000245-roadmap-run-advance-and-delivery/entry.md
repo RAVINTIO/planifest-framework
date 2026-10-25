@@ -39,7 +39,45 @@ Port these parts of the Zero design. Each step runs the framework's full P0 to P
 - **Telemetry labels.** Add the roadmap id, slug, and position to `OTEL_RESOURCE_ATTRIBUTES` per step, as Zero's `roadmap-labels.mjs` does.
 - **CI trigger.** The framework workflow must trigger on pull requests to `roadmap/**`.
 
+### Supervision and driver fixes
+
+Zero's roadmap 0000168 run showed gaps in its own driver design. Zero backlog entry 0000182 holds the full detail. Build these into the port rather than copying the gaps:
+
+- **Supervisor mode.** The session that starts the driver runs as the orchestrator in a supervisor mode. Resume detection skips `plan/current/` while the driver holds its lock, so the supervisor never resumes the child's step. The supervisor doesn't edit the working tree.
+- **Separate acks.** Strict mode accepts a supervisor ack beside the child's ack, for example `plan/.orchestrator-supervisor`. Neither session overwrites the other, and the strict-mode banner stays quiet in both.
+- **Start from R-B Activate.** The orchestrator starts the driver in supervisor mode, rather than offering it as a separate step.
+- **Progress report on request and at each phase end.** It has two parts:
+  - **Roadmap:** steps merged out of the total, and backlog entries done out of the total, with a table of each step's feature, entries, version, and status.
+  - **Current step:** the phase, progress within it (units done out of planned, and criteria verified out of total once validation starts), and what comes next. Add highlights: what the step changes for the user, and any risk, such as criteria verified only by text search.
+- **Heartbeat.** Report at least once every 5 minutes while the driver runs. Each heartbeat names:
+  - the step and its phase
+  - the last build log line and the time it was written
+  - the commits since the last heartbeat
+  - whether the driver process is still running
+  - any stop
+
+  If nothing changed, say so and give the time since the last change.
+- **Immediate events.** Report at once when the build log gains a phase `Complete:`, a `Blocked:`, or a `Resolved:` line.
+- **Monitor.** In Claude Code, a read-only background monitor does this. It checks every 30 seconds and prints one line per event and one heartbeat every 5 minutes. A monitor expires after 30 minutes, so the supervisor starts a new one each time until the driver exits.
+- **Stale build log.** If the child keeps committing but its build log hasn't changed for 15 minutes, flag it in the report.
+- **Final report.** When the driver exits, report each step's version and tag, any `Blocked:` stop with its build log line, and the roadmap PR URL.
+- **Prefixes.** Supervisor messages use `R-C Run:` while steps run and `R-E Delivery:` for the final report.
+- **Backlog filing during a step.** Entries the supervisor files wait outside the working tree, then land on the roadmap branch after the step merges. Allocate each id against every branch, so two sessions can't take the same id.
+- **Driver fixes.** Zero's driver had three bugs. Avoid them in the port:
+  1. Read the newest archived build log as well as `plan/current/build-log.md`, and stop on an unresolved `Blocked:` line in either. Zero's driver missed a stop that ship wrote after archiving.
+  2. Mark a step `merged` and move `position` only after the merge commit exists.
+  3. Set `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` in each child's environment, unless the human has set it. Without it, a `claude -p` child stops its background subagents after 10 minutes.
+
+A test runs the driver with a stub child and checks that the supervisor report names each step. Further tests cover each driver fix.
+
 Decide one fork at P0. The framework's `CLAUDE.md` and ship rules make every merge human-only. The roadmap needs the agent to squash-merge step PRs into `roadmap/*`. Zero amended its merge rule for this in 0000043 ADR-003, and merging to `main` stayed human-only.
+
+Decide one more fork at P0. Should one orchestrator skill run both the roadmap workflow and the feature pipeline, or should they split into two skills?
+
+- **One skill.** The orchestrator keeps the R-A to R-E stages and adds supervisor mode. It keeps one entry point, and the auto-trigger hook needs no change. The cost is a larger skill with two resume paths. Resume detection must also tell a supervisor from a step session.
+- **Two skills.** A roadmap skill owns charting, the driver, supervision, progress reports, and governance across steps. The orchestrator keeps one feature run, P0 onwards. Each session then loads one skill with one resume path and its own ack. The cost is a second entry point. The auto-trigger hook must also pick the right skill, and the shared hard limits must stay in step across both.
+
+The recommendation is two skills. The supervisor and the step session differ in resume detection, ack, prefixes, and reporting duty. A split keeps the orchestrator to one run, and gives roadmap reporting and governance one owner.
 
 Sources in `RAVINTIO/ravintio-zero` on `main`:
 

@@ -34,7 +34,7 @@ Port these parts of the Zero design, adjusted for the framework's P0 to P9 pipel
 - **Chart-time dependency approval.** Collect new dependency approvals at Chart in the same way.
 - **Self-confirmed steps.** A step's P0 builds its brief from the step's backlog entries. It self-confirms the design and the Scope Lock, because Chart already holds the approval.
 - **Stage prefixes.** Add `R-A Chart:` to `R-E Delivery:` beside P0 to P9.
-- **Standard file.** Keep the detail in `planifest-framework/standards/roadmap-standards.md`, with pointers from the orchestrator and ship skills. Zero moved it there to stay within its skill-text budget.
+- **Standard file.** Keep the detail in `ravintio-framework/standards/roadmap-standards.md`, with pointers from the orchestrator and ship skills. Zero moved it there to stay within its skill-text budget.
 - **Gate paths.** `gate-write` already permits writes under `plan/`. Name `plan/roadmap/` in its header as a path that passes between runs, as Zero 0000164 req-002 does.
 
 Sources in `RAVINTIO/ravintio-zero` on `main`:

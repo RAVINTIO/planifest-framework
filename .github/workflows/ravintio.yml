@@ -1,0 +1,188 @@
+name: RAVINTIO Strict Pipeline
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Code/Doc Parity
+        run: |
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          COMMIT_MESSAGES=$(git log origin/${{ github.base_ref }}...HEAD --format="%s")
+
+          # Fast Path exemption: if all commits are fix(fast-path): only require component.yml or changelog
+          FAST_PATH_COUNT=$(echo "$COMMIT_MESSAGES" | grep -cE "^fix\(fast-path\):" || true)
+          TOTAL_COUNT=$(echo "$COMMIT_MESSAGES" | grep -c "." || true)
+
+          if [ "$FAST_PATH_COUNT" -gt 0 ] && [ "$FAST_PATH_COUNT" -eq "$TOTAL_COUNT" ]; then
+            if echo "$CHANGED_FILES" | grep -q "^src/"; then
+              if ! echo "$CHANGED_FILES" | grep -qE "(component\.yml|plan/changelog/)"; then
+                echo "::error title=RAVINTIO Fast Path Violation::Fast Path commits must update component.yml or plan/changelog/."
+                exit 1
+              fi
+            fi
+            echo "✅ RAVINTIO fast-path pipeline passed."
+            exit 0
+          fi
+
+          # Standard check. This is a presence check, not a correspondence
+          # guarantee: it confirms a file under plan/, docs/, or a
+          # component.yml also changed in this diff — it does not verify
+          # that file's content actually corresponds to the src/ change.
+          if echo "$CHANGED_FILES" | grep -q "^src/"; then
+            if ! echo "$CHANGED_FILES" | grep -qE "^(plan/|docs/|.*component\.yml)"; then
+              echo "::error title=RAVINTIO Strict Violation::Code under src/ changed with no plan/, docs/, or component.yml file also touched in this diff. This checks presence only — it does not verify that content corresponds to your change."
+              exit 1
+            fi
+          fi
+          echo "✅ RAVINTIO pipeline passed."
+
+  # This job is specific to this repository's own self-description and is
+  # deliberately NOT mirrored into ravintio-framework/hooks/ravintio.yml
+  # (the copy setup.sh ships to consumer repos) — a consuming repo's README
+  # doesn't have this repository's "## Repository structure" / "## The
+  # framework" sections to validate against. See ADR-001 (feature 0000019).
+  self-description-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify README matches repository structure
+        run: node ravintio-framework/scripts/self-description-check.mjs .
+
+  # The test-suite and setup-powershell jobs test this repository's own
+  # framework and are deliberately NOT mirrored into
+  # ravintio-framework/hooks/ravintio.yml (the copy setup.sh ships to
+  # consumer repos). Consumers don't change the framework, so these tests
+  # tell them nothing new. See ADR-002 (feature 0000031).
+  test-suite:
+    name: Test suite (${{ matrix.os }}${{ matrix.shard && format(', shard {0} of 7', matrix.shard) || '' }})
+    runs-on: ${{ matrix.os }}
+    # The Git Bash leg ran past 10 minutes, so Windows gets 20 minutes per shard
+    # and runs seven shards. Seven keeps the four slowest setup suites in
+    # separate shards. See ADR-014 (feature 0000037). The macOS leg passed
+    # every suite but ran past 10 minutes once the 0000039 helper suite grew,
+    # so Linux and macOS get 15.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 15 }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            shard: 1
+          - os: windows-latest
+            shard: 2
+          - os: windows-latest
+            shard: 3
+          - os: windows-latest
+            shard: 4
+          - os: windows-latest
+            shard: 5
+          - os: windows-latest
+            shard: 6
+          - os: windows-latest
+            shard: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The 0000039 suites compare the tree with the commit before the
+          # rename pass, so the job needs full history and origin/main.
+          fetch-depth: 0
+
+      - name: Run the framework test suite
+        shell: bash
+        env:
+          RAVINTIO_SHARD_INDEX: ${{ matrix.shard }}
+          RAVINTIO_SHARD_COUNT: ${{ matrix.shard && 7 || '' }}
+        run: bash ravintio-framework/tests/run-tests.sh
+
+  setup-powershell:
+    name: Setup under PowerShell 7 (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PowerShell version
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          if ($PSVersionTable.PSVersion.Major -lt 7) {
+            Write-Error "PowerShell 7 or later is required."
+            exit 1
+          }
+
+      - name: Run test_setup.ps1
+        shell: pwsh
+        run: ./ravintio-framework/tests/test_setup.ps1
+
+  # This job is repository-only and deliberately NOT mirrored into
+  # ravintio-framework/hooks/ravintio.yml. It runs test_setup.ps1 under
+  # Windows PowerShell 5.1, the default shell on a stock Windows machine.
+  # See ADR-012 (feature 0000037), which amends ADR-001 (feature 0000031).
+  setup-powershell-51:
+    name: Setup under Windows PowerShell 5.1
+    runs-on: windows-latest
+    # The cap stays at 10 (0000039 X-001). The req-006 step runs only the
+    # .ps1 pass, which took about 2 minutes under pwsh on windows-latest.
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the PowerShell version
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion
+          if ($PSVersionTable.PSVersion.Major -ne 5) {
+            Write-Error "Windows PowerShell 5 is required."
+            exit 1
+          }
+
+      - name: Run test_setup.ps1
+        shell: powershell
+        run: ./ravintio-framework/tests/test_setup.ps1
+
+      # 0000039 req-006 AC4 (X-001): the migration helper must parse and
+      # match the .sh helper under Windows PowerShell 5.1 as well as 7.
+      - name: Parse the migration helper under 5.1
+        shell: powershell
+        run: |
+          $path = Join-Path $PWD 'ravintio-framework\migrations\migrate-0.37.0-ravintio-rename.ps1'
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) {
+            foreach ($e in $errors) { Write-Host "Line $($e.Extent.StartLineNumber): $($e.Message)" }
+            Write-Host "The helper has $($errors.Count) parse errors under $($PSVersionTable.PSVersion)."
+            exit 1
+          }
+          Write-Host "The helper parses under $($PSVersionTable.PSVersion)."
+
+      # Git Bash runs the suite. The .ps1 cases call powershell.exe, which
+      # is Windows PowerShell 5.1. The .sh pass already runs in test-suite.
+      - name: Run the req-006 .ps1 cases under 5.1
+        shell: bash
+        env:
+          RAVINTIO_TEST_PWSH: powershell.exe
+          RAVINTIO_TEST_REQ006_ONLY: ps1
+        run: |
+          major=$(powershell.exe -NoProfile -NonInteractive -Command '$PSVersionTable.PSVersion.Major' | tr -d '\r')
+          if [ "$major" != 5 ]; then
+            echo "powershell.exe reports major version $major, not 5."
+            exit 1
+          fi
+          bash ravintio-framework/tests/test-0000039-req-006-consumer-migration.sh

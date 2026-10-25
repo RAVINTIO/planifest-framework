@@ -20,7 +20,7 @@ The design critic checks each artifact for consistency. It has no checklist for 
 
 ## Suggested Action
 
-Add a checklist to `planifest-design-critic` and `planifest-adr-agent`. Any requirement or ADR that stages, commits, or scans paths must name its fixtures for glob names, bracket names, `:`-led names, a tracked and modified file, an empty list, and a file that moves between steps. Require the ADR author to run a short git probe for each git behaviour the decision relies on, and to record the result in the ADR.
+Add a checklist to `ravintio-design-critic` and `ravintio-adr-agent`. Any requirement or ADR that stages, commits, or scans paths must name its fixtures for glob names, bracket names, `:`-led names, a tracked and modified file, an empty list, and a file that moves between steps. Require the ADR author to run a short git probe for each git behaviour the decision relies on, and to record the result in the ADR.
 
 ## Why Deferred
 

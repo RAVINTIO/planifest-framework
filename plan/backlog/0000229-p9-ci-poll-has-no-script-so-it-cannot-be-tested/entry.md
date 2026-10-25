@@ -18,7 +18,7 @@ ADR-001 keeps the P9 Step 10c poll and the fix-and-push loop as agent instructio
 
 ## Suggested Action
 
-Move the poll into a script such as `planifest-framework/scripts/ci-checks.mjs` with exit codes for pass, red, and unknown. Test it against a stub `gh` for each bucket, the window limits, and the empty-list case. Keep the fix-and-push loop in skill text.
+Move the poll into a script such as `ravintio-framework/scripts/ci-checks.mjs` with exit codes for pass, red, and unknown. Test it against a stub `gh` for each bucket, the window limits, and the empty-list case. Keep the fix-and-push loop in skill text.
 
 ## Why Deferred
 

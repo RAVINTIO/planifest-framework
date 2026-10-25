@@ -14,13 +14,13 @@ status: "open"
 
 ## Problem
 
-`Merge-AllowedTools` in `planifest-framework/setup.ps1` (around lines 436 to 466) reads `.claude/settings.json` into a hashtable and writes it back with `ConvertTo-Json -Depth 10`. Three inputs lose data.
+`Merge-AllowedTools` in `ravintio-framework/setup.ps1` (around lines 436 to 466) reads `.claude/settings.json` into a hashtable and writes it back with `ConvertTo-Json -Depth 10`. Three inputs lose data.
 
 - A value nested deeper than 10 levels is written as its .NET type name.
 - A PowerShell hashtable is case-insensitive, so keys that differ only by case (`Agent` and `agent`) collapse to one.
 - A valid JSON root that is not an object (`[]`, `null`, `5`) passes `Test-SettingsFileReadable` and is replaced with `{ "allowedTools": ["Agent"] }`.
 
-Feature 0000037 added `ConvertTo-PlanifestHashtable` (line 411) on this path but did not change these behaviours. Claude Code settings rarely nest past 6 levels, so the exposure is low.
+Feature 0000037 added `ConvertTo-RavintioHashtable` (line 411) on this path but did not change these behaviours. Claude Code settings rarely nest past 6 levels, so the exposure is low.
 
 ## Suggested Action
 

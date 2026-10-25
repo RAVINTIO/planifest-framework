@@ -4,10 +4,10 @@
 
 - `setup.sh` and `setup.ps1` — all flag processing and tool dispatch
 - `setup/<tool>.sh` and `setup/<tool>.ps1` — per-tool configuration stubs
-- `planifest-framework/hooks/` — all hook scripts installed by setup
-- `planifest-framework/scripts/skill-sync.sh` and `skill-sync.ps1` — external skill lifecycle management
-- `planifest-framework/standards/commit-standards.md` — normative commit message rules
-- `planifest-framework/templates/standard-boot.md` — source template for generated boot files
+- `ravintio-framework/hooks/` — all hook scripts installed by setup
+- `ravintio-framework/scripts/skill-sync.sh` and `skill-sync.ps1` — external skill lifecycle management
+- `ravintio-framework/standards/commit-standards.md` — normative commit message rules
+- `ravintio-framework/templates/standard-boot.md` — source template for generated boot files
 - `external-skills.json` manifest — records installed external skills
 - Claude Code, Cursor, Windsurf, Cline, Codex, OpenCode, Copilot, Antigravity, Roo Code tool targets
 - Acceptance of the three retired integration flags as no-ops (0000030-ADR-003)
@@ -15,7 +15,10 @@
 - The always-on clean-up of the retired integrations, including deleting `plan/.telemetry-failures/` and `plan/.telemetry-receipts/` (0000030-ADR-004, ADR-005)
 <!-- END retired-integrations (0000030) -->
 - `setup/opencode.sh` registration of the plugin in `opencode.json` through Node
-- `<tool-dir>/.planifest-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
+- `<tool-dir>/.ravintio-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
+- The stop while the old pack folder or the old overrides folder exists, and the replacement of the old boot-file markers and ignore-file headers (0000039-ADR-004)
+- The stop while a tool folder holds the old setup flags file or the old manifest file. Setup reads neither file, and the migration helper renames both (0000039-ADR-004, ADR-005)
+- The consumer migration `migrate-0.37.0-ravintio-rename` and its `.sh` and `.ps1` helpers, which move the old overrides folder and the old pack and never delete the pack (0000039-ADR-005)
 
 ## Out of Scope
 
@@ -27,6 +30,7 @@
 
 ## Deferred
 
+- The old-name reads, removed at 1.0.0 (0000039-ADR-003, ADR-004). See TD-011.
 - Narrower clean-up that deletes shipped file names only (backlog 0000090)
 - Live PowerShell checks beyond `test_setup.ps1`, such as stale-entry clean-up and retired flags
 - `setup all` stopping at roo-code (backlog 0000087) and the opencode PowerShell null skills folder (backlog 0000088)

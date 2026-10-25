@@ -1,0 +1,421 @@
+---
+title: "Build Log - 0000039-ravintio-rebrand"
+summary: "Working log file maintained by the orchestrator throughout the pipeline run."
+---
+# Build Log - 0000039-ravintio-rebrand
+
+> Created at P0. Appended by the orchestrator at each phase boundary. Survives session changes.
+
+## Header
+
+| Field | Value |
+|-------|-------|
+| Feature ID | `0000039-ravintio-rebrand` |
+| Pipeline start | `2026-10-25T01:58:32Z` |
+| Tool | `claude-code` |
+| Primary model | `claude-opus-5-5` |
+| Cheaper model | `claude-sonnet-5-5` |
+| Run mode | `autonomous` |
+| Parallel streams | `pending` (set at P1 from the toggle) |
+
+---
+
+## Phase Log
+
+### P0: Assess & Coach
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T01:58:32Z` |
+| End | `2026-10-25T02:12:50Z` |
+| Wall-clock | `14` |
+| Streams | `n/a` |
+| Model tier | primary |
+| Skills loaded | planifest-orchestrator |
+| Agents spawned | `6` (2 Explore surveys and 4 Scope Lock drafts, sonnet) |
+| MCP calls | `0` |
+| Parallel task batches | `2` |
+| P0 questions asked | `3` |
+| Brief complete | `no` |
+| Stack unchanged | `yes` |
+| Notes | `Pre-P0 triage happened before the step -1 context reset. See the pre-P0 notes below.` |
+
+P0 references loaded: .claude/skills/planifest-orchestrator/references/phase-0-assess-and-coach.md, .claude/skills/planifest-orchestrator/references/adoption-modes.md
+
+Pre-P0 notes folded in from `plan/current/.pre-p0-notes.md` (backlog 0000239 option (b)):
+
+- Triage (2026-10-25): Feature Pipeline. Feature `0000039-ravintio-rebrand` on `feat/0000039-ravintio-rebrand`, cut from `main` at `d8162c0c`.
+- Pre-flight: `main` matched `origin/main` after a pull. No open PRs at triage. PR #70 (chore, roadmap backlog swap) opened after triage and is still open.
+- Migrations: none pending. Skill drift check: exit 0, 21 skills match. Both checks re-ran at this session start with the same result.
+- Backlog pickup (step 3c): the human on the loop chose to pull in 0000237 on its own and leave every other entry.
+- Next feature batch, not this run: 0000225 and 0000238. The orchestrator recommended 0000119, 0000105, 0000116, 0000115, and 0000189. 0000167 is a candidate if 0000238 takes the ratchet route. The human on the loop hasn't confirmed the additions.
+- Version fork: 0000237 asks for 1.0.0. RAVINTIO Zero shipped its rename as 1.0.0, then relabelled it 0.12.0 in 0000164 ADR-005.
+
+P0 exchange (backlog pickup): Q: which backlog entries join 0000039? / A: 0000237 only, pre-P0 triage on 2026-10-25.
+P0 exchange (version): Q: none asked. The human on the loop volunteered it. / A: minor increment, so 0.36.0 to 0.37.0. This overrides the major bump that 0000237 suggests and matches RAVINTIO Zero 0000164 ADR-005.
+P0 exchange (bulk rename method): Q: Hard Limit 8 sanctions no rename script. Use a one-off scripted pass with human approval, or Edit only? / A: scripted pass, as recommended. Write puts the script in the scratchpad. The human on the loop approves it before it runs. It runs once, in one commit, logged as a deviation. Follow-up fixes use Edit.
+Scope Lock (happy path): the scripted pass renames everything, the brand guard and every CI leg pass, and a consumer runs the migration then setup and ends on 0.37.0 with a backup. [source: agent-draft-accepted]
+Scope Lock (first-run path): a fresh consumer gets the RAVINTIO pack with no migration, and this repo's first setup run replaces the old skill copies and skips the migration. [source: agent-draft-accepted]
+Scope Lock (error path): a half-moved consumer helper stops at the failed step, names it, deletes nothing, and finishes on a re-run. [source: agent-draft-accepted]
+Scope Lock (cross-session path): only uncommitted work is at risk, the rename and setup re-run land in one commit, and an interrupted migration re-runs safely. [source: agent-draft-accepted]
+Scope Lock complete. All four scenario paths captured.
+P0 exchange (combined confirmation): Q: design, four Scope Lock drafts, and run mode / A: design accepted, all four drafts accepted, run mode [3] autonomous. The orchestrator had recommended [1].
+P0 exchange (script approval in autonomous): Q: the design had a mid-run approval of the rename script, which autonomous doesn't stop for. Keep the stop or use a reviewer? / A: neither. The human on the loop approved the scripted pass now and said to run it at the right time. The design now records that approval and drops the stop.
+Adoption mode: standard-iterative, confirmed by human on 2026-10-25
+Version confirmed: 0.37.0
+P0 questions asked: 3
+Brief complete: no
+Stack unchanged: yes
+Skills inbox (P0 to P1): `planifest-framework/skills-inbox/` absent, nothing to take in.
+Gate check (P0 to P1): every checklist item passes. Problem, three stories, unchanged stack, two components, data ownership, scope in, out, and deferred, NFRs with targets, security, risks, adoption mode, version, Scope Lock, discovery, and feature ID.
+Progress: P0 done at 2026-10-25T02:12:50Z: design confirmed for the RAVINTIO rename, 0.37.0, autonomous run.
+
+Run mode confirmed: autonomous (2026-10-25T02:12:50Z)
+Credential scan (P0): clean (regex only)
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:14:07Z` |
+| End | `2026-10-25T02:30:43Z` |
+| Wall-clock | `16` |
+| Streams | `1` |
+| Model tier | primary (orchestrator), cheaper (all 14 subagents, sonnet) |
+| Skills loaded | planifest-spec-agent, planifest-design-critic, planifest-loop-runner (toggle rules) |
+| Agents spawned | `14` (10 drafters, 3 critics, 1 revision agent) |
+| MCP calls | `0` |
+| Parallel task batches | `1` (the 10 drafters) |
+| Notes | `none` |
+
+Toggle record (P1): design_critic on (autonomous default), reversal_protocol on (autonomous default), verify_by_execution on (autonomous default), cross_model_review on (autonomous default), parallel_streams on (autonomous default). No `loop-toggles.yml` exists.
+Skills inbox (P1): absent, nothing to take in.
+Decision (P1): one stream, no stream state files / reason: every requirement depends on the one scripted rename pass, so no two stories pass the dependency test.
+Decision (P1): backlog IDs 0000246 to 0000255 go to the P1 drafting subagents, one each / reason: PR #70 spent IDs up to 0000245.
+Deviation (P1, additive): split req-002 into req-008. req-002 keeps setup state, and req-008 takes the names the hooks and setup emit. Both trace to US-001. design.md Skill Map gains a REQ-008 row.
+Deviation (P1, additive): split req-006 into req-009. req-006 keeps the helper behaviour, and req-009 takes migrator ordering, the old-path mapping for shipped migration bodies, and `Applies when:` support. Both trace to US-002. design.md Skill Map gains a REQ-009 row.
+Decision (P1): req-006 keeps four criteria / reason: the drafter's split step moved the second concern to req-009, and the four that remain are one helper's behaviour.
+Decision (P1): split step for req-006 at five criteria: keep / reason: one helper's run on a consumer repo, and PowerShell parity can't ship apart because the helpers ship as one pair. This supersedes the four-criteria line above.
+Decision (P1): split step for req-002 at four criteria: keep / reason: all four cover the state setup leaves in a consumer repo.
+Deviation (P1, additive): split req-004 into req-010 (version bump). A new US-004 splits US-001 and adds no scope. design.md, the brief, and the execution plan gain matching rows.
+Decision (P1): split step for req-004: move the fourth criterion and the third criterion's version clause to req-010 deferred / reason: ratchet active.
+Decision (P1): the design's Out line "every other backlog entry" gains a clarifying sub-line, not a rewrite / reason: the ratchet blocked the rewrite as a weakening.
+Decision (P1): critic iteration 1 rejected with one critical, nine major, and four minor findings. A spec revision agent fixes the requirement, risk, and scope files. The orchestrator fixes design.md, execution-plan.md NFR-003, and the brief's Scenario Paths / reason: each file has one owner during the loop.
+Deviation (P1, additive): the critic revision agent edited nine `plan/current/` files with a Python one-liner, not Edit, so `ratchet-check` never ran (Hard Limit 8). The orchestrator read the diff. No `- [ ]` line or in-scope line was removed or changed. The removed lines were three template lines, one nested Verified-by bullet, one reworded stop condition, and three risk rows rewritten as the critic asked. Backlog 0000238 now cites this case.
+Decision (P1): the next dispatch prompts name the ban on interpreters and shell writers explicitly / reason: the shared brief said "Edit" only through the critic prompt, which the agent read as advice.
+Decision (P1): the two split lines stay `unclassified` until the pre-P7 deviation review / reason: the maker never classifies its own deviation (autonomous-run standards).
+Decision (P1): after the critic loop closed, the deferred moves ran through Edit. req-004's version criteria moved to req-010, req-004's heredoc range now reads 811 to 958 plus line 1322, req-006's backup stop criterion names its condition, req-009's skip criterion covers a fresh consumer, and the superseded scope lines are gone / reason: critic iteration 3 minor findings m1 to m5, all held by the ratchet until the loop closed.
+Decision (P1): the loop-state timestamps were first estimated, then corrected to the commit times / reason: Phase Conventions take every timestamp from `date -u`.
+Decision (P1): no new component manifest at P1. The pack manifest id changes in the req-001 pass, and its version and contract change at P6 / reason: both components already exist, and the feature adds none.
+Decision (P1): no OpenAPI spec, operational model, SLO definitions, or cost model / reason: the feature adds no API, no deployed service, and no spend.
+Decision (P1): `src/setup-hook-integration/component.yml` keeps its id and name / reason: neither carries the old name, so the design's "component.yml ids" applies only to the pack manifest.
+Decision (P1): the pack folder after the rename is `ravintio-framework/`, and the brand guard lives at `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh` / reason: the design's rename map fixes the folder name.
+Decision (P1): the two `test-0000030` telemetry-absence suites keep `PLANIFEST_TELEMETRY*` / reason: they model a stale consumer, so they must check the old name.
+Backlog filed (P1): 0000250 (stale copied-folder docs), 0000251 (broken feature-structure links in the setup heredoc), 0000252 (consistency check reads cross-feature ADR references as local). 0000238 gained 0000039 evidence.
+Credential scan (P1): clean (regex only), every P1 commit.
+Skill Map (P1 gate): re-checked. REQ-008, REQ-009, and REQ-010 rows added for the three splits. No other change.
+Gate (P1): passed. The design critic approved iteration 3 with five minor findings, all fixed after the loop closed. Ten requirements, 32 criteria. Consistency check clean, with criteria-count warnings on req-002 (4) and req-006 (5), both with recorded keep answers.
+Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 32 criteria, critic approved on iteration 3
+
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:31:38Z` |
+| End | `2026-10-25T02:39:39Z` |
+| Wall-clock | `8` |
+| Streams | `1` |
+| Model tier | primary (orchestrator), cheaper (all 13 subagents, sonnet) |
+| Skills loaded | planifest-adr-agent, planifest-design-critic |
+| Agents spawned | `13` (10 ADR drafters, 3 critics) |
+| MCP calls | `0` |
+| Parallel task batches | `1` (the 10 drafters) |
+| Notes | `none` |
+
+Skills inbox (P2): absent, nothing to take in.
+Decision (P2): ten ADRs, ADR-001 to ADR-010, one drafter each in one batch / reason: each ADR records one decision the design already fixed, so no drafter needs another's output.
+Decision (P2): NFR-003 and ADR-009 also check `plan/backlog/*/_reference/` / reason: the ADR-009 drafter found the measurement narrower than req-005.
+Deviation (P2, additive): the P2 critic found two design conflicts. The migration helper now leaves `.planifest-setup-flags` and `.planifest-manifest` for setup to read, and removes only `.planifest-session`. The `Applies when:` condition now also names `.ravintio-backup/planifest-framework/`, so a hand-run helper still ends in an `applied` record. design.md gains two clarifying sub-lines, and req-006, req-009, ADR-004, ADR-006, and scope.md follow.
+Decision (P2): critic iteration 2's stale marker wording (ADR-005, ADR-010, R-011, ADR-007) is fixed, and a sweep fixed the same wording in the glossary / reason: one fact must read the same in every artifact.
+Credential scan (P2): clean (regex only), every P2 commit.
+Skills inbox (P2 to P3): absent, nothing to take in.
+Skill Map (P2 gate): re-checked, no change.
+Gate (P2): passed. The design critic approved iteration 3 with no finding left. Ten ADRs, each with at least two rejected alternatives and one negative consequence. Consistency check clean.
+Progress: P2 done at 2026-10-25T02:39:39Z: ten ADRs, critic approved on iteration 3 with no findings
+
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:40:31Z` |
+| End | `2026-10-25T03:59:35Z` |
+| Wall-clock | `79` |
+| Streams | `1` |
+| Model tier | primary (orchestrator, rename script author, req-006 implementer: opus), cheaper (17 other subagents: sonnet) |
+| Skills loaded | planifest-codegen-agent, ravintio-test-writer, ravintio-implementer, ravintio-refactor (in subagents) |
+| Agents spawned | `19` (stage 1: 3 test-writers and the script author, 2 of them resumed once after the gate-write block; stage 3: 7 test-writers, 5 implementers, 1 suite fixer, 1 guard finisher, 1 refactor pass, 1 version implementer) |
+| MCP calls | `0` |
+| Parallel task batches | `3` (stage 1, stage 3 test-writers, stage 3 implementers) |
+| Notes | `none` |
+
+Capability skills (P3): none apply. The stack is unchanged shell, PowerShell, and Node.
+Decision (P3): three stages, per the execution plan. Stage 1 runs the req-001, req-005, and req-007 test-writers and the rename-script author in one batch. Stage 2 is the scripted pass. Stage 3 runs the remaining TDD tracks / reason: every later requirement edits files the pass renames.
+Decision (P3): req-002 and req-008 share one track / reason: both edit `setup.sh` and `setup.ps1`, so parallel tracks would collide.
+Deviation (P3, additive): design.md gains a `## Component Paths` section ahead of `## Scope`. It lists the old and new pack and override folders, `src/setup-hook-integration/`, `.github/workflows/`, `.claude/skills/`, `docs/`, and four root files. gate-write blocked the first two test-writers, because it read path-like lines from the Scope section instead.
+Decision (P3): new 0000039 test files use post-pass names, and the pass skips their content / reason: the tests must name old strings on purpose, and a bulk replace would rewrite them.
+Stage 1 (P3): RED confirmed for req-001 (63 failing assertions), req-005 (97 failing, 81 passing keep rules), and req-007 (3,800 failures). The rename script passed review and a dry run in a scratch clone.
+Deviation (P3, additive): the scripted rename pass ran once in the repo at 2026-10-25T03:03:18Z, the exception to Hard Limit 8 that ADR-008 records and the human on the loop approved at P0. Script and helpers: the session scratchpad, `rename-pass/`. Result: 1,181 renames, 405 files with content changes, 1,086 protected files skipped, and no warnings. `ravintio-framework/setup.sh claude-code --strict-orchestrator` re-ran and succeeded, and `core.hooksPath` reads `ravintio-framework/hooks`.
+Decision (P3): three files are recorded as a delete plus an add, not a rename: `planifest-framework/.gitattributes`, `hooks/adapters/opencode/package.json`, and `standards/framework-update-policy.md` / reason: each is small and fell to 34 to 46% similarity. `ravintio-framework/tests/fixtures/0000039-rename-exceptions.txt` lists them for req-001 AC3.
+Decision (P3): the pass also skips `plan/current/` / reason: those files describe the rename, and rewriting them would corrupt that text.
+Decision (P3): prose rule as applied. In `.md` files the first bare use becomes "RAVINTIO Framework" and later uses "RAVINTIO". Other file types use "RAVINTIO". "Planifest framework" becomes "RAVINTIO framework". CamelCase identifiers become `Ravintio`, such as `Invoke-RavintioSetup` / reason: the mojibake byte check needs the lower-case word kept, and identifiers aren't prose.
+Decision (P3): the "Planifest Framework Contributors" lines in 10 `external-skills/` files stay as written, with allowlist entries / reason: the design keeps vendored text as written.
+Decision (P3): the em-dash guard accepts the old `planifest-em-dash-allow` sentinel through 0.x, beside the new `ravintio-em-dash-allow` one. The req-008 track adds it / reason: consumer files that carry the old sentinel would otherwise lose their bypass with no warning, and ADR-004 keeps such reads through 0.x.
+Decision (P3): the pass renames today's lines, and the stage 3 tracks add the old-name reads that req-002, req-003, and req-008 need / reason: each read then gets its own RED test.
+Credential scan (P3): held back ravintio-framework/external-skills/README.md
+Credential scan (P3): held back ravintio-framework/external-skills/cso/SKILL.md
+Credential scan (P3): held back ravintio-framework/external-skills/ri[s]k-requirements-analysis/SKILL.md (brackets keep this log line from matching the scan rule itself)
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/README.md:323
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/cso/SKILL.md:919
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/cso/SKILL.md:936
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/ri[s]k-requirements-analysis/SKILL.md:2
+Note (P3): the README:323 hit and the SKILL.md:2 hit are the skill's own name. The `api-secret-key` rule `sk-[A-Za-z0-9_-]{20,}` matches the tail of that skill's hyphenated folder name. The two `cso/SKILL.md` hits (`slack-token`) are unconfirmed, and the orchestrator didn't read those lines. Backlog 0000253 records the false positive.
+Decision (P3): the three held-back files keep their old tracked paths in the pass commit, and their moved copies stay untracked. Every later commit leaves all six paths out until the human on the loop clears them / reason: the scan matched regex rules only, and each file is a byte-identical rename (R100) of content on `main` since PR #32. The standing rule still bars a commit that holds a matched file.
+Decision (P3): req-004 needs no implementer. Its suite passes on the first run, 6 of 6 / reason: the scripted pass did the prose and link work, and the suite was written after the pass. The pre-pass RED state for req-004 is the req-007 guard's 2,610 failing lines.
+Decision (P3): the orchestrator-presence banners keep their own form, such as `RAVINTIO PIPELINE ACTIVE`, with no `[RAVINTIO]` prefix. req-008's first criterion reads as: path-rules reasons start with `[RAVINTIO]`, and the presence hook names `ravintio-orchestrator` / reason: the presence banners never carried the bracket prefix, and adding one is outside a rename.
+Decision (P3): the req-003 inventory command also leaves out every `test-0000039-*` suite, not only the req-006 ones / reason: those suites plant old names on purpose, and the brand guard allowlists each such line.
+Decision (P3): one refactor pass runs across all stage 3 tracks once each is GREEN, not one per requirement / reason: most changes are a few lines, and one fresh-context refactor agent sees the shared setup code whole.
+GREEN (P3): req-003, 16 of 16. The OpenCode adapter reads `RAVINTIO_SESSION_ID`, then `PLANIFEST_SESSION_ID`.
+GREEN (P3): req-002 (34 of 34) and req-008 (39 of 39) in one track. Setup stops while the old pack exists, reads the old flags and manifest once, and strips old blocks. The em-dash guard accepts both sentinels.
+GREEN (P3): req-006, 154 of 154 on Bash. The PowerShell half skips locally without `pwsh`, so the CI PowerShell 5.1 and 7 legs must prove it. The helpers hold no literal old name and no recursive delete.
+GREEN (P3): req-009 after the req-006 migration file landed. The migrator skill gained old-path mapping, `Applies when:` support, and the rename check pass. This repo's `plan/_migrations/` record reads `not applicable`.
+Fix (P3): a suite-fixer agent repaired lint findings in the new 0000039 suites, refreshed two 0000038 hashes frozen before the pass, added the old `.planifest-session` delete to `archive-current.mjs`, and taught the 0000030 residue suite to skip 0000039 suites. Full run after it: 120 feature suites pass, 6 fail, and 35 regression suites pass.
+GREEN (P3): req-007, after the finisher completed the allowlist (26 entries, none stale) and the req-004 and req-005 suites learned to skip setup's old-name reads. The finisher also raised two 0000035 migration counts from 11 to 12.
+Refactor (P3): setup's old-manifest prune unlinks a linked folder and never recurses into it, in both shells.
+GREEN (P3): req-010, 8 of 8. P3 bumped product.yml, the pack manifest, and docs/about.md to 0.37.0.
+Deviation (P3, additive): the version bump landed in P3, not P6 as req-010 states / reason: the codegen close-out rule bumps the pack manifest in P3 when framework files change, and req-010 needed a GREEN suite before P3 could close.
+Setup re-run (P3): `ravintio-framework/setup.sh claude-code --strict-orchestrator` pruned all 21 old `planifest-*` skill copies. `.claude/` now holds only `.ravintio-setup-flags` and `.ravintio-manifest`. Skill drift check: 21 skills match.
+Requirement-ID scan (P3): 10 requirements, 0 unmapped. Every declared `Verified by` type has a matching suite header. The `execution` criteria (req-001, req-003, req-004, req-005, req-010) are deferred to P4.
+Full suite (P3 end): 127 feature suites and 35 regression suites pass, 0 fail. The PowerShell halves of req-002 and req-006 skip locally without `pwsh`.
+Credential scan (P3): clean (regex only) on every commit after the pass. The held-back files stay held back.
+Skill Map (P3 gate): re-checked, no change.
+Gate (P3): passed. Every requirement is GREEN. In autonomous mode the P4 CI run is the checker.
+Progress: P3 done at 2026-10-25T03:59:35Z: pack renamed, ten requirements GREEN, 162 suites pass
+### P4: Validate
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T04:00:12Z` |
+| End | `2026-10-25T05:01:11Z` |
+| Wall-clock | `61` |
+| Streams | `1` |
+| Model tier | primary (orchestrator, CI fix agent: opus), cheaper (verify-by-execution: sonnet) |
+| Skills loaded | ravintio-validate-agent, ravintio-verify-by-execution (in a subagent) |
+| Agents spawned | `2` (verify-by-execution, CI fix agent) |
+| MCP calls | `0` |
+| Parallel task batches | `1` (CI with verify-by-execution) |
+| Notes | `none` |
+
+Library audit (P4): skipped. No dependency manifest changed, and the OpenCode `package.json` lists no dependency.
+Lint, typecheck, build (P4): not applicable as separate steps. The repo's lint rules run as suites (0000031, 0000037-req-009, 0000036-req-010) inside the test run, and nothing compiles.
+Deviation (P4, additive): the orchestrator opens the PR as a draft in P4, so CI runs the Windows shards and both PowerShell legs before P5 / reason: `pwsh` isn't installed locally, so the req-002 and req-006 PowerShell halves can only run in CI. CI runs on `pull_request` only (0000031 ADR 003). P9 marks the PR ready instead of creating it.
+PR (P4): #71, draft, https://github.com/RAVINTIO/planifest-framework/pull/71
+Cycle 1 (P4): Check: CI / Error: no checks reported / Root cause: PR #70 merged into `main` during the run, so #71 conflicted, and GitHub runs no `pull_request` workflow on a conflicting PR / Fix: merged `origin/main` (commit 1fffd812). It took main's deletion of backlog 0000096, which the pass had touched, and Edit renamed one old path in the new backlog 0000244 / Result: PR mergeable, CI started.
+Verify (P4): 16 verified, 1 failed, 1 not verifiable. The full 0.36.0 consumer upgrade, the rerun, the setup stop, and a fresh install all behaved. See `plan/current/verification-report.md`.
+Cycle 2 (P4): Check: verify-by-execution / Error: req-001 AC1 found 3 old-name paths in a clean clone / Root cause: a clean checkout still tracks the three held-back files at their old paths. The local run had hidden them, because there they show as deleted / Fix: a fixture lists the held-back paths as regexes, req-001 AC1 skips them, and the guard allowlists the fixture. The list goes when the human on the loop clears the match / Result: req-001 and req-007 pass.
+Decision (P4): the migration doc gains a section telling consumers to check their own override files for old pack paths / reason: verify-by-execution saw consumer override text keep `planifest-framework/` paths, and that text belongs to the consumer, so the helper mustn't rewrite it.
+Cycle 3 (P4): Check: CI run 40160412670 on PR #71 / Errors and root causes:
+- the `.ps1` helper failed on every runner: PowerShell turned `$null` into an empty backup path for `File.Replace`
+- Windows `pwsh` ends lines with CRLF, so the parity text didn't match
+- Git Bash `ln -s` copies instead of linking
+- node read Git Bash `/d/a/...` paths as `C:\d\a`
+- the test job's shallow checkout hid the pre-pass commit
+- Fixes: `NullString` in the helper, CR stripped in the test, a link probe that skips link cases where links don't work, `pwd -W` and a file URL in the req-008 test, `fetch-depth: 0` in the workflow / Result: local suite green, CI to confirm.
+Human touchpoint (P4): the human on the loop asked what the held-back exception meant, then asked to see the two `cso/SKILL.md` lines [exception: 7]
+Decision (P4): the orchestrator showed `cso/SKILL.md` lines 919 and 936 at the human on the loop's request. Both are search patterns made of bare Slack token prefixes, with no token after them, so neither is a credential. The orchestrator waits for the human on the loop to clear the match before it moves the files / reason: only the human on the loop clears a held-back file.
+Backlog filed (P4): 0000254 (quality suite stops silently on its first miss).
+Human touchpoint (P4): the human on the loop cleared the held-back files: "They're just examples in the skill. They stay." [exception: 7]
+Credential scan (P4): cleared by the human on the loop on 2026-10-25 for the three held-back external-skills files. All four hits are false positives: two are the risk skill's folder name, and two are the security skill's example search patterns. The lines stay as written.
+Decision (P4): the three files move to `ravintio-framework/external-skills/` as R100 renames. The held-back fixture, req-001's held-back filter, and the two guard allowlist entries for the old paths go / reason: nothing is held back any more, and a kept entry would be stale.
+Exception cleared (P4, 7): the four `Exception waiting (P3, 7)` lines above.
+Cycle 4 (P4): Check: CI run 40162372708 / Error: req-005 "migration ... is byte-identical to the base commit" on Windows shard 5 / Root cause: the Windows checkout writes CRLF, so working files differ from the stored blobs / Fix: compare git blob ids and check for local edits / Result: 12 of 13 checks had passed, and the fix passed locally.
+Cycle 5 (P4): Check: portability lint / Error: path-literal finding on the new req-005 line / Root cause: the orchestrator pushed cycle 4 before it ran the lint suites / Fix: a `# portable-ok` marker, since the path is a repo-relative git path / Result: lint green.
+Coverage (P4): 10 requirements, 32 criteria, each mapped to a 0000039 suite with a matching `Verified by` header. Every criterion passes.
+CI (P4): all 13 checks pass on PR #71 at a1b94d63, including both PowerShell legs, macOS, Ubuntu, and all seven Windows shards.
+Self-corrections (P4): 5 cycles, within the cap of 5.
+Credential scan (P4): clean (regex only) on every P4 commit, apart from the cleared external-skills move.
+Gate (P4): passed. CI passes, and verify-by-execution confirmed every behavioural criterion. The one clean-clone failure was fixed in cycle 2 and is green in CI.
+Progress: P4 done at 2026-10-25T05:01:11Z: CI green on all 13 checks, 5 self-correction cycles, credential match cleared by the human on the loop
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T05:01:11Z` |
+| End | `2026-10-25T05:45:22Z` |
+| Wall-clock | `44` |
+| Streams | `1` |
+| Model tier | primary (all four subagents, opus) |
+| Skills loaded | ravintio-security-agent |
+| Agents spawned | `4` (2 reviewers, 1 fix agent, 1 fresh-context re-reviewer) |
+| MCP calls | `0` |
+| Parallel task batches | `1` (the two reviewers) |
+| Notes | `none` |
+
+Decision (P5): two fresh-context reviewers in parallel. One covers the consumer migration helpers. The other covers setup, the enforcement hooks, `archive-current.mjs`, secrets, and dependencies / reason: the helpers move consumer files and carry the most risk. The two areas share no code.
+Findings (P5): three Medium (S-01 the old-manifest prune could leave the skills folder, M-001 the helper renamed consumer secret references, M-002 the branch protection warning named the wrong check), plus Lows. One fix agent fixed each Medium and five Lows in 19e485f5, with a test per fix that fails without it.
+Re-review (P5): a fresh-context reviewer closed six findings, including all three Mediums, and judged two partly closed with Low residue. It found one new Low (N-01). Every new test fails when its fix is reverted.
+Deviation (P5, additive): the M-002 fix changed the migration's branch-protection warning and made the helper rewrite the workflow `name:` line. design.md gains a P5 correction sub-line, and risk R-007 reads mitigated.
+Backlog filed (P5): 0000255 (older manifest prune), 0000256 (migrator mapping scope), 0000257 (other secret reference forms), 0000258 (old OpenCode registration), 0000259 (prune parity on a linked folder, and a req-008 test that needs the repo).
+Credential scan (P5): clean (regex only) on every P5 commit.
+Gate (P5): passed. Overall risk Low, with zero open Critical, High, or Medium findings. See `plan/current/security-report.md`.
+Progress: P5 done at 2026-10-25T05:45:22Z: three Mediums fixed and re-reviewed closed, risk Low, five Lows to backlog
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T05:46:54Z` |
+| End | `2026-10-25T13:05:39Z` |
+| Wall-clock | `7h 18m 45s` |
+| Streams | `1` |
+| Model tier | cheaper (docs subagents), full model for the reopened TDD and reviews, `claude-sonnet-5-5` for the cross-model review |
+| Skills loaded | ravintio-docs-agent, ravintio-test-writer, ravintio-implementer, ravintio-refactor, ravintio-security-agent, ravintio-verify-by-execution, ravintio-reversal-assessor, ravintio-loop-runner |
+| Agents spawned | `29` |
+| MCP calls | `0` |
+| Parallel task batches | `11` |
+| Notes | The human on the loop directed the marker rename at P6, which reopened P3 to P5 for req-002 and req-006. |
+
+P6 Gate A: `docs/` exists.
+P6 Gate B: docs update assessment (autonomous, auto-accepted). Feature 0000039 renamed the pack, its skills, paths, variables, and markers, and added a consumer migration. Auto-accepted: updating `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, and `docs/dependency-graph.md`. No component exposes an API, so `docs/api-index.md` stays absent. `docs/about.md` already reads 0.37.0 from P3.
+Decision (P6): three docs subagents in one batch: living docs, per-component docs and the pack manifest, and the recommendations with the changelog / reason: the three sets share no content. Backlog IDs 0000260 to 0000262 go to the recommendations agent.
+Backlog filed (P6): 0000260 (repo rename after merge), 0000261 (remove the old-name reads at 1.0.0), 0000262 (PowerShell cases skip in shells without `pwsh` on `PATH`). The orchestrator corrected 0000262, because `pwsh` sits at `/opt/homebrew/bin/pwsh` and only some agent shells lacked it.
+Drift (P6): the component-docs agent found two old-name reads missing from ADR-004 (the em-dash sentinel from P3, and the old enforcement paths from P5 S-02). It also found that ADR-005 said the helpers delete nothing, when they remove the old session marker file. The glossary matches the code, and no component writes another's data.
+Deviation (P6, additive): ADR-004 gains the two old-name reads, and ADR-005 now names the one marker-file removal. Hard Limit 7 requires docs to match what was built.
+Decision (P6): the req-010 classifier accepts any line that pairs 1.0.0 with a form of "remove" or "go", in either order / reason: the living docs and backlog 0000261 name the removal point in correct wording that the first, narrow pattern missed.
+Decision (P6): the decisions index cites "the Write-or-Edit rule (boot Hard Limit 8)" / reason: the 0000036 hard-limits suite requires each citation to name its rule.
+Revalidation (P6): P4 steps 0-5, pass, feature suites 127 passed and regression 35 passed (162 of 162), after the P6 commit 84e93277.
+Deviation review (P6): 11 lines, all additive, none altering or schema. Two carry the destructive flag: the P3 scripted pass and the P2 marker handling. See `plan/current/deviation-review.md`. The P1 Hard Limit 8 breach needs no decision, and backlog 0000238 tracks it.
+Decision (P6): the scripted pass needs no new exception item / reason: the human on the loop approved it at P0 on 2026-10-25, and the build log records that approval.
+Exception waiting (P6, 1): review that setup removes the old `.planifest-setup-flags` and `.planifest-manifest` files after reading them once. The confirmed design listed only the flags file. The pack owns both markers (ADR-010), and the assessor found no new decision needed. Confirm or ask for a change.
+Human touchpoint (P6): exception 1 answered on 2026-10-25. The human on the loop directed a change: "Rename the file and then point setup to the new path and name. That way you have the best of both preserving the current config." Then: "Can we not rewrite the file with new name paths at the same time?" Then: "Yes and happy with the cost. Do it properly".
+Decision (P6): the helper renames both old marker files in every tool folder. It renames each `planifest-*` skill folder the old manifest lists and rewrites the entries, keeping only those inside the real skills folder. Setup drops both old-name reads and stops while an old marker file exists. The next-step message names the setup command with the saved flags / reason: the human on the loop's direction. Backlog 0000255 stays out of scope, because the helper writes only checked entries.
+Decision (P6): the change reopens P3 for req-002 and req-006, then reruns P4, a P5 re-review of the helper and setup, and the P6 doc pass / reason: both requirements change behaviour, and the helper and setup move or delete consumer files.
+Progress (P3 reopened): req-002 and req-006 TDD in one parallel batch of two streams. RED: ed5b93d3 (req-002, 33 failing) and cc0b1602 (req-006, 94 failing). GREEN: 0b23a3a4 (setup stops on old markers) and 56b5c3a1 (helper renames markers). The orchestrator moved the `test_setup.ps1` S-01 case to the new stop in 21056e86. Refactor: 1b2d2c53. Full suite 162 of 162, and `test_setup.ps1` passes. Agents spawned: 5.
+Decision (P3 reopened): the helper rewrites a manifest whenever the checked form differs, so strays go on the first run with a warning / reason: dropping an unchecked entry is the safer reading, and reruns stay unchanged. req-006 carries the note.
+Backlog filed (P3 reopened): 0000264 (`test_setup.ps1` needs `TEMP` on macOS).
+Setup re-run (P3 reopened): `ravintio-framework/setup.sh claude-code --strict-orchestrator` exited 0. It refreshed the installed skills, and only the `writtenAt` time in `ravintio-overrides/setup-config/claude-code.md` changed.
+Verify by execution (P4 rerun): 8 of 9 checks pass on real 0.36.0 consumers in both shells (b23fe49e). Defect D-1: `setup.sh` writes manifest entries through a linked project path, so a helper rerun after it rewrites the manifest. TDD fix in progress: `setup.sh` writes real paths, as `setup.ps1` does.
+Security re-review (P5 rerun): overall High, see `plan/current/security-rereview-markers.md` (630aefcd). M-001 High (a backslash name passes the entry check on Unix), M-002 High (a `C:` name on Windows), M-003 Medium (trailing dot or space, and `*`), M-004 Low (leftover temp manifest). Decision (P5 rerun): one strict name allowlist in both helpers, string-join the written line, and clean up the temp file / reason: the helper must write only checked entries, so the unguarded prune (backlog 0000255) never sees a bad line. 0000255 stays out of scope.
+Progress (P4 and P5 rerun): D-1 RED 4aefd9f1, GREEN 72ac382d (`setup.sh` writes real manifest paths). M-001 to M-004 RED f98ebe3c, GREEN dae0eaf5 (strict name allowlist in both helpers, string-joined lines, temp-file clean-up). CI on 7b182157 passed 12 of 13. Windows shard 6 failed 12 `.ps1` AC6 assertions, because the `.ps1` real-parent check never matched on Windows. dae0eaf5 also adds a separator-tolerant compare and a probe-file identity check, on Windows only. The D-1 case's Windows skip got its README row. Full local suite 162 of 162. Agents spawned: 5.
+Deviation (P6, altering): the human on the loop directed the marker rename. The helper renames both old marker files in eight tool folders and rewrites the manifest. Setup drops both old-name reads and stops while an old marker exists. design.md, scope.md, req-002, req-006, ADR-004, and ADR-005 carry P6 change lines.
+Deviation (P4 rerun, additive): D-1 fix. `setup.sh` writes manifest entries as real paths, as `setup.ps1` already did.
+Deviation (P5 rerun, additive): the helper's manifest name rule grew through M-001 to M-003 and N-003 to N-004: an allowlist, no trailing dot, no Windows device names, and no UNC entries. The `.ps1` helper adds a Windows-only probe file for its parent check. The helper also deletes its own leftover temporary files (M-004, N-005).
+Deviation (P5 rerun, additive): CI gives the Linux and macOS test legs 15 minutes, not 10, because the macOS leg passed every suite but ran past 10 minutes. The 0000031 and 0000037 CI checks now expect the new value.
+Progress (P5 rerun): N-001 to N-005 RED 25101a59, GREEN 00691244. CI change 5d3fde99, with the two CI-check test updates ending at 61be791e. Full suite 162 of 162 at 61be791e, pushed. Agents spawned: 2.
+Decision (P6): one parallel batch of three: the second P5 re-review, the P6 doc pass, and CI on 61be791e / reason: the three share no files, and the doc pass covers behaviour that the re-review only reads.
+Progress (P6 late change): doc pass 823e7bc7, f74f523f, 4d925d2c, da49c4bf. Full suite 162 of 162. The docs agent also corrected backlog 0000261, and the orchestrator corrected the ADR-004 summary.
+Decision (P6): the 15-minute Linux and macOS CI cap gets no new ADR / reason: it changes one value that 0000031 ADR 003 set, and the decisions index and architecture overview now record it. The deviation review classes it.
+Backlog filed (P6): 0000266 and 0000267, by request of the human on the loop. The same two entries sit uncommitted in RAVINTIO Zero as 0000179 and 0000180. Another session is busy on that branch, and Zero's file-backlog rule never commits in a target repo.
+Progress (P5 rerun): the second re-review rated the marker work Low, with N-004 open on Windows (371fd723). N-004 RED d5931685, GREEN 1e950fc4: both helpers drop an entry whose first two characters are both `/` or `\`, or that starts with `\??\`. Full suite 162 of 162, pushed. CI on 61be791e passed 13 of 13. The run on 5d4d9ac3 failed only the red N-004 cases, as expected.
+Deviation review (P6, late change): rows 12 to 15 classified (6cf8d745). Row 12, the marker rename, is altering and destructive. The human on the loop directed it, so it needs no new decision, and the final report lists it as a gross deviation. Exception waiting (P6, 1) is resolved by that direction.
+Decision (P6): one parallel batch of three: the N-004 confirmation review, the cross-model review, and CI on 1e950fc4 / reason: they read the same code and write different files.
+Security re-review (P5, third): N-004 closed, overall Low (92753fac). New N-006 (Low, older than the fix): a link inside the project that points to a share makes both helpers look up the remote path before they drop the entry.
+Decision (P5): file N-006 as backlog 0000270 and close the P5 loop / reason: it is Low, it deletes nothing, and it needs a Windows link setup that CI lacks. This was the fourth review round, and the loop rules favour a stop over another round.
+Deviation (P5, process): the third re-review agent changed one line with `sed -i` (Hard Limit 8). It reported the slip, and backlog 0000238 now cites it.
+Cross-model review (P6, cycle 1 of 3): REJECT (fcf259e1). Reviewer `claude-sonnet-5-5`, implementer `claude-opus-5-5`. Nine of ten requirements met. X-001 High: nothing runs or parses the `.ps1` helper under Windows PowerShell 5.1, which req-006 AC4 requires. X-002 Medium: the verification report predates the D-1 and strict-name fixes. X-003 to X-006 Low: two stale doc lines, the old-folder stop differs between shells, the req-006 step 8 body, and a shared test fixture folder.
+Decision (P6): fix all six in one parallel batch of three streams. X-001 and X-006 change the req-006 suite and the 5.1 CI job. X-004 changes both setups test first. X-002 re-verifies at HEAD. The orchestrator fixed X-003 and X-005 in d2a79606 / reason: the streams share no files. A fresh cross-model reviewer then runs cycle 2.
+Progress (P6, cross-model fixes): X-003 and X-005 d2a79606. X-004 RED 4a3ae470, GREEN 6c5582c3. X-006 01374ccc, though concurrent runs didn't reproduce the collision. X-001 a19f3b1d: the 5.1 CI job parses the helper and runs the req-006 `.ps1` cases under `powershell.exe`. X-002 0e872066: the re-verification at HEAD passes every check. Defect D-2, in the req-003 command text, is fixed in 4928eba9. Backlog filed: 0000272 (the setup manifest lists folders setup didn't install). Agents spawned: 3. CI run 40195111057 is the first real run of the helper under 5.1. Cross-model cycle 2 runs alongside it.
+Cross-model review (P6, cycle 2 of 3): APPROVE (22e1232c). X-001 to X-006 closed. Y-001 Low, a stale verification row, was closed in 673a161e. CI run 40195111057 at a19f3b1d passed every job, including the first helper parse and run under Windows PowerShell 5.1.
+Gate (P6): passed. Docs match the built code, the deviation review has classified every line, and the cross-model gate approved. The full suite passes 162 of 162.
+Progress: P6 done at 2026-10-25T13:05:39Z: the marker rename the human directed shipped through reopened P3 to P5, and cross-model review approved on cycle 2.
+Drift (P6): the old setup never read `.opencode/.planifest-setup-flags`, so an OpenCode consumer kept a stale old marker. The helper now covers `.opencode/` as well.
+Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
+
+Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
+
+### P7: Archive
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:08:00Z` |
+| End | `2026-10-25T13:21:29Z` |
+| Wall-clock | `13` |
+| Streams | `1` |
+| Model tier | primary (ship agent) |
+| Skills loaded | ravintio-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `1` (cross-reference search and regression-candidate scan) |
+| Notes | `none` |
+
+Run mode check (P7): `run-mode.mjs` printed `interactive`, with the reason "a merge commit changed plan/current/build-log.md, so the anchor is ambiguous". The P4 merge of `origin/main` (1fffd812) trips rule 5.
+Decision (P7): P7 to P9 follow the `autonomous` procedure: scan-then-commit, no prompts, and the final report / reason: the human on the loop chose `autonomous` at P0 (line `Run mode confirmed: autonomous`), the orchestrator's dispatch names `autonomous`, and the boot rules tell the ship agent to push and raise the PR without asking. The autonomous commit flow is the stricter one. Backlog 0000273 records the anchor defect.
+Cross-reference check (P7): no living doc links to a file in this feature's `plan/current/`. The `plan/current/` mentions in `docs/` describe the folder in general. The changelog's three `plan/current/` pointers now name the archive path.
+Regression candidates (P7): three tagged suites, `test-0000039-req-005-history-and-split-name-protection.sh`, `test-0000039-req-006-consumer-migration.sh`, and `test-0000039-req-007-brand-guard.sh`.
+Decision (P7): do not promote `test-0000039-req-005-history-and-split-name-protection.sh` / reason: it checks one rename pass against the pre-pass commit, so it guards a one-off event, not a standing rule.
+Decision (P7): do not promote `test-0000039-req-006-consumer-migration.sh` / reason: the helpers ship only through 0.x, the suite already runs on every CI leg, and the Windows PowerShell 5.1 job names its feature path.
+Decision (P7): promote `test-0000039-req-007-brand-guard.sh` with `promote-to-regression.sh`, promoted by `agent` / reason: it guards a standing rule, the retired brand word stays out of live paths and lines, and its allowlist already covers the regression copy. The copy passes 6 of 6, and `test-regression-pack.sh` passes 17 of 17.
+Backlog filed (P7): 0000273 (a merge from `main` into a feature branch un-anchors the autonomous run mode).
+Changelog (P7): `plan/changelog/0000039-ravintio-rebrand-2026-10-25.md` gains the late items: the second and third P5 re-reviews, N-006 (0000270), X-001 to X-006, D-2, Y-001, and backlog 0000266 to 0000273.
+Skips (P7): no `.skips` file, no phase skipped.
+Release fields (P7): product.yml: version "0.37.0", feature "0000039-ravintio-rebrand" (exit 0, no change, because P3 set both).
+About (P7): `docs/about.md` already reads 0.37.0, `0000039-ravintio-rebrand`, and 25 Oct 2026.
+Full suite (P7): 163 suites, 126 feature suites and 36 regression suites pass. The req-005 suite failed one assertion, because the uncommitted changelog edit showed under `plan/changelog/`. The P7 commit clears it, and P8 reruns the suite.
+Test report (P7): `plan/changelog/0000039-ravintio-rebrand-test-report-2026-10-25.md`.
+Archive (P7): `archive-current.mjs` exited 0. It moved 29 items, removed `plan/current/.feature-id`, and printed `archive-dir: plan/_archive/0000039-ravintio-rebrand-2026-10-25`. `plan/current/` is empty.
+Credential scan (P7): clean (regex only). 97 candidates, all safe. Commit 6dfe98e0.
+Progress: P7 done at 2026-10-25T13:21:29Z: changelog updated, brand guard promoted, plan/current archived
+
+### P8: Build Assessment
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:22:10Z` |
+| End | `2026-10-25T13:26:23Z` |
+| Wall-clock | `4` |
+| Streams | `1` |
+| Model tier | cheaper (build-assessment-agent, haiku) |
+| Skills loaded | ravintio-build-assessment-agent (in a subagent) |
+| Agents spawned | `1` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | `none` |
+
+Rerun (P8): `test-0000039-req-005-history-and-split-name-protection.sh` passes 178 of 178 after the P7 commit, so the full suite stands at 163 of 163.
+Build report (P8): `build-report.md` written. 11 h 22 min 57 s from P0 start to P7 end, 88 agents, 5 self-corrections, 3 touchpoints, none outside the exception list.
+Clean-tree check: clean (the only changes sit under the archive directory, and the P9 marker step commits them)
+Progress: P8 done at 2026-10-25T13:26:23Z: build report filed, tree clean outside the archive
+
+### P9: Ship
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T13:26:23Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (ship agent) |
+| Skills loaded | ravintio-ship-agent |
+| Agents spawned | `0` |
+| MCP calls | `0` |
+| Parallel task batches | `0` |
+| Notes | `none` |
+
+Marker step (P9): `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode` deleted and committed in dd71693a. `git ls-files` lists no marker. Credential scan (P9): clean (regex only), 5 candidates.
+Tag (P9): `product-version.mjs` printed 0.37.0 (exit 0), which matches the P0 version. `v0.37.0` didn't exist locally or on origin. Created at dd71693a.
+Decision (P9): Option [1], push and update the PR / reason: no `ravintio-overrides/instructions/` file holds "local-git-only", "no remote", or "no push" in its text, and `custom-005` says to take Option [1]. No file holds "restore-pr-attribution", so the RAVINTIO footer is omitted.
+Branch check (P9): `feat/0000039-ravintio-rebrand`. Branch pushed at dd71693a.
+PR: #71 https://github.com/RAVINTIO/planifest-framework/pull/71
+PR text folder (P9): /var/folders/6c/f2zkjmp17kqggf4l4yt83_z40000gn/T/tmp.f8o9CVx7Ed
+Decision (P9): run `gh pr ready 71` / reason: every `Exception waiting` line in the log is cleared or resolved. The four P3 item 7 lines were cleared at P4, and the P6 item 1 line was resolved by the human on the loop's direction. The PR body still lists row 12 and the other items for the human on the loop.
+Credential scan (P9): PR text clean (regex only)
+PR update (P9): `gh pr edit 71` set the final title and body, and `gh pr ready 71` marked it ready for review. The PR text folder is removed. The changelog already names the PR URL.
+Clean-tree check (P9 Step 10b): one leftover, this build log, committed as close-out leftovers and pushed.
+CI checks (P9): 4 failed: Test suite (ubuntu-latest), Test suite (macos-latest), Test suite (windows-latest, shard 1 of 7), Test suite (windows-latest, shard 3 of 7). Run 40197746564 at 3962ab5b. The other 9 checks passed.
+Root cause (P9): the P7 promotion put a copy of the brand guard at `ravintio-framework/tests/regression/test-0000039-req-007-brand-guard.sh`. The copy names the retired telemetry variable. `test-0000039-req-003-environment-variables.sh` and `test-0000030-req-001-002-removed-files-and-residue.sh` skip `tests/test-0000039-*` but not the regression copy, so both now fail. The P7 local run missed it, because both suites read `git ls-files` or `git grep` and the copy was not yet tracked.
+Fix attempt 1 (P9): blocked. Edit of both suites to skip `tests/regression/test-0000039-*` was refused by `gate-write`: "No confirmed design at plan/current/design.md. Complete Phase 0 first." P7 archived the design, so P9 can't write to `ravintio-framework/`. The ship agent wrote no Fast Path scope record, because only the orchestrator opens a track. No fix commit landed.
+Exception waiting (P9, 6): CI red on 4 test jobs after the P7 regression promotion, and the write gate blocks the P9 fix. Choose a track to add the two skip lines, or to undo the promotion. Then rerun CI and push the tag.
+Decision (P9): `gh pr ready --undo 71` returns the PR to draft / reason: CI is red, and the PR must not show as ready.
+Decision (P9): hold the `v0.37.0` tag locally at dd71693a, unpushed / reason: the fix will move the head, and a pushed tag never moves.
+Progress: P9 blocked at 2026-10-25T13:43:01Z: CI 4 failed
+

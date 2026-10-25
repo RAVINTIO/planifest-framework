@@ -6,7 +6,7 @@ version: "0.1.0"
 ---
 # Data Contract - Setup Hook Integration
 
-**Skill:** [codegen-agent](../../../planifest-framework/skills/planifest-codegen-agent/SKILL.md) (updated via migration proposals)
+**Skill:** [codegen-agent](../../../ravintio-framework/skills/ravintio-codegen-agent/SKILL.md) (updated via migration proposals)
 **Tool:** claude-code
 **Model:** claude-sonnet-4-6
 **Component:** setup-hook-integration
@@ -21,9 +21,9 @@ version: "0.1.0"
 
 ## Files
 
-### `.claude/.planifest-setup-flags`
+### `.claude/.ravintio-setup-flags`
 
-A single JSON file per repo (not a database table, a local, uncommitted, plain-text marker file). Written by `setup.sh`/`setup.ps1` on successful install (REQ-008), and by the `planifest-refresh-setup` skill before boot-file deletion begins (REQ-009). Read by `planifest-refresh-setup` for flag reconstruction (REQ-002) and cross-session recovery (REQ-010).
+A single JSON file per repo (not a database table, a local, uncommitted, plain-text marker file). Written by `setup.sh`/`setup.ps1` on successful install (REQ-008), and by the `ravintio-refresh-setup` skill before boot-file deletion begins (REQ-009). Read by `ravintio-refresh-setup` for flag reconstruction (REQ-002) and cross-session recovery (REQ-010).
 
 | Field | Type | Nullable | Default | Constraints |
 |-------|------|----------|---------|------------|
@@ -33,7 +33,9 @@ A single JSON file per repo (not a database table, a local, uncommitted, plain-t
 | `attemptStatus` | string enum: `completed` \| `pending` | no | `completed` | `completed` after a successful `setup.sh`/`setup.ps1` install write (REQ-008); `pending` after the refresh skill's pre-deletion write (REQ-009), until a subsequent `completed` write from a successful re-invocation (REQ-005) supersedes it |
 | `attemptedCommand` | string | yes | none | Present only when `attemptStatus` is `pending` or when the file was last written by the refresh skill; the exact command REQ-009 recorded and REQ-005/REQ-006 use for re-invocation or reporting |
 
-The marker and `planifest-overrides/setup-config/{tool}.md` no longer carry a `backendUrl` field (0000030). Setup omits the field and does not write null. A reader must treat an old marker that still holds `backendUrl` as having an unknown extra field and ignore it.
+**Old marker files (0000039).** Before 0.37.0 the marker carried the old brand name in its file name. Setup and `ravintio-refresh-setup` don't read the old file. The migration helper renames it to `.ravintio-setup-flags` with its content unchanged, and setup stops while the old file exists (0000039-ADR-004, ADR-005). Setup owns two other marker files. They are `.ravintio-manifest` and the session marker `.ravintio-session`. The helper renames the old manifest to `.ravintio-manifest`. It renames each old skill folder the manifest lists and rewrites the entries. It keeps an entry only when its name passes a strict allowlist and its parent is the real skills folder. The helper removes the old session marker. `setup.sh` writes each manifest entry as a real path, as `setup.ps1` does. Consumer repos read these files and never write them (0000039-ADR-010).
+
+The marker and `ravintio-overrides/setup-config/{tool}.md` no longer carry a `backendUrl` field (0000030). Setup omits the field and does not write null. A reader must treat an old marker that still holds `backendUrl` as having an unknown extra field and ignore it.
 
 **Indexes:** not applicable, single-file, single-record store, one per repo.
 
@@ -44,7 +46,7 @@ The marker and `planifest-overrides/setup-config/{tool}.md` no longer carry a `b
 <!-- BEGIN retired-integrations (0000030) -->
 ### Retiring state owned by this component (0000030-ADR-005)
 
-This component owns the removal of every artifact in the clean-up list. That includes `plan/.telemetry-failures/` and `plan/.telemetry-receipts/`, which the deleted telemetry hooks in `planifest-framework` used to write. Nothing writes them now, so setup is their only remaining actor and it only deletes them. It deletes by exact folder name. `planifest-framework` keeps ownership of `build-log.md` and the build-log template.
+This component owns the removal of every artifact in the clean-up list. That includes `plan/.telemetry-failures/` and `plan/.telemetry-receipts/`, which the deleted telemetry hooks in `ravintio-framework` used to write. Nothing writes them now, so setup is their only remaining actor and it only deletes them. It deletes by exact folder name. `ravintio-framework` keeps ownership of `build-log.md` and the build-log template.
 
 The removal list is:
 

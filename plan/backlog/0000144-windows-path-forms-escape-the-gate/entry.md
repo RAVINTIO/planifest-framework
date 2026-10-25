@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Some Windows path forms escape the root comparison or the enforcement list in `planifest-framework/hooks/enforcement/path-rules.mjs`:
+Some Windows path forms escape the root comparison or the enforcement list in `ravintio-framework/hooks/enforcement/path-rules.mjs`:
 
 - `\\?\C:\…` device paths
 - `\\.\C:\…` device paths

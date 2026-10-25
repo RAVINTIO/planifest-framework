@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/hooks/enforcement/em-dash-guard.mjs` builds `relTarget` with its local `norm()` (line 59), which calls `toLowerCase()`. The block message at line 123 then prints that lowercased value. A write to `docs/Guide.md` therefore reports `'docs/guide.md'`. The human on the loop sees a path that differs from the real file name. On a case-sensitive file system, that path may name a different file or none. P4 verify-by-execution observed this when a target `[Planifest] forged.md` printed as `[planifest] forged.md`.
+`ravintio-framework/hooks/enforcement/em-dash-guard.mjs` builds `relTarget` with its local `norm()` (line 59), which calls `toLowerCase()`. The block message at line 123 then prints that lowercased value. A write to `docs/Guide.md` therefore reports `'docs/guide.md'`. The human on the loop sees a path that differs from the real file name. On a case-sensitive file system, that path may name a different file or none. P4 verify-by-execution observed this when a target `[RAVINTIO] forged.md` printed as `[ravintio] forged.md`.
 
 ## Suggested Action
 

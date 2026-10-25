@@ -1,0 +1,6 @@
+# Old paths that the 0000039 rename pass records as a delete plus an add, not a rename.
+# Each file is small, and its content changed enough to fall below git's 50% similarity
+# threshold (34% to 46% in the dry run). The build log lists the same three (req-001 AC3).
+planifest-framework/.gitattributes
+planifest-framework/hooks/adapters/opencode/package.json
+planifest-framework/standards/framework-update-policy.md

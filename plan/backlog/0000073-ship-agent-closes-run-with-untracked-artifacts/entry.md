@@ -14,9 +14,9 @@ status: "open"
 
 ## Problem
 
-The `planifest-ship-agent` close-out sequence generates artifacts *after* its own
+The `ravintio-ship-agent` close-out sequence generates artifacts *after* its own
 commit points, so a completed run can end with untracked changes still in the tree.
-A planifest run is expected to close with a clean working tree; leaving generated
+A ravintio run is expected to close with a clean working tree; leaving generated
 artifacts untracked means the archive's own audit trail is incomplete in git.
 
 Concrete instance from the downstream `0000019` run:
@@ -62,7 +62,7 @@ regression of this in future.
 
 Filed at explicit human request after the `0000019` ship in a downstream product,
 where the human noted these artifacts "need to be flagged, though of course the
-human can say no," and that "it's not expected to close a planifest run with
-untracked changes." The fix lives in `skills/planifest-ship-agent/` in this
+human can say no," and that "it's not expected to close a ravintio run with
+untracked changes." The fix lives in `skills/ravintio-ship-agent/` in this
 framework repo, so it belongs to the framework's own pipeline and numbering, not a
 consumer product's backlog.

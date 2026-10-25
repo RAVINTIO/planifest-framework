@@ -19,11 +19,11 @@
 |---|---|---|
 | `.claude/settings.json` | File (merged) | Hook wiring for PreToolUse and UserPromptSubmit. Additive merge, never full replacement. Every enforcement command string is written with a `node` interpreter prefix (0000028 P5 SEC-001); a bare `.mjs` path exits 126 against the non-executable committed file mode and fails open silently. For Claude Code, setup also registers `shell-write-guard.mjs` on a `Bash` PreToolUse matcher (0000032-ADR-006). It first removes any earlier `Bash` group whose command names `shell-write-guard`, so a re-run leaves exactly one. Other `Bash` groups stay in place. |
 | `.claude/hooks/enforcement/` | Directory | Every `*.mjs` under `hooks/enforcement/`, always installed, not gated on any flag. Currently `gate-write.mjs`, `check-design.mjs`, `ratchet-check.mjs`, `em-dash-guard.mjs` (0000028), `auto-trigger-orchestrator.mjs`, `check-orchestrator-presence.mjs`, `shell-write-guard.mjs` (0000032), plus the shared modules `read-stdin.mjs` (0000028) and `path-rules.mjs` (0000032) |
-| `.claude/skills/` | Directory | Skill files from `planifest-framework/skills/` |
+| `.claude/skills/` | Directory | Skill files from `ravintio-framework/skills/` |
 | `CLAUDE.md` | File | Generated from `templates/standard-boot.md` (Claude Code only). Since 0000035, the Write-or-Edit rule (boot Hard Limit 8) names the sanctioned scripts, and the Hook Enforcement section covers the Fast Path scope record and link judgement. Setup copies the template text and changed in no other way (0000035 ADR-011) |
-| `git config core.hooksPath` | Git config | Points to `planifest-framework/hooks/` for advisory commit-msg hook |
-| `planifest-framework/external-skills.json` | File | Manifest of installed external skills (created on first `add-skill`) |
-| `<tool-dir>/.planifest-setup-flags` | File | Flags-used marker (0000020): tool, flags applied, timestamp, attempt status. Written on every successful install; consumed by `planifest-refresh-setup`. Schema: `docs/data-contract.md` |
+| `git config core.hooksPath` | Git config | Points to `ravintio-framework/hooks/` for advisory commit-msg hook |
+| `ravintio-framework/external-skills.json` | File | Manifest of installed external skills (created on first `add-skill`) |
+| `<tool-dir>/.ravintio-setup-flags` | File | Flags-used marker (0000020): tool, flags applied, timestamp, attempt status. Written on every successful install; consumed by `ravintio-refresh-setup`. Schema: `docs/data-contract.md` |
 
 | Clean-up output | stdout lines | Every run prints one line per removal, in the form `  - <path> (retired, removed)` for a deleted path. It prints nothing when it finds nothing |
 | `<tool>` settings files and `opencode.json` | File (merged) | Every settings writer skips a file that is not valid JSON, leaves it byte-identical, and names the parse error. Every write goes to a temporary file in the same folder and is renamed into place |
@@ -53,8 +53,8 @@ Failure behaviour, in every case with exit 0:
 
 `setup.ps1` runs under PowerShell 7 and Windows PowerShell 5.1 with the same inputs and outputs (0000037-ADR-012). Two behaviours matter to a caller:
 
-- `Merge-AllowedTools` parses `settings.json` through `ConvertTo-PlanifestHashtable`, since 5.1 has no `ConvertFrom-Json -AsHashtable`.
-- `Invoke-PlanifestGuardrails` checks the exit code of `git config core.hooksPath`. If the call fails, for example outside a git repository, setup prints a warning, continues, and does not print the guardrails-activated line. `setup.sh` behaves the same way.
+- `Merge-AllowedTools` parses `settings.json` through `ConvertTo-RavintioHashtable`, since 5.1 has no `ConvertFrom-Json -AsHashtable`.
+- `Invoke-RavintioGuardrails` checks the exit code of `git config core.hooksPath`. If the call fails, for example outside a git repository, setup prints a warning, continues, and does not print the guardrails-activated line. `setup.sh` behaves the same way.
 
 ## OpenCode setup
 
@@ -66,13 +66,25 @@ A Fast Path scope record never admits a write to a file that wires the hooks (00
 
 - every hook wiring file that `setup.sh` and `setup.ps1` write, such as `.claude/settings.json` and `.github/hooks/`
 - the installed `hooks/enforcement/` and `hooks/adapters/` folders
-- `planifest-framework/setup/`, `setup.sh`, `setup.ps1`, and the installed `.github/workflows/planifest.yml`
+- `ravintio-framework/setup/`, `setup.sh`, `setup.ps1`, and the installed `.github/workflows/ravintio.yml`
 
 If setup gains a new wiring file, add it to that constant and to the `workflows/fast-path.md` prerequisites in the same change. The req-009 suite checks that the two lists match.
 
+## Rename to RAVINTIO and old-name reads (0000039)
+
+Version 0.37.0 renames the pack to `ravintio-framework/`, the overrides folder to `ravintio-overrides/`, and every skill to `ravintio-*`. Setup and hook output use the `[RAVINTIO]` prefix. Setup changes in these ways:
+
+- Setup stops with exit 1 while the old pack folder or the old overrides folder exists. The message names `migrate-0.37.0-ravintio-rename`.
+- Setup replaces the old boot-file instruction markers and the old ignore-file headers with the RAVINTIO forms.
+- Setup reads neither the old setup flags file nor the old manifest file. It stops with exit 1 while either exists in a tool folder, writes nothing, and names `migrate-0.37.0-ravintio-rename`. The tool folders are `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode`.
+- `setup.sh` writes each manifest entry as a real path, as `setup.ps1` does.
+- The OpenCode adapter reads `RAVINTIO_SESSION_ID` first and the old session ID variable only when the new one is unset.
+
+Each old-name read is removed at 1.0.0. The migration helpers rename the old setup flags and manifest files to the `.ravintio-*` names, with the flags content unchanged. They rename the old skill folders the manifest lists and rewrite its entries. They keep only entries whose name passes a strict allowlist and whose parent is the real skills folder. The helpers `migrate-0.37.0-ravintio-rename.sh` and `.ps1` behave the same, move the old pack into `.ravintio-backup/`, and delete no pack file (0000039-ADR-005).
+
 ## Breaking Change Policy
 
-Changes to `setup.sh` inputs or outputs require a version bump in `component.yml` and a migration note. Consumers: any developer running setup.sh on a Planifest-managed project.
+Changes to `setup.sh` inputs or outputs require a version bump in `component.yml` and a migration note. Consumers: any developer running setup.sh on a RAVINTIO-managed project.
 
 ## Consumers
 
@@ -80,4 +92,4 @@ No downstream components consume the outputs programmatically. Outputs are consu
 - The AI coding agent at session start (reads `settings.json`, skills, boot file)
 - Git at commit time (reads `core.hooksPath`)
 - `skill-sync.sh` (reads `external-skills.json`)
-- `planifest-refresh-setup` skill (reads and updates `.planifest-setup-flags`, 0000020)
+- `ravintio-refresh-setup` skill (reads and updates `.ravintio-setup-flags`, 0000020)

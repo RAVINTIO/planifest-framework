@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-Four suites in `planifest-framework/tests/` print `SKIP (windows)` for the checks below. Each fixture needs something Git Bash on `windows-latest` cannot build. The README skip table has one row per suite.
+Four suites in `ravintio-framework/tests/` print `SKIP (windows)` for the checks below. Each fixture needs something Git Bash on `windows-latest` cannot build. The README skip table has one row per suite.
 
 - `test-0000035-req-004-root-when-cwd-deleted.sh`: Windows cannot delete a directory that is a process's cwd, so the no-cwd and `process.cwd()` throws checks skip. `chmod 000` sets no NTFS block, so the EACCES block skips.
 - `test-0000035-req-005-ratchet-check-shared-root.sh`: `ln -s` copies the target under Git Bash, so the 10-link chain and link loop skip. A Windows file name cannot hold a newline or a colon, so the forged-name and forged-approval checks skip.

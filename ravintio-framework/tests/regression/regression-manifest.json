@@ -1,0 +1,265 @@
+{
+  "$schema": "./regression-manifest.schema.json",
+  "description": "Long-term regression pack manifest. Tracks tests promoted from feature pipelines. Managed by promote-to-regression.sh — do not edit manually.",
+  "fields": {
+    "name": "Unique filename of the test (basename)",
+    "sourceFeature": "Feature ID from which the test was promoted (e.g. 0000004-tdd-regression-test-quality)",
+    "promotionDate": "ISO 8601 date of promotion (YYYY-MM-DD)",
+    "promotedBy": "agent | human",
+    "filePath": "Relative path to the test file within tests/regression/"
+  },
+  "tests": [
+    {
+      "name": "test-0000016-pipeline-governance.sh",
+      "sourceFeature": "0000016-pipeline-governance-and-loop-engineering",
+      "promotionDate": "2026-07-26",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000016-pipeline-governance.sh"
+    },
+    {
+      "name": "test-0000005-framework-governance.sh",
+      "sourceFeature": "0000005-framework-governance",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000005-framework-governance.sh"
+    },
+    {
+      "name": "test-0000006-build-assessment.sh",
+      "sourceFeature": "0000006-build-assessment-phase",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000006-build-assessment.sh"
+    },
+    {
+      "name": "test-0000009-rail-tightening.sh",
+      "sourceFeature": "0000009-framework-rail-tightening",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000009-rail-tightening.sh"
+    },
+    {
+      "name": "test-0000017-req-001-regression-promotion.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000017-req-001-regression-promotion.sh"
+    },
+    {
+      "name": "test-0000017-req-002-ratchet-approve.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000017-req-002-ratchet-approve.sh"
+    },
+    {
+      "name": "test-0000017-req-005-scope-lock-suggested-answers.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000017-req-005-scope-lock-suggested-answers.sh"
+    },
+    {
+      "name": "test-0000017-req-006-structured-discovery-pass.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000017-req-006-structured-discovery-pass.sh"
+    },
+    {
+      "name": "test-0000017-req-007-change-agent-archive.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000017-req-007-change-agent-archive.sh"
+    },
+    {
+      "name": "test-0000018-req-007-discovery-md-hard-limit.sh",
+      "sourceFeature": "0000018-telemetry-emission-consistency",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000018-req-007-discovery-md-hard-limit.sh"
+    },
+    {
+      "name": "test-0000019-req-002-component-yml-matcher.sh",
+      "sourceFeature": "0000019-self-description-and-session-hygiene-fixes",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000019-req-002-component-yml-matcher.sh"
+    },
+    {
+      "name": "test-commit-msg-hook.sh",
+      "sourceFeature": "0000005-framework-governance",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-commit-msg-hook.sh"
+    },
+    {
+      "name": "test-gate-write-windows.sh",
+      "sourceFeature": "0000003-hook-based-enforcement",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-gate-write-windows.sh"
+    },
+    {
+      "name": "test-regression-pack.sh",
+      "sourceFeature": "0000017-ratchet-forgery-detection-and-telemetry-schema-spec",
+      "promotionDate": "2026-08-01",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-regression-pack.sh"
+    },
+    {
+      "name": "test-0000032-req-001-marker-clear-before-tag.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-001-marker-clear-before-tag.sh"
+    },
+    {
+      "name": "test-0000032-req-002-resume-from-archive-evidence.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-002-resume-from-archive-evidence.sh"
+    },
+    {
+      "name": "test-0000032-req-003-no-run-triage-message.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-003-no-run-triage-message.sh"
+    },
+    {
+      "name": "test-0000032-req-004-handover-note-routing.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-004-handover-note-routing.sh"
+    },
+    {
+      "name": "test-0000032-req-005-blocking-context-clear.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-005-blocking-context-clear.sh"
+    },
+    {
+      "name": "test-0000032-req-006-outside-repository-pass.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-006-outside-repository-pass.sh"
+    },
+    {
+      "name": "test-0000032-req-007-stderr-block-reasons.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-007-stderr-block-reasons.sh"
+    },
+    {
+      "name": "test-0000032-req-008-shell-writer-detection.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-008-shell-writer-detection.sh"
+    },
+    {
+      "name": "test-0000032-req-009-shell-guard-path-parity.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-009-shell-guard-path-parity.sh"
+    },
+    {
+      "name": "test-0000032-req-012-write-or-edit-boot-rule.sh",
+      "sourceFeature": "0000032-governance-continuity-and-write-gate-scope",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000032-req-012-write-or-edit-boot-rule.sh"
+    },
+    {
+      "name": "test-0000033-req-001-run-mode-script.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-001-run-mode-script.sh"
+    },
+    {
+      "name": "test-0000033-req-002-exception-list.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-002-exception-list.sh"
+    },
+    {
+      "name": "test-0000033-req-003-gates-as-loops.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-003-gates-as-loops.sh"
+    },
+    {
+      "name": "test-0000033-req-005-ship-without-asking-and-final-report.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-005-ship-without-asking-and-final-report.sh"
+    },
+    {
+      "name": "test-0000033-req-012-archive-script-without-glob-delete.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-012-archive-script-without-glob-delete.sh"
+    },
+    {
+      "name": "test-0000033-req-013-clean-close-out.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-013-clean-close-out.sh"
+    },
+    {
+      "name": "test-0000033-req-017-join-owner-and-reconciliation.sh",
+      "sourceFeature": "0000033-human-on-the-loop-run-mode",
+      "promotionDate": "2026-10-19",
+      "promotedBy": "human",
+      "filePath": "tests/regression/test-0000033-req-017-join-owner-and-reconciliation.sh"
+    },
+    {
+      "name": "test-0000035-req-002-product-yml-in-p7.sh",
+      "sourceFeature": "0000035-write-gate-scope-and-path-hardening",
+      "promotionDate": "2026-10-22",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000035-req-002-product-yml-in-p7.sh"
+    },
+    {
+      "name": "test-0000035-req-008-sanctioned-scripts.sh",
+      "sourceFeature": "0000035-write-gate-scope-and-path-hardening",
+      "promotionDate": "2026-10-22",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000035-req-008-sanctioned-scripts.sh"
+    },
+    {
+      "name": "test-0000037-req-003-credential-scan.sh",
+      "sourceFeature": "0000037-green-ci-before-ship",
+      "promotionDate": "2026-10-24",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000037-req-003-credential-scan.sh"
+    },
+    {
+      "name": "test-0000037-req-003-archive-held-back.sh",
+      "sourceFeature": "0000037-green-ci-before-ship",
+      "promotionDate": "2026-10-24",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000037-req-003-archive-held-back.sh"
+    },
+    {
+      "name": "test-0000039-req-007-brand-guard.sh",
+      "sourceFeature": "0000039-ravintio-rebrand",
+      "promotionDate": "2026-10-25",
+      "promotedBy": "agent",
+      "filePath": "tests/regression/test-0000039-req-007-brand-guard.sh"
+    }
+  ]
+}

@@ -18,13 +18,13 @@ Closed in 0000037 P4, self-correct cycle 2. The gap sat in this feature's own re
 
 ## Problem
 
-Step 10c in `planifest-framework/skills/planifest-ship-agent/SKILL.md` assumes that `gh pr checks {n} --json name,bucket,link` prints an empty JSON list while no checks exist. Verify-by-execution showed otherwise.
+Step 10c in `ravintio-framework/skills/ravintio-ship-agent/SKILL.md` assumes that `gh pr checks {n} --json name,bucket,link` prints an empty JSON list while no checks exist. Verify-by-execution showed otherwise.
 
 For PR #30 (no checks), the command prints nothing on stdout, writes `no checks reported on the 'feat/planifest-framework-v0.7' branch` to stderr, and exits 1.
 
 Step 10c says output that is not valid JSON reads as "CI status could not be read". A fresh PR whose jobs have not registered yet would therefore read as unreadable on the first poll. It would not wait and reread, and the "empty list reads unknown, no checks reported" branch never runs.
 
-The same applies to `planifest-overrides/instructions/custom-003-git-up-to-date-shorthand.md` step 5 for a merged PR with no checks. A check never reads as a pass in either case, so the risk is a premature `P9 blocked`, not a false green.
+The same applies to `ravintio-overrides/instructions/custom-003-git-up-to-date-shorthand.md` step 5 for a merged PR with no checks. A check never reads as a pass in either case, so the risk is a premature `P9 blocked`, not a false green.
 
 ## Suggested Action
 

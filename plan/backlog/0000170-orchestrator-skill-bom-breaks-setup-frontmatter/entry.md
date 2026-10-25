@@ -14,7 +14,7 @@ status: "open"
 
 ## Problem
 
-`planifest-framework/skills/planifest-orchestrator/SKILL.md` starts with a UTF-8 byte order mark (`ef bb bf`). `copy_skills()` in `planifest-framework/setup.sh` parses each skill's frontmatter to read `bundle_templates`. The byte order mark stops that parse from finding the opening `---`, so setup ignores the orchestrator's `bundle_templates` list. Setup then copies every template into the orchestrator's `assets/` folder, as it does for a skill with no list.
+`ravintio-framework/skills/ravintio-orchestrator/SKILL.md` starts with a UTF-8 byte order mark (`ef bb bf`). `copy_skills()` in `ravintio-framework/setup.sh` parses each skill's frontmatter to read `bundle_templates`. The byte order mark stops that parse from finding the opening `---`, so setup ignores the orchestrator's `bundle_templates` list. Setup then copies every template into the orchestrator's `assets/` folder, as it does for a skill with no list.
 
 The 0000036 P1 design critic found this. Other framework files may carry a byte order mark too.
 
