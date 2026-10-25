@@ -148,14 +148,14 @@ Progress: P2 done at 2026-10-25T02:39:39Z: ten ADRs, critic approved on iteratio
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T02:40:31Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T03:59:35Z` |
+| Wall-clock | `79` |
 | Streams | `1` |
-| Model tier | primary (orchestrator, rename script review), cheaper (TDD subagents) |
-| Skills loaded | planifest-codegen-agent |
-| Agents spawned | `pending` |
+| Model tier | primary (orchestrator, rename script author, req-006 implementer: opus), cheaper (17 other subagents: sonnet) |
+| Skills loaded | planifest-codegen-agent, ravintio-test-writer, ravintio-implementer, ravintio-refactor (in subagents) |
+| Agents spawned | `19` (stage 1: 3 test-writers and the script author, 2 of them resumed once after the gate-write block; stage 3: 7 test-writers, 5 implementers, 1 suite fixer, 1 guard finisher, 1 refactor pass, 1 version implementer) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `3` (stage 1, stage 3 test-writers, stage 3 implementers) |
 | Notes | `none` |
 
 Capability skills (P3): none apply. The stack is unchanged shell, PowerShell, and Node.
@@ -189,5 +189,16 @@ GREEN (P3): req-002 (34 of 34) and req-008 (39 of 39) in one track. Setup stops 
 GREEN (P3): req-006, 154 of 154 on Bash. The PowerShell half skips locally without `pwsh`, so the CI PowerShell 5.1 and 7 legs must prove it. The helpers hold no literal old name and no recursive delete.
 GREEN (P3): req-009 after the req-006 migration file landed. The migrator skill gained old-path mapping, `Applies when:` support, and the rename check pass. This repo's `plan/_migrations/` record reads `not applicable`.
 Fix (P3): a suite-fixer agent repaired lint findings in the new 0000039 suites, refreshed two 0000038 hashes frozen before the pass, added the old `.planifest-session` delete to `archive-current.mjs`, and taught the 0000030 residue suite to skip 0000039 suites. Full run after it: 120 feature suites pass, 6 fail, and 35 regression suites pass.
+GREEN (P3): req-007, after the finisher completed the allowlist (26 entries, none stale) and the req-004 and req-005 suites learned to skip setup's old-name reads. The finisher also raised two 0000035 migration counts from 11 to 12.
+Refactor (P3): setup's old-manifest prune unlinks a linked folder and never recurses into it, in both shells.
+GREEN (P3): req-010, 8 of 8. P3 bumped product.yml, the pack manifest, and docs/about.md to 0.37.0.
+Deviation (P3, unclassified): the version bump landed in P3, not P6 as req-010 states / reason: the codegen close-out rule bumps the pack manifest in P3 when framework files change, and req-010 needed a GREEN suite before P3 could close.
+Setup re-run (P3): `ravintio-framework/setup.sh claude-code --strict-orchestrator` pruned all 21 old `planifest-*` skill copies. `.claude/` now holds only `.ravintio-setup-flags` and `.ravintio-manifest`. Skill drift check: 21 skills match.
+Requirement-ID scan (P3): 10 requirements, 0 unmapped. Every declared `Verified by` type has a matching suite header. The `execution` criteria (req-001, req-003, req-004, req-005, req-010) are deferred to P4.
+Full suite (P3 end): 127 feature suites and 35 regression suites pass, 0 fail. The PowerShell halves of req-002 and req-006 skip locally without `pwsh`.
+Credential scan (P3): clean (regex only) on every commit after the pass. The held-back files stay held back.
+Skill Map (P3 gate): re-checked, no change.
+Gate (P3): passed. Every requirement is GREEN. In autonomous mode the P4 CI run is the checker.
+Progress: P3 done at 2026-10-25T03:59:35Z: pack renamed, ten requirements GREEN, 162 suites pass
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
