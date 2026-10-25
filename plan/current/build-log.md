@@ -53,3 +53,4 @@ Pre-P0 notes folded in from `plan/current/.pre-p0-notes.md` (backlog 0000239 opt
 
 P0 exchange (backlog pickup): Q: which backlog entries join 0000039? / A: 0000237 only, pre-P0 triage on 2026-10-25.
 P0 exchange (version): Q: none asked. The human on the loop volunteered it. / A: minor increment, so 0.36.0 to 0.37.0. This overrides the major bump that 0000237 suggests and matches RAVINTIO Zero 0000164 ADR-005.
+P0 exchange (bulk rename method): Q: Hard Limit 8 sanctions no rename script. Use a one-off scripted pass with human approval, or Edit only? / A: scripted pass, as recommended. Write puts the script in the scratchpad. The human on the loop approves it before it runs. It runs once, in one commit, logged as a deviation. Follow-up fixes use Edit.
