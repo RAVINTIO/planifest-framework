@@ -269,6 +269,25 @@ Backlog filed (P5): 0000255 (older manifest prune), 0000256 (migrator mapping sc
 Credential scan (P5): clean (regex only) on every P5 commit.
 Gate (P5): passed. Overall risk Low, with zero open Critical, High, or Medium findings. See `plan/current/security-report.md`.
 Progress: P5 done at 2026-10-25T05:45:22Z: three Mediums fixed and re-reviewed closed, risk Low, five Lows to backlog
+
+### P6: Docs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T05:46:54Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | cheaper (docs subagents) |
+| Skills loaded | ravintio-docs-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+P6 Gate A: `docs/` exists.
+P6 Gate B: docs update assessment (autonomous, auto-accepted). Feature 0000039 renamed the pack, its skills, paths, variables, and markers, and added a consumer migration. Auto-accepted: updating `docs/architecture-overview.md`, `docs/component-registry.md`, `docs/decisions-index.md`, and `docs/dependency-graph.md`. No component exposes an API, so `docs/api-index.md` stays absent. `docs/about.md` already reads 0.37.0 from P3.
+Decision (P6): three docs subagents in one batch: living docs, per-component docs and the pack manifest, and the recommendations with the changelog / reason: the three sets share no content. Backlog IDs 0000260 to 0000262 go to the recommendations agent.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
