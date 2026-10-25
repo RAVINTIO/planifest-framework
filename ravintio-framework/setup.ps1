@@ -70,7 +70,8 @@ $SetupDir = Join-Path $ScriptDir 'setup'
 # Old-name read kept through 0.x and removed at 1.0.0 (ADR-004, ADR-010):
 # stop before any write while an old pack or overrides folder exists.
 foreach ($oldDir in @('planifest-framework', 'planifest-overrides')) {
-    if (Test-Path -LiteralPath (Join-Path $ProjectRoot $oldDir)) {
+    # Get-Item finds a file or a dangling link as well as a folder (X-004).
+    if ($null -ne (Get-Item -LiteralPath (Join-Path $ProjectRoot $oldDir) -Force -ErrorAction SilentlyContinue)) {
         [Console]::Error.WriteLine("Error: found the old folder ${oldDir}/ at the project root.")
         [Console]::Error.WriteLine("Run the migration migrate-0.37.0-ravintio-rename first, then run setup again.")
         exit 1

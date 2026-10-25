@@ -1339,7 +1339,8 @@ done
 # Old-name read kept through 0.x and removed at 1.0.0 (ADR-004, ADR-010):
 # stop before any write while an old pack or overrides folder exists.
 for _old_dir in planifest-framework planifest-overrides; do # old-name read, removed at 1.0.0
-  if [ -d "$PROJECT_ROOT/$_old_dir" ]; then
+  # A file or a dangling link stops setup as well as a folder (X-004).
+  if [ -e "$PROJECT_ROOT/$_old_dir" ] || [ -L "$PROJECT_ROOT/$_old_dir" ]; then
     echo "Error: found the old folder $_old_dir/ at the project root." >&2
     echo "Run the migration migrate-0.37.0-ravintio-rename first, then run setup again." >&2
     exit 1
