@@ -53,6 +53,7 @@ while IFS= read -r f; do
     ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.*) continue ;;
     # Feature 0000039 suites name the retired telemetry variable on purpose, to prove the rename keeps it.
     ravintio-framework/tests/test-0000039-*) continue ;;
+    ravintio-framework/tests/regression/test-0000039-*) continue ;;
   esac
   hits=$(awk '/BEGIN retired-integrations/{f=1} /END retired-integrations/{f=0;next} !f' "$f" \
     | grep -inE "$PATTERN" \

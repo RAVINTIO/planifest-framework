@@ -31,7 +31,7 @@ WORKFLOW="$ROOT/.github/workflows/ravintio.yml"
 # AC1: inventory command
 # ---------------------------------------------------------------------------
 
-INVENTORY="$(git -C "$ROOT" grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-*' | sort -u)"
+INVENTORY="$(git -C "$ROOT" grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-*' ':!ravintio-framework/tests/regression/test-0000039-*' | sort -u)"
 
 EXPECTED_NAMES="PLANIFEST_SESSION_ID
 PLANIFEST_TELEMETRY
@@ -51,7 +51,7 @@ while IFS= read -r f; do
 done <<< "$SESSION_FILES"
 assert_equals "0" "$BAD_SESSION" "req-003 AC1: PLANIFEST_SESSION_ID appears only in the adapter and test files"
 
-TELEMETRY_FILES="$(git -C "$ROOT" grep -lE 'PLANIFEST_TELEMETRY' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-req-006*' ':!ravintio-framework/tests/test-0000039-*' | sort)"
+TELEMETRY_FILES="$(git -C "$ROOT" grep -lE 'PLANIFEST_TELEMETRY' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-req-006*' ':!ravintio-framework/tests/test-0000039-*' ':!ravintio-framework/tests/regression/test-0000039-*' | sort)"
 PACK="ravintio-framework"
 EXPECTED_TELEMETRY_FILES="$PACK/tests/test-0000030-req-003-telemetry-pipeline-text-removal.sh
 $PACK/tests/test-0000030-req-004-install-clean-up-and-retired-flags.sh"
