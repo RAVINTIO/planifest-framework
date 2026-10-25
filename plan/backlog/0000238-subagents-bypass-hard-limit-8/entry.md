@@ -22,6 +22,8 @@ Subagents in feature 0000038 changed project files through Bash three times. No 
 
 The `shell-write-guard` hook blocks a shell write only where `gate-write` would block a **Write**. Writes to `plan/` are always permitted, so the guard passes them. It also can't see writes inside an interpreter. `ratchet-check` runs only on Write and Edit. The written rule alone didn't stop three agents, even though every dispatch prompt repeated it.
 
+It happened again in 0000039 P1. The critic revision agent edited nine `plan/current/` files with a Python one-liner while the design-critic ratchet was active. The orchestrator checked the diff and found no criterion line removed, but no hook ran.
+
 ## Suggested Action
 
 Make the shell guard block appends and interpreter writes to `plan/current/` artifacts while a ratchet loop is active. Or run the ratchet check over the diff at commit time, so a Bash edit can't skip it.
