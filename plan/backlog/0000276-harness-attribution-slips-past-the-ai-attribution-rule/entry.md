@@ -21,6 +21,7 @@ The new source is the Claude Code harness. Its system prompt tells the agent to 
 Evidence:
 
 - PRs #66, #67, and #69 end with the `Generated with [Claude Code]` footer and a `claude.ai/code/session_...` link. PR #66 merged.
+- On 2026-10-25 the human on the loop removed the same footer and session link from PR #71 by hand. They said: "Neither is needed or wanted. I pay for Claude and it has no write to market itself via our repository or frameworks."
 - Commit 5c7859a9 on `main` (the squash merge of PR #61) carries a `Claude-Session:` trailer.
 
 The rule has these gaps:
