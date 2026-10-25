@@ -3,9 +3,11 @@
 # before you run ravintio-framework/setup.ps1. The project root may sit below
 # the git top level.
 #
-# The helper deletes no file except the one session marker. It moves the old
-# pack into .ravintio-backup/ with a plain rename, which moves a nested link or
-# junction as a link and follows none. Every step skips work that is already
+# The helper deletes the session marker and its own leftover temporary
+# manifest and workflow files, and no other file. On Windows it also makes and
+# deletes its own probe file. It moves the old pack into .ravintio-backup/
+# with a plain rename, which moves a nested link or junction as a link and
+# follows none. Every step skips work that is already
 # done, so a rerun is safe. A run stopped after any step resumes on the next run.
 #
 # The .sh twin prints the same text and exits with the same codes:
@@ -48,6 +50,10 @@ $SetupTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'win
 # Use them with -cmatch, so case folding can't widen a range.
 $NameRe = '^[A-Za-z0-9][A-Za-z0-9._-]*\z'
 $TmpRe = '^\.ravintio-manifest\.[A-Za-z0-9]{6}\z'
+$WfTmpRe = '^\.ravintio\.yml\.[A-Za-z0-9]{6}\z'
+# A last part whose base, before the first dot, matches this in upper case is
+# a Windows device name.
+$DeviceRe = '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\z'
 $OnWindows = ($env:OS -eq 'Windows_NT')
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -65,9 +71,11 @@ $Root = (Get-Location).ProviderPath
 $script:Moved = @()
 $script:Changed = $false
 
-# Get-Full REL: a string join, not Combine, so a rooted part in REL can't
-# replace the project root.
+# Get-Full REL: a rooted REL, such as the git output in step 6, as is. Else a
+# string join, not Combine, so a rooted part inside REL can't replace the
+# project root. Callers never pass raw manifest text.
 function Get-Full([string]$Rel) {
+    if ([System.IO.Path]::IsPathRooted($Rel)) { return $Rel }
     $sep = [string][System.IO.Path]::DirectorySeparatorChar
     if ($Root.EndsWith($sep)) { return $Root + $Rel }
     return $Root + $sep + $Rel
@@ -258,7 +266,10 @@ function Test-SamePath([string]$A, [string]$B) {
 # helper keeps it, else an empty string. It keeps an entry whose parent
 # resolves to the real skills folder and whose last part matches NameRe and
 # does not end in a dot. So a last part never holds a separator, a drive
-# colon, a space, or a wildcard.
+# colon, a space, or a wildcard. It drops an entry that starts with \\ or //
+# before any lookup or probe, so no share host is ever reached. It also drops
+# a last part whose base, before the first dot, is a Windows device name in
+# any case.
 #
 # On Windows, two paths to one folder can differ as text, for example an 8.3
 # short name against the long name. So there a parent also counts when the
@@ -267,6 +278,7 @@ function Test-SamePath([string]$A, [string]$B) {
 # reads \ as a separator and the .sh twin does not, so the text compare alone
 # keeps both twins alike.
 function Get-KeptName([string]$Entry, [string]$RealSkills, [string]$Probe) {
+    if ($Entry.StartsWith('\\', [System.StringComparison]::Ordinal) -or $Entry.StartsWith('//', [System.StringComparison]::Ordinal)) { return '' }
     $idx = $Entry.LastIndexOf('/')
     if ($OnWindows) { $idx = [Math]::Max($idx, $Entry.LastIndexOf('\')) }
     if ($idx -lt 0) {
@@ -279,6 +291,7 @@ function Get-KeptName([string]$Entry, [string]$RealSkills, [string]$Probe) {
         if ($parent.EndsWith(':')) { $parent = $parent + '\' }
     }
     if ((-not ($last -cmatch $NameRe)) -or $last.EndsWith('.')) { return '' }
+    if ($last.Split([char]'.')[0].ToUpperInvariant() -cmatch $DeviceRe) { return '' }
     $real = Get-RealPath $parent
     if (($real -ne '') -and (Test-SamePath $real $RealSkills)) { return $last }
     if ($OnWindows -and ($Probe -ne '')) {
@@ -312,11 +325,12 @@ function Remove-Probe([string]$Dir, [string]$Name) {
     try { [System.IO.File]::Delete((Get-Full ($Dir + '/' + $Name))) } catch { }
 }
 
-# Remove-TempFiles DIR: remove each regular file in DIR whose name matches
-# TmpRe, which a stopped run of this helper can leave. Any other name stays.
-function Remove-TempFiles([string]$Dir) {
+# Remove-TempFiles DIR RE STEP: remove each regular file in DIR whose name
+# matches RE, which a stopped run of this helper can leave. Any other name
+# stays.
+function Remove-TempFiles([string]$Dir, [string]$Re, [string]$Step) {
     [string[]]$names = @(Get-ChildItem -LiteralPath (Get-Full $Dir) -Force -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -cmatch $TmpRe } | ForEach-Object { $_.Name })
+        Where-Object { $_.Name -cmatch $Re } | ForEach-Object { $_.Name })
     # Sort by byte order, as the .sh twin does, so both print the same lines.
     [System.Array]::Sort($names, [System.StringComparer]::Ordinal)
     foreach ($f in $names) {
@@ -325,9 +339,9 @@ function Remove-TempFiles([string]$Dir) {
         try {
             [System.IO.File]::Delete((Get-Full $rel))
         } catch {
-            Stop-At '5' "could not remove $rel."
+            Stop-At $Step "could not remove $rel."
         }
-        Write-Host "Step 5: removed the leftover temporary file $rel."
+        Write-Host "Step ${Step}: removed the leftover temporary file $rel."
         $script:Changed = $true
     }
 }
@@ -482,6 +496,7 @@ Invoke-Hook '3'
 if ($WfParentLink -ne '') {
     Write-Host "WARNING: $WfParentLink is a symlink. Skipped step 4, so nothing is written through it."
 } else {
+    if (Test-Dir $WfDir) { Remove-TempFiles $WfDir $WfTmpRe '4' }
     if (Test-File $OldWf) {
         Move-Entry $OldWf $NewWf '4'
         Write-Host "Step 4: renamed $OldWf to $NewWf."
@@ -498,24 +513,34 @@ if ($WfParentLink -ne '') {
             Write-Host "Step 4: skipped the rewrite, $NewWf holds no pack-owned old name."
         } else {
             # Write to a temporary file in the same folder, then rename it
-            # over the target.
+            # over the target. The finally block removes the temporary file
+            # when the write fails or the run is stopped.
             $tmpRel = $WfDir + '/.ravintio.yml.' + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
             $tmpFull = Get-Full $tmpRel
+            $made = $false
+            $fs = $null
             try {
-                $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
-                $buf = $Bytes1.GetBytes($newText)
-                $fs.Write($buf, 0, $buf.Length)
-                $fs.Close()
-            } catch {
-                Stop-At '4' "could not rewrite $NewWf. The temporary file $tmpRel is left for you to check."
-            }
-            # PowerShell turns $null into an empty string for a .NET string
-            # argument, and File.Replace rejects an empty backup path. NullString
-            # passes a real null, so no backup file is made.
-            try {
-                [System.IO.File]::Replace($tmpFull, $wfFull, [System.Management.Automation.Language.NullString]::Value)
-            } catch {
-                Stop-At '4' "could not replace $NewWf. The temporary file $tmpRel is left for you to check."
+                try {
+                    $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+                    $made = $true
+                    $buf = $Bytes1.GetBytes($newText)
+                    $fs.Write($buf, 0, $buf.Length)
+                    $fs.Close()
+                } catch {
+                    if ($fs) { $fs.Dispose() }
+                    Stop-At '4' "could not rewrite $NewWf."
+                }
+                # PowerShell turns $null into an empty string for a .NET string
+                # argument, and File.Replace rejects an empty backup path.
+                # NullString passes a real null, so no backup file is made.
+                try {
+                    [System.IO.File]::Replace($tmpFull, $wfFull, [System.Management.Automation.Language.NullString]::Value)
+                    $made = $false
+                } catch {
+                    Stop-At '4' "could not replace $NewWf."
+                }
+            } finally {
+                if ($made) { [System.IO.File]::Delete($tmpFull) }
             }
             Write-Host "Step 4: rewrote the pack path and pack-owned names in $NewWf."
             $script:Changed = $true
@@ -563,7 +588,7 @@ foreach ($t in $ToolDirs) {
     Rename-Marker ($t + '/' + $OldFlags) ($t + '/' + $NewFlags)
     $skillsRel = $t + '/skills'
     if (-not (Test-Dir $skillsRel)) { continue }
-    Remove-TempFiles $skillsRel
+    Remove-TempFiles $skillsRel $TmpRe '5'
     $manRel = $skillsRel + '/' + $NewManifest
     Rename-Marker ($skillsRel + '/' + $OldManifest) $manRel
     if (-not (Test-File $manRel)) { continue }

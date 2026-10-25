@@ -11,7 +11,7 @@
 
 Framework version 0.37.0 (feature `0000039-ravintio-rebrand`) renames the pack to RAVINTIO. The pack folder, the overrides folder, the skills, the workflow, and the environment variables all take the new name. Setup handles the skills and the installed files. Setup doesn't move the old folders, so this migration does.
 
-The helper backs up and never deletes (ADR-005). It moves the old pack to `.ravintio-backup/` with a plain rename. The only file it removes is the session marker.
+The helper backs up and never deletes (ADR-005). It moves the old pack to `.ravintio-backup/` with a plain rename. It removes the session marker and its own leftover temporary manifest and workflow files, and no other file. On Windows, the `.ps1` helper also makes and removes its own probe file.
 
 This source repo and a fresh consumer hold none of the three folders on the **Applies when** line. The migrator records `not applicable` for them. A consumer that ran the helper by hand still holds the backup, so the condition stays true. The migrator then runs a helper rerun as a check pass and records `applied`.
 
@@ -53,13 +53,16 @@ The helper runs these steps in order. Each step skips work that is already done,
    - each pack-owned variable name in the list below, as a whole name.
 
    A name that follows `secrets.` or `vars.` keeps its old prefix, even when it matches a pack-owned name. It names a consumer secret or variable. A name that is not on the list also keeps its old prefix.
+
+   It rewrites the workflow through a temporary file in the same folder, and removes that file when a write fails. Before the rename, it removes any regular file in `.github/workflows/` left by a stopped run whose name matches `^\.ravintio\.yml\.[A-Za-z0-9]{6}$`. It leaves every other name.
 5. Removes the `.claude/` session marker. Then it renames the markers in each tool folder: `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode`.
    - It renames `.planifest-setup-flags` to `.ravintio-setup-flags`. The content stays the same.
    - It renames `skills/.planifest-manifest` to `skills/.ravintio-manifest`.
    - It renames each `planifest-X` skill folder the manifest lists to `ravintio-X`.
    - It rewrites the manifest through a temporary file in the same folder. Each kept entry becomes the real skills folder joined with its name.
-   - It drops an entry whose parent is not the real skills folder. It also drops one whose last part doesn't match `^[A-Za-z0-9][A-Za-z0-9._-]*$` or ends in `.`. It prints a `WARNING:` line for each dropped entry and never touches its target.
+   - It drops an entry whose parent is not the real skills folder. It also drops one whose last part doesn't match `^[A-Za-z0-9][A-Za-z0-9._-]*$` or ends in `.`. It drops a last part whose base before the first `.` is a Windows device name in any case: `CON`, `PRN`, `AUX`, `NUL`, `COM1` to `COM9`, or `LPT1` to `LPT9`. It drops an entry that starts with `\\` or `//` before any path lookup. It prints a `WARNING:` line for each dropped entry and never touches its target.
    - It removes its temporary manifest when a write fails. Before it reads each manifest, it removes any regular file left by a stopped run whose name matches `^\.ravintio-manifest\.[A-Za-z0-9]{6}$`. It leaves every other name.
+   - On Windows, the `.ps1` helper makes an empty probe file in the real skills folder, with a random name that matches the same pattern. A parent counts as the skills folder when the probe shows through it. The helper removes the probe when it finishes with the manifest.
 
    It uses `git mv` when git tracks a marker or a skill folder. If the tool folder, its `skills` folder, or a marker file is a symbolic link, it skips that tool folder with a warning.
 6. Stops git tracking of the old pack, then moves it to `.ravintio-backup/planifest-framework/`. It adds `.ravintio-backup/` to `.git/info/exclude` once.

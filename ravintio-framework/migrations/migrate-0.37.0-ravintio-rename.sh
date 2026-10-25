@@ -4,9 +4,11 @@
 # before you run ravintio-framework/setup.sh. The project root may sit below
 # the git top level.
 #
-# The helper deletes no file except the one session marker. It moves the old
-# pack into .ravintio-backup/ with a plain rename, which moves a nested link as
-# a link and follows none. Every step skips work that is already done, so a
+# The helper deletes the session marker and its own leftover temporary
+# manifest and workflow files, and no other file. On Windows the .ps1 twin
+# also deletes its own probe file. It moves the old pack into
+# .ravintio-backup/ with a plain rename, which moves a nested link as a link
+# and follows none. Every step skips work that is already done, so a
 # rerun is safe. A run stopped after any step resumes on the next run.
 #
 # The .ps1 twin prints the same text and exits with the same codes:
@@ -45,6 +47,7 @@ NEW_MANIFEST=".ravintio-manifest"
 ALNUM="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 NAME_RE="^[$ALNUM][$ALNUM._-]*\$"
 TMP_RE="^\\.ravintio-manifest\\.[$ALNUM]{6}\$"
+WF_TMP_RE="^\\.ravintio\\.yml\\.[$ALNUM]{6}\$"
 # Step 7 prints a saved tool only when setup accepts it.
 SETUP_TOOLS="claude-code cursor codex antigravity copilot windsurf cline roo-code opencode"
 
@@ -165,29 +168,37 @@ real_dir() {
 # the helper keeps it. It keeps an entry whose parent resolves to the real
 # skills folder and whose last part matches NAME_RE and does not end in a dot.
 # So a last part never holds a separator, a drive colon, a space, or a
-# wildcard.
+# wildcard. It drops an entry that starts with \\ or // before any lookup, so
+# no share host is ever reached. It also drops a last part whose base, before
+# the first dot, is a Windows device name in any case.
 kept_name() {
     local parent last="${1##*/}"
+    case "$1" in '\\'* | //*) return 0 ;; esac
     case "$1" in
         */*) parent="${1%/*}"; [ -z "$parent" ] && parent="/" ;;
         *) parent="." ;;
     esac
     [[ "$last" =~ $NAME_RE ]] || return 0
     case "$last" in *.) return 0 ;; esac
+    case "${last%%.*}" in
+        [Cc][Oo][Nn] | [Pp][Rr][Nn] | [Aa][Uu][Xx] | [Nn][Uu][Ll] | \
+        [Cc][Oo][Mm][123456789] | [Ll][Pp][Tt][123456789]) return 0 ;;
+    esac
     if [ "$(real_dir "$parent")" = "$2" ]; then printf '%s' "$last"; fi
     return 0
 }
 
-# remove_temp_files DIR: remove each regular file in DIR whose name matches
-# TMP_RE, which a stopped run of this helper can leave. Any other name stays.
+# remove_temp_files DIR PREFIX RE STEP: remove each regular file in DIR whose
+# name starts with PREFIX and matches RE, which a stopped run of this helper
+# can leave. Any other name stays.
 remove_temp_files() {
     local f names
-    names="$(for f in "$1"/.ravintio-manifest.*; do printf '%s\n' "${f##*/}"; done | LC_ALL=C sort)"
+    names="$(for f in "$1/$2"*; do printf '%s\n' "${f##*/}"; done | LC_ALL=C sort)"
     while IFS= read -r f; do
-        [[ "$f" =~ $TMP_RE ]] || continue
+        [[ "$f" =~ $3 ]] || continue
         if [ -L "$1/$f" ] || [ ! -f "$1/$f" ]; then continue; fi
-        rm -f -- "$1/$f" || stop_at 5 "could not remove $1/$f."
-        echo "Step 5: removed the leftover temporary file $1/$f."
+        rm -f -- "$1/$f" || stop_at "$4" "could not remove $1/$f."
+        echo "Step $4: removed the leftover temporary file $1/$f."
         CHANGED=1
     done <<< "$names"
 }
@@ -338,6 +349,9 @@ hook 3
 if [ -n "$WF_PARENT_LINK" ]; then
     echo "WARNING: $WF_PARENT_LINK is a symlink. Skipped step 4, so nothing is written through it."
 else
+    if [ -d "$WF_DIR" ]; then
+        remove_temp_files "$WF_DIR" ".ravintio.yml." "$WF_TMP_RE" 4
+    fi
     if [ -f "$OLD_WF" ]; then
         move_path "$OLD_WF" "$NEW_WF" 4
         echo "Step 4: renamed $OLD_WF to $NEW_WF."
@@ -351,11 +365,14 @@ else
             echo "Step 4: skipped the rewrite, $NEW_WF holds no pack-owned old name."
         else
             # Write to a temporary file in the same folder, then rename it
-            # over the target.
+            # over the target. The helper removes the temporary file when the
+            # write fails or the run is stopped.
             TMP="$(mktemp "$WF_DIR/.ravintio.yml.XXXXXX")" || stop_at 4 "could not create a temporary file in $WF_DIR/."
-            rewrite_names "$NEW_WF" > "$TMP" || stop_at 4 "could not rewrite $NEW_WF. The temporary file $TMP is left for you to check."
+            trap 'rm -f -- "$TMP"; exit 1' INT TERM
+            rewrite_names "$NEW_WF" > "$TMP" || { rm -f -- "$TMP"; stop_at 4 "could not rewrite $NEW_WF."; }
             chmod 644 "$TMP"
-            mv -f "$TMP" "$NEW_WF" || stop_at 4 "could not replace $NEW_WF. The temporary file $TMP is left for you to check."
+            mv -f "$TMP" "$NEW_WF" || { rm -f -- "$TMP"; stop_at 4 "could not replace $NEW_WF."; }
+            trap - INT TERM
             echo "Step 4: rewrote the pack path and pack-owned names in $NEW_WF."
             CHANGED=1
         fi
@@ -398,7 +415,7 @@ for t in $TOOL_DIRS; do
     # The flags file keeps its content.
     rename_marker "$t/$OLD_FLAGS" "$t/$NEW_FLAGS"
     if [ ! -d "$t/skills" ]; then continue; fi
-    remove_temp_files "$t/skills"
+    remove_temp_files "$t/skills" ".ravintio-manifest." "$TMP_RE" 5
     rename_marker "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST"
     MANIFEST="$t/skills/$NEW_MANIFEST"
     if [ ! -f "$MANIFEST" ]; then continue; fi
