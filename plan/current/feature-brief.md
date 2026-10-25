@@ -87,7 +87,23 @@ Unchanged: Bash, PowerShell 5.1 and 7, and Node (`.mjs`) scripts. Bash test suit
 
 ## Scenario Paths
 
-Empty. The Scope Lock Challenge derives them.
+The human on the loop accepted these four at the P0 Scope Lock Challenge on 2026-10-25.
+
+**Happy path:**
+
+> In this repo, the scripted pass renames everything. The brand guard finds no stray name, and every CI leg passes. A consumer on 0.36.0 runs the migration, then setup. The consumer ends on 0.37.0 with the old pack in `.ravintio-backup/`. The human on the loop merges, then the repo rename runs.
+
+**First-run path:**
+
+> A fresh consumer install gets the RAVINTIO pack directly, with no migration and no backup. In this repo, the first setup run after the rename replaces the `planifest-*` skill copies and rewires the hooks. The "Applies when" check skips the migration here.
+
+**Error / sad path:**
+
+> The most likely failure is a consumer left half moved. The helper stops at the failed step and names it. It reports what already moved and deletes nothing. A re-run finishes the move.
+
+**Cross-session continuity:**
+
+> Only uncommitted work is at risk. This run resumes from the branch and `plan/current/`. The rename and the setup re-run land in one commit, so a resumed session sees either all old names or all new ones. An interrupted consumer migration re-runs safely.
 
 ## Acceptance Criteria
 

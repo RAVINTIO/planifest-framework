@@ -95,6 +95,8 @@ Decision (P1): backlog IDs 0000246 to 0000255 go to the P1 drafting subagents, o
 Deviation (P1, unclassified): split req-002 into req-008. req-002 keeps setup state, and req-008 takes the names the hooks and setup emit. Both trace to US-001. design.md Skill Map gains a REQ-008 row.
 Deviation (P1, unclassified): split req-006 into req-009. req-006 keeps the helper behaviour, and req-009 takes migrator ordering, the old-path mapping for shipped migration bodies, and `Applies when:` support. Both trace to US-002. design.md Skill Map gains a REQ-009 row.
 Decision (P1): req-006 keeps four criteria / reason: the drafter's split step moved the second concern to req-009, and the four that remain are one helper's behaviour.
+Decision (P1): critic iteration 1 rejected with one critical, nine major, and four minor findings. A spec revision agent fixes the requirement, risk, and scope files. The orchestrator fixes design.md, execution-plan.md NFR-003, and the brief's Scenario Paths / reason: each file has one owner during the loop.
+Decision (P1): the two split lines stay `unclassified` until the pre-P7 deviation review / reason: the maker never classifies its own deviation (autonomous-run standards).
 Decision (P1): no new component manifest at P1. The pack manifest id changes in the req-001 pass, and its version and contract change at P6 / reason: both components already exist, and the feature adds none.
 Decision (P1): no OpenAPI spec, operational model, SLO definitions, or cost model / reason: the feature adds no API, no deployed service, and no spend.
 Decision (P1): `src/setup-hook-integration/component.yml` keeps its id and name / reason: neither carries the old name, so the design's "component.yml ids" applies only to the pack manifest.
