@@ -22,6 +22,8 @@ const HOOKS_DIR = dirname(PLUGIN_DIR); // ravintio-framework/hooks/
 
 function getSessionId(cwd: string): string {
   if (process.env.RAVINTIO_SESSION_ID) return process.env.RAVINTIO_SESSION_ID;
+  // Old name kept through 0.x, removed at 1.0.0 (ADR-004).
+  if (process.env.PLANIFEST_SESSION_ID) return process.env.PLANIFEST_SESSION_ID;
   try {
     const sessionFile = join(cwd, ".claude", ".ravintio-session");
     if (existsSync(sessionFile)) return readFileSync(sessionFile, "utf-8").trim();

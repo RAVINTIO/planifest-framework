@@ -31,7 +31,7 @@ WORKFLOW="$ROOT/.github/workflows/ravintio.yml"
 # AC1: inventory command
 # ---------------------------------------------------------------------------
 
-INVENTORY="$(git -C "$ROOT" grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-req-006*' | sort -u)"
+INVENTORY="$(git -C "$ROOT" grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-*' | sort -u)"
 
 EXPECTED_NAMES="PLANIFEST_SESSION_ID
 PLANIFEST_TELEMETRY
