@@ -1,9 +1,9 @@
 ---
-title: "Backlog Entry: 0000276 - harness attribution slips past the AI attribution rule"
+title: "Backlog Entry: 0000276 - remove AI attribution from commits, docs, and PRs, enforced by hooks"
 summary: "A discovered-but-out-of-scope item deferred for pickup at a future P0."
 status: "open"
 ---
-# Backlog Entry: 0000276 - harness attribution slips past the AI attribution rule
+# Backlog Entry: 0000276 - remove AI attribution from commits, docs, and PRs, enforced by hooks
 
 **Source feature:** 0000039-ravintio-rebrand
 **Source phase:** P9
@@ -31,13 +31,30 @@ The rule has these gaps:
 - Nothing checks PR descriptions. The ship skill omits its own footer but doesn't strip a footer the harness adds.
 - `CLAUDE.md` and `commit-standards.md` §3 name commit messages only. Neither says the rule overrides a harness instruction or covers PR text.
 
+- No hook checks files. An agent can write attribution into a doc, a README, or a code comment, and nothing stops it.
+
 ## Suggested Action
 
-1. Extend `commit-msg` to block `Claude-Session:` trailers and `claude.ai/code/session` links.
-2. Extend the generated `CLAUDE.md` rule and `commit-standards.md` §3 to cover PR titles and descriptions. State that the rule overrides any tool or harness attribution instruction.
-3. Add a ship-agent step that checks the PR body for attribution before `gh pr create` and `gh pr edit`.
-4. Consider documenting the Claude Code `attribution` setting in `.claude/settings.json`, so setup can turn the harness text off at source.
+Run this as a Feature Pipeline: remove AI attribution from commits, docs, and PRs, and enforce the rule with hooks. The human on the loop asked for hook enforcement on 2026-10-25.
+
+The feature would cover these surfaces:
+
+| Surface | Enforcement |
+|---------|-------------|
+| Commit messages | Extend `commit-msg` to block `Claude-Session:` trailers, `claude.ai/code/session` links, and `Generated with [Claude Code]` footers. |
+| Files (docs, READMEs, comments) | Add a `pre-commit` check on staged files, and a PreToolUse Write and Edit check so the agent sees the block before it writes. |
+| PR titles and bodies | Add a PreToolUse Bash check that blocks `gh pr create`, `gh pr edit`, and `gh api` PR writes whose title or body holds attribution. |
+| PRs edited outside the agent | Add a CI job on `pull_request` that fails when the PR title or body holds attribution. GitHub builds the squash-merge message from them, so this also guards `main`. |
+| Source of the text | Have setup write the Claude Code `attribution` setting (`{"commit": "", "pr": ""}`) into `.claude/settings.json`, so the harness stops asking for it. |
+
+Points to settle at P0:
+
+- Keep one shared pattern list that every hook and the CI job read, so the surfaces can't drift apart.
+- Decide the allowlist. Some files must name the patterns, such as `commit-standards.md`, the hooks, their tests, and this entry. History under `plan/_archive/` and `plan/changelog/` stays as written.
+- Cover the other supported tools, not only Claude Code, where each one adds its own attribution.
+- Extend the generated `CLAUDE.md` rule and `commit-standards.md` §3 to cover files and PRs. State that the rule overrides any tool or harness instruction.
+- Decide whether to clean the existing text out of merged PRs #66 and #61's squash commit. Rewriting `main` history needs the human on the loop.
 
 ## Why Deferred
 
-Out of scope for 0000039, which renames the framework. The fix touches an enforcement hook, so it needs the Change or Feature Pipeline rather than Fast Path.
+Out of scope for 0000039, which renames the framework. The fix changes enforcement hooks and setup, so it needs the Feature Pipeline rather than Fast Path.
