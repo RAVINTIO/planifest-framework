@@ -24,6 +24,8 @@ The `shell-write-guard` hook blocks a shell write only where `gate-write` would 
 
 It happened again in 0000039 P1. The critic revision agent edited nine `plan/current/` files with a Python one-liner while the design-critic ratchet was active. The orchestrator checked the diff and found no criterion line removed, but no hook ran.
 
+It happened once more in 0000039 P5. The third security re-review agent changed one cited line number in `plan/current/security-rereview-markers.md` with `sed -i`, then used Edit for the rest. It reported the slip itself. No ratchet loop was active, so no check was skipped, but the guard let the write through.
+
 ## Suggested Action
 
 Make the shell guard block appends and interpreter writes to `plan/current/` artifacts while a ratchet loop is active. Or run the ratchet check over the diff at commit time, so a Bash edit can't skip it.
