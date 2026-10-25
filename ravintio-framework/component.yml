@@ -75,7 +75,7 @@ responsibilities:
   - "Run the suite on Windows under Git Bash in seven shards with a fix-or-skip rule, and test setup.ps1 under Windows PowerShell 5.1 (0000037-ADR-012, ADR-013, ADR-014)"
   - "Name the product RAVINTIO Framework in every live path, identifier, variable, marker, and prose line: the pack folder ravintio-framework/, ravintio-overrides/, the ravintio-* skills, RAVINTIO_* variables, and the [RAVINTIO] log prefix (0000039-ADR-002)"
   - "Move a 0.36.0 consumer repo to the RAVINTIO pack with migration migrate-0.37.0-ravintio-rename and its .sh and .ps1 helpers, which back up the old pack to .ravintio-backup/ and never delete it. Setup stops while the old pack or old overrides folder exists (0000039-ADR-005, ADR-006)"
-  - "Keep the old-name reads listed in 0000039-ADR-004 through 0.x, removed at 1.0.0: the old session ID variable in the OpenCode adapter, the old boot-file markers and ignore-file headers, and the old setup flags and manifest marker files (0000039-ADR-003)"
+  - "Keep the old-name reads listed in 0000039-ADR-004 through 0.x, removed at 1.0.0: the old session ID variable in the OpenCode adapter, and the old boot-file markers and ignore-file headers. Setup reads neither old setup marker file and stops while one exists, because the migration helper renames both (0000039-ADR-003, ADR-004)"
   - "Fail a test when a tracked live file brings back the old name, with a path-and-line allowlist whose stale entries also fail, while history under plan/_archive/, plan/changelog/, and plan/_migrations/ stays as written (0000039-ADR-007, ADR-009)"
   - "Own the consumer marker files .ravintio-session, .ravintio-manifest, and .ravintio-setup-flags, which consumer repos read and never write (0000039-ADR-010)"
 
@@ -168,7 +168,8 @@ scope:
     - ".github/workflows/ravintio.yml Windows Git Bash shards and setup-powershell-51 job, repository-only (0000037)"
     - "The rename to ravintio-framework/, ravintio-overrides/, ravintio-* skills, RAVINTIO_* variables, and the [RAVINTIO] log prefix, applied in one scripted pass (0000039-ADR-002, ADR-008)"
     - "migrations/migrate-0.37.0-ravintio-rename.md with its .sh and .ps1 helpers, and the setup stop while the old pack or overrides folder exists (0000039-ADR-005, ADR-006)"
-    - "Old-name reads through 0.x, removed at 1.0.0: the old session ID variable, old boot-file markers and ignore-file headers, and the old setup flags and manifest marker files (0000039-ADR-003, ADR-004)"
+    - "Old-name reads through 0.x, removed at 1.0.0: the old session ID variable, and old boot-file markers and ignore-file headers (0000039-ADR-003, ADR-004)"
+    - "The setup stop while a tool folder holds the old setup flags or manifest file, and the helper step that renames both in eight tool folders and rewrites the manifest entries (0000039-ADR-004, ADR-005)"
     - "The brand guard suite tests/test-0000039-req-007-brand-guard.sh with its path-and-line allowlist, and the other 0000039 suites test-0000039-req-001 to req-010 (0000039-ADR-007)"
     - "Version 0.37.0 in product.yml, this manifest, and docs/about.md (0000039-ADR-003)"
   outOfScope:
@@ -204,7 +205,7 @@ quality:
     - "ratchet-check cannot verify who wrote .ratchet-approve (ADR-004 same-changeset detection not implemented in 0.16.0); marker forgery is audit-detected via ratchet-log.md and P8, not prevented"
     - "product-version.mjs parses only the constrained product.template.yml shape, not arbitrary YAML"
     - "The brand guard reads git ls-files minus the history paths and plan/current/, so an untracked file with the old name passes until it is added. Each allowlist entry needs a path regex, a line regex, and a reason (0000039-ADR-007)"
-    - "The migration helpers leave the old setup flags and manifest files in place for setup to read once and remove. A hand-run helper leaves .ravintio-backup/, so the migrator records applied and not not-applicable (0000039-ADR-006)"
+    - "The migration helpers rename the old setup flags and manifest files in place, and drop any manifest entry whose name fails the strict allowlist, with a warning. A hand-run helper leaves .ravintio-backup/, so the migrator records applied and not not-applicable (0000039-ADR-006)"
     - "The em dash guard only matches the Write and Edit tools and only inspects paths that resolve under 5 relative prefixes, so a write made through Bash, or through an absolute path outside cwd, is not inspected at all. This is a style rule with a deliberately narrow reach, not an authorisation control (0000028-req-006)"
 
 pipeline:

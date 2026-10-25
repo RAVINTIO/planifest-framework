@@ -76,10 +76,11 @@ Version 0.37.0 renames the pack to `ravintio-framework/`, the overrides folder t
 
 - Setup stops with exit 1 while the old pack folder or the old overrides folder exists. The message names `migrate-0.37.0-ravintio-rename`.
 - Setup replaces the old boot-file instruction markers and the old ignore-file headers with the RAVINTIO forms.
-- Setup reads the old setup flags file and the old manifest file once, then removes them. It prunes the old skill folders from the skills folder.
+- Setup reads neither the old setup flags file nor the old manifest file. It stops with exit 1 while either exists in a tool folder, writes nothing, and names `migrate-0.37.0-ravintio-rename`. The tool folders are `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode`.
+- `setup.sh` writes each manifest entry as a real path, as `setup.ps1` does.
 - The OpenCode adapter reads `RAVINTIO_SESSION_ID` first and the old session ID variable only when the new one is unset.
 
-Each of these reads is removed at 1.0.0. The helpers `migrate-0.37.0-ravintio-rename.sh` and `.ps1` behave the same, move the old pack into `.ravintio-backup/`, and delete no pack file (0000039-ADR-005).
+Each old-name read is removed at 1.0.0. The migration helpers rename the old setup flags and manifest files to the `.ravintio-*` names, with the flags content unchanged. They rename the old skill folders the manifest lists and rewrite its entries. They keep only entries whose name passes a strict allowlist and whose parent is the real skills folder. The helpers `migrate-0.37.0-ravintio-rename.sh` and `.ps1` behave the same, move the old pack into `.ravintio-backup/`, and delete no pack file (0000039-ADR-005).
 
 ## Breaking Change Policy
 
