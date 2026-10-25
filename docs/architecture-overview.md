@@ -161,6 +161,7 @@ Feature 0000037 changed the platform matrix (ADR-012, ADR-013, and ADR-014 of th
 - Windows PowerShell 5.1 is a supported runtime for `setup.ps1`, tested by `setup-powershell-51`.
 - The suite runs on Windows under Git Bash. `run-tests.sh` reads `RAVINTIO_SHARD_INDEX` and `RAVINTIO_SHARD_COUNT`, so the Windows leg runs in seven shards.
 - Each Windows shard has `timeout-minutes: 20`. Every other job keeps 10.
+- Feature 0000039 gives the Linux and macOS legs of `test-suite` 15 minutes. The macOS leg passed every suite but ran past 10 minutes once the migration helper suite grew. No ADR records this change. The 0000031 and 0000037 CI checks expect the new value.
 - A suite check that can't run on Windows prints `SKIP (windows): {reason}` and has a row in the skip table in `ravintio-framework/tests/README.md`.
 
 A red check doesn't block a merge until branch protection marks it as required. Only the human on the loop can change that setting.
@@ -471,7 +472,7 @@ The migrator maps old pack, overrides, and skill names to the new ones when it r
 
 ### Old-name reads
 
-Through the 0.x line, the pack still reads the old session ID variable, the old boot-file markers, and the old setup flags and manifest files (0000039-ADR-004). Setup reads each marker once, writes the `.ravintio-*` form, and removes the old file. The old session marker is not read. Version 1.0.0 removes every old-name read (0000039-ADR-003). The `ravintio-framework` component owns the new marker files (0000039-ADR-010).
+Through the 0.x line, the pack still reads the old session ID variable and the old boot-file markers and ignore-file headers (0000039-ADR-004). Setup replaces each old block with the RAVINTIO form. Setup reads neither the old setup flags file nor the old manifest file. The migration helper renames both in each of the eight tool folders, with the flags content unchanged. It also renames each old skill folder the manifest lists and rewrites the entries. It keeps an entry only when its name passes a strict allowlist and its parent is the real skills folder (0000039-ADR-005). The helper's next-step message prints the setup command with the saved flags. Setup stops while either old marker file exists, and names the migration. `setup.sh` writes real manifest paths, as `setup.ps1` does. The old session marker is not read. Version 1.0.0 removes every old-name read (0000039-ADR-003). The `ravintio-framework` component owns the new marker files (0000039-ADR-010).
 
 ### Brand guard
 
