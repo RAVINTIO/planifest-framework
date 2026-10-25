@@ -93,6 +93,8 @@ Skills inbox (P1): absent, nothing to take in.
 Decision (P1): one stream, no stream state files / reason: every requirement depends on the one scripted rename pass, so no two stories pass the dependency test.
 Decision (P1): backlog IDs 0000246 to 0000255 go to the P1 drafting subagents, one each / reason: PR #70 spent IDs up to 0000245.
 Deviation (P1, unclassified): split req-002 into req-008. req-002 keeps setup state, and req-008 takes the names the hooks and setup emit. Both trace to US-001. design.md Skill Map gains a REQ-008 row.
+Deviation (P1, unclassified): split req-006 into req-009. req-006 keeps the helper behaviour, and req-009 takes migrator ordering, the old-path mapping for shipped migration bodies, and `Applies when:` support. Both trace to US-002. design.md Skill Map gains a REQ-009 row.
+Decision (P1): req-006 keeps four criteria / reason: the drafter's split step moved the second concern to req-009, and the four that remain are one helper's behaviour.
 Decision (P1): `src/setup-hook-integration/component.yml` keeps its id and name / reason: neither carries the old name, so the design's "component.yml ids" applies only to the pack manifest.
 Decision (P1): the pack folder after the rename is `ravintio-framework/`, and the brand guard lives at `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh` / reason: the design's rename map fixes the folder name.
 Decision (P1): the two `test-0000030` telemetry-absence suites keep `PLANIFEST_TELEMETRY*` / reason: they model a stale consumer, so they must check the old name.
