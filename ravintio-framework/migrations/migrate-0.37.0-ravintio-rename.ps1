@@ -245,8 +245,11 @@ if ($WfParentLink -ne '') {
             } catch {
                 Stop-At '4' "could not rewrite $NewWf. The temporary file $tmpRel is left for you to check."
             }
+            # PowerShell turns $null into an empty string for a .NET string
+            # argument, and File.Replace rejects an empty backup path. NullString
+            # passes a real null, so no backup file is made.
             try {
-                [System.IO.File]::Replace($tmpFull, $wfFull, $null)
+                [System.IO.File]::Replace($tmpFull, $wfFull, [System.Management.Automation.Language.NullString]::Value)
             } catch {
                 Stop-At '4' "could not replace $NewWf. The temporary file $tmpRel is left for you to check."
             }

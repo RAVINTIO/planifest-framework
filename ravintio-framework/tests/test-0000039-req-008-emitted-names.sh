@@ -21,10 +21,18 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO="$(cd "$FRAMEWORK/.." && pwd)"
-RULES="$FRAMEWORK/hooks/enforcement/path-rules.mjs"
 GUARD="$FRAMEWORK/hooks/enforcement/em-dash-guard.mjs"
 
-TMP="$(mktemp -d)"
+# Git Bash gives /d/a/x, which node reads as C:\d\a\x inside an -e program or
+# a JSON payload. pwd -W gives the Windows form, which both bash and node read.
+# The import uses a file URL built from that form.
+RULES_NODE="$(cd "$FRAMEWORK/hooks/enforcement" && { pwd -W 2>/dev/null || pwd; })/path-rules.mjs"
+case "$RULES_NODE" in
+  /*) RULES="file://$RULES_NODE" ;;
+  *)  RULES="file:///$RULES_NODE" ;;
+esac
+
+TMP="$(cd "$(mktemp -d)" && { pwd -W 2>/dev/null || pwd; })"
 trap 'rm -rf "$TMP"' EXIT
 
 yes_no() {
@@ -56,7 +64,8 @@ mkdir -p "$P1/src/app/sub/planifest-framework"
 OUT="$(cd "$P1/src/app/sub" && node --input-type=module -e "
   import * as p from '$RULES';
   import { realpathSync } from 'node:fs';
-  console.log(p.resolveRoot(process.cwd()) === realpathSync('$P1') ? 'top' : 'nested');
+  const r = p.resolveRoot(process.cwd());
+  console.log(r !== null && realpathSync(r) === realpathSync('$P1') ? 'top' : 'nested');
 " 2>&1)"
 assert_equals "top" "$OUT" "req-008 AC1: the old marker folder does not mark a root"
 

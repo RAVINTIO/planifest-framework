@@ -91,11 +91,21 @@ snapshot() {
 
 exists() { [ -e "$1" ] || [ -L "$1" ] && echo yes || echo no; }
 
+# LINKS_OK: yes when ln -s makes a real link here. Git Bash on Windows copies
+# the target instead, so the link cases (h) to (k) print SKIP there.
+LINKS_OK=no
+mkdir -p "$WS/link-probe-target"
+if ln -s "$WS/link-probe-target" "$WS/link-probe" 2>/dev/null && [ -L "$WS/link-probe" ]; then
+  LINKS_OK=yes
+fi
+
 # run_helper DIR [ENV=VAL...]: run the helper for the current KIND from DIR.
+# pwsh on Windows ends each line with CRLF, so the ps1 branch drops the CR.
+# pipefail keeps the helper's exit code.
 run_helper() {
   local d="$1"; shift
   if [ "$KIND" = ps1 ]; then
-    ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" pwsh -NoProfile -NonInteractive -File "$PS_HELPER" 2>&1 )
+    ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" pwsh -NoProfile -NonInteractive -File "$PS_HELPER" 2>&1 | tr -d '\r' )
   else
     ( cd "$d" && env GIT_CEILING_DIRECTORIES="$WS" "$@" bash "$SH_HELPER" 2>&1 )
   fi
@@ -196,8 +206,11 @@ run_suite() {
   assert_equals "0" "$CODE" "$T: staged pack deletion does not stop the run"
   assert_equals "yes" "$(exists "$R/.ravintio-backup/$OLDPACK/file.md")" "$T: staged deletion run still backs up the pack"
 
+  local name wf kind TARGET OUTSIDE parent REAL REAL_BEFORE
+  if [ "$LINKS_OK" != yes ]; then
+    echo "  SKIP: $T (h) to (k): ln -s makes no real link on this platform (Git Bash on Windows copies the target)"
+  else
   echo "=== $T (h) link refusals leave link and target alone ==="
-  local name wf kind TARGET
   for name in "$OLDPACK" "$OLDOVR" "ravintio-overrides" ".ravintio-backup"; do
     R=$(make_repo "$KIND-link-$name")
     TARGET="$WS/target-$KIND-$name"
@@ -232,7 +245,7 @@ run_suite() {
 
   echo "=== $T (i) a nested link in the old pack moves as a link ==="
   R=$(make_repo "$KIND-nested")
-  local OUTSIDE="$WS/outside-$KIND"
+  OUTSIDE="$WS/outside-$KIND"
   mkdir -p "$OUTSIDE"; echo "keep" > "$OUTSIDE/keep.txt"
   ln -s "$OUTSIDE" "$R/$OLDPACK/nested"
   OUT=$(run_helper "$R"); CODE=$?
@@ -241,7 +254,6 @@ run_suite() {
   assert_equals "keep" "$(cat "$OUTSIDE/keep.txt" 2>/dev/null)" "$T: file behind the nested link survives"
 
   echo "=== $T (j) a linked parent folder skips only the step that writes through it ==="
-  local parent REAL REAL_BEFORE
   for parent in ".github" ".github/workflows" ".claude" ".claude/skills"; do
     R=$(make_repo "$KIND-parent-${parent//\//-}")
     REAL="$WS/real-$KIND-${parent//\//-}"
@@ -266,6 +278,7 @@ run_suite() {
   assert_contains "WARNING:" "$OUT" "$T: linked exclude file warns"
   assert_equals "keep" "$(cat "$WS/exclude-target-$KIND")" "$T: exclude target untouched"
   assert_equals "yes" "$(exists "$R/.ravintio-backup/$OLDPACK/file.md")" "$T: linked exclude file still backs up the pack"
+  fi
 
   echo "=== $T (l) a project below its git top level migrates ==="
   R=$(make_repo "$KIND-inner")
