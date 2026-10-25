@@ -62,6 +62,18 @@ A record with no matching migration file is ignored. It never makes a migration 
 
 Read the migration file. Output a one-paragraph summary: what it scans for, what it changes, which directories it covers.
 
+### Order and old paths
+
+Run migrations in file-name order. `migrate-0.37.0-ravintio-rename.md` sorts before the older migrations, so the pack copy and the rename come first.
+
+A migration shipped before 0.37.0 names `planifest-framework/` paths. Its body stays byte-identical. When you run one, apply this mapping to every path you read or write, and never to the migration file:
+
+- Read `planifest-framework/` as `ravintio-framework/`.
+- Read `planifest-overrides/` as `ravintio-overrides/`.
+- Read a `planifest-` skill name as the `ravintio-` name.
+
+Never read inside `.ravintio-backup/`. It holds the old pack, and it isn't a live pack. You may check that the folder exists, and nothing more.
+
 ### Step 1b: Target check
 
 Read the `**Target:**` line near the top of the migration file. If the file has no such line, go to Step 2.
@@ -70,7 +82,24 @@ Read the `**Target:**` line near the top of the migration file. If the file has 
 2. If the line names only a downstream project and this project is the framework source, skip Steps 2 to 4. Don't run the Migrator Instructions.
 3. Record the outcome `not applicable` with both counts at `0` (Step 5). The body says that this project is the framework source.
 
-In every other case, go to Step 2.
+In every other case, go to Step 1c.
+
+### Step 1c: Applies-when check
+
+Read the `**Applies when:**` line near the top of the migration file. If the file has no such line, go to Step 2.
+
+1. Evaluate the condition against this project.
+2. If it is false, skip Steps 2 to 4, report `Skipped:` with the reason, and record `not applicable` with both counts at `0` (Step 5).
+
+If the condition is true, go to Step 2.
+
+### Check pass for the rename migration
+
+`migrate-0.37.0-ravintio-rename.md` runs as a check pass in a consumer repo. The human on the loop has already run the helper by hand, so there is nothing to move. Do this instead of Steps 2 to 4:
+
+1. Confirm the old `planifest-framework/` and `planifest-overrides/` folders are gone.
+2. Run the helper again and confirm it changes nothing.
+3. The check pass records `applied` with both counts at `0` (Step 5).
 
 ### Step 2: Scan
 

@@ -67,6 +67,7 @@ On every session start, before taking any action:
    - A record can't be read when the frontmatter is missing or doesn't parse. It also can't be read when `migration` isn't `{stem}.md`, `outcome` isn't one of the three values, or `date` isn't `YYYY-MM-DD`.
    - If a record can't be read, this step names the record file and treats the migration as pending. It ignores a record with no matching migration file.
    - Invoke the `ravintio-migrator` skill for each pending migration in file-name order, before any other phase work. Migrations take priority.
+   - If the migrator skips a migration because its `**Applies when:**` condition is false, report each skipped migration with its reason. Never skip one silently.
    - This step reads records and never writes them. The migrator owns `plan/_migrations/` and states the full record format.
 
 1a. **Detect a `ravintio-framework/` dependency update** (ADR-002): before any other phase work, check for a version mismatch between the installed `ravintio-framework/component.yml` version and the previously recorded value, or the arrival of framework files declaring a version newer than what this repo last ran a pipeline against. Full detection signal and confirmation gate: `ravintio-framework/standards/framework-update-policy.md`.
