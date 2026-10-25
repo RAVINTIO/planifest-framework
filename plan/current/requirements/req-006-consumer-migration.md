@@ -23,7 +23,7 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
   2. Check every stop condition before the first move. A stop condition is any of these:
      - `planifest-overrides/` and `ravintio-overrides/` both exist.
      - `.github/workflows/ravintio.yml` exists while `planifest.yml` also exists.
-     - `.ravintio-backup/planifest-framework` exists.
+     - `.ravintio-backup/planifest-framework` exists while `planifest-framework/` (the old pack) also still exists in place. If the old pack is already gone and the backup exists, the move is complete. The rerun skips step 6 and exits 0.
      - git holds a staged edit under `planifest-framework/` that differs from both `HEAD` and the working file. Run `git diff --cached --quiet -- planifest-framework` and print a clear message.
      - `planifest-framework`, `planifest-overrides`, `ravintio-overrides`, `.ravintio-backup`, or either workflow file is a symbolic link or a junction, dangling or not.
   3. Move `planifest-overrides/` to `ravintio-overrides/`. Use `git mv` when git tracks the folder.
@@ -41,7 +41,9 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
   - Detect a link or junction with `Get-Item -Force` and the `ReparsePoint` attribute, not with a command that PowerShell 5.1 lacks.
   - Use only syntax that both versions parse. CI parses the file on both.
 - The migration file declares `**Applies when:**` `planifest-framework/` or `planifest-overrides/` exists at the project root. This source repo holds neither folder after the rename, so it skips the migration. How the migrator reads that field belongs to req-009.
-- Split step: this requirement holds the helper's behaviour. The order in which the migrator runs older migrations around this one is a separate concern, so req-009 carries it.
+- The migration body lists every renamed variable, using the req-003 inventory. Step 4 rewrites only the names on that list.
+- A helper stopped after any single step resumes on rerun. It skips the done steps, completes the rest, and ends in the same state as an uninterrupted run.
+- Split step: keep. The criteria cover one helper's behaviour in two shells. The migrator ordering concern already went to req-009.
 - Ship one test per helper. Each covers the clean run and a rerun, each stop condition, each link refusal, each parent-link skip, a project below its git top level, and a consumer secret that keeps its `PLANIFEST_` name.
 
 ## Acceptance Criteria
@@ -49,6 +51,7 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
 - [ ] A rerun changes nothing and exits 0. Each stop condition (no `ravintio-framework/`, both override folders, an existing `ravintio.yml` beside `planifest.yml`, an existing backup, a staged pack edit) exits non-zero before any move. Verified by: integration
 - [ ] A link or junction at `planifest-framework`, `planifest-overrides`, `ravintio-overrides`, or `.ravintio-backup`, or at either workflow file, makes the helper refuse and leave the link and its target untouched. Verified by: integration
 - [ ] The `.ps1` helper parses and gives the same output and exit codes as the `.sh` helper on Windows PowerShell 5.1 and PowerShell 7. Verified by: integration
+- [ ] A helper stopped after any single step, then rerun, completes the remaining steps and ends in the same state as an uninterrupted run. Verified by: integration
 
 ## Dependencies
 - req-001 (pack-paths-and-identifiers) provides the `ravintio-framework/` folder and the renamed `ravintio-migrator` skill.

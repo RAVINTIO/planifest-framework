@@ -34,6 +34,17 @@ As a human on the loop, I get a failing test when a live file brings back the ol
   - The `planifest-docs` sibling links.
   - The `C:\d\planifest\framework\` path in the refresh script.
   - This suite and its regression copy, which must name the word to match it.
+- The closed list also holds these entries, which other requirements rely on. Each carries a path regex, a line regex, and the reason shown:
+  - req-003: `ravintio-framework/tests/test-0000030-req-003-telemetry-pipeline-text-removal.sh` and `ravintio-framework/tests/test-0000030-req-004-install-clean-up-and-retired-flags.sh`, lines matching `PLANIFEST_TELEMETRY`. Reason: they simulate a consumer who holds the retired name.
+  - req-003: the OpenCode adapter `index.ts` and its test, lines matching `PLANIFEST_SESSION_ID`. Reason: the legacy fallback.
+  - req-004: the mojibake lines in the `setup.sh` heredoc that cannot change without touching their bytes. Reason: byte-identical rule.
+  - req-004: `planifest-docs` link lines in `README.md` and `docs/`. Reason: sibling repo.
+  - req-005: the protected needles in `ravintio-framework/tests/test-0000036-req-001*`. Reason: they test split names.
+  - req-005: the history-reading suites that name `plan/_archive/` or `plan/changelog/` paths. Reason: they read history.
+  - req-006: `ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.*` and `ravintio-framework/tests/test-0000039-req-006*`. Reason: the helpers name the old pack.
+  - req-002 and req-008: setup lines and test fixtures that plant `.planifest-*` markers, old boot-file markers, and old ignore-file headers. Reason: old-name detection through 0.x.
+  - req-009: migrator lines that map `planifest-framework/` to `ravintio-framework/`. Reason: the old-path mapping.
+  - Live backlog entries that quote the old name, namely 0000237 and entries filed during this feature. Reason: they describe the rename.
 - Fail the suite when an allowlist entry matches no line or path. A stale entry must not stay.
 - Add a second case. Plant the old name in a scratch copy of `README.md` and expect the check to flag it with the file and line number.
 - Read lines with `done <<< "$(...)"` and skip empty lines. Never use `done < <(...)`, because macOS Bash 3.2 drops lines from that form.

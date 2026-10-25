@@ -13,8 +13,6 @@ version: "0.1.0"
 
 ## User Story
 
-> One requirement doc = one user story.
-
 As a human on the loop, I see RAVINTIO names in every hook message, log line, and generated boot file, so that the pack matches the RAVINTIO org.
 
 ## Functional Requirements
@@ -30,7 +28,6 @@ As a human on the loop, I see RAVINTIO names in every hook message, log line, an
 - [ ] `path-rules.mjs` tests pass with `ravintio-framework` as the root marker, `.ravintio-session` always permitted, and the `@ravintio` and `ravintio.yml` enforcement paths. The gate-write and presence messages name `ravintio-orchestrator` and start with `[RAVINTIO]`. Verified by: unit
 - [ ] After `setup.sh claude-code` runs on a fixture, `core.hooksPath` equals `ravintio-framework/hooks` and the OpenCode plugin sits under `@ravintio`. Setup output holds no `[Planifest]` text. Verified by: integration
 - [ ] The generated `CLAUDE.md` and the boot files for the other tools hold no `planifest-framework/` path. Each sanctioned script in Hard Limit 8 exists under `ravintio-framework/`, and the workflow name reads `RAVINTIO Strict Pipeline`. Verified by: integration
-  - Verified by: integration - the generated boot-file text is checked against paths on disk in the fixture.
 
 ## Dependencies
 - req-001-pack-paths-and-identifiers renames the files and folders that these names point to.

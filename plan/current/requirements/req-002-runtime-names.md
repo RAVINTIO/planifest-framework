@@ -13,8 +13,6 @@ version: "0.1.0"
 
 ## User Story
 
-> One requirement doc = one user story.
-
 As a human on the loop, I re-run setup in a consumer repo and see only RAVINTIO state files and blocks, so that the pack matches the RAVINTIO org and nothing appears twice.
 
 ## Functional Requirements
@@ -24,12 +22,15 @@ As a human on the loop, I re-run setup in a consumer repo and see only RAVINTIO 
 - Setup recognises the old ignore-file headers `# Planifest - Token Reduction` and `# Planifest - Indexing Exclusions`. It replaces each block with the RAVINTIO header. No block appears twice after a re-run.
 - While `planifest-framework/` or `planifest-overrides/` exists, setup stops before it writes anything. The message names the consumer migration `migrate-0.37.0-ravintio-rename`.
 - The old-name reads stay through 0.x and go at 1.0.0 (design decision, 2026-10-25).
+- Split step for the fourth criterion: keep. All four criteria cover setup state. The earlier split, noted below, already moved the emitted names to req-008.
+- A repo with no old pack and no old markers gets only `.ravintio-*` markers and new-form blocks. Setup prints no migration message.
 - Split step: split. This requirement holds the setup state concern. The names that hooks and generated files emit take req-008, also Source US-001.
 
 ## Acceptance Criteria
 - [ ] After setup runs on a fixture with `.planifest-setup-flags` and `.planifest-manifest`, only the `.ravintio-*` files remain. The new flags marker holds the old flags, the old installed skill folders are gone, and no `.planifest-*` marker is left. Verified by: integration
 - [ ] After setup runs twice on a fixture with the old boot-file markers and the old ignore-file headers, each block appears exactly once, in the RAVINTIO form. The suites pass under Bash 3.2 and Bash 5. Verified by: integration
 - [ ] When `planifest-framework/` or `planifest-overrides/` exists, `setup.sh` and `setup.ps1` exit non-zero, write nothing, and name `migrate-0.37.0-ravintio-rename` in the message. Verified by: integration
+- [ ] Setup on a repo with no old pack and no old markers writes only `.ravintio-*` markers and new-form blocks, and prints no migration message. Verified by: integration
 
 ## Dependencies
 - req-001-pack-paths-and-identifiers renames the setup scripts and skill folders that this requirement edits.

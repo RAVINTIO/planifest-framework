@@ -13,8 +13,6 @@ version: "0.1.0"
 
 ## User Story
 
-> One requirement doc = one user story.
-
 As the human on the loop, I rename every `PLANIFEST_*` variable to `RAVINTIO_*`, so that no environment variable carries the old brand.
 
 ## Functional Requirements
@@ -26,6 +24,7 @@ As the human on the loop, I rename every `PLANIFEST_*` variable to `RAVINTIO_*`,
   - OpenCode adapter: `PLANIFEST_SESSION_ID`.
   - Retired telemetry names, in tests only: `PLANIFEST_TELEMETRY`, `PLANIFEST_TELEMETRY_URL`.
   - `PLANIFEST_SHARD` is a prefix match inside prose or a glob. Rename it with the shard pair.
+- The exact inventory command is `git grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-req-006*' | sort -u`. The exclusions cover history paths, shipped migration bodies, `plan/_migrations/`, `plan/current/`, backlog `_reference/` documents, and the req-006 helper files and their tests. The helpers name the pack-owned variables they rewrite in a consumer workflow.
 - Re-run the inventory command at P3 and rename any name that appears since P1.
 - `PLANIFEST_SESSION_ID` is the only name with a legacy fallback. The OpenCode adapter in `planifest-framework/hooks/adapters/opencode/index.ts` (renamed by req-001) reads `RAVINTIO_SESSION_ID` first. It reads `PLANIFEST_SESSION_ID` only when `RAVINTIO_SESSION_ID` is unset. It prints no warning. 1.0.0 removes the fallback.
 - No other variable gets a fallback, because only the pack sets them.

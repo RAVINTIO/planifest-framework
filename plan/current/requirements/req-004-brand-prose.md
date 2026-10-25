@@ -38,11 +38,14 @@ As a human on the loop, I read "RAVINTIO Framework" in every doc, skill, templat
 - Path tokens inside those lines, such as `planifest-framework/`, belong to req-001. This requirement covers the brand word only.
 - Split step: keep. The prose and its links are one concern, because both come from the same replace rules and the same guard check.
 - `docs/about.md` shows 0.37.0 after ship.
+- The heredoc range in req-005 governs. It runs from line 811 to 958 and writes `plan/feature-structure.md`. Line 1322 also holds a banner bar. Lines 788 and 957 are stale links outside the mojibake lines. The 788 to 957 range in AC3 reads as that range.
+- `product.yml` and `ravintio-framework/component.yml` carry version 0.37.0 after P6, and `docs/about.md` shows it after ship.
 
 ## Acceptance Criteria
 - [ ] After the pass, no brand-word "Planifest" remains in prose outside history, `_reference/` documents, vendored text, and the allowlist. The brand guard from req-007 passes. Verified by: integration
 - [ ] `git grep -n 'github.com/planifest'` lists only `planifest-docs` links and allowlisted history. Every repo link points to `github.com/RAVINTIO/ravintio-framework`. Verified by: integration
 - [ ] A diff of the `setup.sh` heredoc, lines 788 to 957, changes only brand words, and every mojibake byte matches the previous commit. `docs/about.md` shows 0.37.0 after ship. Verified by: execution
+- [ ] `product.yml` and `ravintio-framework/component.yml` read version 0.37.0 after P6. Verified by: integration
 
 ## Dependencies
 - req-001 (pack-paths-and-identifiers) provides the renamed paths that links and layout text refer to.

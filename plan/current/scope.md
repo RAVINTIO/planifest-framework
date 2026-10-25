@@ -24,6 +24,7 @@ version: "0.1.0"
 - Hook wiring tests in `setup-hook-integration` with updated path references. Maps to req-002-runtime-names (US-001).
 - The scripted bulk rename in P3. One pass uses `git mv` and a replace that skips the protected list. The script lives in the scratchpad and never in the repo. Follow-up fixes use Edit. Maps to req-001-pack-paths-and-identifiers (US-001), with the protected list owned by req-005-history-and-split-name-protection.
 - The 0.37.0 minor version bump, with old-name reads kept through 0.x. Maps to req-006-consumer-migration (US-002).
+- Clarification: the 0.37.0 version bump maps to req-004-brand-prose (US-001), which checks `product.yml`, `ravintio-framework/component.yml`, and `docs/about.md`. The line above that points at req-006 is superseded.
 
 ## Out of Scope
 
@@ -34,7 +35,7 @@ version: "0.1.0"
 - Historical review documents under `plan/backlog/*/_reference/`. They stay as written, with brand-guard allowlist entries.
 - Old feature ids, ADR ids, backlog ids, and sibling repo names. They stay as written.
 - A major version bump. Backlog 0000237 proposed one, and the human on the loop set a minor bump on 2026-10-25.
-- Every other backlog entry.
+- Every other backlog entry. Live backlog entries change only their brand words, and the pipeline picks up no backlog entry besides 0000237.
 
 ## Deferred
 
