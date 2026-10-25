@@ -25,8 +25,8 @@ status: "active"
 ### Iteration 1 (2026-10-25T02:40:00Z)
 - **Approach:** 1
 - **Action:** Fresh-context critic runs the mechanical check and the rubric over req-001 to req-009, the execution plan, scope, risk register, and glossary.
-- **Observation:** pending
-- **Decision:** pending
+- **Observation:** Mechanical check exit 0, with a criteria-count warning on req-006. One critical finding (req-006 backup stop breaks the rerun), nine major, and four minor. The first write of the verdict failed on the em-dash guard, and the critic rewrote it. Verdict in `plan/current/critic-verdict-1.md`.
+- **Decision:** continue: REJECT. A spec revision agent fixes the findings, and a fresh critic re-reviews at iteration 2.
 
 ---
 
