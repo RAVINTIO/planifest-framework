@@ -161,5 +161,6 @@ Progress: P2 done at 2026-10-25T02:39:39Z: ten ADRs, critic approved on iteratio
 Capability skills (P3): none apply. The stack is unchanged shell, PowerShell, and Node.
 Decision (P3): three stages, per the execution plan. Stage 1 runs the req-001, req-005, and req-007 test-writers and the rename-script author in one batch. Stage 2 is the scripted pass. Stage 3 runs the remaining TDD tracks / reason: every later requirement edits files the pass renames.
 Decision (P3): req-002 and req-008 share one track / reason: both edit `setup.sh` and `setup.ps1`, so parallel tracks would collide.
+Deviation (P3, unclassified): design.md gains a `## Component Paths` section ahead of `## Scope`. It lists the old and new pack and override folders, `src/setup-hook-integration/`, `.github/workflows/`, `.claude/skills/`, `docs/`, and four root files. gate-write blocked the first two test-writers, because it read path-like lines from the Scope section instead.
 Decision (P3): new 0000039 test files use post-pass names, and the pass skips their content / reason: the tests must name old strings on purpose, and a bulk replace would rewrite them.
 

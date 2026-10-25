@@ -70,6 +70,20 @@
   5. Every follow-up fix uses **Edit**.
 - Before the pass: P1 lists every split or built name, every history-reading suite, and the `setup.sh` mojibake lines. Each one gets a test or a protected-list entry.
 
+## Component Paths
+- `planifest-framework/`
+- `ravintio-framework/`
+- `planifest-overrides/`
+- `ravintio-overrides/`
+- `src/setup-hook-integration/`
+- `.github/workflows/`
+- `.claude/skills/`
+- `docs/`
+- `./product.yml`
+- `./README.md`
+- `./refresh-planifest-framework-dir.ps1`
+- `./refresh-ravintio-framework-dir.ps1`
+
 ## Scope
 - In:
   - the rename map above, across every live file and path
