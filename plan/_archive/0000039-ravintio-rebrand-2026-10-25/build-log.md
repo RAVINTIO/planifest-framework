@@ -411,4 +411,11 @@ Decision (P9): run `gh pr ready 71` / reason: every `Exception waiting` line in 
 Credential scan (P9): PR text clean (regex only)
 PR update (P9): `gh pr edit 71` set the final title and body, and `gh pr ready 71` marked it ready for review. The PR text folder is removed. The changelog already names the PR URL.
 Clean-tree check (P9 Step 10b): one leftover, this build log, committed as close-out leftovers and pushed.
+CI checks (P9): 4 failed: Test suite (ubuntu-latest), Test suite (macos-latest), Test suite (windows-latest, shard 1 of 7), Test suite (windows-latest, shard 3 of 7). Run 40197746564 at 3962ab5b. The other 9 checks passed.
+Root cause (P9): the P7 promotion put a copy of the brand guard at `ravintio-framework/tests/regression/test-0000039-req-007-brand-guard.sh`. The copy names the retired telemetry variable. `test-0000039-req-003-environment-variables.sh` and `test-0000030-req-001-002-removed-files-and-residue.sh` skip `tests/test-0000039-*` but not the regression copy, so both now fail. The P7 local run missed it, because both suites read `git ls-files` or `git grep` and the copy was not yet tracked.
+Fix attempt 1 (P9): blocked. Edit of both suites to skip `tests/regression/test-0000039-*` was refused by `gate-write`: "No confirmed design at plan/current/design.md. Complete Phase 0 first." P7 archived the design, so P9 can't write to `ravintio-framework/`. The ship agent wrote no Fast Path scope record, because only the orchestrator opens a track. No fix commit landed.
+Exception waiting (P9, 6): CI red on 4 test jobs after the P7 regression promotion, and the write gate blocks the P9 fix. Choose a track to add the two skip lines, or to undo the promotion. Then rerun CI and push the tag.
+Decision (P9): `gh pr ready --undo 71` returns the PR to draft / reason: CI is red, and the PR must not show as ready.
+Decision (P9): hold the `v0.37.0` tag locally at dd71693a, unpushed / reason: the fix will move the head, and a pushed tag never moves.
+Progress: P9 blocked at 2026-10-25T13:43:01Z: CI 4 failed
 
