@@ -168,12 +168,15 @@ real_dir() {
 # the helper keeps it. It keeps an entry whose parent resolves to the real
 # skills folder and whose last part matches NAME_RE and does not end in a dot.
 # So a last part never holds a separator, a drive colon, a space, or a
-# wildcard. It drops an entry that starts with \\ or // before any lookup, so
-# no share host is ever reached. It also drops a last part whose base, before
-# the first dot, is a Windows device name in any case.
+# wildcard. Before any lookup, it drops an entry whose first two characters
+# are both / or \ in any mix, or that starts with \??\. Windows reads each of
+# these as a share or device path, so no share host is ever reached. It also
+# drops a last part whose base, before the first dot, is a Windows device
+# name in any case.
 kept_name() {
     local parent last="${1##*/}"
-    case "$1" in '\\'* | //*) return 0 ;; esac
+    case "${1:0:2}" in '//' | '\\' | '\/' | '/\') return 0 ;; esac
+    case "$1" in '\??\'*) return 0 ;; esac
     case "$1" in
         */*) parent="${1%/*}"; [ -z "$parent" ] && parent="/" ;;
         *) parent="." ;;

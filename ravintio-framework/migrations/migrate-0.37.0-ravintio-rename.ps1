@@ -266,10 +266,11 @@ function Test-SamePath([string]$A, [string]$B) {
 # helper keeps it, else an empty string. It keeps an entry whose parent
 # resolves to the real skills folder and whose last part matches NameRe and
 # does not end in a dot. So a last part never holds a separator, a drive
-# colon, a space, or a wildcard. It drops an entry that starts with \\ or //
-# before any lookup or probe, so no share host is ever reached. It also drops
-# a last part whose base, before the first dot, is a Windows device name in
-# any case.
+# colon, a space, or a wildcard. Before any lookup or probe, it drops an
+# entry whose first two characters are both / or \ in any mix, or that starts
+# with \??\. Windows reads each of these as a share or device path, so no
+# share host is ever reached. It also drops a last part whose base, before
+# the first dot, is a Windows device name in any case.
 #
 # On Windows, two paths to one folder can differ as text, for example an 8.3
 # short name against the long name. So there a parent also counts when the
@@ -278,7 +279,8 @@ function Test-SamePath([string]$A, [string]$B) {
 # reads \ as a separator and the .sh twin does not, so the text compare alone
 # keeps both twins alike.
 function Get-KeptName([string]$Entry, [string]$RealSkills, [string]$Probe) {
-    if ($Entry.StartsWith('\\', [System.StringComparison]::Ordinal) -or $Entry.StartsWith('//', [System.StringComparison]::Ordinal)) { return '' }
+    if ($Entry.Length -ge 2 -and '/\'.IndexOf($Entry[0]) -ge 0 -and '/\'.IndexOf($Entry[1]) -ge 0) { return '' }
+    if ($Entry.StartsWith('\??\', [System.StringComparison]::Ordinal)) { return '' }
     $idx = $Entry.LastIndexOf('/')
     if ($OnWindows) { $idx = [Math]::Max($idx, $Entry.LastIndexOf('\')) }
     if ($idx -lt 0) {
