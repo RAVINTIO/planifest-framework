@@ -665,6 +665,121 @@ run_marker_suite() {
   assert_equals "same" "$(cmp -s "$WS/$KIND-mkbogus-flags" "$R/.claude/.ravintio-setup-flags" && echo same || echo differ)" "$T: unknown tool flags file still renamed byte-identical"
 }
 
+# ---------------------------------------------------------------------
+# req-006 AC6 (P5 M-001 to M-004): strict manifest entry names
+# ---------------------------------------------------------------------
+#
+# Both helpers keep a manifest entry only when its parent resolves to the
+# real skills folder and its last part matches NAME_RE and does not end in
+# a dot. Any other entry is dropped with "WARNING: dropped manifest entry
+# {entry as written}", and its target is untouched.
+#
+# M-004 temporary file pattern, pinned from the helper source:
+#   .sh   mktemp "{skills}/.ravintio-manifest.XXXXXX"
+#   .ps1  "{skills}/.ravintio-manifest." plus 6 characters of
+#         GetRandomFileName() with the dot removed
+# So a helper temp file is ".ravintio-manifest." followed by exactly 6
+# letters or digits (TMP_RE). A rerun removes such a file from each skills
+# folder it processes, and leaves any other name alone.
+#
+# M-004 uses a planted leftover rather than a forced failure. The test hook
+# RAVINTIO_MIGRATE_STOP_AFTER fires only after step 5 ends, when the temp
+# file is already renamed. A read-only skills folder makes mktemp fail
+# before any temp file exists. Making the rename itself fail needs chflags
+# or chattr, which differ by platform or need root.
+NAME_RE='^[A-Za-z0-9][A-Za-z0-9._-]*$'
+TMP_RE='^\.ravintio-manifest\.[A-Za-z0-9]{6}$'
+
+run_strict_names_suite() {
+  KIND="$1"
+  local T="[$KIND] req-006 AC6" R OUT CODE sk nsk rs line up last bad n e BEFORE has
+  local NAME="$KIND-mkstrict"
+  local BS='..\..\..\'"$OLD-victim3-$KIND"
+
+  echo "=== $T (P5 M-001) crafted last parts are dropped and their targets survive ==="
+  R=$(make_marker_repo "$NAME")
+  sk="$R/.claude/skills"
+  nsk="$(nat "$sk")"
+  mkdir -p "$WS/$OLD-victim3-$KIND" "$sk/a" "$sk/ravintio_x.y"
+  echo keep > "$WS/$OLD-victim3-$KIND/keep.txt"
+  echo keep > "$sk/a/keep.txt"
+  echo keep > "$R/.claude/keep.txt"
+  echo x > "$sk/ravintio_x.y/SKILL.md"
+  {
+    printf '%s/%s\n' "$nsk" "$BS"
+    printf '%s/%s\n' "$nsk" 'C:'
+    printf '%s/%s\n' "$nsk" '.. '
+    printf '%s/%s\n' "$nsk" '...'
+    printf '%s/%s\n' "$nsk" '*'
+    printf '%s/%s\n' "$nsk" 'a.'
+    printf '%s/%s\n' "$nsk" 'ravintio_x.y'
+  } >> "$sk/.$OLD-manifest"
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T (P5 M-001): run with crafted entries exits 0"
+  assert_contains "WARNING: dropped manifest entry $nsk/$BS"$'\n' "$OUT" "$T (P5 M-001): backslash entry named in a warning"
+  assert_contains "WARNING: dropped manifest entry $nsk/C:"$'\n' "$OUT" "$T (P5 M-002): drive entry C: named in a warning"
+  assert_contains "WARNING: dropped manifest entry $nsk/.. "$'\n' "$OUT" "$T (P5 M-003): entry with a trailing space named in a warning"
+  assert_contains "WARNING: dropped manifest entry $nsk/..."$'\n' "$OUT" "$T (P5 M-003): entry ... named in a warning"
+  assert_contains "WARNING: dropped manifest entry $nsk/*"$'\n' "$OUT" "$T (P5 M-003): wildcard entry named in a warning"
+  assert_contains "WARNING: dropped manifest entry $nsk/a."$'\n' "$OUT" "$T (P5 M-003): entry with a trailing dot named in a warning"
+  has=no; [[ "$OUT" == *"dropped manifest entry $nsk/ravintio_x.y"* ]] && has=yes
+  assert_equals "no" "$has" "$T (P5 M-001): valid name ravintio_x.y is not dropped"
+
+  # No dropped last part appears in the rewritten manifest.
+  bad=""
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    last="${line##*/}"; last="${last##*\\}"
+    for e in "$BS" "${BS##*\\}" 'C:' '.. ' '...' '*' 'a.'; do
+      if [ "$last" = "$e" ]; then bad="$bad [$e]"; fi
+    done
+  done <<< "$(cat "$sk/.ravintio-manifest" 2>/dev/null)"
+  assert_equals "" "$bad" "$T (P5 M-001): no dropped last part appears in .ravintio-manifest"
+  check_manifest "$T (P5 M-001)" "$sk/.ravintio-manifest" "$sk" "ravintio-orchestrator ravintio-spec-agent external-tool ravintio_x.y"
+
+  # Every line is the real skills folder joined with an allowlisted name.
+  rs=$(cd "$sk" 2>/dev/null && pwd -P)
+  bad=0; n=0
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    n=$((n + 1))
+    up=$(upath "$line")
+    last="${up##*/}"
+    if ! [[ "$last" =~ $NAME_RE ]] || [ "${last%.}" != "$last" ]; then bad=$((bad + 1)); continue; fi
+    if [ "$IS_WIN" != yes ] && [ "${line%/*}" != "$rs" ]; then bad=$((bad + 1)); fi
+  done <<< "$(cat "$sk/.ravintio-manifest" 2>/dev/null)"
+  assert_equals "4" "$n" "$T (P5 M-001): .ravintio-manifest holds exactly the four valid entries"
+  assert_equals "0" "$bad" "$T (P5 M-001): every manifest line is the real skills folder joined with an allowlisted name"
+
+  # Each real folder a crafted entry could point to survives.
+  assert_equals "keep" "$(cat "$WS/$OLD-victim3-$KIND/keep.txt" 2>/dev/null)" "$T (P5 M-001): folder the backslash entry points to is untouched"
+  assert_equals "no" "$(exists "$WS/ravintio-victim3-$KIND")" "$T (P5 M-001): folder the backslash entry points to is not renamed"
+  assert_equals "keep" "$(cat "$R/.claude/keep.txt" 2>/dev/null)" "$T (P5 M-003): tool folder the trailing-space entry points to survives"
+  assert_equals "keep" "$(cat "$sk/a/keep.txt" 2>/dev/null)" "$T (P5 M-003): folder a, which a. points to on Windows, survives"
+  assert_equals "e" "$(cat "$sk/external-tool/SKILL.md" 2>/dev/null)" "$T (P5 M-003): folders the wildcard entry matches survive"
+  assert_equals "x" "$(cat "$sk/ravintio_x.y/SKILL.md" 2>/dev/null)" "$T (P5 M-001): valid ravintio_x.y folder kept in place"
+
+  echo "=== $T (P5 M-004) a rerun removes a leftover temporary manifest ==="
+  R=$(make_marker_repo "$KIND-mktmp")
+  sk="$R/.claude/skills"
+  run_helper "$R" >/dev/null
+  # Names that do not match TMP_RE are not helper temp files and must stay.
+  echo mine > "$sk/.ravintio-manifest.mine"
+  echo mine > "$sk/.ravintio-manifest.abc1234"
+  BEFORE=$(snapshot "$R")
+  for e in .ravintio-manifest.Ab12Cd .ravintio-manifest.x9y8z7; do
+    [[ "$e" =~ $TMP_RE ]] || { echo "  FAIL: $T (P5 M-004): fixture $e does not match the temp pattern"; ((FAIL++)) || true; }
+    printf 'stale\n' > "$sk/$e"
+  done
+  printf 'stale\n' > "$R/.opencode/skills/.ravintio-manifest.Q1w2E3"
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T (P5 M-004): rerun with leftover temp files exits 0"
+  assert_equals "no" "$(exists "$sk/.ravintio-manifest.Ab12Cd")" "$T (P5 M-004): .sh-style leftover temp file removed"
+  assert_equals "no" "$(exists "$sk/.ravintio-manifest.x9y8z7")" "$T (P5 M-004): .ps1-style leftover temp file removed"
+  assert_equals "no" "$(exists "$R/.opencode/skills/.ravintio-manifest.Q1w2E3")" "$T (P5 M-004): leftover temp file removed from .opencode/skills"
+  assert_equals "$BEFORE" "$(snapshot "$R")" "$T (P5 M-004): rerun removes only the leftover temp files"
+}
+
 echo "=== req-006: helper files exist ==="
 assert_equals "yes" "$(exists "$SH_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.sh exists"
 assert_equals "yes" "$(exists "$PS_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.ps1 exists"
@@ -674,6 +789,7 @@ if [ -f "$SH_HELPER" ]; then
   run_suite sh
   check_early_stops sh
   run_marker_suite sh
+  run_strict_names_suite sh
 else
   echo "  FAIL: req-006: skipped the .sh cases because the helper is missing"; ((FAIL++)) || true
 fi
@@ -684,6 +800,7 @@ if command -v pwsh >/dev/null 2>&1; then
     run_suite ps1
     check_early_stops ps1
     run_marker_suite ps1
+    run_strict_names_suite ps1
     # (p) parity: same output and exit code for the same scenario.
     for scenario in clean rerun nopack bothoverrides; do
       A=$(make_repo "parity-sh-$scenario"); B=$(make_repo "parity-ps-$scenario")
