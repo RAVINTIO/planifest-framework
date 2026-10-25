@@ -47,7 +47,7 @@ The scripted pass is the step every other requirement waits on, so P3 runs in th
 |----|----------|------------|--------|-------------|
 | NFR-001 | Completeness | No live file or path holds the old name outside the allowlist | 0 unallowlisted hits | brand guard suite (req-007) |
 | NFR-002 | Regression | The full suite passes on every CI leg | 0 failing suites on ubuntu, macOS, the Windows shards, and both PowerShell legs | CI on the PR |
-| NFR-003 | History | Existing history files stay byte-identical | 0 modified, deleted, or renamed files under `plan/_archive/`, `plan/changelog/`, and `plan/_migrations/`. Added files, such as this feature's archive folder, changelog entry, and migration record, don't count. | `git diff --name-status --diff-filter=MDR main...HEAD -- plan/_archive plan/changelog plan/_migrations` prints nothing |
+| NFR-003 | History | Existing history files stay byte-identical | 0 modified, deleted, or renamed files under `plan/_archive/`, `plan/changelog/`, and `plan/_migrations/`. Added files, such as this feature's archive folder, changelog entry, and migration record, don't count. | `git diff --name-status --diff-filter=MDR main...HEAD -- plan/_archive plan/changelog plan/_migrations ':(glob)plan/backlog/*/_reference/**'` prints nothing. Shipped migration bodies move with the pack folder, so req-005's first criterion checks them by content against the pre-pass commit. |
 | NFR-004 | Security | The migration helpers never delete pack files or follow a link | 0 delete calls on the old pack, and every link case refused | req-006 suites and the P5 review |
 
 ## API Summary
