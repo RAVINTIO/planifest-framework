@@ -1187,9 +1187,18 @@ TOML
   fi
 
   # Write manifest listing all installed skill directories (enables safe re-run cleanup)
+  # Each entry uses the real skills folder, as setup.ps1 does. If it can't be resolved, keep the glob path.
   local installed_dirs=()
+  local real_skills_dir
+  real_skills_dir="$(cd -P "$skills_dir" 2>/dev/null && pwd -P)" || real_skills_dir=""
   for dir in "$skills_dir"/*/; do
-    [ -d "$dir" ] && installed_dirs+=("${dir%/}")
+    [ -d "$dir" ] || continue
+    if [ -n "$real_skills_dir" ]; then
+      dir="${dir%/}"
+      installed_dirs+=("$real_skills_dir/${dir##*/}")
+    else
+      installed_dirs+=("${dir%/}")
+    fi
   done
   if [ ${#installed_dirs[@]} -gt 0 ]; then
     printf '%s\n' "${installed_dirs[@]}" > "$manifest"
