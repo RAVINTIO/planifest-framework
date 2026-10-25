@@ -133,3 +133,47 @@ None.
 
 1. Close N-004 on Windows. Drop an entry when its first two characters are both `/` or `\`, or when it starts with `\??\`. Or keep a rooted parent only when `GetPathRoot` returns a drive root such as `C:\`.
 2. Fix backlog 0000255. A guarded prune in both setups would stop any bad manifest line, including one the helper never wrote.
+
+## Third re-review
+
+Reviewer: fresh-context security agent, 2026-10-25. Scope: fix commit 1e950fc4 and its test commit d5931685.
+
+Overall rating for the marker rename work: **Low**. The fix closes N-004 for every share or device form that the entry text can carry. One Low finding remains, N-006. A link inside the project can still point the lookup at a share, and the finding predates the fix. Backlog 0000255 still covers the unguarded prune in both setups.
+
+Method:
+
+- Read `git show` for both commits and the current helper files.
+- Built three scratch projects under `mktemp -d` with one manifest of 15 entries. Ran the `.sh` twin with bash 3.2.57 and the `.ps1` twin with pwsh 7.6.8 on macOS. Nothing ran in the repo.
+- Ran the `.ps1` twin a second time with `OS=Windows_NT`. Wrapper functions logged each `Get-Item` and `Test-Path` path. That run used macOS paths, so it shows what reaches a lookup, not how Windows reads it.
+- Windows, UNC paths, and Windows PowerShell 5.1 were not tested. No Windows host was available.
+
+### Status of N-004
+
+| ID | Status | Evidence |
+|---|---|---|
+| N-004 | Closed | `.ps1:282-283` and `.sh:178-179` now drop an entry when its first two characters are both `/` or `\` in any mix, or when it starts with `\??\`. Both run before the name rule and any lookup. Both twins dropped `\/h1/s/sub/a`, `/\h2\s\sub\b`, `\??\UNC\h3\s\c`, `//h4/s/sub/d`, `\\h5\s\sub\e`, and `\\?\C:\x\j`, each with a `WARNING:` line. The logged run held no `Get-Item` or `Test-Path` call for any of them. Both twins printed the same lines and wrote the same manifest, with only the real skill kept. The guide at `migrate-0.37.0-ravintio-rename.md:63` matches the code. |
+
+### Forms that still reach a lookup
+
+The logged run showed seven other forms that reach `Get-RealPath` and the probe. None of them names a share on Windows, by the documented .NET and Win32 path rules. None was run on Windows.
+
+- **A leading space or tab**, as in ` \\h6\s\sub\f`. `IsPathRooted` is false, so both `Combine` and `Get-Full` join the entry to the project root. Win32 folds the inner `\\` into one separator, so the lookup stays local. On Windows PowerShell 5.1, .NET Framework rejects a tab in a path, and `Combine` throws. `$ErrorActionPreference` is `Continue` (`.ps1:23`), so that entry fails its check and the run goes on.
+- **A share mark later in the text**, as in `x//h12/s/sub/m`, `.\\h13\s\sub\n`, `C:\\h14\s\sub\o`, and `C:/\h15\s\sub\q`. Each path starts at the project root or a drive root. A share prefix counts only at the start of a path.
+- **`/??/UNC/h8/s/h`.** .NET and Win32 read the `\??\` prefix only with backslashes. PowerShell reads a path that starts with one separator as the current drive root, so the probe asks for `C:\??\UNC\h8\s\...`, which is an invalid name. This was not run, so it is not a finding.
+
+### Checks on the fix
+
+- **Correctness.** `'/\'.IndexOf($Entry[0])` takes a `char` in both PowerShell 5.1 and 7. The length check stops an index error on a one-character entry. In bash 3.2, `${1:0:2}` and the quoted `case` patterns match the four pairs as plain text.
+- **Fail-safe drop.** The wider drop can only remove entries. A dropped entry makes setup delete nothing. A project on a share path, such as `\\server\share\proj` or `//server/share/proj` in Git Bash, now loses every manifest entry. The second fix already did that for `\\` and `//`, so the change adds nothing there. Setup then leaves stale skill folders in place, which is not a security issue.
+- **Tests.** `d5931685` adds each new form, plus `\/skills/uncdir2`. That entry resolves to the real skills folder through a link named `\` on macOS, so only the text check can drop it. The case still skips on Windows.
+
+### New findings
+
+| ID | Severity | File:line | Description | Suggested fix |
+|---|---|---|---|---|
+| N-006 | Low | `migrate-0.37.0-ravintio-rename.ps1:238-243`, `:299-305`, `migrate-0.37.0-ravintio-rename.sh:190` | This finding predates the fix. A link inside the project whose target is a share, such as `lnk` pointing to `\\host\share`, still sends the lookup to that host. For the entry `lnk/sub/i`, `Get-RealPath` reads the link target and calls `Get-Item` on `\\host\share\sub`. The probe check then calls `Test-Path` on `{project}\lnk\sub\...`, and Windows follows the link to the host. The `.sh` twin's `cd -P` follows it the same way in Git Bash. Both twins drop the entry afterwards, so nothing is deleted. The risk is the same NTLM leak as N-004. A committed link becomes a real link only when git has `core.symlinks=true` and Windows allows link creation. Other tools that follow links in the project would also reach the host. The logged run reached `Get-Item` and `Test-Path` on `{project}/lnk/sub`. The Windows lookup was not run. | In `Get-RealPath`, return an empty string when a link target's first two characters are both `/` or `\`, or when it starts with `\??\`. Run the probe only when `Get-RealPath` returned a path. In the `.sh` twin, check `readlink` on each part before `cd -P`, or accept the residual risk and record it in the guide. |
+
+### Top actions
+
+1. Fix N-006, or record it as an accepted residual risk in the guide.
+2. Fix backlog 0000255. A guarded prune in both setups would stop any bad manifest line, including one the helper never wrote.
