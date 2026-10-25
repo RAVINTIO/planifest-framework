@@ -16,6 +16,8 @@
 <!-- END retired-integrations (0000030) -->
 - `setup/opencode.sh` registration of the plugin in `opencode.json` through Node
 - `<tool-dir>/.ravintio-setup-flags` marker write on successful install, in parity between `setup.sh` and `setup.ps1` (0000020)
+- The stop while the old pack folder or the old overrides folder exists, and the one-time reads of the old boot-file markers, ignore-file headers, and setup marker files (0000039-ADR-004)
+- The consumer migration `migrate-0.37.0-ravintio-rename` and its `.sh` and `.ps1` helpers, which move the old overrides folder and the old pack and never delete the pack (0000039-ADR-005)
 
 ## Out of Scope
 
@@ -27,6 +29,7 @@
 
 ## Deferred
 
+- The old-name reads, removed at 1.0.0 (0000039-ADR-003, ADR-004). See TD-011.
 - Narrower clean-up that deletes shipped file names only (backlog 0000090)
 - Live PowerShell checks beyond `test_setup.ps1`, such as stale-entry clean-up and retired flags
 - `setup all` stopping at roo-code (backlog 0000087) and the opencode PowerShell null skills folder (backlog 0000088)

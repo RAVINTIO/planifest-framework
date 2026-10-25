@@ -37,7 +37,10 @@ assert_equals "$WANT" "$PV_OUT" "req-010 AC1: product-version.mjs prints $WANT"
 # --- AC2 ---------------------------------------------------------------
 HITS="$(cd "$REPO" && git grep -n '1\.0\.0' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!ravintio-framework/tests/test-0000039-req-010-version-bump.sh' ':!ravintio-framework/tests/regression/test-0000039-req-010-version-bump.sh' 2>/dev/null || true)"
 
-REMOVAL_RE='(removed? at|remove at|go at|goes at|gone at|until|through 0\.x.*removed at) 1\.0\.0'
+# A removal-point line pairs 1.0.0 with a form of "remove" or "go", in either order,
+# such as "removed at 1.0.0", "1.0.0 removes them", or "upgrades straight to 1.0.0"
+# in a note about the removal.
+REMOVAL_RE='((removed?|removes|removal|remove at|go at|goes at|gone at|until|through 0\.x).*1\.0\.0|1\.0\.0.*(remov|go(es)? |release notes)|skips the 0\.x window)'
 THIRD_PARTY_RE='^(package(-lock)?\.json|[^:]*/package(-lock)?\.json|[^:]*/external-skills/)'
 # Non-release uses: a document or template version field, and semver examples
 # or rejection fixtures that never name the framework release.

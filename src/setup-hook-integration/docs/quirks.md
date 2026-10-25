@@ -66,6 +66,10 @@ The `setup.ps1` clean-up, the `-LiteralPath` and reparse-point handling (F2), th
 
 **Resolved in 0000037.** The req-011 section of `test_setup.ps1` seeds a stale hook folder and a stale `settings.json` entry, and passes a retired flag. It then checks the clean-up, the removal notice, the surviving hand-added hook, and the marker. It runs under PowerShell 7 and under Windows PowerShell 5.1 in the `setup-powershell-51` job (0000037-ADR-012). Under 5.1, the test relaxes `$ErrorActionPreference` to `Continue` around the setup call, because 5.1 turns merged native stderr into a terminating error. The `-LiteralPath`, reparse-point, and exclusive temporary file paths stay checked by source text only.
 
+## Q-015: old names stay in live code through 0.x (0000039)
+
+Some live lines still hold the old brand name. Each is an old-name read that ADR-004 or the brand guard allowlist covers. They exist so a consumer repo on 0.36.0 upgrades without duplicate blocks or a lost session ID. The brand guard (`test-0000039-req-007-brand-guard.sh`) fails on any other hit and on a stale allowlist entry. They are removed at 1.0.0. Two reads are not in the ADR-004 list: the old em dash bypass sentinel in `em-dash-guard.mjs` and the old plugin and workflow paths in `FAST_PATH_ENFORCEMENT_PATHS`. See TD-011.
+
 ## Q-014: `Write-SettingsFile` writes UTF-8 without a BOM (0000030)
 
 `Write-SettingsFile` in `setup.ps1` now writes UTF-8 without a byte order mark. Windows PowerShell 5.1 `Set-Content -Encoding UTF8` wrote one. Readers in this repo strip a leading BOM, so files written by older runs still parse.

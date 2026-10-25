@@ -6,7 +6,7 @@ status: "active"
 type: "component-pack"
 domain: "developer-tooling"
 summary: "Core standards, skills, hooks, and setup scripts that enforce the RAVINTIO confirmed-design pipeline."
-systemContext: "Installed into any AI-assisted project via setup.ps1/setup.sh. Provides enforcement hooks, structured standards, and agent skills consumed by Claude Code, Cursor, Windsurf, and GitHub Copilot."
+systemContext: "Installed into any AI-assisted project via setup.ps1/setup.sh. A repo on 0.36.0 or earlier first runs migrate-0.37.0-ravintio-rename. Provides enforcement hooks, structured standards, and agent skills consumed by Claude Code, Cursor, Windsurf, and GitHub Copilot."
 
 responsibilities:
   - "Enforce confirmed-design gate: block writes outside declared component scope"
@@ -73,6 +73,11 @@ responsibilities:
   - "Require a Verified by field on each acceptance criterion and run a requirement-ID scan at P3 (0000037-ADR-007, ADR-008)"
   - "Test the installed hook commands verbatim, compare the re-run-setup migration with the release diff, and lint tests for GNU and BSD differences (0000037-ADR-009, ADR-010, ADR-011)"
   - "Run the suite on Windows under Git Bash in seven shards with a fix-or-skip rule, and test setup.ps1 under Windows PowerShell 5.1 (0000037-ADR-012, ADR-013, ADR-014)"
+  - "Name the product RAVINTIO Framework in every live path, identifier, variable, marker, and prose line: the pack folder ravintio-framework/, ravintio-overrides/, the ravintio-* skills, RAVINTIO_* variables, and the [RAVINTIO] log prefix (0000039-ADR-002)"
+  - "Move a 0.36.0 consumer repo to the RAVINTIO pack with migration migrate-0.37.0-ravintio-rename and its .sh and .ps1 helpers, which back up the old pack to .ravintio-backup/ and never delete it. Setup stops while the old pack or old overrides folder exists (0000039-ADR-005, ADR-006)"
+  - "Keep the old-name reads listed in 0000039-ADR-004 through 0.x, removed at 1.0.0: the old session ID variable in the OpenCode adapter, the old boot-file markers and ignore-file headers, and the old setup flags and manifest marker files (0000039-ADR-003)"
+  - "Fail a test when a tracked live file brings back the old name, with a path-and-line allowlist whose stale entries also fail, while history under plan/_archive/, plan/changelog/, and plan/_migrations/ stays as written (0000039-ADR-007, ADR-009)"
+  - "Own the consumer marker files .ravintio-session, .ravintio-manifest, and .ravintio-setup-flags, which consumer repos read and never write (0000039-ADR-010)"
 
 exceptions:
   - "Does not write to ravintio-overrides/ — that directory is user-owned"
@@ -106,6 +111,12 @@ contract:
     - name: "credential-scan.mjs exit code and stdout (0000037)"
       type: "cli"
       description: "Exit 0 clean, 1 match, 2 could not run. Prints path:line and rule name, never matched text. --safe-paths writes the clean paths to a NUL-separated file."
+    - name: "migrate-0.37.0-ravintio-rename.sh and .ps1 exit code and stdout (0000039)"
+      type: "cli"
+      description: "Run from the consumer project root. Exit 0 on success or when nothing is left to do, non-zero on a stop. A stop names the step and the files already moved. Moves the old overrides folder to ravintio-overrides/, renames the workflow to ravintio.yml, removes the old session marker, and moves the old pack into .ravintio-backup/. Deletes no pack file and refuses links and junctions."
+    - name: "setup.sh and setup.ps1 stop message (0000039)"
+      type: "cli"
+      description: "While the old pack folder or the old overrides folder exists, setup exits 1 and names migrate-0.37.0-ravintio-rename."
   consumedBy: ["claude-code-hooks", "copilot-agent-hooks"]
   consumes: []
   breakingChangePolicy: "requires-adr"
@@ -155,12 +166,19 @@ scope:
     - "GUTD step 5 in ravintio-overrides/instructions/custom-003-git-up-to-date-shorthand.md and the revised post-P6 revalidation in ravintio-docs-agent (0000037)"
     - "tests/run-tests.sh shard selection through RAVINTIO_SHARD_INDEX and RAVINTIO_SHARD_COUNT, the portability lint, and the Windows skip table in tests/README.md (0000037)"
     - ".github/workflows/ravintio.yml Windows Git Bash shards and setup-powershell-51 job, repository-only (0000037)"
+    - "The rename to ravintio-framework/, ravintio-overrides/, ravintio-* skills, RAVINTIO_* variables, and the [RAVINTIO] log prefix, applied in one scripted pass (0000039-ADR-002, ADR-008)"
+    - "migrations/migrate-0.37.0-ravintio-rename.md with its .sh and .ps1 helpers, and the setup stop while the old pack or overrides folder exists (0000039-ADR-005, ADR-006)"
+    - "Old-name reads through 0.x, removed at 1.0.0: the old session ID variable, old boot-file markers and ignore-file headers, and the old setup flags and manifest marker files (0000039-ADR-003, ADR-004)"
+    - "The brand guard suite tests/test-0000039-req-007-brand-guard.sh with its path-and-line allowlist, and the other 0000039 suites test-0000039-req-001 to req-010 (0000039-ADR-007)"
+    - "Version 0.37.0 in product.yml, this manifest, and docs/about.md (0000039-ADR-003)"
   outOfScope:
     - "Application-level code generation (handled by ravintio-codegen-agent)"
     - "CI pipeline configuration for consumer projects"
   deferred:
     - "Windsurf native hook wiring (hooks API not yet stable)"
     - "Roo-Code support (tool sunset 02 May 2026)"
+    - "The old-name reads, removed at 1.0.0"
+    - "gh repo rename ravintio-framework and the origin update, run by the human on the loop after the merge"
 
 risk:
   level: "low"
@@ -169,6 +187,8 @@ risk:
     - "Aggressive skill/instruction trimming can leave technically-complete but ambiguous wording that increases future agent confusion or retries even without losing enforcement content — mitigated by the regression-pack baseline comparison introduced in 0000021"
     - "Only 4 of 22 regression tests pin orchestrator-specific content; a lost rule in an untested area would not fail the pack — mitigated by the P4 diff review named as a second detector in 0000022, resolving identically to a failed test (restore, never rationalise)"
     - "credential-scan.mjs detects and reports only. The stop on a match is skill text that an agent follows, not a hook, and without gitleaks the scan uses the regex rules alone (0000037-ADR-003)"
+    - "Old-name reads stay in live code through 0.x and are removed at 1.0.0. A consumer that skips the 0.x window loses them, and the brand guard allowlist drops each entry when they go (0000039-ADR-004)"
+    - "The consumer migration moves files in a consumer repo. It refuses links and junctions, backs up the old pack and deletes nothing, and a clash stops it before the first move (0000039-ADR-005)"
     - "Windows Git Bash skips some checks (symlinks, NTFS modes, cwd deletion), tracked in backlog 0000208, 0000210, 0000211, and 0000209 records a real enforcement gap on Windows (0000037)"
     - "The em dash guard's bypass sentinel is matched anywhere in the payload, including inside prose that merely quotes it, so any document explaining the rule exempts itself from the rule (0000028-P5 SEC-005)"
 
@@ -183,6 +203,8 @@ quality:
     - "ratchet-check treats a reworded criterion as remove+add and blocks it (conservative); the .ratchet-approve marker is the intended path for legitimate rewording"
     - "ratchet-check cannot verify who wrote .ratchet-approve (ADR-004 same-changeset detection not implemented in 0.16.0); marker forgery is audit-detected via ratchet-log.md and P8, not prevented"
     - "product-version.mjs parses only the constrained product.template.yml shape, not arbitrary YAML"
+    - "The brand guard reads git ls-files minus the history paths and plan/current/, so an untracked file with the old name passes until it is added. Each allowlist entry needs a path regex, a line regex, and a reason (0000039-ADR-007)"
+    - "The migration helpers leave the old setup flags and manifest files in place for setup to read once and remove. A hand-run helper leaves .ravintio-backup/, so the migrator records applied and not not-applicable (0000039-ADR-006)"
     - "The em dash guard only matches the Write and Edit tools and only inspects paths that resolve under 5 relative prefixes, so a write made through Bash, or through an absolute path outside cwd, is not inspected at all. This is a style rule with a deliberately narrow reach, not an authorisation control (0000028-req-006)"
 
 pipeline:
@@ -192,7 +214,7 @@ pipeline:
 
 metadata:
   createdAt: "2026-05-02"
-  updatedAt: "2026-10-24"
+  updatedAt: "2026-10-25"
   # Updated by 0000021 (spec-agent) P1: seeded requirements-derived
   # responsibilities/scope/risk entries for the regression-pack and
   # audit-findings-report/guardrailed-trim process ahead of P3 codegen.
@@ -244,8 +266,13 @@ metadata:
   # credential-scan.mjs with scan-then-commit, GUTD step 5, post-P6
   # revalidation after the commit, the Verified by field and P3 scan, the
   # portability lint, and the Windows Git Bash shards and PowerShell 5.1 job.
+  # Updated by 0000039 (docs-agent) P6: version 0.37.0. Renamed the pack to
+  # ravintio-framework/ and every skill, variable, marker, and log prefix to
+  # RAVINTIO. Added migrate-0.37.0-ravintio-rename with Bash and PowerShell
+  # helpers, the old-name reads kept through 0.x (ADR-004), and the brand
+  # guard suite plus the test-0000039 suites.
   createdBy: "agent"
-  lastModifiedBy: "agent"
-  skill: "ravintio-codegen-agent"
+  lastModifiedBy: "ravintio-docs-agent"
+  skill: "ravintio-docs-agent"
   tool: "claude-code"
   model: "claude-sonnet-5"

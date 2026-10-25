@@ -33,6 +33,8 @@ A single JSON file per repo (not a database table, a local, uncommitted, plain-t
 | `attemptStatus` | string enum: `completed` \| `pending` | no | `completed` | `completed` after a successful `setup.sh`/`setup.ps1` install write (REQ-008); `pending` after the refresh skill's pre-deletion write (REQ-009), until a subsequent `completed` write from a successful re-invocation (REQ-005) supersedes it |
 | `attemptedCommand` | string | yes | none | Present only when `attemptStatus` is `pending` or when the file was last written by the refresh skill; the exact command REQ-009 recorded and REQ-005/REQ-006 use for re-invocation or reporting |
 
+**Old marker files (0000039).** Before 0.37.0 the marker carried the old brand name in its file name. Setup and `ravintio-refresh-setup` read the old file once when the new one is absent. They write `.ravintio-setup-flags` and remove the old file (0000039-ADR-004). Setup owns two other marker files. They are `.ravintio-manifest` and the session marker `.ravintio-session`. Setup reads the old manifest once to prune the old skill copies, then removes it. The migration helper removes the old session marker and leaves the old flags and manifest files for setup. Consumer repos read these files and never write them (0000039-ADR-010).
+
 The marker and `ravintio-overrides/setup-config/{tool}.md` no longer carry a `backendUrl` field (0000030). Setup omits the field and does not write null. A reader must treat an old marker that still holds `backendUrl` as having an unknown extra field and ignore it.
 
 **Indexes:** not applicable, single-file, single-record store, one per repo.

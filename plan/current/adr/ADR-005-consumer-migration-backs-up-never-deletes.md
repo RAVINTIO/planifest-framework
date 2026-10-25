@@ -50,7 +50,7 @@ The helper runs these steps:
 
 The safety rules are:
 
-- The helper never deletes a file. The pack moves with `mv` in Bash and `System.IO.Directory.Move` in PowerShell. A rename moves a nested link as a link and follows none.
+- The helper never deletes the pack or any folder. Its one removal is the old `.planifest-session` marker file, a regular file it checks is not a link first (`rm -f` in Bash, `File.Delete` in PowerShell). The pack moves with `mv` in Bash and `System.IO.Directory.Move` in PowerShell. A rename moves a nested link as a link and follows none.
 - The helper refuses a symbolic link or junction, dangling or not, at the old pack, either overrides folder, `.ravintio-backup`, or either workflow file. It leaves the link and its target untouched.
 - A link at a parent folder skips only the step that writes through it, with a warning.
 - Every step skips work that is already done, so a rerun is safe. A run stopped after any single step resumes and ends in the same state as an uninterrupted run.

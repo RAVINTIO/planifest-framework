@@ -57,3 +57,8 @@ These items covered tests of a hook integration that setup no longer installs.
 **File:** `.github/workflows/ravintio.yml`
 **Status:** Partly resolved in 0000031. CI now runs the suite on Linux and macOS and `test_setup.ps1` under PowerShell 7 on Windows. Stale-entry clean-up and retired flags still have no live PowerShell test, see Q-013.
 **Resolved in 0000037.** The req-011 section of `test_setup.ps1` runs the stale clean-up and a retired flag live under PowerShell 7 and Windows PowerShell 5.1. Backlog 0000203 tracks a remaining byte order mark under 5.1.
+
+## TD-011: old-name reads removed at 1.0.0 (0000039-ADR-003, ADR-004)
+
+**File:** `ravintio-framework/setup.sh`, `ravintio-framework/setup.ps1`, `ravintio-framework/hooks/adapters/opencode/index.ts`, `ravintio-framework/hooks/enforcement/em-dash-guard.mjs`, `ravintio-framework/hooks/enforcement/path-rules.mjs`
+**Status:** Open. Every old-name read and its brand guard allowlist entry is removed at 1.0.0 (backlog 0000261). Also add the em dash sentinel and the old paths in `FAST_PATH_ENFORCEMENT_PATHS` to the ADR-004 list, or remove them.

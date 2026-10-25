@@ -415,7 +415,7 @@ ADR files: [plan/_archive/0000039-ravintio-rebrand-2026-10-25/adr/](../plan/_arc
 | ADR-005 | Consumer migration backs up, never deletes | accepted | `migrate-0.37.0-ravintio-rename.sh` and `.ps1` move the old pack into `.ravintio-backup/` with a plain rename. Setup stops while the old pack or overrides folder exists. |
 | ADR-006 | Migrator old-path mapping and Applies when | accepted | The migrator maps old paths and skill names to the new ones without editing shipped migrations. An `**Applies when:**` line lets it skip a migration and record `not applicable`. |
 | ADR-007 | Brand guard with a path and line allowlist | accepted | `test-0000039-req-007-brand-guard.sh` fails on any match of the old brand name outside history paths unless an allowlist entry matches both path and line. A stale entry fails the suite. |
-| ADR-008 | One scripted rename pass | accepted | A scratchpad script renames paths with `git mv` and then replaces content, once, as a recorded exception to Hard Limit 8. Every follow-up fix uses **Edit**. |
+| ADR-008 | One scripted rename pass | accepted | A scratchpad script renames paths with `git mv` and then replaces content, once, as a recorded exception to the Write-or-Edit rule (boot Hard Limit 8). Every follow-up fix uses **Edit**. |
 | ADR-009 | History stays as written | accepted | Archives, changelogs, migration records, backlog references, shipped migration bodies, and old ids stay byte-identical. Each protected line gets an allowlist entry. |
 | ADR-010 | Pack owns consumer marker files | accepted | `ravintio-framework` owns `.ravintio-session`, `.ravintio-manifest`, `.ravintio-setup-flags`, the boot-file blocks, and the migration records. Consumers never write them by hand. |
 

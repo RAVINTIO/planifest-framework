@@ -70,6 +70,17 @@ A Fast Path scope record never admits a write to a file that wires the hooks (00
 
 If setup gains a new wiring file, add it to that constant and to the `workflows/fast-path.md` prerequisites in the same change. The req-009 suite checks that the two lists match.
 
+## Rename to RAVINTIO and old-name reads (0000039)
+
+Version 0.37.0 renames the pack to `ravintio-framework/`, the overrides folder to `ravintio-overrides/`, and every skill to `ravintio-*`. Setup and hook output use the `[RAVINTIO]` prefix. Setup changes in these ways:
+
+- Setup stops with exit 1 while the old pack folder or the old overrides folder exists. The message names `migrate-0.37.0-ravintio-rename`.
+- Setup replaces the old boot-file instruction markers and the old ignore-file headers with the RAVINTIO forms.
+- Setup reads the old setup flags file and the old manifest file once, then removes them. It prunes the old skill folders from the skills folder.
+- The OpenCode adapter reads `RAVINTIO_SESSION_ID` first and the old session ID variable only when the new one is unset.
+
+Each of these reads is removed at 1.0.0. The helpers `migrate-0.37.0-ravintio-rename.sh` and `.ps1` behave the same, move the old pack into `.ravintio-backup/`, and delete no pack file (0000039-ADR-005).
+
 ## Breaking Change Policy
 
 Changes to `setup.sh` inputs or outputs require a version bump in `component.yml` and a migration note. Consumers: any developer running setup.sh on a RAVINTIO-managed project.
