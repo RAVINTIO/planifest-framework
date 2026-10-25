@@ -16,7 +16,7 @@ version: "0.1.0"
 As a human on the loop, I get a failing test when a live file brings back the old name, so that the rename stays complete.
 
 ## Functional Requirements
-- Add the suite `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh`. It follows the model of RAVINTIO Zero 0000160 req-006 and ADR-004.
+- Add the suite `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh`. It follows the model of RAVINTIO Zero 0000160 req-006 and ADR 004.
 - Read the tracked files from `git ls-files`. Drop these paths before any check:
   - `plan/_archive/`
   - `plan/changelog/`

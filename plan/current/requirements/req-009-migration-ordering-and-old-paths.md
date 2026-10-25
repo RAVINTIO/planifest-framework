@@ -24,7 +24,7 @@ As a human on the loop with a consumer repo on an older version, I get older mig
   - When the migrator runs a migration shipped before 0.37.0, it reads `planifest-framework/` as `ravintio-framework/`, `planifest-overrides/` as `ravintio-overrides/`, and `planifest-` skill names as `ravintio-`. It applies the mapping to paths it reads and writes, never to the shipped file.
   - The migrator never reads `.ravintio-backup/` as a live pack.
 - The migrator runs `migrate-0.37.0-ravintio-rename.md` in a consumer repo as a check pass. The helper has already run, so the pass confirms the old folders are gone, runs the helper again to confirm it does nothing, and records `applied`.
-- The migrator reads the `**Applies when:**` line near the top of a migration. If the condition is false, it skips Steps 2 to 4, reports `Skipped:` with the reason, and records `not applicable` with both counts at `0`. This source repo gets that record at `plan/_migrations/migrate-0.37.0-ravintio-rename.md`, per 0000035 ADR-010.
+- The migrator reads the `**Applies when:**` line near the top of a migration. If the condition is false, it skips Steps 2 to 4, reports `Skipped:` with the reason, and records `not applicable` with both counts at `0`. This source repo gets that record at `plan/_migrations/migrate-0.37.0-ravintio-rename.md`, per 0000035 ADR 010.
 - The orchestrator reports each migration it skips for a false `Applies when:` condition. It does not skip one silently.
 - The migrator's framework source check reads `id: "ravintio-framework"` in the root `product.yml`, in place of `id: "planifest-framework"`.
 - Split step: this requirement holds the migrator and orchestrator behaviour. The helper's file moves belong to req-006.
@@ -37,5 +37,5 @@ As a human on the loop with a consumer repo on an older version, I get older mig
 ## Dependencies
 - req-006 (consumer-migration) provides the migration file, its `Applies when:` line, and the helpers.
 - req-001 (pack-paths-and-identifiers) renames the migrator and orchestrator skills and the migrations folder.
-- 0000035 ADR-010 sets the rule that this repo keeps a run record for every migration it ships.
-- RAVINTIO Zero 0000160 ADR-003 defines the `Applies when:` field and its skip rule.
+- 0000035 ADR 010 sets the rule that this repo keeps a run record for every migration it ships.
+- RAVINTIO Zero 0000160 ADR 003 defines the `Applies when:` field and its skip rule.

@@ -35,4 +35,4 @@ As a human on the loop, I re-run setup in a consumer repo and see only RAVINTIO 
 - req-001-pack-paths-and-identifiers renames the setup scripts and skill folders that this requirement edits.
 - req-006-consumer-migration supplies the migration that the stop message names.
 - req-008-emitted-names covers the names setup writes into generated files.
-- 0000035 ADR-010 sets the pattern for a migration record with outcome `not applicable` in this source repo.
+- 0000035 ADR 010 sets the pattern for a migration record with outcome `not applicable` in this source repo.

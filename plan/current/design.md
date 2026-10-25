@@ -56,7 +56,7 @@
   4. A clash, such as an existing `ravintio-overrides/` or `.ravintio-backup/`, stops the helper before it moves anything. Every step can run again safely.
   5. Setup stops while `planifest-framework/` or `planifest-overrides/` exists, and names the migration.
   6. The migration warns that branch protection must require `RAVINTIO Strict Pipeline` in place of the old check name.
-  7. An "Applies when" check skips this source repo. This repo writes its own `plan/_migrations/` record with outcome `not applicable`, per 0000035 ADR-010.
+  7. An "Applies when" check skips this source repo. This repo writes its own `plan/_migrations/` record with outcome `not applicable`, per 0000035 ADR 010.
 - Brand guard: a Bash suite reads `git ls-files` minus the history paths and `plan/current/`. It fails on any `planifest` hit, in any case, in a path or a line. The only exceptions are allowlist entries, each a path regex plus a line regex with a reason. A stale entry also fails. A second case plants the old name and expects a failure.
 - Bulk rename method (human decision, 2026-10-25): one scripted pass in P3, a recorded exception to Hard Limit 8.
   1. **Write** creates the script in the scratchpad, never in the repo.

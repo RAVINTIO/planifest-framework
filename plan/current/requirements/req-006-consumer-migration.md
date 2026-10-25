@@ -54,5 +54,5 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
 - req-001 (pack-paths-and-identifiers) provides the `ravintio-framework/` folder and the renamed `ravintio-migrator` skill.
 - req-002 (runtime-names) makes setup stop while `planifest-framework/` or `planifest-overrides/` exists, and name this migration.
 - req-009 (migration-ordering-and-old-paths) covers how the migrator finds, orders, and records this migration.
-- RAVINTIO Zero 0000160 ADR-003 is the prior art. Its security findings S-001 to S-018 shaped the rename design, the link refusals, and the staged-edit and exclude-link checks.
+- RAVINTIO Zero 0000160 ADR 003 is the prior art. Its security findings S-001 to S-018 shaped the rename design, the link refusals, and the staged-edit and exclude-link checks.
 - Existing pattern: `migrate-archive-dirname.sh`, `migrate-archive-dirname.ps1`, and `migrate-0.36.0-rerun-setup.md`.
