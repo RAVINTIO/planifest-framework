@@ -35,7 +35,7 @@ PV_OUT="$(cd "$REPO" && env -u CLAUDE_PROJECT_DIR node "$FRAMEWORK/scripts/produ
 assert_equals "$WANT" "$PV_OUT" "req-010 AC1: product-version.mjs prints $WANT"
 
 # --- AC2 ---------------------------------------------------------------
-HITS="$(cd "$REPO" && git grep -n '1\.0\.0' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' 2>/dev/null || true)"
+HITS="$(cd "$REPO" && git grep -n '1\.0\.0' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!ravintio-framework/tests/test-0000039-req-010-version-bump.sh' ':!ravintio-framework/tests/regression/test-0000039-req-010-version-bump.sh' 2>/dev/null || true)"
 
 REMOVAL_RE='(removed? at|remove at|go at|goes at|gone at|until|through 0\.x.*removed at) 1\.0\.0'
 THIRD_PARTY_RE='^(package(-lock)?\.json|[^:]*/package(-lock)?\.json|[^:]*/external-skills/)'

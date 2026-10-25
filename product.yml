@@ -12,8 +12,8 @@
 
 id: "ravintio-framework"
 name: "RAVINTIO Framework"
-version: "0.36.0"
-feature: "0000038-token-efficiency-windows-shard"
+version: "0.37.0"
+feature: "0000039-ravintio-rebrand"
 
 versionPolicy: "max-component-version"
 
