@@ -65,8 +65,18 @@ OLDC="Plan""ifest"
 OLDPACK="$OLD-framework"
 OLDOVR="$OLD-overrides"
 
-WS=$(mktemp -d)
-trap 'rm -rf "${WS:?}"' EXIT
+# WS is the only fixture root. Every repo, shim, link target, and victim
+# folder lives under it, and GIT_CEILING_DIRECTORIES stops git at it. mktemp
+# gives each run its own WS, so two runs at the same time never share a
+# fixture (0000039 P6 X-006). The exit trap clears the chflags lock and any
+# read-only bit first, so an interrupted run still removes its WS.
+WS=$(mktemp -d) || { echo "  FAIL: req-006: mktemp -d failed"; exit 1; }
+cleanup_ws() {
+  if command -v chflags >/dev/null 2>&1; then chflags -R nouchg "$WS" 2>/dev/null; fi
+  chmod -R u+w "$WS" 2>/dev/null
+  rm -rf "${WS:?}"
+}
+trap cleanup_ws EXIT
 # WSR is the real path of WS. On macOS /var is a link to /private/var.
 WSR=$(cd "$WS" && pwd -P)
 
