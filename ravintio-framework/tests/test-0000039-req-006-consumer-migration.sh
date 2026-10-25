@@ -791,9 +791,11 @@ run_strict_names_suite() {
 # N-003  A last part whose base name, before the first ".", is a Windows
 #        device name is dropped on every platform, ignoring case:
 #        CON PRN AUX NUL COM1 to COM9 LPT1 to LPT9.
-# N-004  An entry whose text starts with \\ or // is dropped before any
-#        path lookup. The case runs off Windows only, because on Windows the
-#        current helpers would look up the host.
+# N-004  An entry is dropped before any path lookup when its first two
+#        characters are both / or \ in any mix (//, \\, \/, /\), or when it
+#        starts with \??\ or //?/ or \\?\ or \\.\. Windows reads each of these
+#        as a share or device path. The case runs off Windows only, because
+#        on Windows the current helpers would look up the host.
 # N-005  Step 4 temporary file pattern, pinned from the helper source:
 #          .sh   mktemp ".github/workflows/.ravintio.yml.XXXXXX"
 #          .ps1  ".github/workflows/.ravintio.yml." plus 6 characters of
@@ -859,27 +861,51 @@ run_rereview_suite() {
   done
   check_manifest "$T (P5 N-003)" "$sk/.ravintio-manifest" "$sk" "ravintio-orchestrator ravintio-spec-agent external-tool console com10 CONx.d nul-x"
 
-  echo "=== $T (P5 N-004) entries that start with \\\\ or // are dropped before any lookup ==="
+  echo "=== $T (P5 N-004) entries that start with a share or device prefix are dropped before any lookup ==="
   if [ "$IS_WIN" = yes ]; then
     echo "  SKIP (windows): $T (P5 N-004): a UNC entry would make the current helpers look up the host"
   else
     R=$(make_marker_repo "$NAME-unc")
     sk="$R/.claude/skills"
-    mkdir -p "$sk/uncdir"; echo u > "$sk/uncdir/SKILL.md"
+    mkdir -p "$sk/uncdir" "$sk/uncdir2"; echo u > "$sk/uncdir/SKILL.md"; echo u > "$sk/uncdir2/SKILL.md"
+    # A link named \ in the project root points to .claude. Off Windows, \ is
+    # a plain name character, so the entry \/skills/uncdir2 resolves through
+    # that link to the real skills folder. Only a text check on the first two
+    # characters can drop it, so it fails off Windows until the helpers drop
+    # \/ entries. Windows reads the same text as a share path. The link does
+    # not point to /, because bash 3.2 cd -P through it prints //private/...
+    # PowerShell off Windows still reads \ as / in Get-Item, so for the .ps1
+    # pass \/skills means the project root's skills. A second link there
+    # points to the real skills folder, so the .ps1 pass resolves it too.
+    ln -s "$R/.claude" "$R"/'\'
+    ln -s "$R/.claude/skills" "$R/skills"
     # The third entry is the real skills folder written with a leading //.
     # It resolves to the skills folder, so only a text check can drop it.
     {
       printf '%s\n' "//host/share/$OLD-x"
       printf '%s\n' '\\host\share\'"$OLD-x"
       printf '%s\n' "/$sk/uncdir"
+      printf '%s\n' '\/host/share/'"$OLD-a"
+      printf '%s\n' '/\host\share\'"$OLD-b"
+      printf '%s\n' '\??\UNC\host\share\'"$OLD-c"
+      printf '%s\n' '\\?\C:\x\'"$OLD-d"
+      printf '%s\n' '\/skills/uncdir2'
     } >> "$sk/.$OLD-manifest"
     OUT=$(run_helper "$R"); CODE=$?
     assert_equals "0" "$CODE" "$T (P5 N-004): run with UNC-style entries exits 0"
     assert_contains "WARNING: dropped manifest entry //host/share/$OLD-x"$'\n' "$OUT" "$T (P5 N-004): //host/share entry named in a warning"
     assert_contains 'WARNING: dropped manifest entry \\host\share\'"$OLD-x"$'\n' "$OUT" "$T (P5 N-004): \\\\host\\share entry named in a warning"
     assert_contains "WARNING: dropped manifest entry /$sk/uncdir"$'\n' "$OUT" "$T (P5 N-004): // entry that names the skills folder is dropped"
+    for e in '\/host/share/'"$OLD-a" '/\host\share\'"$OLD-b" '\??\UNC\host\share\'"$OLD-c" '\\?\C:\x\'"$OLD-d" '\/skills/uncdir2'; do
+      assert_contains "WARNING: dropped manifest entry $e"$'\n' "$OUT" "$T (P5 N-004): share or device form $e named in a warning"
+      has=no; grep -F -- "$e" "$sk/.ravintio-manifest" >/dev/null 2>&1 && has=yes
+      assert_equals "no" "$has" "$T (P5 N-004): share or device form $e is not in .ravintio-manifest"
+    done
+    has=no; grep -F -- "uncdir2" "$sk/.ravintio-manifest" >/dev/null 2>&1 && has=yes
+    assert_equals "no" "$has" "$T (P5 N-004): the \\/ entry that names the skills folder is not kept"
     check_manifest "$T (P5 N-004)" "$sk/.ravintio-manifest" "$sk" "ravintio-orchestrator ravintio-spec-agent external-tool"
     assert_equals "u" "$(cat "$sk/uncdir/SKILL.md" 2>/dev/null)" "$T (P5 N-004): folder the // entry points to is untouched"
+    assert_equals "u" "$(cat "$sk/uncdir2/SKILL.md" 2>/dev/null)" "$T (P5 N-004): folder the \\/ entry points to is untouched"
   fi
 
   echo "=== $T (P5 N-005) a stopped step 4 leaves no temporary workflow file ==="
