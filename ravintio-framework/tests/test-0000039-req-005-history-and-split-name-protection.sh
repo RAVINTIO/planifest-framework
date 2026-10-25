@@ -21,6 +21,7 @@
 # Verified by: unit
 
 set -uo pipefail
+unset CLAUDE_PROJECT_DIR
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/helpers/assert.sh"
@@ -311,8 +312,10 @@ norm_base < "$WORK/hd-base.raw" > "$WORK/hd-base.norm"
 norm_now < "$WORK/hd-now.raw" > "$WORK/hd-now.norm"
 assert_equals "yes" "$([ -s "$WORK/hd-base.raw" ] && [ -s "$WORK/hd-now.raw" ] && echo yes || echo no)" "req-005: the feature-structure heredoc is found in base and now"
 assert_equals "$(wc -l < "$WORK/hd-base.raw" | tr -d ' ')" "$(wc -l < "$WORK/hd-now.raw" | tr -d ' ')" "req-005: the heredoc keeps its line count"
-MB_BASE="$(grep -c -P '[\x80-\xFF]' "$WORK/hd-base.raw" 2>/dev/null || grep -c '[^ -~]' "$WORK/hd-base.raw")"
-MB_NOW="$(grep -c -P '[\x80-\xFF]' "$WORK/hd-now.raw" 2>/dev/null || grep -c '[^ -~]' "$WORK/hd-now.raw")"
+# Count lines that hold a high byte. The C locale and a raw-byte range work in GNU and BSD grep.
+HIGH_BYTES=$'[\x80-\xFF]'
+MB_BASE="$(LC_ALL=C grep -c "$HIGH_BYTES" "$WORK/hd-base.raw")"
+MB_NOW="$(LC_ALL=C grep -c "$HIGH_BYTES" "$WORK/hd-now.raw")"
 assert_equals "$MB_BASE" "$MB_NOW" "req-005: the heredoc keeps its count of non-ASCII lines"
 if cmp -s "$WORK/hd-base.norm" "$WORK/hd-now.norm"; then R=same; else R=differs; fi
 assert_equals "same" "$R" "req-005: the heredoc differs from base only by the brand words"

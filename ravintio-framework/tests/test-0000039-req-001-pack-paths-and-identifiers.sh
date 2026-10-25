@@ -27,11 +27,17 @@ OLD="planif""est"
 
 SKILLS="adr-agent build-assessment-agent change-agent codegen-agent design-critic docs-agent implementer loop-runner migrator optimise-agent orchestrator refactor refresh-setup reversal-assessor scope-lock-agent security-agent ship-agent spec-agent test-writer validate-agent verify-by-execution"
 
+# Tracked paths, minus paths deleted in the working tree but not yet staged. The
+# held-back vendored files under the old pack folder are in that state until P4.
+DELETED_NOW="$(git ls-files --deleted)"
 TRACKED="$(git ls-files)"
+if [ -n "$DELETED_NOW" ]; then
+  TRACKED="$(grep -vxF -f <(printf '%s\n' "$DELETED_NOW") <<< "$TRACKED" || true)"
+fi
 
 # has_tracked <prefix>: succeeds when git tracks at least one path under the prefix.
 has_tracked() {
-  printf '%s\n' "$TRACKED" | grep -qE "^$1"
+  grep -qE "^$1" <<< "$TRACKED"
 }
 
 # yaml_top <file> <key>: prints the top-level scalar value, unquoted.
@@ -45,8 +51,8 @@ PROTECTED_RE='^plan/(_archive|changelog|_migrations)/|^plan/backlog/[^/]+/_refer
 leftover=""
 while IFS= read -r p; do
   [ -z "$p" ] && continue
-  if printf '%s\n' "$p" | grep -qiE "$OLD"; then
-    if ! printf '%s\n' "$p" | grep -qE "$PROTECTED_RE"; then
+  if grep -qiE "$OLD" <<< "$p"; then
+    if ! grep -qE "$PROTECTED_RE" <<< "$p"; then
       leftover="$leftover$p"$'\n'
     fi
   fi
@@ -67,7 +73,7 @@ for d in ravintio-framework/ ravintio-overrides/ ravintio-framework/hooks/adapte
 done
 
 for f in .github/workflows/ravintio.yml ravintio-framework/hooks/ravintio.yml refresh-ravintio-framework-dir.ps1; do
-  if printf '%s\n' "$TRACKED" | grep -qxF "$f"; then
+  if grep -qxF "$f" <<< "$TRACKED"; then
     assert_equals "yes" "yes" "req-001 AC1: $f exists"
   else
     assert_equals "yes" "no" "req-001 AC1: $f exists"
@@ -76,7 +82,7 @@ done
 
 skill_count=0
 for s in $SKILLS; do
-  if printf '%s\n' "$TRACKED" | grep -qxF "ravintio-framework/skills/ravintio-$s/SKILL.md"; then
+  if grep -qxF "ravintio-framework/skills/ravintio-$s/SKILL.md" <<< "$TRACKED"; then
     skill_count=$((skill_count + 1))
   else
     assert_equals "yes" "no" "req-001 AC1: ravintio-framework/skills/ravintio-$s/SKILL.md exists"
@@ -87,11 +93,13 @@ assert_equals "21" "$skill_count" "req-001 AC1: 21 ravintio-* skill folders exis
 echo ""
 echo "=== req-001 AC2: identifiers carry the new id, name, and scope ==="
 
+BOM="$(printf '\357\273\277')"
 bad_names=0
 for s in $SKILLS; do
   f="$FW/skills/ravintio-$s/SKILL.md"
   if [ -f "$f" ]; then
-    actual="$(awk 'NR==1 && /^---/ {fm=1; next} fm && /^---/ {exit} fm && /^name:/ {sub(/^name:[ \t]*/, ""); gsub(/^"|"[ \t]*$/, ""); print; exit}' "$f")"
+    # Strip a leading UTF-8 BOM on line 1 so the frontmatter fence still matches.
+    actual="$(awk -v bom="$BOM" 'NR==1 && index($0, bom) == 1 {$0 = substr($0, length(bom) + 1)} NR==1 && /^---/ {fm=1; next} fm && /^---/ {exit} fm && /^name:/ {sub(/^name:[ \t]*/, ""); gsub(/^"|"[ \t]*$/, ""); print; exit}' "$f")"
   else
     actual="(missing file)"
   fi
@@ -107,15 +115,15 @@ CY="$FW/component.yml"
 PJ="$FW/hooks/adapters/opencode/package.json"
 
 assert_equals "ravintio-framework" "$(yaml_top "$PY" id 2>/dev/null)" "req-001 AC2: product.yml id"
-assert_contains "$(yaml_top "$PY" name 2>/dev/null)" "RAVINTIO" "req-001 AC2: product.yml name carries RAVINTIO"
+assert_contains "RAVINTIO" "$(yaml_top "$PY" name 2>/dev/null)" "req-001 AC2: product.yml name carries RAVINTIO"
 assert_equals "ravintio-framework" "$(yaml_top "$CY" id 2>/dev/null)" "req-001 AC2: component.yml id"
-assert_contains "$(yaml_top "$CY" name 2>/dev/null)" "RAVINTIO" "req-001 AC2: component.yml name carries RAVINTIO"
+assert_contains "RAVINTIO" "$(yaml_top "$CY" name 2>/dev/null)" "req-001 AC2: component.yml name carries RAVINTIO"
 
 pj_name="$(grep -E '"name"' "$PJ" 2>/dev/null | head -1 | sed -E 's/.*"name"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')"
 assert_equals "@ravintio/opencode-hooks" "$pj_name" "req-001 AC2: OpenCode package.json name"
 
-assert_contains "$(cat "$PY" 2>/dev/null)" 'path: "ravintio-framework/component.yml"' "req-001 AC2: product.yml components[] points at ravintio-framework/component.yml"
-assert_contains "$(cat "$PY" 2>/dev/null)" '  - id: "ravintio-framework"' "req-001 AC2: product.yml components[] id"
+assert_contains 'path: "ravintio-framework/component.yml"' "$(cat "$PY" 2>/dev/null)" "req-001 AC2: product.yml components[] points at ravintio-framework/component.yml"
+assert_contains '  - id: "ravintio-framework"' "$(cat "$PY" 2>/dev/null)" "req-001 AC2: product.yml components[] id"
 
 # The brandless component keeps its id (req-001 functional requirement).
 SH="$ROOT/src/setup-hook-integration/component.yml"
@@ -139,7 +147,7 @@ else
 
   # is_exception <old path>: succeeds when the path is on the exception list.
   is_exception() {
-    [ -n "$EXC" ] && printf '%s\n' "$EXC" | grep -qxF "$1"
+    [ -n "$EXC" ] && grep -qxF "$1" <<< "$EXC"
   }
 
   # r_pair <old> <new>: succeeds when an R entry maps old to new.
@@ -180,7 +188,7 @@ else
     st="${line%%$'\t'*}"
     path="${line#*$'\t'}"
     [ "$st" = "D" ] || continue
-    printf '%s\n' "$path" | grep -qiE "$OLD" || continue
+    grep -qiE "$OLD" <<< "$path" || continue
     is_exception "$path" && continue
     deleted="$deleted$path"$'\n'
   done <<< "$NS"

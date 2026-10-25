@@ -60,7 +60,7 @@ const MAX_LEN = 120;
 const CURRENT = "plan/current";
 const ARCHIVE_ROOT = "plan/_archive";
 const TARGET_FILE = ".archive-target";
-const EXPLICIT_DELETES = [".skips", ".ravintio-session", ".feature-id", "capability-skills"];
+const EXPLICIT_DELETES = [".skips", ".ravintio-session", ".planifest-session" /* old name, req-005 / ADR-004: clear a stale pre-rename marker */, ".feature-id", "capability-skills"];
 
 function fail(code, message) {
   process.stderr.write(`archive-current: ${message}\n`);

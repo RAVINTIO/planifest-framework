@@ -49,6 +49,8 @@ while IFS= read -r f; do
     docs/decisions-index.md|ravintio-framework/standards/reference/backend-stack-evaluation.md) continue ;;
     ravintio-framework/migrations/migrate-remove-context-mode-and-telemetry.md) continue ;;
     ravintio-framework/tests/test-0000030-*) continue ;;
+    # Feature 0000039 suites name the retired telemetry variable on purpose, to prove the rename keeps it.
+    ravintio-framework/tests/test-0000039-*) continue ;;
   esac
   hits=$(awk '/BEGIN retired-integrations/{f=1} /END retired-integrations/{f=0;next} !f' "$f" \
     | grep -inE "$PATTERN" \
