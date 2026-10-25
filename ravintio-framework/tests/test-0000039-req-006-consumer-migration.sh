@@ -780,6 +780,166 @@ run_strict_names_suite() {
   assert_equals "$BEFORE" "$(snapshot "$R")" "$T (P5 M-004): rerun removes only the leftover temp files"
 }
 
+# ---------------------------------------------------------------------
+# req-006 (P5 N-001 to N-005): re-review of the marker fixes
+# ---------------------------------------------------------------------
+#
+# N-001  In a linked worktree, git rev-parse --git-path info/exclude prints
+#        a rooted path. Step 6 must write that file as is, so git ignores
+#        .ravintio-backup/, and make no stray exclude file in the project.
+# N-002  Doc and comments only, so no case here.
+# N-003  A last part whose base name, before the first ".", is a Windows
+#        device name is dropped on every platform, ignoring case:
+#        CON PRN AUX NUL COM1 to COM9 LPT1 to LPT9.
+# N-004  An entry whose text starts with \\ or // is dropped before any
+#        path lookup. The case runs off Windows only, because on Windows the
+#        current helpers would look up the host.
+# N-005  Step 4 temporary file pattern, pinned from the helper source:
+#          .sh   mktemp ".github/workflows/.ravintio.yml.XXXXXX"
+#          .ps1  ".github/workflows/.ravintio.yml." plus 6 characters of
+#                GetRandomFileName() with the dot removed
+#        So a step 4 temp file is ".ravintio.yml." followed by exactly 6
+#        letters or digits (WF_TMP_RE). A stopped step 4 leaves none. A
+#        rerun removes each regular file of that name in .github/workflows/
+#        and leaves any other name alone.
+#        The .sh pass forces the stop with an mv shim that fails on the temp
+#        file. The .ps1 pass makes File.Replace fail with chflags uchg on
+#        the target, which only macOS offers without root.
+WF_TMP_RE='^\.ravintio\.yml\.[A-Za-z0-9]{6}$'
+
+# wf_temp_files DIR: print each name in DIR that matches WF_TMP_RE.
+wf_temp_files() {
+  local f
+  for f in "$1"/.ravintio.yml.*; do
+    [ -e "$f" ] || [ -L "$f" ] || continue
+    f="${f##*/}"
+    if [[ "$f" =~ $WF_TMP_RE ]]; then printf '%s\n' "$f"; fi
+  done
+}
+
+run_rereview_suite() {
+  KIND="$1"
+  local T="[$KIND] req-006" R W M OUT CODE sk nsk e has BEFORE wf SHIM REAL_MV
+  local NAME="$KIND-rr"
+
+  echo "=== $T (P5 N-001) a linked worktree gets the backup line in the exclude file git reads ==="
+  M=$(make_repo "$NAME-wtmain")
+  W="$WS/$NAME-wt"
+  if ( cd "$M" && git worktree add -q -b wt "$W" >/dev/null 2>&1 ) && [ -f "$W/.git" ]; then
+    OUT=$(run_helper "$W"); CODE=$?
+    assert_equals "0" "$CODE" "$T (P5 N-001): run in a linked worktree exits 0"
+    assert_equals "yes" "$(exists "$W/.ravintio-backup/$OLDPACK/setup.sh")" "$T (P5 N-001): worktree pack moved to the backup"
+    assert_equals "1" "$(grep -cx '.ravintio-backup/' "$M/.git/info/exclude" 2>/dev/null)" "$T (P5 N-001): backup line added once to the real exclude file"
+    assert_equals "0" "$( cd "$W" && GIT_CEILING_DIRECTORIES="$WS" git check-ignore -q .ravintio-backup/x >/dev/null 2>&1; echo $? )" "$T (P5 N-001): git check-ignore reports .ravintio-backup/x as ignored in the worktree"
+    has="$(find "$W" -path "$W/.ravintio-backup" -prune -o -name exclude -print 2>/dev/null)"
+    assert_equals "" "$has" "$T (P5 N-001): no stray exclude file made inside the worktree"
+  else
+    echo "  SKIP: $T (P5 N-001): git worktree is not available here"
+  fi
+
+  echo "=== $T (P5 N-003) Windows device names are dropped on every platform ==="
+  R=$(make_marker_repo "$NAME-dev")
+  sk="$R/.claude/skills"
+  nsk="$(nat "$sk")"
+  for e in console com10 CONx.d nul-x; do
+    mkdir -p "$sk/$e"; echo k > "$sk/$e/SKILL.md"
+  done
+  {
+    for e in NUL con.txt Com1 lpt9 AUX.tar.gz prn COM9.x Lpt1; do printf '%s/%s\n' "$nsk" "$e"; done
+    for e in console com10 CONx.d nul-x; do printf '%s/%s\n' "$nsk" "$e"; done
+  } >> "$sk/.$OLD-manifest"
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T (P5 N-003): run with device name entries exits 0"
+  for e in NUL con.txt Com1 lpt9 AUX.tar.gz prn COM9.x Lpt1; do
+    assert_contains "WARNING: dropped manifest entry $nsk/$e"$'\n' "$OUT" "$T (P5 N-003): device name entry $e named in a warning"
+  done
+  for e in console com10 CONx.d nul-x; do
+    has=no; [[ "$OUT" == *"dropped manifest entry $nsk/$e"$'\n'* ]] && has=yes
+    assert_equals "no" "$has" "$T (P5 N-003): near-miss name $e is not dropped"
+  done
+  check_manifest "$T (P5 N-003)" "$sk/.ravintio-manifest" "$sk" "ravintio-orchestrator ravintio-spec-agent external-tool console com10 CONx.d nul-x"
+
+  echo "=== $T (P5 N-004) entries that start with \\\\ or // are dropped before any lookup ==="
+  if [ "$IS_WIN" = yes ]; then
+    echo "  SKIP (windows): $T (P5 N-004): a UNC entry would make the current helpers look up the host"
+  else
+    R=$(make_marker_repo "$NAME-unc")
+    sk="$R/.claude/skills"
+    mkdir -p "$sk/uncdir"; echo u > "$sk/uncdir/SKILL.md"
+    # The third entry is the real skills folder written with a leading //.
+    # It resolves to the skills folder, so only a text check can drop it.
+    {
+      printf '%s\n' "//host/share/$OLD-x"
+      printf '%s\n' '\\host\share\'"$OLD-x"
+      printf '%s\n' "/$sk/uncdir"
+    } >> "$sk/.$OLD-manifest"
+    OUT=$(run_helper "$R"); CODE=$?
+    assert_equals "0" "$CODE" "$T (P5 N-004): run with UNC-style entries exits 0"
+    assert_contains "WARNING: dropped manifest entry //host/share/$OLD-x"$'\n' "$OUT" "$T (P5 N-004): //host/share entry named in a warning"
+    assert_contains 'WARNING: dropped manifest entry \\host\share\'"$OLD-x"$'\n' "$OUT" "$T (P5 N-004): \\\\host\\share entry named in a warning"
+    assert_contains "WARNING: dropped manifest entry /$sk/uncdir"$'\n' "$OUT" "$T (P5 N-004): // entry that names the skills folder is dropped"
+    check_manifest "$T (P5 N-004)" "$sk/.ravintio-manifest" "$sk" "ravintio-orchestrator ravintio-spec-agent external-tool"
+    assert_equals "u" "$(cat "$sk/uncdir/SKILL.md" 2>/dev/null)" "$T (P5 N-004): folder the // entry points to is untouched"
+  fi
+
+  echo "=== $T (P5 N-005) a stopped step 4 leaves no temporary workflow file ==="
+  R=$(make_repo "$NAME-wfstop")
+  wf="$R/.github/workflows"
+  if [ "$KIND" = sh ]; then
+    SHIM="$WS/mvshim-$KIND"
+    REAL_MV="$(command -v mv)"
+    mkdir -p "$SHIM"
+    {
+      printf '#!/usr/bin/env bash\n'
+      printf 'case "$*" in *.ravintio.yml.*) echo "mv shim: refused" >&2; exit 1 ;; esac\n'
+      printf 'exec "%s" "$@"\n' "$REAL_MV"
+    } > "$SHIM/mv"
+    chmod +x "$SHIM/mv"
+    OUT=$(run_helper "$R" "PATH=$SHIM:$PATH"); CODE=$?
+  elif [ "$(uname -s)" = Darwin ] && command -v chflags >/dev/null 2>&1; then
+    # Rename the workflow first, so step 4 only rewrites it, then lock it.
+    ( cd "$R" && git mv "$wf/$OLD.yml" "$wf/ravintio.yml" && git commit -q -m wf )
+    chflags uchg "$wf/ravintio.yml"
+    OUT=$(run_helper "$R"); CODE=$?
+    chflags nouchg "$wf/ravintio.yml"
+  else
+    OUT=""; CODE=skip
+    echo "  SKIP: $T (P5 N-005) forced stop: only macOS can lock a file without root"
+  fi
+  if [ "$CODE" != skip ]; then
+    assert_equals "1" "$CODE" "$T (P5 N-005): a failed step 4 replace exits 1"
+    assert_contains "Stopped at step 4" "$OUT" "$T (P5 N-005): a failed step 4 replace names step 4"
+    assert_equals "" "$(wf_temp_files "$wf")" "$T (P5 N-005): a stopped step 4 leaves no .ravintio.yml temp file"
+  fi
+
+  echo "=== $T (P5 N-005) a rerun removes a leftover temporary workflow file ==="
+  R=$(make_repo "$NAME-wftmp")
+  wf="$R/.github/workflows"
+  run_helper "$R" >/dev/null
+  # Names that are not step 4 temp files, or are not regular files, stay.
+  echo mine > "$wf/.ravintio.yml.mine"
+  echo mine > "$wf/.ravintio.yml.abc1234"
+  echo mine > "$wf/.ravintio.yml.Ab12C"
+  mkdir -p "$wf/.ravintio.yml.Dir123"; echo mine > "$wf/.ravintio.yml.Dir123/keep.txt"
+  if [ "$LINKS_OK" = yes ]; then
+    echo outside > "$WS/$NAME-wf-link-target"
+    ln -s "$WS/$NAME-wf-link-target" "$wf/.ravintio.yml.Lnk123"
+  fi
+  BEFORE=$(snapshot "$R")
+  for e in .ravintio.yml.Ab12Cd .ravintio.yml.x9y8z7; do
+    [[ "$e" =~ $WF_TMP_RE ]] || { echo "  FAIL: $T (P5 N-005): fixture $e does not match the temp pattern"; ((FAIL++)) || true; }
+    printf 'stale\n' > "$wf/$e"
+  done
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T (P5 N-005): rerun with leftover workflow temp files exits 0"
+  assert_equals "no" "$(exists "$wf/.ravintio.yml.Ab12Cd")" "$T (P5 N-005): .sh-style leftover workflow temp file removed"
+  assert_equals "no" "$(exists "$wf/.ravintio.yml.x9y8z7")" "$T (P5 N-005): .ps1-style leftover workflow temp file removed"
+  assert_equals "$BEFORE" "$(snapshot "$R")" "$T (P5 N-005): rerun removes only the leftover workflow temp files"
+  if [ "$LINKS_OK" = yes ]; then
+    assert_equals "outside" "$(cat "$WS/$NAME-wf-link-target" 2>/dev/null)" "$T (P5 N-005): link target outside the project untouched"
+  fi
+}
+
 echo "=== req-006: helper files exist ==="
 assert_equals "yes" "$(exists "$SH_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.sh exists"
 assert_equals "yes" "$(exists "$PS_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.ps1 exists"
@@ -790,6 +950,7 @@ if [ -f "$SH_HELPER" ]; then
   check_early_stops sh
   run_marker_suite sh
   run_strict_names_suite sh
+  run_rereview_suite sh
 else
   echo "  FAIL: req-006: skipped the .sh cases because the helper is missing"; ((FAIL++)) || true
 fi
@@ -801,6 +962,7 @@ if command -v pwsh >/dev/null 2>&1; then
     check_early_stops ps1
     run_marker_suite ps1
     run_strict_names_suite ps1
+    run_rereview_suite ps1
     # (p) parity: same output and exit code for the same scenario.
     for scenario in clean rerun nopack bothoverrides; do
       A=$(make_repo "parity-sh-$scenario"); B=$(make_repo "parity-ps-$scenario")
