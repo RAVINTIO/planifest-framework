@@ -24,7 +24,7 @@ As a human on the loop, I read "RAVINTIO Framework" in every doc, skill, templat
   - The prose of hook messages and setup messages.
 - Apply these replacements in order:
   - "Planifest Framework" becomes "RAVINTIO Framework".
-  - A bare "Planifest" becomes "RAVINTIO" where the short form reads better. Otherwise it becomes "RAVINTIO Framework".
+  - A bare "Planifest" becomes "RAVINTIO Framework" on its first use in a file or a message. Later uses in the same file or message become "RAVINTIO". Log prefixes and headings that name only the brand also use "RAVINTIO".
 - Write RAVINTIO in block capitals in prose. Identifiers keep lowercase `ravintio`, per req-001.
 - Move repo links to `github.com/RAVINTIO/ravintio-framework`. Find the current forms with `git grep -n 'github.com/planifest'`.
 - Leave the `planifest-docs` sibling links as they are. The brand guard allowlists them.
@@ -36,10 +36,9 @@ As a human on the loop, I read "RAVINTIO Framework" in every doc, skill, templat
   - Make each change with a byte-exact tool, never an editor that re-encodes the file.
   - If a line cannot change without touching those bytes, leave the whole line unchanged and add a brand-guard allowlist entry for it.
 - Path tokens inside those lines, such as `planifest-framework/`, belong to req-001. This requirement covers the brand word only.
-- Split step: keep. The prose and its links are one concern, because both come from the same replace rules and the same guard check.
-- `docs/about.md` shows 0.37.0 after ship.
+- Split step, in two answers. At drafting the answer was keep: prose and links come from the same replace rules and the same guard check. At the fourth criterion the answer was split: the version bump is its own outcome, so req-010 takes it.
+- The version clause in the third criterion and the whole fourth criterion belong to req-010. They stay here while the ratchet is active, and req-010 cross-refers to them. Moving them waits until no loop-state file is active.
 - The heredoc range in req-005 governs. It runs from line 811 to 958 and writes `plan/feature-structure.md`. Line 1322 also holds a banner bar. Lines 788 and 957 are stale links outside the mojibake lines. The 788 to 957 range in AC3 reads as that range.
-- `product.yml` and `ravintio-framework/component.yml` carry version 0.37.0 after P6, and `docs/about.md` shows it after ship.
 
 ## Acceptance Criteria
 - [ ] After the pass, no brand-word "Planifest" remains in prose outside history, `_reference/` documents, vendored text, and the allowlist. The brand guard from req-007 passes. Verified by: integration

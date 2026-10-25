@@ -25,6 +25,7 @@ As a human on the loop with a consumer repo on an older version, I get older mig
   - The migrator never reads `.ravintio-backup/` as a live pack.
 - The migrator runs `migrate-0.37.0-ravintio-rename.md` in a consumer repo as a check pass. The helper has already run, so the pass confirms the old folders are gone, runs the helper again to confirm it does nothing, and records `applied`.
 - The migrator reads the `**Applies when:**` line near the top of a migration. If the condition is false, it skips Steps 2 to 4, reports `Skipped:` with the reason, and records `not applicable` with both counts at `0`. This source repo gets that record at `plan/_migrations/migrate-0.37.0-ravintio-rename.md`, per 0000035 ADR 010.
+- A fresh consumer install has no old pack, so its `Applies when:` condition is false too. The migrator writes the same `not applicable` record there, so the migration never shows as pending.
 - The orchestrator reports each migration it skips for a false `Applies when:` condition. It does not skip one silently.
 - The migrator's framework source check reads `id: "ravintio-framework"` in the root `product.yml`, in place of `id: "planifest-framework"`.
 - Split step: this requirement holds the migrator and orchestrator behaviour. The helper's file moves belong to req-006.

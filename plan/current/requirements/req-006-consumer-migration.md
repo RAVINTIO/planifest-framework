@@ -24,7 +24,7 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
      - `planifest-overrides/` and `ravintio-overrides/` both exist.
      - `.github/workflows/ravintio.yml` exists while `planifest.yml` also exists.
      - `.ravintio-backup/planifest-framework` exists while `planifest-framework/` (the old pack) also still exists in place. If the old pack is already gone and the backup exists, the move is complete. The rerun skips step 6 and exits 0.
-     - git holds a staged edit under `planifest-framework/` that differs from both `HEAD` and the working file. Run `git diff --cached --quiet -- planifest-framework` and print a clear message.
+     - git holds a staged edit under `planifest-framework/` that differs from both `HEAD` and the working file. Run `git diff --cached --quiet --diff-filter=ACMRT -- planifest-framework` and print a clear message. Staged deletions don't count, because step 6 stages them with `git rm --cached`, so a rerun after step 6 passes this check.
      - `planifest-framework`, `planifest-overrides`, `ravintio-overrides`, `.ravintio-backup`, or either workflow file is a symbolic link or a junction, dangling or not.
   3. Move `planifest-overrides/` to `ravintio-overrides/`. Use `git mv` when git tracks the folder.
   4. Rename `.github/workflows/planifest.yml` to `ravintio.yml`. Rewrite `planifest-framework/` to `ravintio-framework/` inside it. Rewrite only the pack-owned `PLANIFEST_` variable names it holds, as whole names. Leave every other `PLANIFEST_` name, such as a consumer secret. Write to a temporary file in the same folder, then rename it over the target.
@@ -43,7 +43,8 @@ As a human on the loop with a consumer repo on 0.36.0, I run one migration that 
 - The migration file declares `**Applies when:**` `planifest-framework/` or `planifest-overrides/` exists at the project root. This source repo holds neither folder after the rename, so it skips the migration. How the migrator reads that field belongs to req-009.
 - The migration body lists every renamed variable, using the req-003 inventory. Step 4 rewrites only the names on that list.
 - A helper stopped after any single step resumes on rerun. It skips the done steps, completes the rest, and ends in the same state as an uninterrupted run.
-- Split step: keep. The criteria cover one helper's behaviour in two shells. The migrator ordering concern already went to req-009.
+- Split step: keep, at five criteria. The one concern is a single helper's run on a consumer repo: the clean run, its reruns and resumes, its link refusals, and the same behaviour in its second shell. PowerShell parity can't ship on its own, because the migration ships both helpers as one pair. The migrator ordering concern already went to req-009.
+- On any stop, the helper names the step it stopped at and the files it already moved. The resume test for the fifth criterion asserts that message. It includes a run stopped right after step 6, with the pack deletions still staged.
 - Ship one test per helper. Each covers the clean run and a rerun, each stop condition, each link refusal, each parent-link skip, a project below its git top level, and a consumer secret that keeps its `PLANIFEST_` name.
 
 ## Acceptance Criteria

@@ -22,9 +22,8 @@ As a human on the loop, I re-run setup in a consumer repo and see only RAVINTIO 
 - Setup recognises the old ignore-file headers `# Planifest - Token Reduction` and `# Planifest - Indexing Exclusions`. It replaces each block with the RAVINTIO header. No block appears twice after a re-run.
 - While `planifest-framework/` or `planifest-overrides/` exists, setup stops before it writes anything. The message names the consumer migration `migrate-0.37.0-ravintio-rename`.
 - The old-name reads stay through 0.x and go at 1.0.0 (design decision, 2026-10-25).
-- Split step for the fourth criterion: keep. All four criteria cover setup state. The earlier split, noted below, already moved the emitted names to req-008.
+- Split step, in two answers. At drafting the answer was split: the names that hooks and generated files emit went to req-008. At the fourth criterion the answer was keep: all four remaining criteria cover the state setup leaves in a consumer repo.
 - A repo with no old pack and no old markers gets only `.ravintio-*` markers and new-form blocks. Setup prints no migration message.
-- Split step: split. This requirement holds the setup state concern. The names that hooks and generated files emit take req-008, also Source US-001.
 
 ## Acceptance Criteria
 - [ ] After setup runs on a fixture with `.planifest-setup-flags` and `.planifest-manifest`, only the `.ravintio-*` files remain. The new flags marker holds the old flags, the old installed skill folders are gone, and no `.planifest-*` marker is left. Verified by: integration

@@ -11,6 +11,7 @@
 - User stories:
   - US-001: As a human on the loop, I see RAVINTIO Framework in every live path, identifier, and prose line, so that the pack matches the RAVINTIO org.
   - US-002: As a human on the loop with a consumer repo on 0.36.0, I run one migration that moves it to the RAVINTIO pack and keeps a backup of the old pack, so that I upgrade without losing files.
+  - US-004 (split from US-001 at P1, no new scope): As a human on the loop, I see version 0.37.0 in `product.yml`, the pack manifest, and `docs/about.md`, so that I can tell the rename release apart from 0.36.0.
   - US-003: As a human on the loop, I get a failing test when a live file brings back the old name, so that the rename stays complete.
 - Acceptance criteria confirmed: 3 at brief level. P1 writes about 3 per requirement.
 - Constraints:
@@ -78,6 +79,7 @@
   - sibling repos, including RAVINTIO Zero and `planifest-docs`
   - the local clone folder and the `C:\d\planifest\framework\` path in the refresh script
   - every other backlog entry
+    - This means picking up no other entry. Live backlog entries still change their brand words, per req-004.
 - Deferred:
   - `gh repo rename ravintio-framework` and the `origin` update run after the human on the loop merges the PR. Repo links resolve once the repo rename runs.
   - The old-name reads go at 1.0.0.
@@ -114,6 +116,7 @@ None
 | REQ-007 - brand-guard | planifest-test-writer | The guard suite and its allowlist |
 | REQ-008 - emitted-names | planifest-codegen-agent | Split from REQ-002 at P1: names the hooks and setup emit, under TDD |
 | REQ-009 - migration-ordering-and-old-paths | planifest-codegen-agent | Split from REQ-006 at P1: migrator order, old-path mapping, and the Applies when check |
+| REQ-010 - version-bump | planifest-docs-agent | Split from REQ-004 at P1: P6 writes the release version |
 
 ## Repo Instructions
 Five files in `planifest-overrides/instructions/`, read at P0. They move to `ravintio-overrides/instructions/` with the rename.

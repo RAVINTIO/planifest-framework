@@ -31,6 +31,7 @@ Each file follows the naming convention `req-{NNN}-{kebab-slug}.md` and the [Req
 | [req-007-brand-guard.md](requirements/req-007-brand-guard.md) | A Bash 3.2-safe suite fails on any old name outside a path and line allowlist | US-003 |
 | [req-008-emitted-names.md](requirements/req-008-emitted-names.md) | Hooks and setup emit the new root marker, hook path, log prefix, npm scope, workflow name, and boot-file paths | US-001 |
 | [req-009-migration-ordering-and-old-paths.md](requirements/req-009-migration-ordering-and-old-paths.md) | The migrator runs older migrations against the new paths and honours `Applies when:` | US-002 |
+| [req-010-version-bump.md](requirements/req-010-version-bump.md) | P6 writes 0.37.0 to the product manifest, the pack manifest, and the about page | US-004 |
 
 ## Build order
 

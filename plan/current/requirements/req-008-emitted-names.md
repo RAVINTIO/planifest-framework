@@ -22,6 +22,7 @@ As a human on the loop, I see RAVINTIO names in every hook message, log line, an
 - The OpenCode plugin path and registration use the `@ravintio` npm scope in `setup/opencode.sh` and `setup/opencode.ps1`.
 - The workflow file `ravintio.yml` names its workflow `RAVINTIO Strict Pipeline`.
 - The generated boot file for Claude Code and every other tool names `ravintio-framework/` paths. This includes the sanctioned-scripts list in Hard Limit 8, such as `ravintio-framework/scripts/archive-current.mjs` and `ravintio-framework/setup.sh`.
+- The fixture for the second criterion starts from an old 0.36.0 install. Its `core.hooksPath` reads `planifest-framework/hooks`, and its OpenCode plugin sits under `@planifest`. The test runs the migration helper and then setup, and checks both values change.
 - Split step: this is the second half of the split from req-002. The old-name reads (the `PLANIFEST_SESSION_ID` fallback) belong to req-003.
 
 ## Acceptance Criteria

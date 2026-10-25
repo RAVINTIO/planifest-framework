@@ -20,6 +20,7 @@ The GitHub org is now `RAVINTIO`, and the ecosystem names this product RAVINTIO 
 |---------|-------------|----------|------|
 | Pack rename | As a human on the loop, I see RAVINTIO Framework in every live path, identifier, and prose line, so that the pack matches the RAVINTIO org. | must-have | 1 |
 | Consumer migration | As a human on the loop with a consumer repo on 0.36.0, I run one migration that moves it to the RAVINTIO pack and keeps a backup of the old pack, so that I upgrade without losing files. | must-have | 1 |
+| Version bump (split from pack rename at P1) | As a human on the loop, I see version 0.37.0 in `product.yml`, the pack manifest, and `docs/about.md`, so that I can tell the rename release apart from 0.36.0. | must-have | 1 |
 | Brand guard | As a human on the loop, I get a failing test when a live file brings back the old name, so that the rename stays complete. | must-have | 1 |
 
 ## Waves

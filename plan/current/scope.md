@@ -25,6 +25,7 @@ version: "0.1.0"
 - The scripted bulk rename in P3. One pass uses `git mv` and a replace that skips the protected list. The script lives in the scratchpad and never in the repo. Follow-up fixes use Edit. Maps to req-001-pack-paths-and-identifiers (US-001), with the protected list owned by req-005-history-and-split-name-protection.
 - The 0.37.0 minor version bump, with old-name reads kept through 0.x. Maps to req-006-consumer-migration (US-002).
 - Clarification: the 0.37.0 version bump maps to req-004-brand-prose (US-001), which checks `product.yml`, `ravintio-framework/component.yml`, and `docs/about.md`. The line above that points at req-006 is superseded.
+- Clarification: after the P1 split, the version bump maps to req-010-version-bump (US-004). The setup refusal while the old folders exist maps to req-002-runtime-names (US-001), and req-006 supplies the migration its message names.
 
 ## Out of Scope
 
