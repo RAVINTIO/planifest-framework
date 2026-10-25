@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Tests for feature 0000039-ravintio-rebrand.
 #
-# req-010: the rename release carries version 0.37.0, and no live file names
+# req-010: the rename release carries a 0.37 version, and no live file names
 #          1.0.0 as the current release (ADR-003).
 #   AC1: product.yml, ravintio-framework/component.yml and docs/about.md
-#        (frontmatter and table) read 0.37.0, and product-version.mjs prints it.
+#        (frontmatter and table) read the same 0.37.x version, and
+#        product-version.mjs prints it. A patch release keeps the 0.37 minor.
 #   AC2: every `git grep` hit for 1.0.0 names it as the removal point for
 #        old-name reads, or sits in a third-party or non-release version field.
 #
@@ -18,11 +19,14 @@ source "$SCRIPT_DIR/helpers/assert.sh"
 
 FRAMEWORK="$(cd "$SCRIPT_DIR/.." && pwd)"
 REPO="$(cd "$FRAMEWORK/.." && pwd)"
-WANT="0.37.0"
 
 # --- AC1 ---------------------------------------------------------------
 PRODUCT_V="$(sed -n 's/^version: *"\{0,1\}\([0-9.]*\)"\{0,1\} *$/\1/p' "$REPO/product.yml" | head -n 1)"
 COMP_V="$(sed -n 's/^version: *"\{0,1\}\([0-9.]*\)"\{0,1\} *$/\1/p' "$FRAMEWORK/component.yml" | head -n 1)"
+# The component version sets the release, and it must be a 0.37 patch.
+WANT="$COMP_V"
+if [[ "$COMP_V" =~ ^0\.37\.[0-9]+$ ]]; then R=ok; else R="not a 0.37 version: $COMP_V"; fi
+assert_equals "ok" "$R" "req-010 AC1: ravintio-framework/component.yml version is a 0.37 release"
 ABOUT_FM_V="$(awk 'NR==1 && /^---$/ {fm=1; next} fm && /^---$/ {exit} fm && /^version:/ {gsub(/^version: *"?|"? *$/, ""); print; exit}' "$REPO/docs/about.md")"
 ABOUT_TABLE_V="$(sed -n 's/^| Version | `\([0-9.]*\)` |.*$/\1/p' "$REPO/docs/about.md" | head -n 1)"
 

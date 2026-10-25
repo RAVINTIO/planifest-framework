@@ -12,7 +12,7 @@
 
 id: "ravintio-framework"
 name: "RAVINTIO Framework"
-version: "0.37.0"
+version: "0.37.1"
 feature: "0000039-ravintio-rebrand"
 
 versionPolicy: "max-component-version"

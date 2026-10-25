@@ -48,6 +48,14 @@ ALNUM="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 NAME_RE="^[$ALNUM][$ALNUM._-]*\$"
 TMP_RE="^\\.ravintio-manifest\\.[$ALNUM]{6}\$"
 WF_TMP_RE="^\\.ravintio\\.yml\\.[$ALNUM]{6}\$"
+ATTR_TMP_RE="^\\.gitattributes\\.[$ALNUM]{6}\$"
+# Step 4 also rewrites the pack path in this file, so its LF rules cover the
+# new hooks.
+ATTRS=".gitattributes"
+# Step 4 rewrites these old brand phrases in the workflow messages.
+WF_PHRASES="title=$OLDC Fast Path Violation::|title=$OLDC Strict Violation::|$OLDC fast-path pipeline passed.|$OLDC pipeline passed."
+# Step 5 moves each old boot file into the backup. Setup writes the new one.
+OLD_BOOTS=".cursor/rules/$OLD.mdc .clinerules/00-$OLD-boot.md"
 # Step 7 prints a saved tool only when setup accepts it.
 SETUP_TOOLS="claude-code cursor codex antigravity copilot windsurf cline roo-code opencode"
 
@@ -226,19 +234,29 @@ flags_args() {
     return 0
 }
 
-# rewrite_names FILE: print FILE with the workflow name line, the pack path,
-# and the pack-owned variable names rewritten. A name counts only as a whole
-# name, and never after secrets. or vars., where it names a consumer secret
-# or variable.
+# rewrite_names FILE: print FILE with the workflow name line, the old brand
+# phrases in the workflow messages, the pack path, and the pack-owned
+# variable names rewritten. A name counts only as a whole name, and never
+# after secrets. or vars., where it names a consumer secret or variable.
 rewrite_names() {
     awk -v op="$OLD_PACK/" -v np="$NEW_PACK/" -v old="${OLDU}_" -v new="RAVINTIO_" -v names="$PACK_VARS" \
-        -v oldname="$OLD_WF_NAME" -v newname="$NEW_WF_NAME" '
+        -v oldname="$OLD_WF_NAME" -v newname="$NEW_WF_NAME" -v phrases="$WF_PHRASES" -v oldc="$OLDC" '
     function isword(c) { return c ~ /[A-Za-z0-9_]/ }
-    BEGIN { n = split(names, nm, " ") }
+    BEGIN { n = split(names, nm, " "); np_n = split(phrases, ph, "|") }
     {
         line = $0
         if (line == oldname || line == oldname "\r") {
             line = newname substr(line, length(oldname) + 1)
+        }
+        for (k = 1; k <= np_n; k++) {
+            rep = ph[k]
+            sub(oldc, "RAVINTIO", rep)
+            out = ""
+            while ((i = index(line, ph[k])) > 0) {
+                out = out substr(line, 1, i - 1) rep
+                line = substr(line, i + length(ph[k]))
+            }
+            line = out line
         }
         out = ""
         while ((i = index(line, op)) > 0) {
@@ -264,6 +282,25 @@ rewrite_names() {
         }
         print line
     }' "$1"
+}
+
+# rewrite_file FILE TMP_PREFIX STEP WHAT: rewrite FILE with rewrite_names, or
+# print a skip line when nothing changes. It writes to a temporary file in the
+# same folder, then renames it over FILE. The helper removes the temporary
+# file when the write fails or the run is stopped.
+rewrite_file() {
+    if rewrite_names "$1" | cmp -s - "$1"; then
+        echo "Step $3: skipped the rewrite, $1 holds no pack-owned old name."
+        return 0
+    fi
+    TMP="$(mktemp "$2XXXXXX")" || stop_at "$3" "could not create a temporary file for $1."
+    trap 'rm -f -- "$TMP"; exit 1' INT TERM
+    rewrite_names "$1" > "$TMP" || { rm -f -- "$TMP"; stop_at "$3" "could not rewrite $1."; }
+    chmod 644 "$TMP"
+    mv -f "$TMP" "$1" || { rm -f -- "$TMP"; stop_at "$3" "could not replace $1."; }
+    trap - INT TERM
+    echo "Step $3: rewrote $4 in $1."
+    CHANGED=1
 }
 
 # Step 1: the new pack must be in place.
@@ -364,22 +401,15 @@ else
         echo "Step 4: skipped the rename, $OLD_WF is not present."
     fi
     if [ -f "$NEW_WF" ]; then
-        if rewrite_names "$NEW_WF" | cmp -s - "$NEW_WF"; then
-            echo "Step 4: skipped the rewrite, $NEW_WF holds no pack-owned old name."
-        else
-            # Write to a temporary file in the same folder, then rename it
-            # over the target. The helper removes the temporary file when the
-            # write fails or the run is stopped.
-            TMP="$(mktemp "$WF_DIR/.ravintio.yml.XXXXXX")" || stop_at 4 "could not create a temporary file in $WF_DIR/."
-            trap 'rm -f -- "$TMP"; exit 1' INT TERM
-            rewrite_names "$NEW_WF" > "$TMP" || { rm -f -- "$TMP"; stop_at 4 "could not rewrite $NEW_WF."; }
-            chmod 644 "$TMP"
-            mv -f "$TMP" "$NEW_WF" || { rm -f -- "$TMP"; stop_at 4 "could not replace $NEW_WF."; }
-            trap - INT TERM
-            echo "Step 4: rewrote the pack path and pack-owned names in $NEW_WF."
-            CHANGED=1
-        fi
+        rewrite_file "$NEW_WF" "$WF_DIR/.ravintio.yml." 4 "the pack path and pack-owned names"
     fi
+fi
+# The LF rules in .gitattributes name the pack path.
+remove_temp_files "." "$ATTRS." "$ATTR_TMP_RE" 4
+if [ -L "$ATTRS" ]; then
+    echo "WARNING: $ATTRS is a symlink. Skipped its rewrite, so nothing is written through it."
+elif [ -f "$ATTRS" ]; then
+    rewrite_file "$ATTRS" "./$ATTRS." 4 "the pack path"
 fi
 hook 4
 
@@ -466,6 +496,35 @@ for t in $TOOL_DIRS; do
         echo "Step 5: rewrote the entries in $MANIFEST."
         CHANGED=1
     fi
+done
+# Move each old boot file into the backup, so the tool stops loading the old
+# rules. Setup writes the new boot file.
+for b in $OLD_BOOTS; do
+    bdir="${b%/*}"
+    blink="$(first_link "${bdir%%/*}" "$bdir" "$b")"
+    if [ -n "$blink" ]; then
+        echo "WARNING: $blink is a symlink. Left $b in place."
+        continue
+    fi
+    if [ ! -f "$b" ]; then
+        if present "$b"; then echo "WARNING: $b is not a regular file. Left it in place."; fi
+        continue
+    fi
+    if present "$BACKUP" && [ ! -d "$BACKUP" ]; then
+        stop_at 5 "$BACKUP exists and is not a folder. Move it aside, then run this helper again."
+    fi
+    if present "$BACKUP/$b"; then
+        echo "WARNING: $BACKUP/$b exists. Left $b in place."
+        continue
+    fi
+    if tracked "$b"; then
+        git rm -q --cached -- "$b" >/dev/null 2>&1 || stop_at 5 "could not stop git tracking of $b."
+    fi
+    mkdir -p "$BACKUP/$bdir" || stop_at 5 "could not create $BACKUP/$bdir/."
+    mv "$b" "$BACKUP/$b" || stop_at 5 "could not move $b to $BACKUP/$b."
+    echo "Step 5: moved the old boot file $b to $BACKUP/$b."
+    note_moved "$b to $BACKUP/$b"
+    CHANGED=1
 done
 hook 5
 

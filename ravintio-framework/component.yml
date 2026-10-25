@@ -1,7 +1,7 @@
 id: "ravintio-framework"
 name: "RAVINTIO Framework"
 feature: "0000039-ravintio-rebrand"
-version: "0.37.0"
+version: "0.37.1"
 status: "active"
 type: "component-pack"
 domain: "developer-tooling"

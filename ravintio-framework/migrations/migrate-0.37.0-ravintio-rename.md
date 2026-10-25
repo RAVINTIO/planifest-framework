@@ -2,7 +2,7 @@
 
 **Target:** every consumer project that still holds the 0.36.0 pack, its overrides folder, or the backup this helper leaves.
 **Applies when:** `planifest-framework/`, `planifest-overrides/`, or `.ravintio-backup/planifest-framework/` exists at the project root.
-**Scope:** the old pack folder, the old overrides folder, the installed CI workflow, the session marker, the setup flags file and skills manifest in each tool folder, the skill folders a manifest lists, and `.git/info/exclude`. This migration never edits `plan/`, `docs/`, or application code.
+**Scope:** the old pack folder, the old overrides folder, the installed CI workflow, `.gitattributes`, the session marker, the setup flags file and skills manifest in each tool folder, the skill folders a manifest lists, the old Cursor and Cline boot files, and `.git/info/exclude`. This migration never edits `plan/`, `docs/`, or application code.
 **Safe to skip:** No. Setup stops while the old pack or the old overrides folder exists, so the project can't take 0.37.0 until this migration runs.
 
 ---
@@ -49,12 +49,15 @@ The helper runs these steps in order. Each step skips work that is already done,
 3. Moves the old overrides folder to `ravintio-overrides/`. It uses `git mv` when git tracks the folder.
 4. Renames the workflow to `.github/workflows/ravintio.yml`. It rewrites these parts:
    - the line `name: Planifest Strict Pipeline` to `name: RAVINTIO Strict Pipeline`, when it is the whole line. Setup skips a workflow that already exists, so only the helper changes this line.
+   - the old brand word in four message phrases that 0.36.0 setup wrote: `title=Planifest Fast Path Violation::`, `title=Planifest Strict Violation::`, `Planifest fast-path pipeline passed.`, and `Planifest pipeline passed.`. Other text keeps the old word.
    - the old pack path to `ravintio-framework/`.
    - each pack-owned variable name in the list below, as a whole name.
 
    A name that follows `secrets.` or `vars.` keeps its old prefix, even when it matches a pack-owned name. It names a consumer secret or variable. A name that is not on the list also keeps its old prefix.
 
    It rewrites the workflow through a temporary file in the same folder, and removes that file when a write fails. Before the rename, it removes any regular file in `.github/workflows/` left by a stopped run whose name matches `^\.ravintio\.yml\.[A-Za-z0-9]{6}$`. It leaves every other name.
+
+   Step 4 then rewrites the old pack path in `.gitattributes` in the same way. Setup skips a `.gitattributes` that already exists, so without this rewrite no LF rule covers the new hooks. On Windows, git could then write the hooks with CRLF endings, and they would stop running. Before the rewrite, it removes any regular file in the project root whose name matches `^\.gitattributes\.[A-Za-z0-9]{6}$`. If `.gitattributes` is a symbolic link, the helper skips it with a warning.
 5. Removes the `.claude/` session marker. Then it renames the markers in each tool folder: `.claude`, `.cursor`, `.windsurf`, `.clinerules`, `.agents`, `.github`, `.gemini`, and `.opencode`.
    - It renames `.planifest-setup-flags` to `.ravintio-setup-flags`. The content stays the same.
    - It renames `skills/.planifest-manifest` to `skills/.ravintio-manifest`.
@@ -65,6 +68,8 @@ The helper runs these steps in order. Each step skips work that is already done,
    - On Windows, the `.ps1` helper makes an empty probe file in the real skills folder, with a random name that matches the same pattern. A parent counts as the skills folder when the probe shows through it. The helper removes the probe when it finishes with the manifest.
 
    It uses `git mv` when git tracks a marker or a skill folder. If the tool folder, its `skills` folder, or a marker file is a symbolic link, it skips that tool folder with a warning.
+
+   Last, step 5 moves each old boot file into the backup: `.cursor/rules/planifest.mdc` and `.clinerules/00-planifest-boot.md`. Cursor and Cline load every rule file in those folders, so the old file would load beside the new one. The helper stops git tracking of the file, then moves it to the same path under `.ravintio-backup/`. Setup writes the new boot file. If the backup copy already exists, or the file or a parent folder is a symbolic link, the helper leaves the old file in place with a warning.
 6. Stops git tracking of the old pack, then moves it to `.ravintio-backup/planifest-framework/`. It adds `.ravintio-backup/` to `.git/info/exclude` once.
 7. Prints the setup command to run next. It prints one command for each `.ravintio-setup-flags` whose `tool` value is a tool setup accepts. That command carries the `--include-full-skill-library` and `--strict-orchestrator` flags the file holds, and no other flag. If no flags file names such a tool, it prints the generic command.
 8. Prints the branch protection warning.

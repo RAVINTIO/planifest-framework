@@ -988,6 +988,109 @@ run_rereview_suite() {
   fi
 }
 
+# ---------------------------------------------------------------------
+# req-006 (backlog 0000277): installed files the 0.36.0 setup named
+# ---------------------------------------------------------------------
+#
+# A run on a real 0.36.0 consumer left three files in their old form:
+#   - the old Cursor and Cline boot files, which the tools still load
+#   - .gitattributes, whose LF rules named the old hook paths
+#   - the old brand phrases in the workflow messages
+# Step 4 now rewrites .gitattributes and the four workflow phrases. Step 5
+# moves each old boot file into .ravintio-backup/, and setup writes the new one.
+ATTR_TMP_RE='^\.gitattributes\.[A-Za-z0-9]{6}$'
+
+run_leftovers_suite() {
+  KIND="$1"
+  local T="[$KIND] req-006 (0000277)" R OUT CODE BEFORE e
+  local NAME="$KIND-lo"
+
+  echo "=== $T workflow messages, .gitattributes, and boot files ==="
+  R=$(make_repo "$NAME-all")
+  {
+    printf '          echo "::error title=%s Fast Path Violation::Fast Path commits must update component.yml."\n' "$OLDC"
+    printf '          echo "ok %s fast-path pipeline passed."\n' "$OLDC"
+    printf '          echo "::error title=%s Strict Violation::Code under src/ changed."\n' "$OLDC"
+    printf '          echo "ok %s pipeline passed."\n' "$OLDC"
+    printf '          echo "%s is our own word here"\n' "$OLDC"
+  } >> "$R/.github/workflows/$OLD.yml"
+  printf '# %s line ending rules\n%s/hooks/pre-commit  text eol=lf\n%s/hooks/commit-msg  text eol=lf\n*.png binary\n' \
+    "$OLDC" "$OLDPACK" "$OLDPACK" > "$R/.gitattributes"
+  mkdir -p "$R/.cursor/rules" "$R/.clinerules"
+  echo "old cursor rules" > "$R/.cursor/rules/$OLD.mdc"
+  echo "mine" > "$R/.cursor/rules/team.mdc"
+  echo "old cline rules" > "$R/.clinerules/00-$OLD-boot.md"
+  ( cd "$R" && git add -A && git commit -q -m leftovers )
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T: run exits 0"
+  e="$R/.github/workflows/ravintio.yml"
+  assert_equals "1" "$(grep -c 'title=RAVINTIO Fast Path Violation::' "$e")" "$T: workflow Fast Path message takes the new name"
+  assert_equals "1" "$(grep -c 'title=RAVINTIO Strict Violation::' "$e")" "$T: workflow Strict message takes the new name"
+  assert_equals "1" "$(grep -c 'ok RAVINTIO fast-path pipeline passed\.' "$e")" "$T: workflow fast-path pass message takes the new name"
+  assert_equals "1" "$(grep -c 'ok RAVINTIO pipeline passed\.' "$e")" "$T: workflow pass message takes the new name"
+  assert_equals "1" "$(grep -c "echo \"$OLDC is our own word here\"" "$e")" "$T: other workflow text keeps the old word"
+  assert_equals "2" "$(grep -c '^ravintio-framework/hooks/.* text eol=lf$' "$R/.gitattributes")" "$T: .gitattributes LF rules name the new hook paths"
+  assert_equals "0" "$(grep -c "$OLDPACK/" "$R/.gitattributes")" "$T: .gitattributes names no old pack path"
+  assert_equals "1" "$(grep -cx '\*\.png binary' "$R/.gitattributes")" "$T: .gitattributes keeps the consumer's own line"
+  assert_contains "Step 4: rewrote the pack path in .gitattributes." "$OUT" "$T: step 4 reports the .gitattributes rewrite"
+  assert_equals "no" "$(exists "$R/.cursor/rules/$OLD.mdc")" "$T: old Cursor boot file gone from .cursor/rules"
+  assert_equals "old cursor rules" "$(cat "$R/.ravintio-backup/.cursor/rules/$OLD.mdc" 2>/dev/null)" "$T: old Cursor boot file kept in the backup"
+  assert_equals "no" "$(exists "$R/.clinerules/00-$OLD-boot.md")" "$T: old Cline boot file gone from .clinerules"
+  assert_equals "old cline rules" "$(cat "$R/.ravintio-backup/.clinerules/00-$OLD-boot.md" 2>/dev/null)" "$T: old Cline boot file kept in the backup"
+  assert_equals "mine" "$(cat "$R/.cursor/rules/team.mdc" 2>/dev/null)" "$T: the consumer's own Cursor rule stays"
+  assert_equals "" "$( cd "$R" && git ls-files -- ".cursor/rules/$OLD.mdc" ".clinerules/00-$OLD-boot.md" )" "$T: git no longer tracks the old boot files"
+  assert_contains "Step 5: moved the old boot file .cursor/rules/$OLD.mdc to .ravintio-backup/.cursor/rules/$OLD.mdc." "$OUT" "$T: step 5 reports the Cursor boot move"
+  BEFORE=$(snapshot "$R")
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T: rerun exits 0"
+  assert_contains "Nothing to do" "$OUT" "$T: rerun has nothing to do"
+  assert_equals "$BEFORE" "$(snapshot "$R")" "$T: rerun changes nothing"
+
+  echo "=== $T an old boot file whose backup copy exists stays in place ==="
+  R=$(make_repo "$NAME-bk")
+  mkdir -p "$R/.cursor/rules" "$R/.ravintio-backup/.cursor/rules"
+  echo "old" > "$R/.cursor/rules/$OLD.mdc"
+  echo "older" > "$R/.ravintio-backup/.cursor/rules/$OLD.mdc"
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T: run with an existing backup copy exits 0"
+  assert_contains "WARNING: .ravintio-backup/.cursor/rules/$OLD.mdc exists. Left .cursor/rules/$OLD.mdc in place." "$OUT" "$T: warns about the existing backup copy"
+  assert_equals "old" "$(cat "$R/.cursor/rules/$OLD.mdc" 2>/dev/null)" "$T: old boot file left in place"
+  assert_equals "older" "$(cat "$R/.ravintio-backup/.cursor/rules/$OLD.mdc" 2>/dev/null)" "$T: existing backup copy untouched"
+
+  echo "=== $T a rerun removes a leftover temporary .gitattributes file ==="
+  R=$(make_repo "$NAME-attmp")
+  printf '%s/hooks/pre-commit text eol=lf\n' "$OLDPACK" > "$R/.gitattributes"
+  run_helper "$R" >/dev/null
+  echo mine > "$R/.gitattributes.mine"
+  echo mine > "$R/.gitattributes.abc1234"
+  BEFORE=$(snapshot "$R")
+  for e in .gitattributes.Ab12Cd .gitattributes.x9y8z7; do
+    [[ "$e" =~ $ATTR_TMP_RE ]] || { echo "  FAIL: $T: fixture $e does not match the temp pattern"; ((FAIL++)) || true; }
+    printf 'stale\n' > "$R/$e"
+  done
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "0" "$CODE" "$T: rerun with leftover .gitattributes temp files exits 0"
+  assert_equals "$BEFORE" "$(snapshot "$R")" "$T: rerun removes only the leftover .gitattributes temp files"
+
+  if [ "$LINKS_OK" = yes ]; then
+    echo "=== $T links are left alone ==="
+    R=$(make_repo "$NAME-ln")
+    echo outside > "$WS/$NAME-attr-target"
+    ln -s "$WS/$NAME-attr-target" "$R/.gitattributes"
+    mkdir -p "$WS/$NAME-rules-target" "$R/.cursor"
+    echo "old" > "$WS/$NAME-rules-target/$OLD.mdc"
+    ln -s "$WS/$NAME-rules-target" "$R/.cursor/rules"
+    OUT=$(run_helper "$R"); CODE=$?
+    assert_equals "0" "$CODE" "$T: run with linked .gitattributes and .cursor/rules exits 0"
+    assert_contains "WARNING: .gitattributes is a symlink." "$OUT" "$T: warns about the linked .gitattributes"
+    assert_contains "WARNING: .cursor/rules is a symlink. Left .cursor/rules/$OLD.mdc in place." "$OUT" "$T: warns about the linked rules folder"
+    assert_equals "outside" "$(cat "$WS/$NAME-attr-target")" "$T: linked .gitattributes target untouched"
+    assert_equals "old" "$(cat "$WS/$NAME-rules-target/$OLD.mdc" 2>/dev/null)" "$T: boot file behind the link untouched"
+  else
+    echo "  SKIP: $T links: ln -s makes no real link here"
+  fi
+}
+
 echo "=== req-006: helper files exist ==="
 assert_equals "yes" "$(exists "$SH_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.sh exists"
 assert_equals "yes" "$(exists "$PS_HELPER")" "req-006: migrate-0.37.0-ravintio-rename.ps1 exists"
@@ -1022,6 +1125,7 @@ elif [ -f "$SH_HELPER" ]; then
   run_marker_suite sh
   run_strict_names_suite sh
   run_rereview_suite sh
+  run_leftovers_suite sh
 else
   echo "  FAIL: req-006: skipped the .sh cases because the helper is missing"; ((FAIL++)) || true
 fi
@@ -1035,6 +1139,7 @@ if command -v "$PS_BIN" >/dev/null 2>&1; then
     run_marker_suite ps1
     run_strict_names_suite ps1
     run_rereview_suite ps1
+    run_leftovers_suite ps1
     # (p) parity: same output and exit code for the same scenario.
     for scenario in clean rerun nopack bothoverrides; do
       A=$(make_repo "parity-sh-$scenario"); B=$(make_repo "parity-ps-$scenario")
