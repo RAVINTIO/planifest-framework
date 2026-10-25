@@ -92,6 +92,10 @@ jobs:
             shard: 7
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The 0000039 suites compare the tree with the commit before the
+          # rename pass, so the job needs full history and origin/main.
+          fetch-depth: 0
 
       - name: Run the framework test suite
         shell: bash
