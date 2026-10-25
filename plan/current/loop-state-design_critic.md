@@ -12,7 +12,7 @@ status: "active"
 | Loop id | `design_critic` |
 | Owning phase | `P1` |
 | Toggle level | `on` |
-| Iteration | `2` of cap `3` |
+| Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` |
 | Last decision | `continue` |
@@ -31,6 +31,12 @@ status: "active"
 ### Iteration 2 (2026-10-25T03:05:00Z)
 - **Approach:** 1
 - **Action:** A fresh-context critic re-runs the mechanical check, checks every iteration 1 finding, and applies the full rubric to every P1 artifact.
+- **Observation:** Mechanical check clean. Six of ten iteration 1 findings fixed. Two new major findings (N1 staged deletions break the rerun, N2 split records) and four minor. Verdict in `plan/current/critic-verdict-2.md`.
+- **Decision:** continue: REJECT. The orchestrator fixes the findings through Edit, including a split of req-004 into req-010.
+
+### Iteration 3 (2026-10-25T03:20:00Z)
+- **Approach:** 1
+- **Action:** A fresh-context critic re-runs the mechanical check, checks every iteration 2 finding, and applies the full rubric to req-001 to req-010 and the other P1 artifacts.
 - **Observation:** pending
 - **Decision:** pending
 
