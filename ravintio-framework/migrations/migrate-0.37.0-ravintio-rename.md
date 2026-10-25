@@ -58,7 +58,8 @@ The helper runs these steps in order. Each step skips work that is already done,
    - It renames `skills/.planifest-manifest` to `skills/.ravintio-manifest`.
    - It renames each `planifest-X` skill folder the manifest lists to `ravintio-X`.
    - It rewrites the manifest through a temporary file in the same folder. Each kept entry becomes the real skills folder joined with its name.
-   - It drops an entry whose parent is not the real skills folder, or whose last part is empty, `.`, or `..`. It prints a `WARNING:` line for each dropped entry and never touches its target.
+   - It drops an entry whose parent is not the real skills folder. It also drops one whose last part doesn't match `^[A-Za-z0-9][A-Za-z0-9._-]*$` or ends in `.`. It prints a `WARNING:` line for each dropped entry and never touches its target.
+   - It removes its temporary manifest when a write fails. Before it reads each manifest, it removes any regular file left by a stopped run whose name matches `^\.ravintio-manifest\.[A-Za-z0-9]{6}$`. It leaves every other name.
 
    It uses `git mv` when git tracks a marker or a skill folder. If the tool folder, its `skills` folder, or a marker file is a symbolic link, it skips that tool folder with a warning.
 6. Stops git tracking of the old pack, then moves it to `.ravintio-backup/planifest-framework/`. It adds `.ravintio-backup/` to `.git/info/exclude` once.

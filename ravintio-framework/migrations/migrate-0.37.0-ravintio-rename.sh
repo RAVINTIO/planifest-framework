@@ -40,6 +40,11 @@ OLD_FLAGS=".$OLD-setup-flags"
 NEW_FLAGS=".ravintio-setup-flags"
 OLD_MANIFEST=".$OLD-manifest"
 NEW_MANIFEST=".ravintio-manifest"
+# A kept manifest name and a leftover temporary manifest must match these.
+# The letters are listed in full, so no locale can widen a range.
+ALNUM="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+NAME_RE="^[$ALNUM][$ALNUM._-]*\$"
+TMP_RE="^\\.ravintio-manifest\\.[$ALNUM]{6}\$"
 # Step 7 prints a saved tool only when setup accepts it.
 SETUP_TOOLS="claude-code cursor codex antigravity copilot windsurf cline roo-code opencode"
 
@@ -158,16 +163,33 @@ real_dir() {
 
 # kept_name ENTRY REAL_SKILLS: print the last part of a manifest entry when
 # the helper keeps it. It keeps an entry whose parent resolves to the real
-# skills folder and whose last part is not empty, . or ..
+# skills folder and whose last part matches NAME_RE and does not end in a dot.
+# So a last part never holds a separator, a drive colon, a space, or a
+# wildcard.
 kept_name() {
     local parent last="${1##*/}"
     case "$1" in
         */*) parent="${1%/*}"; [ -z "$parent" ] && parent="/" ;;
         *) parent="." ;;
     esac
-    case "$last" in ""|.|..) return 0 ;; esac
+    [[ "$last" =~ $NAME_RE ]] || return 0
+    case "$last" in *.) return 0 ;; esac
     if [ "$(real_dir "$parent")" = "$2" ]; then printf '%s' "$last"; fi
     return 0
+}
+
+# remove_temp_files DIR: remove each regular file in DIR whose name matches
+# TMP_RE, which a stopped run of this helper can leave. Any other name stays.
+remove_temp_files() {
+    local f names
+    names="$(for f in "$1"/.ravintio-manifest.*; do printf '%s\n' "${f##*/}"; done | LC_ALL=C sort)"
+    while IFS= read -r f; do
+        [[ "$f" =~ $TMP_RE ]] || continue
+        if [ -L "$1/$f" ] || [ ! -f "$1/$f" ]; then continue; fi
+        rm -f -- "$1/$f" || stop_at 5 "could not remove $1/$f."
+        echo "Step 5: removed the leftover temporary file $1/$f."
+        CHANGED=1
+    done <<< "$names"
 }
 
 # flags_args DIR: print the setup arguments DIR's flags file holds, or
@@ -376,6 +398,7 @@ for t in $TOOL_DIRS; do
     # The flags file keeps its content.
     rename_marker "$t/$OLD_FLAGS" "$t/$NEW_FLAGS"
     if [ ! -d "$t/skills" ]; then continue; fi
+    remove_temp_files "$t/skills"
     rename_marker "$t/skills/$OLD_MANIFEST" "$t/skills/$NEW_MANIFEST"
     MANIFEST="$t/skills/$NEW_MANIFEST"
     if [ ! -f "$MANIFEST" ]; then continue; fi
@@ -407,11 +430,19 @@ for t in $TOOL_DIRS; do
     done < "$MANIFEST"
     if ! printf '%s' "$CONTENT" | cmp -s - "$MANIFEST"; then
         # Write to a temporary file in the same folder, then rename it over
-        # the target.
+        # the target. The helper removes the temporary file when the write
+        # fails or the run is stopped.
         TMP="$(mktemp "$t/skills/$NEW_MANIFEST.XXXXXX")" || stop_at 5 "could not create a temporary file in $t/skills/."
-        printf '%s' "$CONTENT" > "$TMP" || stop_at 5 "could not rewrite $MANIFEST. The temporary file $TMP is left for you to check."
+        trap 'rm -f -- "$TMP"; exit 1' INT TERM
+        printf '%s' "$CONTENT" > "$TMP" || { rm -f -- "$TMP"; stop_at 5 "could not rewrite $MANIFEST."; }
         chmod 644 "$TMP"
-        mv -f "$TMP" "$MANIFEST" || stop_at 5 "could not replace $MANIFEST. The temporary file $TMP is left for you to check."
+        # mv would move the file inside a folder that took the name.
+        if [ -d "$MANIFEST" ] || [ -L "$MANIFEST" ]; then
+            rm -f -- "$TMP"
+            stop_at 5 "could not replace $MANIFEST."
+        fi
+        mv -f "$TMP" "$MANIFEST" || { rm -f -- "$TMP"; stop_at 5 "could not replace $MANIFEST."; }
+        trap - INT TERM
         echo "Step 5: rewrote the entries in $MANIFEST."
         CHANGED=1
     fi

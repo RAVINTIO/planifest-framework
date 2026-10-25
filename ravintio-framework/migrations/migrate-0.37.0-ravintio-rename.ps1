@@ -44,6 +44,10 @@ $OldManifest = '.' + $Old + '-manifest'
 $NewManifest = '.ravintio-manifest'
 # Step 7 prints a saved tool only when setup accepts it.
 $SetupTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'windsurf', 'cline', 'roo-code', 'opencode')
+# A kept manifest name and a leftover temporary manifest must match these.
+# Use them with -cmatch, so case folding can't widen a range.
+$NameRe = '^[A-Za-z0-9][A-Za-z0-9._-]*\z'
+$TmpRe = '^\.ravintio-manifest\.[A-Za-z0-9]{6}\z'
 $OnWindows = ($env:OS -eq 'Windows_NT')
 $Utf8 = New-Object System.Text.UTF8Encoding($false)
 
@@ -61,8 +65,12 @@ $Root = (Get-Location).ProviderPath
 $script:Moved = @()
 $script:Changed = $false
 
+# Get-Full REL: a string join, not Combine, so a rooted part in REL can't
+# replace the project root.
 function Get-Full([string]$Rel) {
-    return [System.IO.Path]::Combine($Root, $Rel)
+    $sep = [string][System.IO.Path]::DirectorySeparatorChar
+    if ($Root.EndsWith($sep)) { return $Root + $Rel }
+    return $Root + $sep + $Rel
 }
 
 function Write-Moved {
@@ -239,14 +247,26 @@ function Get-RealPath([string]$Full) {
 }
 
 function Test-SamePath([string]$A, [string]$B) {
-    if ($OnWindows) { return [string]::Equals($A, $B, [System.StringComparison]::OrdinalIgnoreCase) }
+    if ($OnWindows) {
+        # Windows reads / and \ alike, so compare them alike.
+        return [string]::Equals($A.Replace('/', '\'), $B.Replace('/', '\'), [System.StringComparison]::OrdinalIgnoreCase)
+    }
     return [string]::Equals($A, $B, [System.StringComparison]::Ordinal)
 }
 
 # Get-KeptName ENTRY REAL_SKILLS: the last part of a manifest entry when the
 # helper keeps it, else an empty string. It keeps an entry whose parent
-# resolves to the real skills folder and whose last part is not empty, . or ..
-function Get-KeptName([string]$Entry, [string]$RealSkills) {
+# resolves to the real skills folder and whose last part matches NameRe and
+# does not end in a dot. So a last part never holds a separator, a drive
+# colon, a space, or a wildcard.
+#
+# On Windows, two paths to one folder can differ as text, for example an 8.3
+# short name against the long name. So there a parent also counts when the
+# probe file PROBE, made in the real skills folder, shows through it. Only
+# the same folder can show a file with that random name. Elsewhere PowerShell
+# reads \ as a separator and the .sh twin does not, so the text compare alone
+# keeps both twins alike.
+function Get-KeptName([string]$Entry, [string]$RealSkills, [string]$Probe) {
     $idx = $Entry.LastIndexOf('/')
     if ($OnWindows) { $idx = [Math]::Max($idx, $Entry.LastIndexOf('\')) }
     if ($idx -lt 0) {
@@ -258,10 +278,58 @@ function Get-KeptName([string]$Entry, [string]$RealSkills) {
         if ($parent -eq '') { $parent = '/' }
         if ($parent.EndsWith(':')) { $parent = $parent + '\' }
     }
-    if (($last -eq '') -or ($last -eq '.') -or ($last -eq '..')) { return '' }
+    if ((-not ($last -cmatch $NameRe)) -or $last.EndsWith('.')) { return '' }
     $real = Get-RealPath $parent
     if (($real -ne '') -and (Test-SamePath $real $RealSkills)) { return $last }
+    if ($OnWindows -and ($Probe -ne '')) {
+        $pf = $parent
+        if (-not [System.IO.Path]::IsPathRooted($pf)) { $pf = Get-Full $pf }
+        $sep = [string][System.IO.Path]::DirectorySeparatorChar
+        if (-not $pf.EndsWith($sep)) { $pf = $pf + $sep }
+        if (Test-Path -LiteralPath ($pf + $Probe) -PathType Leaf) { return $last }
+    }
     return ''
+}
+
+# New-Probe DIR: make an empty probe file in DIR with a new random name that
+# matches TmpRe, and return the name. Return an empty string when that fails.
+# Only Windows needs a probe.
+function New-Probe([string]$Dir) {
+    if (-not $OnWindows) { return '' }
+    $name = $NewManifest + '.' + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
+    try {
+        $fs = New-Object System.IO.FileStream((Get-Full ($Dir + '/' + $name)), [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+        $fs.Close()
+    } catch {
+        return ''
+    }
+    return $name
+}
+
+# Remove-Probe DIR NAME: remove the probe file NAME from DIR, if one was made.
+function Remove-Probe([string]$Dir, [string]$Name) {
+    if ($Name -eq '') { return }
+    try { [System.IO.File]::Delete((Get-Full ($Dir + '/' + $Name))) } catch { }
+}
+
+# Remove-TempFiles DIR: remove each regular file in DIR whose name matches
+# TmpRe, which a stopped run of this helper can leave. Any other name stays.
+function Remove-TempFiles([string]$Dir) {
+    [string[]]$names = @(Get-ChildItem -LiteralPath (Get-Full $Dir) -Force -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -cmatch $TmpRe } | ForEach-Object { $_.Name })
+    # Sort by byte order, as the .sh twin does, so both print the same lines.
+    [System.Array]::Sort($names, [System.StringComparer]::Ordinal)
+    foreach ($f in $names) {
+        $rel = $Dir + '/' + $f
+        if ((Test-Link $rel) -or (-not (Test-File $rel))) { continue }
+        try {
+            [System.IO.File]::Delete((Get-Full $rel))
+        } catch {
+            Stop-At '5' "could not remove $rel."
+        }
+        Write-Host "Step 5: removed the leftover temporary file $rel."
+        $script:Changed = $true
+    }
 }
 
 # Get-Lines FILE: the lines of FILE, without a trailing carriage return.
@@ -379,15 +447,20 @@ foreach ($t in $ToolDirs) {
     }
     if (($scan -ne '') -and (Test-Dir ($t + '/skills'))) {
         $rs = Get-RealPath ($t + '/skills')
-        foreach ($entry in (Get-Lines $scan)) {
-            if ($entry -eq '') { continue }
-            $name = Get-KeptName $entry $rs
-            if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
-                $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
-                if ((Test-Present ($t + '/skills/' + $name)) -and (Test-Present ($t + '/skills/' + $nn))) {
-                    Stop-At '2' "both $t/skills/$name and $t/skills/$nn exist. Keep one of them, then run this helper again."
+        $probe = New-Probe ($t + '/skills')
+        try {
+            foreach ($entry in (Get-Lines $scan)) {
+                if ($entry -eq '') { continue }
+                $name = Get-KeptName $entry $rs $probe
+                if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
+                    $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
+                    if ((Test-Present ($t + '/skills/' + $name)) -and (Test-Present ($t + '/skills/' + $nn))) {
+                        Stop-At '2' "both $t/skills/$name and $t/skills/$nn exist. Keep one of them, then run this helper again."
+                    }
                 }
             }
+        } finally {
+            Remove-Probe ($t + '/skills') $probe
         }
     }
 }
@@ -490,6 +563,7 @@ foreach ($t in $ToolDirs) {
     Rename-Marker ($t + '/' + $OldFlags) ($t + '/' + $NewFlags)
     $skillsRel = $t + '/skills'
     if (-not (Test-Dir $skillsRel)) { continue }
+    Remove-TempFiles $skillsRel
     $manRel = $skillsRel + '/' + $NewManifest
     Rename-Marker ($skillsRel + '/' + $OldManifest) $manRel
     if (-not (Test-File $manRel)) { continue }
@@ -497,25 +571,31 @@ foreach ($t in $ToolDirs) {
     # skill folder, and write each kept entry as the real path.
     $rs = Get-RealPath $skillsRel
     $sb = New-Object System.Text.StringBuilder
-    foreach ($entry in (Get-Lines $manRel)) {
-        if ($entry -eq '') { continue }
-        $name = Get-KeptName $entry $rs
-        if ($name -eq '') {
-            Write-Host "WARNING: dropped manifest entry $entry"
-            continue
-        }
-        if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
-            $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
-            if (Test-Present ($skillsRel + '/' + $name)) {
-                Move-Entry ($skillsRel + '/' + $name) ($skillsRel + '/' + $nn) '5'
-                Write-Host "Step 5: renamed $skillsRel/$name to $skillsRel/$nn."
-                $script:Moved += "$skillsRel/$name to $skillsRel/$nn"
-                $script:Changed = $true
+    $probe = New-Probe $skillsRel
+    try {
+        foreach ($entry in (Get-Lines $manRel)) {
+            if ($entry -eq '') { continue }
+            $name = Get-KeptName $entry $rs $probe
+            if ($name -eq '') {
+                Write-Host "WARNING: dropped manifest entry $entry"
+                continue
             }
-            $name = $nn
+            if ($name.StartsWith($Old + '-', [System.StringComparison]::Ordinal)) {
+                $nn = 'ravintio-' + $name.Substring($Old.Length + 1)
+                if (Test-Present ($skillsRel + '/' + $name)) {
+                    Move-Entry ($skillsRel + '/' + $name) ($skillsRel + '/' + $nn) '5'
+                    Write-Host "Step 5: renamed $skillsRel/$name to $skillsRel/$nn."
+                    $script:Moved += "$skillsRel/$name to $skillsRel/$nn"
+                    $script:Changed = $true
+                }
+                $name = $nn
+            }
+            # A string join, not Combine, so a rooted name can't replace $rs.
+            [void]$sb.Append($rs + [string][System.IO.Path]::DirectorySeparatorChar + $name)
+            [void]$sb.Append("`n")
         }
-        [void]$sb.Append([System.IO.Path]::Combine($rs, $name))
-        [void]$sb.Append("`n")
+    } finally {
+        Remove-Probe $skillsRel $probe
     }
     $manFull = Get-Full $manRel
     $newBytes = $Utf8.GetBytes($sb.ToString())
@@ -528,21 +608,31 @@ foreach ($t in $ToolDirs) {
     }
     if (-not $same) {
         # Write to a temporary file in the same folder, then rename it over
-        # the target.
+        # the target. The finally block removes the temporary file when the
+        # write fails or the run is stopped.
         $tmpRel = $manRel + '.' + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
         $tmpFull = Get-Full $tmpRel
+        $made = $false
+        $fs = $null
         try {
-            $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
-            $fs.Write($newBytes, 0, $newBytes.Length)
-            $fs.Close()
-        } catch {
-            Stop-At '5' "could not rewrite $manRel. The temporary file $tmpRel is left for you to check."
-        }
-        # NullString passes a real null, so File.Replace makes no backup file.
-        try {
-            [System.IO.File]::Replace($tmpFull, $manFull, [System.Management.Automation.Language.NullString]::Value)
-        } catch {
-            Stop-At '5' "could not replace $manRel. The temporary file $tmpRel is left for you to check."
+            try {
+                $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+                $made = $true
+                $fs.Write($newBytes, 0, $newBytes.Length)
+                $fs.Close()
+            } catch {
+                if ($fs) { $fs.Dispose() }
+                Stop-At '5' "could not rewrite $manRel."
+            }
+            # NullString passes a real null, so File.Replace makes no backup file.
+            try {
+                [System.IO.File]::Replace($tmpFull, $manFull, [System.Management.Automation.Language.NullString]::Value)
+                $made = $false
+            } catch {
+                Stop-At '5' "could not replace $manRel."
+            }
+        } finally {
+            if ($made) { [System.IO.File]::Delete($tmpFull) }
         }
         Write-Host "Step 5: rewrote the entries in $manRel."
         $script:Changed = $true
