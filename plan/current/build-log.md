@@ -313,6 +313,9 @@ Deviation (P5 rerun, unclassified): the helper's manifest name rule grew through
 Deviation (P5 rerun, unclassified): CI gives the Linux and macOS test legs 15 minutes, not 10, because the macOS leg passed every suite but ran past 10 minutes. The 0000031 and 0000037 CI checks now expect the new value.
 Progress (P5 rerun): N-001 to N-005 RED 25101a59, GREEN 00691244. CI change 5d3fde99, with the two CI-check test updates ending at 61be791e. Full suite 162 of 162 at 61be791e, pushed. Agents spawned: 2.
 Decision (P6): one parallel batch of three: the second P5 re-review, the P6 doc pass, and CI on 61be791e / reason: the three share no files, and the doc pass covers behaviour that the re-review only reads.
+Progress (P6 late change): doc pass 823e7bc7, f74f523f, 4d925d2c, da49c4bf. Full suite 162 of 162. The docs agent also corrected backlog 0000261, and the orchestrator corrected the ADR-004 summary.
+Decision (P6): the 15-minute Linux and macOS CI cap gets no new ADR / reason: it changes one value that 0000031 ADR 003 set, and the decisions index and architecture overview now record it. The deviation review classes it.
+Backlog filed (P6): 0000266 and 0000267, by request of the human on the loop. The same two entries sit uncommitted in RAVINTIO Zero as 0000179 and 0000180. Another session is busy on that branch, and Zero's file-backlog rule never commits in a target repo.
 Drift (P6): the old setup never read `.opencode/.planifest-setup-flags`, so an OpenCode consumer kept a stale old marker. The helper now covers `.opencode/` as well.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 

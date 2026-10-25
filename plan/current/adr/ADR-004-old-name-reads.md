@@ -1,6 +1,6 @@
 ---
 title: "ADR 004: Old name reads"
-summary: "Through 0.x, one environment variable, the old boot-file markers and ignore-file headers, and two setup marker files stay readable. Every other variable renames with no fallback."
+summary: "Through 0.x, one environment variable and the old boot-file markers and ignore-file headers stay readable. The migration helper renames the two old setup marker files, and setup stops while one exists. Every other variable renames with no fallback."
 status: "accepted"
 version: "0.1.0"
 ---
