@@ -70,9 +70,13 @@ assert_equals "yes" "$([ -n "$MIG_LIST" ] && echo yes || echo no)" "req-005: the
 while IFS= read -r path; do
   [ -z "$path" ] && continue
   name="$(basename "$path")"
-  git -C "$ROOT" show "$BASE:$path" > "$WORK/base-$name" 2>/dev/null
-  NOW="$FW/migrations/$name"
-  if [ -f "$NOW" ] && cmp -s "$WORK/base-$name" "$NOW"; then R=same; else R=differs; fi
+  # Compare git blob ids, not working files: a Windows checkout writes CRLF line
+  # endings, so the bytes on disk differ even when the stored file doesn't.
+  NOWPATH="ravintio-framework/migrations/$name"
+  BASE_ID="$(git -C "$ROOT" rev-parse "$BASE:$path" 2>/dev/null)"
+  NOW_ID="$(git -C "$ROOT" rev-parse "HEAD:$NOWPATH" 2>/dev/null)"
+  R=differs
+  if [ -n "$BASE_ID" ] && [ "$BASE_ID" = "$NOW_ID" ] && git -C "$ROOT" diff --quiet HEAD -- "$NOWPATH"; then R=same; fi
   assert_equals "same" "$R" "req-005: migration $name is byte-identical to the base commit"
 done <<< "$MIG_LIST"
 
