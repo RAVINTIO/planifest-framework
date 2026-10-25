@@ -71,3 +71,24 @@ Gate check (P0 to P1): every checklist item passes. Problem, three stories, unch
 Progress: P0 done at 2026-10-25T02:12:50Z: design confirmed for the RAVINTIO rename, 0.37.0, autonomous run.
 
 Run mode confirmed: autonomous (2026-10-25T02:12:50Z)
+Credential scan (P0): clean (regex only)
+
+### P1: Spec
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:14:07Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (orchestrator), cheaper (drafting subagents) |
+| Skills loaded | planifest-spec-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+Toggle record (P1): design_critic on (autonomous default), reversal_protocol on (autonomous default), verify_by_execution on (autonomous default), cross_model_review on (autonomous default), parallel_streams on (autonomous default). No `loop-toggles.yml` exists.
+Skills inbox (P1): absent, nothing to take in.
+Decision (P1): one stream, no stream state files / reason: every requirement depends on the one scripted rename pass, so no two stories pass the dependency test.
+Decision (P1): backlog IDs 0000246 to 0000255 go to the P1 drafting subagents, one each / reason: PR #70 spent IDs up to 0000245.
