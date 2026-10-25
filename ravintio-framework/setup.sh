@@ -260,6 +260,55 @@ copy_capability_skills() {
   fi
 }
 
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
+# Remove an ignore-file block whose header carries the old name. The block runs
+# from the header line to the next blank line.
+strip_old_ignore_block() {
+  local file="$1" header="$2"
+  [ -f "$file" ] || return 0
+  grep -qF -- "$header" "$file" || return 0
+  local tmp
+  tmp="$(mktemp)"
+  awk -v h="$header" '
+    index($0, h) { skip = 1; next }
+    skip && $0 == "" { skip = 0; next }
+    !skip { print }
+  ' "$file" > "$tmp"
+  cat "$tmp" > "$file"
+  rm -f "$tmp"
+}
+
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
+# Carry flags from the old flags marker into the RAVINTIO variables, then remove it.
+migrate_old_flags_marker() {
+  local tool_dir="$1"
+  local old="$PROJECT_ROOT/$tool_dir/.planifest-setup-flags" # old-name read, removed at 1.0.0
+  [ -f "$old" ] || return 0
+  if grep -qF -- '"--include-full-skill-library"' "$old"; then INCLUDE_FULL_SKILL_LIBRARY=true; fi
+  if grep -qF -- '"--strict-orchestrator"' "$old"; then
+    STRICT_ORCHESTRATOR=true
+    mkdir -p "$PROJECT_ROOT/plan"
+    touch "$PROJECT_ROOT/plan/.orchestrator-strict"
+  fi
+  rm -f "$old"
+  echo "  ~ carried old setup flags into .ravintio-setup-flags"
+}
+
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
+# Remove the installed old skill folders the old manifest lists, then the manifest.
+migrate_old_manifest() {
+  local old="$1/.planifest-manifest" # old-name read, removed at 1.0.0
+  [ -f "$old" ] || return 0
+  local dir_path
+  while IFS= read -r dir_path; do
+    if [ -n "$dir_path" ] && [ -d "$dir_path" ] && [[ "$(basename "$dir_path")" == planifest-* ]]; then # old-name read, removed at 1.0.0
+      rm -rf "$dir_path"
+      echo "  - removed old skill: $(basename "$dir_path")"
+    fi
+  done < "$old"
+  rm -f "$old"
+}
+
 append_override_instructions() {
   # Appends project-specific instructions from ravintio-overrides/instructions/
   # into the boot file between sentinel markers (idempotent). (REQ-006, REQ-007,
@@ -268,6 +317,21 @@ append_override_instructions() {
   local instr_dir="$PROJECT_ROOT/ravintio-overrides/instructions"
   local start_marker="<!-- ravintio-overrides:instructions:start -->"
   local end_marker="<!-- ravintio-overrides:instructions:end -->"
+
+  # Old-name read kept through 0.x and removed at 1.0.0 (ADR-004): drop a block
+  # written under the old marker names so no block appears twice.
+  if [ -f "$boot_file" ] && command -v node >/dev/null 2>&1; then
+    RAVINTIO_BOOT="$boot_file" node -e '
+      const fs = require("fs");
+      const b = process.env.RAVINTIO_BOOT;
+      const c = fs.readFileSync(b, "utf8");
+      const s = "<!-- planifest-overrides:instructions:start -->"; // old-name read, removed at 1.0.0
+      const e = "<!-- planifest-overrides:instructions:end -->"; // old-name read, removed at 1.0.0
+      const i = c.indexOf(s), j = c.indexOf(e);
+      if (i < 0 || j < i) process.exit(0);
+      fs.writeFileSync(b, c.slice(0, i).replace(/\n+$/, "") + c.slice(j + e.length), "utf8");
+    '
+  fi
 
   if [ ! -d "$instr_dir" ]; then
     return
@@ -970,6 +1034,7 @@ out/
 .next/
 "
   for ignore_file in ".cursorignore" ".claudeignore" ".windsurfignore" ".clineignore"; do
+    strip_old_ignore_block "$PROJECT_ROOT/$ignore_file" "Planifest - Token Reduction"
     if [ ! -f "$PROJECT_ROOT/$ignore_file" ]; then
       echo "$ignore_content" > "$PROJECT_ROOT/$ignore_file"
       echo "  + $ignore_file (created)"
@@ -989,6 +1054,7 @@ tool-setup-reference.md
 getting-started.md
 "
   local indexing_ignore_file="$PROJECT_ROOT/.cursorindexingignore"
+  strip_old_ignore_block "$indexing_ignore_file" "Planifest - Indexing Exclusions"
   if [ ! -f "$indexing_ignore_file" ]; then
     echo "$indexing_ignore_content" > "$indexing_ignore_file"
     echo "  + .cursorindexingignore (created)"
@@ -1025,6 +1091,10 @@ setup_tool() {
     hooks_base_rel=".claude/hooks"
   fi
   cleanup_retired_integrations "$hooks_base_rel" "${TOOL_SETTINGS_FILE:-}"
+
+  # One-time read of the old-name state (ADR-004)
+  migrate_old_flags_marker "$(dirname "$TOOL_SKILLS_DIR")"
+  migrate_old_manifest "$skills_dir"
 
   # Manifest cleanup — remove only previously installed directories on re-run
   local manifest="$skills_dir/.ravintio-manifest"
@@ -1290,6 +1360,16 @@ while [[ $# -gt 0 ]]; do
     -*) echo "Unknown flag: $1"; exit 1 ;;
     *) TOOL="$1"; shift ;;
   esac
+done
+
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004, ADR-010):
+# stop before any write while an old pack or overrides folder exists.
+for _old_dir in planifest-framework planifest-overrides; do # old-name read, removed at 1.0.0
+  if [ -d "$PROJECT_ROOT/$_old_dir" ]; then
+    echo "Error: found the old folder $_old_dir/ at the project root." >&2
+    echo "Run the migration migrate-0.37.0-ravintio-rename first, then run setup again." >&2
+    exit 1
+  fi
 done
 
 if [ -z "$TOOL" ]; then

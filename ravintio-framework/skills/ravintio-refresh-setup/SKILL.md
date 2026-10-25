@@ -59,6 +59,7 @@ Before running full detection, check whether this is a recovery scenario:
 Skip this step if Step 2 already produced a recovered flag set.
 
 1. Check `{tool-dir}/.ravintio-setup-flags` for the target tool. If it exists and is well-formed (see schema in `src/setup-hook-integration/docs/data-contract.md`), read `flags` and report every flag at **high** confidence, source: marker file.
+   Old-name read kept through 0.x and removed at 1.0.0 (ADR-004): if `{tool-dir}/.ravintio-setup-flags` is absent but `{tool-dir}/.planifest-setup-flags` exists, read `flags` from the old file once, at **high** confidence, source: old marker file. Setup carries those flags into `.ravintio-setup-flags` and removes the old file.
 2. If the marker file is absent, incomplete, or for a different tool than the one being refreshed, infer flags from installed hook wiring instead:
 
    | Signal | Implies | Confidence |

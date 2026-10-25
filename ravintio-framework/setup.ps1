@@ -67,6 +67,16 @@ $SkillsSrc = Join-Path $ScriptDir 'skills'
 $WorkflowsSrc = Join-Path $ScriptDir 'workflows'
 $SetupDir = Join-Path $ScriptDir 'setup'
 
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004, ADR-010):
+# stop before any write while an old pack or overrides folder exists.
+foreach ($oldDir in @('planifest-framework', 'planifest-overrides')) {
+    if (Test-Path -LiteralPath (Join-Path $ProjectRoot $oldDir)) {
+        [Console]::Error.WriteLine("Error: found the old folder ${oldDir}/ at the project root.")
+        [Console]::Error.WriteLine("Run the migration migrate-0.37.0-ravintio-rename first, then run setup again.")
+        exit 1
+    }
+}
+
 $ValidTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'windsurf', 'cline', 'roo-code', 'opencode')
 
 # --- Shared functions ---
@@ -1081,6 +1091,7 @@ out/
 
     foreach ($ignoreFile in @('.cursorignore', '.claudeignore', '.windsurfignore', '.clineignore')) {
         $ignorePath = Join-Path $ProjectRoot $ignoreFile
+        Remove-OldIgnoreBlock -Path $ignorePath -Header 'Planifest - Token Reduction'
         if (-not (Test-Path $ignorePath)) {
             Set-Content -Path $ignorePath -Value $ignoreContent -Encoding UTF8
             Write-Host "  + $ignoreFile (created)"
@@ -1106,6 +1117,7 @@ getting-started.md
 "@
 
     $indexingIgnorePath = Join-Path $ProjectRoot ".cursorindexingignore"
+    Remove-OldIgnoreBlock -Path $indexingIgnorePath -Header 'Planifest - Indexing Exclusions'
     if (-not (Test-Path $indexingIgnorePath)) {
         Set-Content -Path $indexingIgnorePath -Value $indexingIgnoreContent -Encoding UTF8
         Write-Host "  + .cursorindexingignore (created)"
@@ -1142,6 +1154,24 @@ function Copy-CapabilitySkills {
     }
 }
 
+# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
+# Remove an ignore-file block whose header carries the old name. The block runs
+# from the header line to the next blank line.
+function Remove-OldIgnoreBlock {
+    param([string]$Path, [string]$Header)
+    if (-not (Test-Path $Path)) { return }
+    $lines = @(Get-Content -Path $Path)
+    if (-not ($lines | Where-Object { $_.Contains($Header) })) { return }
+    $kept = @()
+    $skip = $false
+    foreach ($line in $lines) {
+        if ($line.Contains($Header)) { $skip = $true; continue }
+        if ($skip -and $line -eq '') { $skip = $false; continue }
+        if (-not $skip) { $kept += $line }
+    }
+    Set-Content -Path $Path -Value $kept -Encoding UTF8
+}
+
 function Append-OverrideInstructions {
     # Appends project-specific instructions from ravintio-overrides/instructions/
     # to the tool's boot file. Idempotent — strips and replaces the override block
@@ -1150,6 +1180,17 @@ function Append-OverrideInstructions {
 
     $bootPath = Join-Path $ProjectRoot $BootFilePath
     if (-not (Test-Path $bootPath)) { return }
+
+    # Old-name read kept through 0.x and removed at 1.0.0 (ADR-004): drop a block
+    # written under the old marker names so no block appears twice.
+    $oldStart = '<!-- planifest-overrides:instructions:start -->'
+    $oldEnd   = '<!-- planifest-overrides:instructions:end -->'
+    $oldCurrent = Get-Content -Path $bootPath -Raw
+    if ($oldCurrent -match [regex]::Escape($oldStart)) {
+        $oldPattern = "(?s)\r?\n$([regex]::Escape($oldStart)).*?$([regex]::Escape($oldEnd))\r?\n?"
+        $oldCurrent = [regex]::Replace($oldCurrent, $oldPattern, '')
+        Set-Content -Path $bootPath -Value $oldCurrent.TrimEnd() -Encoding UTF8 -NoNewline
+    }
 
     $startMarker = '<!-- ravintio-overrides:instructions:start -->'
     $endMarker   = '<!-- ravintio-overrides:instructions:end -->'
@@ -1258,6 +1299,31 @@ function Invoke-RavintioSetup {
     Write-Host ""
     Write-Host "  Setting up $ToolName"
     Write-Host "  Skills directory: $($toolConfig.SkillsDir)/"
+
+    # One-time read of the old-name state (ADR-004). Old-name read kept through 0.x, removed at 1.0.0.
+    $oldFlagsPath = Join-Path (Split-Path -Parent $skillsDir) '.planifest-setup-flags'
+    if (Test-Path $oldFlagsPath) {
+        $oldFlagsRaw = Get-Content -Path $oldFlagsPath -Raw
+        if ($oldFlagsRaw -match '"--include-full-skill-library"') { $script:IncludeFullSkillLibrary = $true }
+        if ($oldFlagsRaw -match '"--strict-orchestrator"') {
+            $script:StrictOrchestrator = $true
+            $strictPlanDir = Join-Path $ProjectRoot 'plan'
+            New-Item -ItemType Directory -Path $strictPlanDir -Force | Out-Null
+            New-Item -ItemType File -Path (Join-Path $strictPlanDir '.orchestrator-strict') -Force | Out-Null
+        }
+        Remove-Item -Path $oldFlagsPath -Force
+        Write-Host "  ~ carried old setup flags into .ravintio-setup-flags"
+    }
+    $oldManifest = Join-Path $skillsDir '.planifest-manifest'
+    if (Test-Path $oldManifest) {
+        Get-Content -Path $oldManifest | Where-Object { $_ -ne '' } | ForEach-Object {
+            if ((Test-Path $_) -and ((Split-Path -Leaf $_) -like 'planifest-*')) {
+                Remove-Item -Path $_ -Recurse -Force
+                Write-Host "  - removed old skill: $(Split-Path -Leaf $_)"
+            }
+        }
+        Remove-Item -Path $oldManifest -Force
+    }
 
     # Manifest cleanup — remove only previously installed directories on re-run
     $manifest = Join-Path $skillsDir ".ravintio-manifest"
