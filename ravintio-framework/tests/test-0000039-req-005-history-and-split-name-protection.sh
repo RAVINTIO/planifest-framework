@@ -72,7 +72,7 @@ while IFS= read -r path; do
   name="$(basename "$path")"
   # Compare git blob ids, not working files: a Windows checkout writes CRLF line
   # endings, so the bytes on disk differ even when the stored file doesn't.
-  NOWPATH="ravintio-framework/migrations/$name"
+  NOWPATH="ravintio-framework/migrations/$name" # portable-ok: repo-relative git path, not a file-system path
   BASE_ID="$(git -C "$ROOT" rev-parse "$BASE:$path" 2>/dev/null)"
   NOW_ID="$(git -C "$ROOT" rev-parse "HEAD:$NOWPATH" 2>/dev/null)"
   R=differs
