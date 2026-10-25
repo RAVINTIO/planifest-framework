@@ -218,6 +218,9 @@ Progress: P3 done at 2026-10-25T03:59:35Z: pack renamed, ten requirements GREEN,
 Library audit (P4): skipped. No dependency manifest changed, and the OpenCode `package.json` lists no dependency.
 Lint, typecheck, build (P4): not applicable as separate steps. The repo's lint rules run as suites (0000031, 0000037-req-009, 0000036-req-010) inside the test run, and nothing compiles.
 Deviation (P4, unclassified): the orchestrator opens the PR as a draft in P4, so CI runs the Windows shards and both PowerShell legs before P5 / reason: `pwsh` isn't installed locally, so the req-002 and req-006 PowerShell halves can only run in CI. CI runs on `pull_request` only (0000031 ADR 003). P9 marks the PR ready instead of creating it.
+PR (P4): #71, draft, https://github.com/RAVINTIO/planifest-framework/pull/71
+Cycle 1 (P4): Check: CI / Error: no checks reported / Root cause: PR #70 merged into `main` during the run, so #71 conflicted, and GitHub runs no `pull_request` workflow on a conflicting PR / Fix: merged `origin/main` (commit 1fffd812). It took main's deletion of backlog 0000096, which the pass had touched, and Edit renamed one old path in the new backlog 0000244 / Result: PR mergeable, CI started.
+Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
