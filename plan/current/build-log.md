@@ -245,6 +245,23 @@ Self-corrections (P4): 5 cycles, within the cap of 5.
 Credential scan (P4): clean (regex only) on every P4 commit, apart from the cleared external-skills move.
 Gate (P4): passed. CI passes, and verify-by-execution confirmed every behavioural criterion. The one clean-clone failure was fixed in cycle 2 and is green in CI.
 Progress: P4 done at 2026-10-25T05:01:11Z: CI green on all 13 checks, 5 self-correction cycles, credential match cleared by the human on the loop
+
+### P5: Security
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T05:01:11Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (two fresh-context reviewers, opus) |
+| Skills loaded | ravintio-security-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+Decision (P5): two fresh-context reviewers in parallel. One covers the consumer migration helpers. The other covers setup, the enforcement hooks, `archive-current.mjs`, secrets, and dependencies / reason: the helpers move consumer files and carry the most risk. The two areas share no code.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
