@@ -112,6 +112,7 @@ None
 | REQ-005 - history-and-split-name-protection | planifest-test-writer | Tests first for every split name and history reader |
 | REQ-006 - consumer-migration | planifest-codegen-agent | Helpers under TDD, then the security review |
 | REQ-007 - brand-guard | planifest-test-writer | The guard suite and its allowlist |
+| REQ-008 - emitted-names | planifest-codegen-agent | Split from REQ-002 at P1: names the hooks and setup emit, under TDD |
 
 ## Repo Instructions
 Five files in `planifest-overrides/instructions/`, read at P0. They move to `ravintio-overrides/instructions/` with the rename.
