@@ -2,8 +2,9 @@
 # Verified by: integration
 # test-0000039-req-002-runtime-names.sh
 # Feature 0000039-ravintio-rebrand, req-002-runtime-names (ADR-004, ADR-010).
-# Setup writes only .ravintio-* markers and RAVINTIO blocks, reads the old
-# .planifest-* state once, and stops while an old pack folder exists.
+# Setup writes only .ravintio-* markers and RAVINTIO blocks. It reads no old
+# .planifest-* marker, and it stops while an old pack folder or an old marker
+# file exists (P6 change, 2026-10-25).
 # Each case builds a scratch consumer repo in a temp folder and never writes in ROOT.
 # Run from any directory: bash ravintio-framework/tests/test-0000039-req-002-runtime-names.sh
 
@@ -22,6 +23,8 @@ FW="$(cd "$TESTS_DIR/.." && pwd)"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+export PATH="/opt/homebrew/bin:$PATH"
+
 MIGRATION_ID="migrate-0.37.0-ravintio-rename"
 OLD_START="<!-- planifest-overrides:instructions:start -->"
 OLD_END="<!-- planifest-overrides:instructions:end -->"
@@ -38,10 +41,18 @@ make_repo() {
   echo "$repo"
 }
 
-# Run setup.sh in a repo. Sets OUT and RC.
+# Run setup.sh in a repo, passing any extra arguments as flags. Sets OUT and RC.
 run_setup() {
   local repo="$1"
-  OUT="$(cd "$repo" && bash ravintio-framework/setup.sh claude-code 2>&1)"
+  shift
+  OUT="$(cd "$repo" && bash ravintio-framework/setup.sh claude-code "$@" 2>&1)"
+  RC=$?
+}
+
+# Run setup.ps1 in a repo. Sets OUT and RC.
+run_setup_ps1() {
+  local repo="$1"
+  OUT="$(cd "$repo" && pwsh -NoProfile -File ravintio-framework/setup.ps1 claude-code 2>&1)"
   RC=$?
 }
 
@@ -52,26 +63,41 @@ count_in() {
   grep -cF -- "$needle" "$file" || true
 }
 
-# List files under a repo except the pack copy, the git folder, and the skills folder.
+# List files under a repo except the pack copy and the git folder.
 snapshot() {
   (cd "$1" && find . -path ./ravintio-framework -prune -o -path ./.git -prune -o -print | sort)
 }
 
-echo "=== req-002 AC1: old markers are carried into .ravintio-* and removed ==="
+# AC1 (P6 change): the fixture reads as a repo the migration helper already
+# renamed. It holds .ravintio-setup-flags and a .ravintio-manifest that lists
+# ravintio-* folders as absolute paths, one per line.
+echo "=== req-002 AC1: a helper-migrated repo gets fresh copies and the passed flags ==="
 R1="$(make_repo ac1)"
-mkdir -p "$R1/.claude/skills/planifest-orchestrator"
-echo "# old skill" > "$R1/.claude/skills/planifest-orchestrator/SKILL.md"
-printf '%s\n' "$R1/.claude/skills/planifest-orchestrator" > "$R1/.claude/skills/.planifest-manifest"
-cat > "$R1/.claude/.planifest-setup-flags" <<'EOF'
+mkdir -p "$R1/.claude/skills/ravintio-orchestrator" "$R1/.claude/skills/ravintio-spec-agent"
+echo "# stale copy" > "$R1/.claude/skills/ravintio-orchestrator/SKILL.md"
+echo "stale" > "$R1/.claude/skills/ravintio-orchestrator/stale.txt"
+echo "stale" > "$R1/.claude/skills/ravintio-spec-agent/stale.txt"
+{
+  printf '%s\n' "$R1/.claude/skills/ravintio-orchestrator"
+  printf '%s\n' "$R1/.claude/skills/ravintio-spec-agent"
+} > "$R1/.claude/skills/.ravintio-manifest"
+cat > "$R1/.claude/.ravintio-setup-flags" <<'EOF'
 {
   "tool": "claude-code",
-  "flags": ["--strict-orchestrator"],
+  "flags": [],
   "writtenAt": "2026-10-01T00:00:00Z",
   "attemptStatus": "completed"
 }
 EOF
-run_setup "$R1"
-assert_exit_zero "$RC" "req-002 AC1: setup exits 0 on a repo with old markers"
+run_setup "$R1" --strict-orchestrator
+assert_exit_zero "$RC" "req-002 AC1: setup exits 0 on a helper-migrated repo"
+for skill in ravintio-orchestrator ravintio-spec-agent; do
+  if [ -f "$R1/.claude/skills/$skill/stale.txt" ]; then STALE="present"; else STALE="gone"; fi
+  assert_equals "gone" "$STALE" "req-002 AC1: listed folder $skill holds a fresh copy"
+done
+assert_equals "0" "$(count_in "# stale copy" "$R1/.claude/skills/ravintio-orchestrator/SKILL.md")" "req-002 AC1: ravintio-orchestrator SKILL.md is the fresh copy"
+if [ -f "$R1/.claude/skills/ravintio-orchestrator/SKILL.md" ]; then SKILL_OK="yes"; else SKILL_OK="no"; fi
+assert_equals "yes" "$SKILL_OK" "req-002 AC1: ravintio-orchestrator SKILL.md exists"
 OLD_LEFT="$(cd "$R1" && find . -path ./ravintio-framework -prune -o -name '.planifest-*' -print)"
 assert_equals "" "$OLD_LEFT" "req-002 AC1: no .planifest-* marker is left"
 if [ -f "$R1/.claude/.ravintio-setup-flags" ]; then
@@ -79,48 +105,60 @@ if [ -f "$R1/.claude/.ravintio-setup-flags" ]; then
 else
   FLAGS_BODY="(missing)"
 fi
-assert_contains "--strict-orchestrator" "$FLAGS_BODY" "req-002 AC1: new flags marker holds the old flag"
-if [ -f "$R1/.claude/skills/.ravintio-manifest" ]; then
-  MANIFEST_OK="yes"
-else
-  MANIFEST_OK="no"
-fi
+assert_contains '"--strict-orchestrator"' "$FLAGS_BODY" "req-002 AC1: new flags marker records the passed flag"
+if [ -f "$R1/.claude/skills/.ravintio-manifest" ]; then MANIFEST_OK="yes"; else MANIFEST_OK="no"; fi
 assert_equals "yes" "$MANIFEST_OK" "req-002 AC1: .ravintio-manifest exists"
-if [ -d "$R1/.claude/skills/planifest-orchestrator" ]; then
-  OLD_SKILL="present"
-else
-  OLD_SKILL="gone"
-fi
-assert_equals "gone" "$OLD_SKILL" "req-002 AC1: old installed skill folder is gone"
 
-# The old manifest prune deletes only a folder whose real parent is the real
-# skills folder (P5 finding S-01). Each entry below points somewhere else.
-echo "=== req-002 AC1: the old manifest prune never leaves the skills folder ==="
-R1B="$(make_repo ac1b)"
-OUTSIDE="$TMP/ac1b/outside"
-mkdir -p "$OUTSIDE/planifest-victim" "$R1B/planifest-victim2" "$R1B/.claude/skills"
-echo "keep" > "$OUTSIDE/planifest-victim/keep.txt"
-echo "keep" > "$R1B/planifest-victim2/keep.txt"
-{
-  printf '%s\n' "$OUTSIDE/planifest-victim"
-  printf '%s\n' "$R1B/.claude/skills/../../planifest-victim2"
-} > "$R1B/.claude/skills/.planifest-manifest"
-LINKS_OK=no
-mkdir -p "$TMP/ac1b/linked/planifest-victim3"
-echo "keep" > "$TMP/ac1b/linked/planifest-victim3/keep.txt"
-if ln -s "$TMP/ac1b/linked" "$R1B/.claude/skills/link" 2>/dev/null && [ -L "$R1B/.claude/skills/link" ]; then
-  LINKS_OK=yes
-  printf '%s\n' "$R1B/.claude/skills/link/planifest-victim3" >> "$R1B/.claude/skills/.planifest-manifest"
-fi
-run_setup "$R1B"
-assert_exit_zero "$RC" "req-002 AC1: setup exits 0 with stray old manifest entries"
-assert_equals "keep" "$(cat "$OUTSIDE/planifest-victim/keep.txt" 2>/dev/null)" "req-002 AC1: an absolute path outside the repo survives the prune"
-assert_equals "keep" "$(cat "$R1B/planifest-victim2/keep.txt" 2>/dev/null)" "req-002 AC1: a .. path out of the skills folder survives the prune"
-if [ "$LINKS_OK" = yes ]; then
-  assert_equals "keep" "$(cat "$TMP/ac1b/linked/planifest-victim3/keep.txt" 2>/dev/null)" "req-002 AC1: a folder under a linked parent survives the prune"
+# AC new (P6 change): an old marker file in any tool folder stops setup before
+# any write. Pinned stop text: "Error: found the old marker file {path}." with
+# {path} relative to the project root, in the style of the old-folder stop.
+echo "=== req-002 old markers: an old marker file stops setup before any write ==="
+OLD_MARKERS=".claude/.planifest-setup-flags .cursor/skills/.planifest-manifest .opencode/.planifest-setup-flags"
+_i=0
+for marker in $OLD_MARKERS; do
+  _i=$((_i + 1))
+  RM="$(make_repo "old-marker-$_i")"
+  mkdir -p "$RM/$(dirname "$marker")"
+  echo '{"flags": []}' > "$RM/$marker"
+  BEFORE="$(snapshot "$RM")"
+  run_setup "$RM"
+  AFTER="$(snapshot "$RM")"
+  if [ "$RC" -ne 0 ]; then STOPPED="nonzero"; else STOPPED="zero"; fi
+  assert_equals "nonzero" "$STOPPED" "req-002 old markers: setup.sh exits non-zero with $marker present"
+  assert_equals "$BEFORE" "$AFTER" "req-002 old markers: setup.sh writes nothing with $marker present"
+  assert_contains "Error: found the old marker file $marker." "$OUT" "req-002 old markers: setup.sh names $marker in the stop message"
+  assert_contains "$MIGRATION_ID" "$OUT" "req-002 old markers: setup.sh names the migration with $marker present"
+done
+
+if command -v pwsh >/dev/null 2>&1; then
+  _i=0
+  for marker in $OLD_MARKERS; do
+    _i=$((_i + 1))
+    RMP="$(make_repo "old-marker-ps-$_i")"
+    mkdir -p "$RMP/$(dirname "$marker")"
+    echo '{"flags": []}' > "$RMP/$marker"
+    BEFORE="$(snapshot "$RMP")"
+    run_setup_ps1 "$RMP"
+    AFTER="$(snapshot "$RMP")"
+    if [ "$RC" -ne 0 ]; then STOPPED="nonzero"; else STOPPED="zero"; fi
+    assert_equals "nonzero" "$STOPPED" "req-002 old markers: setup.ps1 exits non-zero with $marker present"
+    assert_equals "$BEFORE" "$AFTER" "req-002 old markers: setup.ps1 writes nothing with $marker present"
+    assert_contains "Error: found the old marker file $marker." "$OUT" "req-002 old markers: setup.ps1 names $marker in the stop message"
+    assert_contains "$MIGRATION_ID" "$OUT" "req-002 old markers: setup.ps1 names the migration with $marker present"
+  done
 else
-  echo "  SKIP: req-002 AC1 linked parent case, ln -s makes no real link here"
+  echo "  SKIP: req-002 old markers setup.ps1 half, pwsh is not on PATH"
 fi
+
+# Setup holds no read of either old marker. The one-time read functions, their
+# setup.ps1 variables, and the messages they printed must all be gone.
+echo "=== req-002 old markers: setup holds no read of an old marker ==="
+for needle in migrate_old_flags_marker migrate_old_manifest "carried old setup flags" "removed old skill"; do
+  assert_equals "0" "$(count_in "$needle" "$FW/setup.sh")" "req-002 old markers: setup.sh holds no '$needle'"
+done
+for needle in oldFlagsPath oldManifest oldFlagsRaw "carried old setup flags" "removed old skill"; do
+  assert_equals "0" "$(count_in "$needle" "$FW/setup.ps1")" "req-002 old markers: setup.ps1 holds no '$needle'"
+done
 
 echo "=== req-002 AC2: old blocks are replaced once, twice-run stays single ==="
 R2="$(make_repo ac2)"
@@ -164,8 +202,7 @@ if command -v pwsh >/dev/null 2>&1; then
     R3P="$(make_repo "ac3p-$old")"
     mkdir -p "$R3P/$old"
     BEFORE="$(snapshot "$R3P")"
-    OUT="$(cd "$R3P" && pwsh -NoProfile -File ravintio-framework/setup.ps1 claude-code 2>&1)"
-    RC=$?
+    run_setup_ps1 "$R3P"
     AFTER="$(snapshot "$R3P")"
     if [ "$RC" -ne 0 ]; then STOPPED="nonzero"; else STOPPED="zero"; fi
     assert_equals "nonzero" "$STOPPED" "req-002 AC3: setup.ps1 exits non-zero with $old present"
