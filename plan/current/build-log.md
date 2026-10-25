@@ -54,3 +54,9 @@ Pre-P0 notes folded in from `plan/current/.pre-p0-notes.md` (backlog 0000239 opt
 P0 exchange (backlog pickup): Q: which backlog entries join 0000039? / A: 0000237 only, pre-P0 triage on 2026-10-25.
 P0 exchange (version): Q: none asked. The human on the loop volunteered it. / A: minor increment, so 0.36.0 to 0.37.0. This overrides the major bump that 0000237 suggests and matches RAVINTIO Zero 0000164 ADR-005.
 P0 exchange (bulk rename method): Q: Hard Limit 8 sanctions no rename script. Use a one-off scripted pass with human approval, or Edit only? / A: scripted pass, as recommended. Write puts the script in the scratchpad. The human on the loop approves it before it runs. It runs once, in one commit, logged as a deviation. Follow-up fixes use Edit.
+Scope Lock (happy path): the scripted pass renames everything, the brand guard and every CI leg pass, and a consumer runs the migration then setup and ends on 0.37.0 with a backup. [source: agent-draft-accepted]
+Scope Lock (first-run path): a fresh consumer gets the RAVINTIO pack with no migration, and this repo's first setup run replaces the old skill copies and skips the migration. [source: agent-draft-accepted]
+Scope Lock (error path): a half-moved consumer helper stops at the failed step, names it, deletes nothing, and finishes on a re-run. [source: agent-draft-accepted]
+Scope Lock (cross-session path): only uncommitted work is at risk, the rename and setup re-run land in one commit, and an interrupted migration re-runs safely. [source: agent-draft-accepted]
+Scope Lock complete. All four scenario paths captured.
+P0 exchange (combined confirmation): Q: design, four Scope Lock drafts, and run mode / A: design accepted, all four drafts accepted, run mode [3] autonomous. The orchestrator had recommended [1].
