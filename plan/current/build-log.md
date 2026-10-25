@@ -143,3 +143,23 @@ Skill Map (P2 gate): re-checked, no change.
 Gate (P2): passed. The design critic approved iteration 3 with no finding left. Ten ADRs, each with at least two rejected alternatives and one negative consequence. Consistency check clean.
 Progress: P2 done at 2026-10-25T02:39:39Z: ten ADRs, critic approved on iteration 3 with no findings
 
+### P3: Codegen
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:40:31Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (orchestrator, rename script review), cheaper (TDD subagents) |
+| Skills loaded | planifest-codegen-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+Capability skills (P3): none apply. The stack is unchanged shell, PowerShell, and Node.
+Decision (P3): three stages, per the execution plan. Stage 1 runs the req-001, req-005, and req-007 test-writers and the rename-script author in one batch. Stage 2 is the scripted pass. Stage 3 runs the remaining TDD tracks / reason: every later requirement edits files the pass renames.
+Decision (P3): req-002 and req-008 share one track / reason: both edit `setup.sh` and `setup.ps1`, so parallel tracks would collide.
+Decision (P3): new 0000039 test files use post-pass names, and the pass skips their content / reason: the tests must name old strings on purpose, and a bulk replace would rewrite them.
+
