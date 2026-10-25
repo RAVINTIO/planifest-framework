@@ -401,4 +401,14 @@ Progress: P8 done at 2026-10-25T13:26:23Z: build report filed, tree clean outsid
 | Parallel task batches | `0` |
 | Notes | `none` |
 
+Marker step (P9): `plan/.orchestrator-active`, `plan/.orchestrator-ack`, and `plan/.run-mode` deleted and committed in dd71693a. `git ls-files` lists no marker. Credential scan (P9): clean (regex only), 5 candidates.
+Tag (P9): `product-version.mjs` printed 0.37.0 (exit 0), which matches the P0 version. `v0.37.0` didn't exist locally or on origin. Created at dd71693a.
+Decision (P9): Option [1], push and update the PR / reason: no `ravintio-overrides/instructions/` file holds "local-git-only", "no remote", or "no push" in its text, and `custom-005` says to take Option [1]. No file holds "restore-pr-attribution", so the RAVINTIO footer is omitted.
+Branch check (P9): `feat/0000039-ravintio-rebrand`. Branch pushed at dd71693a.
+PR: #71 https://github.com/RAVINTIO/planifest-framework/pull/71
+PR text folder (P9): /var/folders/6c/f2zkjmp17kqggf4l4yt83_z40000gn/T/tmp.f8o9CVx7Ed
+Decision (P9): run `gh pr ready 71` / reason: every `Exception waiting` line in the log is cleared or resolved. The four P3 item 7 lines were cleared at P4, and the P6 item 1 line was resolved by the human on the loop's direction. The PR body still lists row 12 and the other items for the human on the loop.
+Credential scan (P9): PR text clean (regex only)
+PR update (P9): `gh pr edit 71` set the final title and body, and `gh pr ready 71` marked it ready for review. The PR text folder is removed. The changelog already names the PR URL.
+Clean-tree check (P9 Step 10b): one leftover, this build log, committed as close-out leftovers and pushed.
 
