@@ -1317,9 +1317,15 @@ function Invoke-RavintioSetup {
     $oldManifest = Join-Path $skillsDir '.planifest-manifest'
     if (Test-Path $oldManifest) {
         Get-Content -Path $oldManifest | Where-Object { $_ -ne '' } | ForEach-Object {
-            if ((Test-Path $_) -and ((Split-Path -Leaf $_) -like 'planifest-*')) {
-                Remove-Item -Path $_ -Recurse -Force
-                Write-Host "  - removed old skill: $(Split-Path -Leaf $_)"
+            $oldDirPath = $_.TrimEnd('/', '\')
+            if ((Test-Path -LiteralPath $oldDirPath -PathType Container) -and ((Split-Path -Leaf $oldDirPath) -like 'planifest-*')) {
+                $oldItem = Get-Item -LiteralPath $oldDirPath -Force
+                if ($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                    $oldItem.Delete() # unlink only, never recurse into the link target
+                } else {
+                    Remove-Item -LiteralPath $oldDirPath -Recurse -Force
+                }
+                Write-Host "  - removed old skill: $(Split-Path -Leaf $oldDirPath)"
             }
         }
         Remove-Item -Path $oldManifest -Force

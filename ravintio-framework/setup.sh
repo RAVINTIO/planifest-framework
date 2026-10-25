@@ -301,8 +301,13 @@ migrate_old_manifest() {
   [ -f "$old" ] || return 0
   local dir_path
   while IFS= read -r dir_path; do
+    dir_path="${dir_path%/}" # a trailing slash would make rm follow a link
     if [ -n "$dir_path" ] && [ -d "$dir_path" ] && [[ "$(basename "$dir_path")" == planifest-* ]]; then # old-name read, removed at 1.0.0
-      rm -rf "$dir_path"
+      if [ -L "$dir_path" ]; then
+        rm -f "$dir_path" # unlink only, never recurse into the link target
+      else
+        rm -rf "$dir_path"
+      fi
       echo "  - removed old skill: $(basename "$dir_path")"
     fi
   done < "$old"
