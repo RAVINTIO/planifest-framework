@@ -171,5 +171,14 @@ Decision (P3): prose rule as applied. In `.md` files the first bare use becomes 
 Decision (P3): the "Planifest Framework Contributors" lines in 10 `external-skills/` files stay as written, with allowlist entries / reason: the design keeps vendored text as written.
 Decision (P3): the em-dash guard accepts the old `planifest-em-dash-allow` sentinel through 0.x, beside the new `ravintio-em-dash-allow` one. The req-008 track adds it / reason: consumer files that carry the old sentinel would otherwise lose their bypass with no warning, and ADR-004 keeps such reads through 0.x.
 Decision (P3): the pass renames today's lines, and the stage 3 tracks add the old-name reads that req-002, req-003, and req-008 need / reason: each read then gets its own RED test.
+Credential scan (P3): held back ravintio-framework/external-skills/README.md
+Credential scan (P3): held back ravintio-framework/external-skills/cso/SKILL.md
+Credential scan (P3): held back ravintio-framework/external-skills/ri[s]k-requirements-analysis/SKILL.md (brackets keep this log line from matching the scan rule itself)
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/README.md:323
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/cso/SKILL.md:919
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/cso/SKILL.md:936
+Exception waiting (P3, 7): credential sighting in ravintio-framework/external-skills/ri[s]k-requirements-analysis/SKILL.md:2
+Note (P3): the README:323 hit and the SKILL.md:2 hit are the skill's own name. The `api-secret-key` rule `sk-[A-Za-z0-9_-]{20,}` matches the tail of that skill's hyphenated folder name. The two `cso/SKILL.md` hits (`slack-token`) are unconfirmed, and the orchestrator didn't read those lines. Backlog 0000253 records the false positive.
+Decision (P3): the three held-back files keep their old tracked paths in the pass commit, and their moved copies stay untracked. Every later commit leaves all six paths out until the human on the loop clears them / reason: the scan matched regex rules only, and each file is a byte-identical rename (R100) of content on `main` since PR #32. The standing rule still bars a commit that holds a matched file.
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
