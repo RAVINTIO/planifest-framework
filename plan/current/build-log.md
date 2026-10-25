@@ -185,5 +185,9 @@ Decision (P3): the orchestrator-presence banners keep their own form, such as `R
 Decision (P3): the req-003 inventory command also leaves out every `test-0000039-*` suite, not only the req-006 ones / reason: those suites plant old names on purpose, and the brand guard allowlists each such line.
 Decision (P3): one refactor pass runs across all stage 3 tracks once each is GREEN, not one per requirement / reason: most changes are a few lines, and one fresh-context refactor agent sees the shared setup code whole.
 GREEN (P3): req-003, 16 of 16. The OpenCode adapter reads `RAVINTIO_SESSION_ID`, then `PLANIFEST_SESSION_ID`.
+GREEN (P3): req-002 (34 of 34) and req-008 (39 of 39) in one track. Setup stops while the old pack exists, reads the old flags and manifest once, and strips old blocks. The em-dash guard accepts both sentinels.
+GREEN (P3): req-006, 154 of 154 on Bash. The PowerShell half skips locally without `pwsh`, so the CI PowerShell 5.1 and 7 legs must prove it. The helpers hold no literal old name and no recursive delete.
+GREEN (P3): req-009 after the req-006 migration file landed. The migrator skill gained old-path mapping, `Applies when:` support, and the rename check pass. This repo's `plan/_migrations/` record reads `not applicable`.
+Fix (P3): a suite-fixer agent repaired lint findings in the new 0000039 suites, refreshed two 0000038 hashes frozen before the pass, added the old `.planifest-session` delete to `archive-current.mjs`, and taught the 0000030 residue suite to skip 0000039 suites. Full run after it: 120 feature suites pass, 6 fail, and 35 regression suites pass.
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
 
