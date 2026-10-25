@@ -517,11 +517,13 @@ export const FAST_PATH_ENFORCEMENT_PATHS = Object.freeze([
   ".codex/config.toml",
   "opencode.json",
   ".opencode/plugins/@ravintio/opencode-hooks/",
+  ".opencode/plugins/@planifest/opencode-hooks/", // old-name read, removed at 1.0.0 (ADR-004)
   // Tool-local settings files, which can also register or turn off hooks
   ".claude/settings.local.json",
   "opencode.jsonc",
   // The CI workflow setup installs, which enforces the fix(fast-path) commit rule (G-S03)
   ".github/workflows/ravintio.yml",
+  ".github/workflows/planifest.yml", // old-name read, removed at 1.0.0 (ADR-004)
 ]);
 
 // foldWide: norm(p) with NFKC compatibility folding and a full case fold, so

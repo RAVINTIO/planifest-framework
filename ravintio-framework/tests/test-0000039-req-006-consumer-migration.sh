@@ -26,7 +26,8 @@
 #   rerun with all done     "Nothing to do", exit 0
 #   step 7                  "Next step: run ravintio-framework/setup.sh claude-code"
 #   step 6 backup           ".ravintio-backup/"
-#   step 8                  "RAVINTIO Strict Pipeline"
+#   step 8                  "RAVINTIO Strict Pipeline" and "validate-branch keeps its name"
+#   target appears late     "Stopped at step N", exit 1 (case (n), P5 finding L-001)
 #   parent link skip        "WARNING: {folder} is a symlink", exit 0
 #
 # The old brand word is built from pieces so this file needs no brand-guard
@@ -46,6 +47,7 @@ SH_HELPER="$MIG_DIR/migrate-0.37.0-ravintio-rename.sh"
 PS_HELPER="$MIG_DIR/migrate-0.37.0-ravintio-rename.ps1"
 OLD="plan""ifest"
 OLDU="PLAN""IFEST"
+OLDC="Plan""ifest"
 OLDPACK="$OLD-framework"
 OLDOVR="$OLD-overrides"
 
@@ -66,10 +68,13 @@ make_repo() {
   echo "x" > "$d/$OLDPACK/setup.sh"
   echo "y" > "$d/$OLDPACK/sub/x.md"
   {
+    printf 'name: %s Strict Pipeline\n' "$OLDC"
     printf 'run: bash %s/tests/run-tests.sh\nenv:\n' "$OLDPACK"
     for v in $PACK_VARS; do printf '  %s_%s: 1\n' "$OLDU" "$v"; done
     printf '  %s_GATE_EXTRA: keep\n' "$OLDU"
     printf '  TOKEN: ${{ secrets.%s_MY_SECRET }}\n' "$OLDU"
+    printf '  Z: ${{ secrets.%s_NAME }}\n' "$OLDU"
+    printf '  V: ${{ vars.%s_TIER }}\n' "$OLDU"
   } > "$d/.github/workflows/$OLD.yml"
   echo "x" > "$d/.claude/.$OLD-setup-flags"
   echo "x" > "$d/.claude/skills/.$OLD-manifest"
@@ -131,7 +136,11 @@ run_suite() {
   done
   assert_contains "secrets.${OLDU}_MY_SECRET" "$WF" "$T: consumer secret keeps its name"
   assert_contains "${OLDU}_GATE_EXTRA: keep" "$WF" "$T: a longer name that only starts with a pack name is left alone"
-  assert_equals "2" "$(grep -c "${OLDU}_" "$R/.github/workflows/ravintio.yml" 2>/dev/null)" "$T: only the two consumer names keep the old prefix"
+  assert_contains "secrets.${OLDU}_NAME }}" "$WF" "$T: a secret that shares a pack name keeps its name (M-001)"
+  assert_contains "vars.${OLDU}_TIER }}" "$WF" "$T: a variable that shares a pack name keeps its name (M-001)"
+  assert_equals "4" "$(grep -c "${OLDU}_" "$R/.github/workflows/ravintio.yml" 2>/dev/null)" "$T: only the four consumer names keep the old prefix"
+  assert_equals "name: RAVINTIO Strict Pipeline" "$(head -n 1 "$R/.github/workflows/ravintio.yml" 2>/dev/null)" "$T: the workflow name line is rewritten (M-002)"
+  assert_equals "0" "$(grep -c "$OLDC Strict Pipeline" "$R/.github/workflows/ravintio.yml" 2>/dev/null)" "$T: the old workflow name is gone (M-002)"
   assert_equals "no" "$(exists "$R/.claude/.$OLD-session")" "$T: session marker removed"
   assert_equals "yes" "$(exists "$R/.claude/.$OLD-setup-flags")" "$T: setup flags stay for setup"
   assert_equals "yes" "$(exists "$R/.claude/skills/.$OLD-manifest")" "$T: manifest stays for setup"
@@ -143,7 +152,10 @@ run_suite() {
   assert_equals "1" "$(grep -cx '.ravintio-backup/' "$R/.git/info/exclude" 2>/dev/null)" "$T: backup added once to .git/info/exclude"
   assert_contains "Next step: run ravintio-framework/setup.sh claude-code" "$OUT" "$T: prints the setup command"
   assert_contains ".ravintio-backup/" "$OUT" "$T: names the backup folder"
+  assert_contains "git clean -x deletes it" "$OUT" "$T: warns that git clean -x deletes the backup (L-006)"
   assert_contains "RAVINTIO Strict Pipeline" "$OUT" "$T: prints the branch protection warning"
+  assert_contains "The required check validate-branch keeps its name" "$OUT" "$T: the warning names the unchanged job check (M-002)"
+  assert_contains "needs no change" "$OUT" "$T: the warning says a validate-branch rule needs no change (M-002)"
 
   echo "=== $T (b) rerun changes nothing ==="
   BEFORE=$(snapshot "$R")
@@ -205,6 +217,17 @@ run_suite() {
   OUT=$(run_helper "$R"); CODE=$?
   assert_equals "0" "$CODE" "$T: staged pack deletion does not stop the run"
   assert_equals "yes" "$(exists "$R/.ravintio-backup/$OLDPACK/file.md")" "$T: staged deletion run still backs up the pack"
+
+  echo "=== $T (g2) an old pack held as a git submodule stops at step 2 (L-007) ==="
+  R=$(make_repo "$KIND-submodule")
+  ( cd "$R" && git rm -r -q --cached "$OLDPACK" \
+    && git update-index --add --cacheinfo "160000,$(git rev-parse HEAD),$OLDPACK" && git commit -q -m sub )
+  BEFORE=$(snapshot "$R")
+  OUT=$(run_helper "$R"); CODE=$?
+  assert_equals "1" "$CODE" "$T: a submodule pack exits 1"
+  assert_contains "Stopped at step 2" "$OUT" "$T: a submodule pack names step 2"
+  assert_contains "git submodule deinit" "$OUT" "$T: a submodule pack names the fix"
+  assert_equals "$BEFORE" "$(snapshot "$R")" "$T: a submodule pack moves nothing"
 
   local name wf kind TARGET OUTSIDE parent REAL REAL_BEFORE
   if [ "$LINKS_OK" != yes ]; then
@@ -293,6 +316,39 @@ run_suite() {
   assert_equals "yes" "$(exists "$R/.ravintio-backup/$OLDPACK/setup.sh")" "$T: nested project pack moved to the backup"
   assert_equals "1" "$(grep -cx '.ravintio-backup/' "$WS/outer-$KIND/.git/info/exclude" 2>/dev/null)" "$T: backup excluded in the outer repo"
   assert_contains "secrets.${OLDU}_MY_SECRET" "$(cat "$R/.github/workflows/ravintio.yml" 2>/dev/null)" "$T: nested project keeps the consumer secret name"
+
+  echo "=== $T (n) a target that appears after step 2 stops the move (L-001) ==="
+  # A git shim plants the target when the helper asks git whether it tracks
+  # the source, which happens after step 2 and before the move.
+  case "$KIND-$(uname -s)" in
+    ps1-MINGW*|ps1-MSYS*|ps1-CYGWIN*)
+      echo "  SKIP (windows): $T (n): pwsh on Windows can't run the bash git shim"
+      ;;
+    *)
+      local SHIM REAL_GIT
+      SHIM="$WS/shim-$KIND"
+      REAL_GIT="$(command -v git)"
+      mkdir -p "$SHIM"
+      {
+        printf '#!/usr/bin/env bash\n'
+        printf 'if [ "$1" = ls-files ] && [ "$3" = "$PLANT_ON" ]; then mkdir -p "$PLANT_DIR"; fi\n'
+        printf 'exec "%s" "$@"\n' "$REAL_GIT"
+      } > "$SHIM/git"
+      chmod +x "$SHIM/git"
+      R=$(make_repo "$KIND-late-3")
+      OUT=$(run_helper "$R" "PATH=$SHIM:$PATH" "PLANT_ON=$OLDOVR" "PLANT_DIR=$R/ravintio-overrides"); CODE=$?
+      assert_equals "1" "$CODE" "$T: a late overrides target exits 1"
+      assert_contains "Stopped at step 3" "$OUT" "$T: a late overrides target names step 3"
+      assert_equals "mine" "$(cat "$R/$OLDOVR/instructions/a.md" 2>/dev/null)" "$T: a late overrides target leaves the old overrides in place"
+      assert_equals "no" "$(exists "$R/ravintio-overrides/$OLDOVR")" "$T: a late overrides target gets nothing moved into it"
+      R=$(make_repo "$KIND-late-6")
+      OUT=$(run_helper "$R" "PATH=$SHIM:$PATH" "PLANT_ON=$OLDPACK" "PLANT_DIR=$R/.ravintio-backup/$OLDPACK"); CODE=$?
+      assert_equals "1" "$CODE" "$T: a late backup target exits 1"
+      assert_contains "Stopped at step 6" "$OUT" "$T: a late backup target names step 6"
+      assert_equals "x" "$(cat "$R/$OLDPACK/file.md" 2>/dev/null)" "$T: a late backup target leaves the old pack in place"
+      assert_equals "no" "$(exists "$R/.ravintio-backup/$OLDPACK/$OLDPACK")" "$T: a late backup target gets nothing moved into it"
+      ;;
+  esac
 
   echo "=== $T (m) resume after any single step matches an uninterrupted run ==="
   local N REF RESUMED STOPOUT

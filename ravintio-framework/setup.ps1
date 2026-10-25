@@ -1316,16 +1316,41 @@ function Invoke-RavintioSetup {
     }
     $oldManifest = Join-Path $skillsDir '.planifest-manifest'
     if (Test-Path $oldManifest) {
+        # Delete only a folder whose parent is the skills folder itself, and act
+        # on the joined path, so an absolute, .. or linked-parent entry is skipped.
+        $skillsFull = $null
+        $skillsItem = Get-Item -LiteralPath $skillsDir -Force -ErrorAction SilentlyContinue
+        if ($null -ne $skillsItem) { $skillsFull = $skillsItem.FullName.TrimEnd('\', '/') }
+        # Skip the prune if the skills folder, or a folder above it up to the
+        # project root, is a link or junction.
+        $rootFull = (Get-Item -LiteralPath $ProjectRoot -Force).FullName.TrimEnd('\', '/')
+        $walk = $skillsItem
+        while (($null -ne $walk) -and ($walk.FullName.TrimEnd('\', '/') -ine $rootFull)) {
+            if ($walk.Attributes -band [IO.FileAttributes]::ReparsePoint) { $skillsFull = $null; break }
+            $walk = $walk.Parent
+        }
         Get-Content -Path $oldManifest | Where-Object { $_ -ne '' } | ForEach-Object {
             $oldDirPath = $_.TrimEnd('/', '\')
-            if ((Test-Path -LiteralPath $oldDirPath -PathType Container) -and ((Split-Path -Leaf $oldDirPath) -like 'planifest-*')) {
-                $oldItem = Get-Item -LiteralPath $oldDirPath -Force
+            if (($null -eq $skillsFull) -or ($oldDirPath -eq '')) { return }
+            $oldLeaf = Split-Path -Leaf $oldDirPath
+            $oldParent = $null
+            try {
+                $oldParentPath = Split-Path -Parent $oldDirPath
+                if ($oldParentPath) { $oldParent = Get-Item -LiteralPath $oldParentPath -Force -ErrorAction SilentlyContinue }
+            } catch {
+                $oldParent = $null
+            }
+            if ($null -eq $oldParent) { return }
+            if ($oldParent.FullName.TrimEnd('\', '/') -ine $skillsFull) { return }
+            $oldTarget = Join-Path $skillsDir $oldLeaf
+            if ((Test-Path -LiteralPath $oldTarget -PathType Container) -and ($oldLeaf -like 'planifest-*')) {
+                $oldItem = Get-Item -LiteralPath $oldTarget -Force
                 if ($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
                     $oldItem.Delete() # unlink only, never recurse into the link target
                 } else {
-                    Remove-Item -LiteralPath $oldDirPath -Recurse -Force
+                    Remove-Item -LiteralPath $oldTarget -Recurse -Force
                 }
-                Write-Host "  - removed old skill: $(Split-Path -Leaf $oldDirPath)"
+                Write-Host "  - removed old skill: $oldLeaf"
             }
         }
         Remove-Item -Path $oldManifest -Force

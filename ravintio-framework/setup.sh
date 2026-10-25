@@ -299,16 +299,23 @@ migrate_old_flags_marker() {
 migrate_old_manifest() {
   local old="$1/.planifest-manifest" # old-name read, removed at 1.0.0
   [ -f "$old" ] || return 0
-  local dir_path
+  # Delete only a folder whose real parent is the real skills folder, and act
+  # on the joined path, so an absolute, .. or linked-parent entry is skipped.
+  local skills_real
+  skills_real="$(cd "$1" 2>/dev/null && pwd -P)" || return 0
+  local dir_path name parent_real
   while IFS= read -r dir_path; do
     dir_path="${dir_path%/}" # a trailing slash would make rm follow a link
-    if [ -n "$dir_path" ] && [ -d "$dir_path" ] && [[ "$(basename "$dir_path")" == planifest-* ]]; then # old-name read, removed at 1.0.0
-      if [ -L "$dir_path" ]; then
-        rm -f "$dir_path" # unlink only, never recurse into the link target
+    [ -n "$dir_path" ] || continue
+    name="$(basename "$dir_path")"
+    parent_real="$(cd "$(dirname "$dir_path")" 2>/dev/null && pwd -P)" || continue
+    if [ "$parent_real" = "$skills_real" ] && [[ "$name" == planifest-* ]] && [ -d "$skills_real/$name" ]; then # old-name read, removed at 1.0.0
+      if [ -L "$skills_real/$name" ]; then
+        rm -f "$skills_real/$name" # unlink only, never recurse into the link target
       else
-        rm -rf "$dir_path"
+        rm -rf "$skills_real/$name"
       fi
-      echo "  - removed old skill: $(basename "$dir_path")"
+      echo "  - removed old skill: $name"
     fi
   done < "$old"
   rm -f "$old"

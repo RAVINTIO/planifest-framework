@@ -93,6 +93,35 @@ else
 fi
 assert_equals "gone" "$OLD_SKILL" "req-002 AC1: old installed skill folder is gone"
 
+# The old manifest prune deletes only a folder whose real parent is the real
+# skills folder (P5 finding S-01). Each entry below points somewhere else.
+echo "=== req-002 AC1: the old manifest prune never leaves the skills folder ==="
+R1B="$(make_repo ac1b)"
+OUTSIDE="$TMP/ac1b/outside"
+mkdir -p "$OUTSIDE/planifest-victim" "$R1B/planifest-victim2" "$R1B/.claude/skills"
+echo "keep" > "$OUTSIDE/planifest-victim/keep.txt"
+echo "keep" > "$R1B/planifest-victim2/keep.txt"
+{
+  printf '%s\n' "$OUTSIDE/planifest-victim"
+  printf '%s\n' "$R1B/.claude/skills/../../planifest-victim2"
+} > "$R1B/.claude/skills/.planifest-manifest"
+LINKS_OK=no
+mkdir -p "$TMP/ac1b/linked/planifest-victim3"
+echo "keep" > "$TMP/ac1b/linked/planifest-victim3/keep.txt"
+if ln -s "$TMP/ac1b/linked" "$R1B/.claude/skills/link" 2>/dev/null && [ -L "$R1B/.claude/skills/link" ]; then
+  LINKS_OK=yes
+  printf '%s\n' "$R1B/.claude/skills/link/planifest-victim3" >> "$R1B/.claude/skills/.planifest-manifest"
+fi
+run_setup "$R1B"
+assert_exit_zero "$RC" "req-002 AC1: setup exits 0 with stray old manifest entries"
+assert_equals "keep" "$(cat "$OUTSIDE/planifest-victim/keep.txt" 2>/dev/null)" "req-002 AC1: an absolute path outside the repo survives the prune"
+assert_equals "keep" "$(cat "$R1B/planifest-victim2/keep.txt" 2>/dev/null)" "req-002 AC1: a .. path out of the skills folder survives the prune"
+if [ "$LINKS_OK" = yes ]; then
+  assert_equals "keep" "$(cat "$TMP/ac1b/linked/planifest-victim3/keep.txt" 2>/dev/null)" "req-002 AC1: a folder under a linked parent survives the prune"
+else
+  echo "  SKIP: req-002 AC1 linked parent case, ln -s makes no real link here"
+fi
+
 echo "=== req-002 AC2: old blocks are replaced once, twice-run stays single ==="
 R2="$(make_repo ac2)"
 mkdir -p "$R2/ravintio-overrides/instructions"

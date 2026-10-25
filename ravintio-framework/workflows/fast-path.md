@@ -32,10 +32,12 @@ Executes a direct, lightweight change for trivial fixes. Bypasses the full pipel
     - `.codex/config.toml` (Codex CLI)
     - `opencode.json` (OpenCode)
     - `.opencode/plugins/@ravintio/opencode-hooks/` (OpenCode)
+    - `.opencode/plugins/@planifest/opencode-hooks/` (OpenCode), the old plugin path, kept until 1.0.0
   - The tool-local settings files that a tool also loads hooks from. They are usually git-ignored, so a PR shows no change to them:
     - `.claude/settings.local.json` (Claude Code), whose `disableAllHooks` key turns every hook off
     - `opencode.jsonc` (OpenCode), which OpenCode reads in place of `opencode.json`
   - `.github/workflows/ravintio.yml`, the CI workflow that setup installs. It enforces the `fix(fast-path)` commit rule.
+  - `.github/workflows/planifest.yml`, the old name of that workflow, kept until 1.0.0
 
   A change to any of them takes the Change or Feature Pipeline, even with no `src/` target. If a target matches one, stop and route the change there.
 - Every target path is plain ASCII. Some file systems fold a lookalike character onto a plain letter. On APFS, `hookſ` names the `hooks` folder. So the scope record never admits a target that holds a non-ASCII character. If a target needs one, take the Change Pipeline.

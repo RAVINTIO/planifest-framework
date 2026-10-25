@@ -40,8 +40,16 @@ The helper runs these steps in order. Each step skips work that is already done,
    - The backup of the old pack exists while the old pack is still in place.
    - git holds a staged edit, other than a deletion, under the old pack.
    - The old pack, either overrides folder, `.ravintio-backup`, or either workflow file is a symbolic link or a junction.
+   - git holds the old pack as a submodule. Run `git submodule deinit` and `git rm` on it first.
+
+   Just before each move, the helper checks again that the target is absent. If the target appeared after step 2, the helper stops at that step with exit 1.
 3. Moves the old overrides folder to `ravintio-overrides/`. It uses `git mv` when git tracks the folder.
-4. Renames the workflow to `.github/workflows/ravintio.yml`. It rewrites the old pack path to `ravintio-framework/` and each pack-owned variable name in the list below. A consumer secret or any other name keeps its old prefix.
+4. Renames the workflow to `.github/workflows/ravintio.yml`. It rewrites these parts:
+   - the line `name: Planifest Strict Pipeline` to `name: RAVINTIO Strict Pipeline`, when it is the whole line. Setup skips a workflow that already exists, so only the helper changes this line.
+   - the old pack path to `ravintio-framework/`.
+   - each pack-owned variable name in the list below, as a whole name.
+
+   A name that follows `secrets.` or `vars.` keeps its old prefix, even when it matches a pack-owned name. It names a consumer secret or variable. A name that is not on the list also keeps its old prefix.
 5. Removes the `.claude/` session marker. Setup reads and removes the setup flags file and the skills manifest itself.
 6. Stops git tracking of the old pack, then moves it to `.ravintio-backup/planifest-framework/`. It adds `.ravintio-backup/` to `.git/info/exclude` once.
 7. Prints the setup command to run next.
@@ -100,13 +108,13 @@ The helper moves `ravintio-overrides/` but doesn't rewrite the text inside it. T
 
 ## Branch protection
 
-The CI check now reports as `RAVINTIO Strict Pipeline`. If a branch protection rule requires the old check name, change it to require `RAVINTIO Strict Pipeline`. Until you do, the old check never reports and pull requests stay blocked.
+The workflow name is now `RAVINTIO Strict Pipeline`. GitHub matches a required status check by its job name, and the job is still `validate-branch`. So a branch protection rule that requires `validate-branch` needs no change. Don't require `RAVINTIO Strict Pipeline`: that is a workflow name, and no check reports under it.
 
 ---
 
 ## Backup clean-up
 
-The old pack stays in `.ravintio-backup/planifest-framework/`, and git ignores it through `.git/info/exclude`. Check it for any custom file of yours, and move that file somewhere you keep. Then delete `.ravintio-backup/` yourself. The helper never deletes it.
+The old pack stays in `.ravintio-backup/planifest-framework/`, and git ignores it through `.git/info/exclude`. Check it for any custom file of yours, and move that file somewhere you keep. Then delete `.ravintio-backup/` yourself. The helper never deletes it. `git clean -x` deletes it, because git ignores it, so check the backup before you run that command.
 
 ---
 

@@ -22,6 +22,10 @@ $ErrorActionPreference = 'Continue'
 
 $Old = 'plan' + 'ifest'
 $OldU = 'PLAN' + 'IFEST'
+$OldC = 'Plan' + 'ifest'
+# Step 4 rewrites this workflow name line when it matches the whole line.
+$OldWfName = 'name: ' + $OldC + ' Strict Pipeline'
+$NewWfName = 'name: RAVINTIO Strict Pipeline'
 $NewPack = 'ravintio-framework'
 $OldPack = $Old + '-framework'
 $OldOvr = $Old + '-overrides'
@@ -129,9 +133,19 @@ function Test-Tracked([string]$Rel) {
     return ("$out" -ne '')
 }
 
+# Stop-IfPresent DST STEP: stop when DST appeared after the step 2 check,
+# because git mv would move the source inside it.
+function Stop-IfPresent([string]$Dst, [string]$Step) {
+    if (Test-Present $Dst) {
+        Stop-At $Step "$Dst appeared after step 2. Move it aside, then run this helper again."
+    }
+}
+
 # Move-Entry SRC DST STEP: git mv when git tracks SRC, else a plain rename.
 function Move-Entry([string]$Src, [string]$Dst, [string]$Step) {
-    if (Test-Tracked $Src) {
+    $useGit = Test-Tracked $Src
+    Stop-IfPresent $Dst $Step
+    if ($useGit) {
         & git mv $Src $Dst 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0) { Stop-At $Step "could not move $Src to $Dst." }
         return
@@ -147,18 +161,23 @@ function Move-Entry([string]$Src, [string]$Dst, [string]$Step) {
     }
 }
 
-# Get-Rewritten TEXT: TEXT with the pack path and the pack-owned variable
-# names rewritten, line by line, each line ending in a newline. A name counts
-# only as a whole name.
+# Get-Rewritten TEXT: TEXT with the workflow name line, the pack path, and
+# the pack-owned variable names rewritten, line by line, each line ending in a
+# newline. A name counts only as a whole name, and never after secrets. or
+# vars., where it names a consumer secret or variable.
 function Get-Rewritten([string]$Text) {
     if ($Text.Length -eq 0) { return '' }
     $body = $Text
     if ($body.EndsWith("`n")) { $body = $body.Substring(0, $body.Length - 1) }
-    $pattern = '(?<![A-Za-z0-9_])' + $OldU + '_(' + ($PackVars -join '|') + ')(?![A-Za-z0-9_])'
+    $pattern = '(?<![A-Za-z0-9_])(?<!secrets\.)(?<!vars\.)' + $OldU + '_(' + ($PackVars -join '|') + ')(?![A-Za-z0-9_])'
     $regex = New-Object System.Text.RegularExpressions.Regex($pattern)
     $sb = New-Object System.Text.StringBuilder
     foreach ($line in $body.Split([char]10)) {
-        $l = $line.Replace($OldPack + '/', $NewPack + '/')
+        $l = $line
+        if (($l -ceq $OldWfName) -or ($l -ceq ($OldWfName + "`r"))) {
+            $l = $NewWfName + $l.Substring($OldWfName.Length)
+        }
+        $l = $l.Replace($OldPack + '/', $NewPack + '/')
         $l = $regex.Replace($l, 'RAVINTIO_$1')
         [void]$sb.Append($l)
         [void]$sb.Append("`n")
@@ -198,6 +217,12 @@ if ($InGit) {
     & git diff --cached --quiet --diff-filter=ACMRT -- $OldPack 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
         Stop-At '2' "git holds a staged edit under $OldPack/. Commit it or unstage it, then run this helper again."
+    }
+}
+if ($InGit) {
+    $stage = & git ls-files -s -- $OldPack 2>$null
+    if (@($stage | Where-Object { "$_" -like '160000 *' }).Count -gt 0) {
+        Stop-At '2' "$OldPack/ is a git submodule. Run git submodule deinit and git rm on it first, then run this helper again."
     }
 }
 Write-Host 'Step 2: no stop condition found.'
@@ -296,6 +321,7 @@ if (Test-Dir $OldPack) {
     } catch {
         Stop-At '6' "could not create $Backup/."
     }
+    Stop-IfPresent ($Backup + '/' + $OldPack) '6'
     try {
         [System.IO.Directory]::Move((Get-Full $OldPack), (Get-Full ($Backup + '/' + $OldPack)))
     } catch {
@@ -346,12 +372,12 @@ if (-not $script:Changed) {
 # Step 7: the next step.
 Write-Host "Next step: run $NewPack/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
 if (Test-Dir ($Backup + '/' + $OldPack)) {
-    Write-Host "The old pack is in $Backup/$OldPack/. Delete $Backup/ after you check that nothing of yours is in it."
+    Write-Host "The old pack is in $Backup/$OldPack/. Delete $Backup/ after you check that nothing of yours is in it. git clean -x deletes it too."
 }
 Invoke-Hook '7'
 
 # Step 8: branch protection.
-Write-Host 'WARNING: a branch protection rule that requires the old check name must now require RAVINTIO Strict Pipeline.'
+Write-Host 'WARNING: the workflow name is now RAVINTIO Strict Pipeline. The required check validate-branch keeps its name, so a branch protection rule that requires validate-branch needs no change.'
 Invoke-Hook '8'
 
 exit 0

@@ -20,6 +20,10 @@ set -uo pipefail
 
 OLD="plan""ifest"
 OLDU="PLAN""IFEST"
+OLDC="Plan""ifest"
+# Step 4 rewrites this workflow name line when it matches the whole line.
+OLD_WF_NAME="name: $OLDC Strict Pipeline"
+NEW_WF_NAME="name: RAVINTIO Strict Pipeline"
 NEW_PACK="ravintio-framework"
 OLD_PACK="$OLD-framework"
 OLD_OVR="$OLD-overrides"
@@ -81,9 +85,20 @@ tracked() {
     [ "$IN_GIT" -eq 1 ] && [ -n "$(git ls-files -- "$1" 2>/dev/null)" ]
 }
 
+# stop_if_present DST STEP: stop when DST appeared after the step 2 check,
+# because mv and git mv would move the source inside it.
+stop_if_present() {
+    if present "$1"; then
+        stop_at "$2" "$1 appeared after step 2. Move it aside, then run this helper again."
+    fi
+}
+
 # move_path SRC DST STEP: git mv when git tracks SRC, else a plain rename.
 move_path() {
-    if tracked "$1"; then
+    local use_git=0
+    if tracked "$1"; then use_git=1; fi
+    stop_if_present "$2" "$3"
+    if [ "$use_git" -eq 1 ]; then
         git mv "$1" "$2" >/dev/null 2>&1 || stop_at "$3" "could not move $1 to $2."
     else
         mv "$1" "$2" || stop_at "$3" "could not move $1 to $2."
@@ -102,14 +117,20 @@ first_link() {
     return 0
 }
 
-# rewrite_names FILE: print FILE with the pack path and the pack-owned
-# variable names rewritten. A name counts only as a whole name.
+# rewrite_names FILE: print FILE with the workflow name line, the pack path,
+# and the pack-owned variable names rewritten. A name counts only as a whole
+# name, and never after secrets. or vars., where it names a consumer secret
+# or variable.
 rewrite_names() {
-    awk -v op="$OLD_PACK/" -v np="$NEW_PACK/" -v old="${OLDU}_" -v new="RAVINTIO_" -v names="$PACK_VARS" '
+    awk -v op="$OLD_PACK/" -v np="$NEW_PACK/" -v old="${OLDU}_" -v new="RAVINTIO_" -v names="$PACK_VARS" \
+        -v oldname="$OLD_WF_NAME" -v newname="$NEW_WF_NAME" '
     function isword(c) { return c ~ /[A-Za-z0-9_]/ }
     BEGIN { n = split(names, nm, " ") }
     {
         line = $0
+        if (line == oldname || line == oldname "\r") {
+            line = newname substr(line, length(oldname) + 1)
+        }
         out = ""
         while ((i = index(line, op)) > 0) {
             out = out substr(line, 1, i - 1) np
@@ -122,7 +143,8 @@ rewrite_names() {
             while ((i = index(line, w)) > 0) {
                 pre = (i > 1) ? substr(line, i - 1, 1) : substr(out, length(out), 1)
                 post = substr(line, i + length(w), 1)
-                if ((pre == "" || !isword(pre)) && (post == "" || !isword(post))) {
+                ctx = out substr(line, 1, i - 1)
+                if ((pre == "" || !isword(pre)) && (post == "" || !isword(post)) && ctx !~ /(secrets|vars)\.$/) {
                     out = out substr(line, 1, i - 1) new nm[k]
                 } else {
                     out = out substr(line, 1, i - 1 + length(w))
@@ -167,6 +189,9 @@ if present "$BACKUP/$OLD_PACK" && present "$OLD_PACK"; then
 fi
 if [ "$IN_GIT" -eq 1 ] && ! git diff --cached --quiet --diff-filter=ACMRT -- "$OLD_PACK" >/dev/null 2>&1; then
     stop_at 2 "git holds a staged edit under $OLD_PACK/. Commit it or unstage it, then run this helper again."
+fi
+if [ "$IN_GIT" -eq 1 ] && git ls-files -s -- "$OLD_PACK" 2>/dev/null | grep '^160000 ' >/dev/null; then
+    stop_at 2 "$OLD_PACK/ is a git submodule. Run git submodule deinit and git rm on it first, then run this helper again."
 fi
 echo "Step 2: no stop condition found."
 hook 2
@@ -239,6 +264,7 @@ if [ -d "$OLD_PACK" ]; then
         git rm -r -q --cached -- "$OLD_PACK" >/dev/null 2>&1 || stop_at 6 "could not stop git tracking of $OLD_PACK/."
     fi
     mkdir -p "$BACKUP" || stop_at 6 "could not create $BACKUP/."
+    stop_if_present "$BACKUP/$OLD_PACK" 6
     mv "$OLD_PACK" "$BACKUP/$OLD_PACK" || stop_at 6 "could not move $OLD_PACK/ to $BACKUP/$OLD_PACK/."
     echo "Step 6: moved $OLD_PACK/ to $BACKUP/$OLD_PACK/."
     note_moved "$OLD_PACK/ to $BACKUP/$OLD_PACK/"
@@ -272,12 +298,12 @@ fi
 # Step 7: the next step.
 echo "Next step: run $NEW_PACK/setup.sh claude-code, or setup.ps1, or the tool this project uses, before the next commit."
 if [ -d "$BACKUP/$OLD_PACK" ]; then
-    echo "The old pack is in $BACKUP/$OLD_PACK/. Delete $BACKUP/ after you check that nothing of yours is in it."
+    echo "The old pack is in $BACKUP/$OLD_PACK/. Delete $BACKUP/ after you check that nothing of yours is in it. git clean -x deletes it too."
 fi
 hook 7
 
 # Step 8: branch protection.
-echo "WARNING: a branch protection rule that requires the old check name must now require RAVINTIO Strict Pipeline."
+echo "WARNING: the workflow name is now RAVINTIO Strict Pipeline. The required check validate-branch keeps its name, so a branch protection rule that requires validate-branch needs no change."
 hook 8
 
 exit 0

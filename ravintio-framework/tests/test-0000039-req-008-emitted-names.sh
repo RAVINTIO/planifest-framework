@@ -78,6 +78,14 @@ assert_equals "true" "$OUT" "req-008 AC1: the @ravintio OpenCode plugin path is 
 OUT="$(rules_eval "console.log(p.isEnforcementPath('.github/workflows/ravintio.yml'));")"
 assert_equals "true" "$OUT" "req-008 AC1: ravintio.yml is an enforcement path"
 
+# Old-name reads kept through 0.x (ADR-004, P5 finding S-02): a leftover old
+# plugin or old workflow stays out of reach of a Fast Path scope record.
+OUT="$(rules_eval "console.log(p.isEnforcementPath('.opencode/plugins/@planifest/opencode-hooks/index.ts'));")"
+assert_equals "true" "$OUT" "req-008 AC1: the old @planifest OpenCode plugin path is still an enforcement path"
+
+OUT="$(rules_eval "console.log(p.isEnforcementPath('.github/workflows/planifest.yml'));")"
+assert_equals "true" "$OUT" "req-008 AC1: the old planifest.yml workflow is still an enforcement path"
+
 OUT="$(rules_eval "console.log(p.isEnforcementPath('ravintio-framework/hooks/enforcement/gate-write.mjs'));")"
 assert_equals "true" "$OUT" "req-008 AC1: ravintio-framework/hooks/ is an enforcement path"
 

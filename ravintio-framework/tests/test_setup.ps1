@@ -142,6 +142,27 @@ try {
     Assert-MarkerRejected -Case 'missing field' -Folder $brokenDir -Content '{ "tool": "claude-code", "flags": [], "writtenAt": "2026-01-01T00:00:00Z" }'
     Assert-MarkerRejected -Case 'flags as a string' -Folder $brokenDir -Content '{ "tool": "claude-code", "flags": "--strict-orchestrator", "writtenAt": "2026-01-01T00:00:00Z", "attemptStatus": "completed" }'
 
+    # 0000039 P5 finding S-01: the old manifest prune never leaves the skills
+    # folder. The old brand word is built from parts.
+    Write-Host "--- Testing: old manifest prune stays in the skills folder ---"
+    $oldWord = 'plan' + 'ifest'
+    $victimA = Join-Path $testDir ("outside\" + $oldWord + '-victim')
+    $victimB = Join-Path $testDir ($oldWord + '-victim2')
+    New-Item -ItemType Directory -Path $victimA -Force | Out-Null
+    New-Item -ItemType Directory -Path $victimB -Force | Out-Null
+    Set-Content -Path (Join-Path $victimA 'keep.txt') -Value 'keep'
+    Set-Content -Path (Join-Path $victimB 'keep.txt') -Value 'keep'
+    $oldManifestLines = @($victimA, (Join-Path $testDir (".claude\skills\..\..\" + $oldWord + '-victim2')))
+    Set-Content -Path (Join-Path $testDir (".claude\skills\." + $oldWord + '-manifest')) -Value $oldManifestLines
+    & .\ravintio-framework\setup.ps1 claude-code
+    if (-not (Test-Path -LiteralPath (Join-Path $victimA 'keep.txt'))) {
+        throw "FAIL: 0000039 S-01: the prune deleted an absolute path outside the skills folder"
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $victimB 'keep.txt'))) {
+        throw "FAIL: 0000039 S-01: the prune deleted a .. path out of the skills folder"
+    }
+    Write-Host "  PASS: 0000039 S-01: absolute and .. manifest entries survive the prune"
+
     Write-Host "--- Testing: cursor ---"
     & .\ravintio-framework\setup.ps1 cursor
 

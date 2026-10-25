@@ -97,7 +97,7 @@ If the condition is true, go to Step 2.
 
 `migrate-0.37.0-ravintio-rename.md` runs as a check pass in a consumer repo. The human on the loop has already run the helper by hand, so there is nothing to move. Do this instead of Steps 2 to 4:
 
-1. Confirm the old `planifest-framework/` and `planifest-overrides/` folders are gone.
+1. Confirm the old `planifest-framework/` and `planifest-overrides/` folders are gone. If either is still there, this is not a check pass. Follow the Migrator Instructions in the migration file instead.
 2. Run the helper again and confirm it changes nothing.
 3. The check pass records `applied` with both counts at `0` (Step 5).
 
