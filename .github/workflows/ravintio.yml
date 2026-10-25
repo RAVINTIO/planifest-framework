@@ -67,8 +67,10 @@ jobs:
     runs-on: ${{ matrix.os }}
     # The Git Bash leg ran past 10 minutes, so Windows gets 20 minutes per shard
     # and runs seven shards. Seven keeps the four slowest setup suites in
-    # separate shards. See ADR-014 (feature 0000037).
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 10 }}
+    # separate shards. See ADR-014 (feature 0000037). The macOS leg passed
+    # every suite but ran past 10 minutes once the 0000039 helper suite grew,
+    # so Linux and macOS get 15.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 20 || 15 }}
     permissions:
       contents: read
     strategy:
