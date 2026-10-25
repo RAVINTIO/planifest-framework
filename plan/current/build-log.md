@@ -117,3 +117,21 @@ Skill Map (P1 gate): re-checked. REQ-008, REQ-009, and REQ-010 rows added for th
 Gate (P1): passed. The design critic approved iteration 3 with five minor findings, all fixed after the loop closed. Ten requirements, 32 criteria. Consistency check clean, with criteria-count warnings on req-002 (4) and req-006 (5), both with recorded keep answers.
 Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 32 criteria, critic approved on iteration 3
 
+### P2: ADRs
+
+| Field | Value |
+|-------|-------|
+| Start | `2026-10-25T02:31:38Z` |
+| End | `pending` |
+| Wall-clock | `pending` |
+| Streams | `1` |
+| Model tier | primary (orchestrator), cheaper (ADR drafters and critic) |
+| Skills loaded | planifest-adr-agent |
+| Agents spawned | `pending` |
+| MCP calls | `0` |
+| Parallel task batches | `pending` |
+| Notes | `none` |
+
+Skills inbox (P2): absent, nothing to take in.
+Decision (P2): ten ADRs, ADR-001 to ADR-010, one drafter each in one batch / reason: each ADR records one decision the design already fixed, so no drafter needs another's output.
+
