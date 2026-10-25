@@ -78,3 +78,72 @@ Consumers:
 
 - Step 2b needed both `planifest-framework/` and `planifest-overrides/` moved out, because either folder stops setup first.
 - req-006 step 8 says a rule must now require `RAVINTIO Strict Pipeline`. The migration doc and the helper output say the opposite: keep `validate-branch` and don't require the workflow name. The helper follows the migration doc.
+
+## Re-verification at HEAD
+
+**Date:** 2026-10-25
+**Closes:** cross-model finding X-002
+**Commits:** first run at `d2a79606`. HEAD then moved to `01374ccc`, which changes the `setup.sh` and `setup.ps1` old-folder stop check (X-004) and a test fixture (X-006). The consumer and stray-entry runs were repeated at `01374ccc` with the same results. The full suite and req-001 suite ran at `d2a79606`.
+**Software exercised:** the `v0.36.0` pack (`f8e31435`) and the `ravintio-framework/` pack at each commit, both taken with `git archive`. The working tree was never used, because other agents had uncommitted changes in it. Each consumer is a fresh git repo under one `mktemp -d` folder, `/var/folders/.../tmp.XCOpC9004X`. On macOS `/var` is a link to `/private/var`. The full suite and the req-001 suite ran in a `git clone` checked out at `d2a79606` in the scratchpad. PowerShell is 7.6.8 with `PATH="/opt/homebrew/bin:$PATH"`. Nothing ran inside ROOT.
+
+Consumers:
+
+| Copy | Path form | Helper and setup |
+|------|-----------|------------------|
+| `c1` | logical (`/var/...`), holds a link | `.sh` helper, then `setup.sh` |
+| `c2` | physical (`/private/var/...`) | `.sh` helper, then `setup.sh` |
+| `c3` | logical, holds a link | `.ps1` helper, then `setup.ps1` |
+| `c4` | physical | `.ps1` helper, then `setup.ps1` |
+| `s1` | logical, stray entries planted | `.sh` helper, then `setup.sh` |
+| `s2` | logical, stray entries planted | `.ps1` helper, then `setup.ps1` |
+
+Each upgrade run took these steps:
+
+1. Run `tar -x` on the 0.36.0 archive, then `bash planifest-framework/setup.sh claude-code --strict-orchestrator`, then commit.
+2. Extract the new pack, then run the helper.
+3. Run the setup command from the helper's `Next step:` line.
+4. Hash the state, rerun the helper, and hash again.
+
+The hash covers every path, mtime, size, and mode outside `.git`, the SHA-1 of each file, `git status --porcelain`, and `core.hooksPath`.
+
+### Results
+
+| Check | Command | Outcome | Observation evidence |
+|-------|---------|---------|---------------------|
+| D-1: `.sh` rerun on a linked path (`c1`) | `bash ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.sh`, then `ravintio-framework/setup.sh claude-code --strict-orchestrator` as printed, then the helper again | verified | The old manifest names `/var/.../c1/.claude/skills/planifest-adr-agent`. Helper exit 0 with 28 change lines and `Next step: run ravintio-framework/setup.sh claude-code --strict-orchestrator, ...`. Setup exit 0. Its manifest now names `/private/var/.../c1/.claude/skills/ravintio-adr-agent`, so `setup.sh` writes the real path (fix `72ac382d`). Rerun exit 0, 0 change lines, `Nothing to do. This project already uses the RAVINTIO names.` State hash `9213937fe5ee` before and after. At `01374ccc` the hash is `88567a123b0c` both times. |
+| `.sh` rerun on a physical path (`c2`) | Same steps | verified | Rerun exit 0, 0 change lines. State hash `ab7a90b1efa9` both times. At `01374ccc` the hash is `27f100b6351e` both times. |
+| `.ps1` rerun on a linked path (`c3`) | `pwsh -NoProfile -File ravintio-framework/migrations/migrate-0.37.0-ravintio-rename.ps1`, then `pwsh -NoProfile -File ravintio-framework/setup.ps1 claude-code --strict-orchestrator`, then the helper again | verified | Helper exit 0, 28 change lines, and the same `Next step:` line as the `.sh` helper. Setup exit 0. Rerun exit 0, 0 change lines, `Nothing to do.` State hash `1cc0277006ee` both times. At `01374ccc` the hash is `23562b06003e` both times. |
+| `.ps1` rerun on a physical path (`c4`) | Same steps | verified | Rerun exit 0, 0 change lines. State hash `ce2ea7ee0e9f` both times. At `01374ccc` the hash is `bbe44e08616e` both times. |
+| Cross-shell rerun | `.ps1` helper in `c1` after `setup.sh`, and `.sh` helper in `c3` after `setup.ps1` | verified | Both exit 0, 0 change lines, `Nothing to do.` |
+| Upgrade end state (`c1` to `c4`) | Read the markers after setup | verified | 21 manifest entries. `.ravintio-setup-flags` holds `"flags":["--strict-orchestrator"]` and `"attemptStatus":"completed"`. `plan/.orchestrator-strict` exists. `core.hooksPath` is `ravintio-framework/hooks`. `find` outside `.git` and `.ravintio-backup` returns 0 `planifest*` paths. |
+| Manifest holds only strict names after migration (`c1` to `c4`) | For each entry, check that the last part matches `^[A-Za-z0-9][A-Za-z0-9._-]*$`, doesn't end in a dot, and starts with `ravintio-`. Then check that its parent equals `pwd -P` of the skills folder and the folder exists | verified | 21 entries in each copy, 0 failing. |
+| Stray entries dropped (`s1`, `.sh`) | Append 11 stray lines to `.claude/skills/.planifest-manifest` and plant `.ravintio-manifest.AbC123`. Run the helper, then `setup.sh claude-code` | verified | The stray lines are an outside folder, a `../../../` path to it, `//evilhost/share/...`, `\\evilhost\share\...`, `bad name`, `trail.`, `CON`, `aux.txt`, `*`, a relative name, and `.hidden`. Helper exit 0 prints `WARNING: dropped manifest entry` once for each of the 11. It prints `Step 5: removed the leftover temporary file .claude/skills/.ravintio-manifest.AbC123.` The new manifest holds 21 entries, 0 failing the rule. After setup the outside folder still holds its file (`victim intact: data`). Same result at `01374ccc`. |
+| Stray entries dropped (`s2`, `.ps1`) | Same fixture with the `.ps1` helper and `setup.ps1` | verified | Same 11 drop warnings and the temporary file removal. 21 entries, 0 failing. The outside folder is intact. Same result at `01374ccc`. |
+| req-001 AC1: no tracked path with the old brand | `git ls-files` filtered for the old brand outside the protected paths, then `RAVINTIO_PASS_COMMIT=81287992 bash ravintio-framework/tests/test-0000039-req-001-pack-paths-and-identifiers.sh` in the clone | verified | `count=0` at `d2a79606` and at `01374ccc` (`git ls-tree`). The three external-skills files now sit at `ravintio-framework/external-skills/`, moved in `e5608c50`. Suite exit 0, `Results: 44 passed, 0 failed`, including `PASS: ... (0 found)`. |
+| req-003 AC1: full suite passes | `bash ravintio-framework/tests/run-tests.sh --quiet` in the clone, with `pwsh` on the path | verified | Exit 0. `Feature suites: 127 passed, 0 failed.` `Regression suite: 35 passed, 0 failed.` `Suites run: 162`. This covers macOS with PowerShell 7 only. The Windows and Windows PowerShell 5.1 legs need the CI matrix on the PR. |
+| req-003 AC1: inventory | The exact command from req-003: `git grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ... ':!ravintio-framework/tests/test-0000039-req-006*' \| sort -u` | **failed** | Output: `PLANIFEST_SESSION_ID`, `PLANIFEST_SHARD_COUNT`, `PLANIFEST_SHARD_INDEX`, `PLANIFEST_TELEMETRY`, `PLANIFEST_TELEMETRY_URL`. The criterion allows only the session and telemetry names. Both shard hits come from `test-0000039-req-003-environment-variables.sh` line 130, a probe that shows the old shard names no longer shard a run. See defect D-2. |
+
+### Defect D-2: the req-003 inventory command doesn't match its test
+
+- **Criterion:** req-003 AC1, "the inventory command returns only `PLANIFEST_SESSION_ID` ... and `PLANIFEST_TELEMETRY*`".
+- **Cause:** the requirement's exact command leaves out only `test-0000039-req-006*`. The req-003 suite leaves out every `test-0000039-*` file (line 33), so the suite passes. The req-003 test holds the old shard names in its legacy probe.
+- **Effect:** none in the shipped software. The CI workflow and `run-tests.sh` read only the `RAVINTIO_SHARD_*` names. The earlier inventory row showed the same five names and still recorded verified.
+- **Suggested fix:** under Hard Limit 7, change the command in req-003 to leave out `ravintio-framework/tests/test-0000039-req-003*` as well, or match the suite's `test-0000039-*`.
+- **Scope:** low.
+
+### Observation: setup lists folders it didn't install
+
+`setup.sh` writes every folder under `.claude/skills/` to the manifest. That includes folders the pack didn't install. In `s1` and `s2` the planted folders `bad name`, `trail.`, `CON`, and `aux.txt` appear in the manifest after setup. The next helper run drops them and rewrites the manifest, so the rerun isn't a no-op in this fixture. The next setup run without a helper run deletes them. A 0.36.0 consumer shows the same deletion of a user folder `my-own-skill` on the second setup rerun, so this predates 0000039. It's out of scope here. Backlog entry 0000255 covers a related prune gap but not this listing.
+
+### Counts
+
+- verified: 11
+- failed: 1 (req-003 AC1 inventory, defect D-2)
+- not-verifiable: 0
+
+### Closing lines for earlier rows
+
+- REQ-001 AC1, first table, **failed**: now verified at `d2a79606` and `01374ccc`. The three held-back files were committed in `e5608c50`.
+- REQ-003 AC1 full suite, first table, not-verifiable: now verified, 162 of 162 suites pass on macOS. The Windows and 5.1 legs still need CI.
+- REQ-003 AC1 inventory, first table, verified: now failed against the exact command (D-2). The output is unchanged. The earlier row didn't compare it with the criterion.
+- P6 step 5 helper rerun, **failed** (D-1): now verified for `.sh` and `.ps1` on a linked path and a physical path.
