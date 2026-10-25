@@ -25,6 +25,7 @@ As the human on the loop, I rename every `PLANIFEST_*` variable to `RAVINTIO_*`,
   - Retired telemetry names, in tests only: `PLANIFEST_TELEMETRY`, `PLANIFEST_TELEMETRY_URL`.
   - `PLANIFEST_SHARD` is a prefix match inside prose or a glob. Rename it with the shard pair.
 - The exact inventory command is `git grep -ohE 'PLANIFEST_[A-Z_]+' -- . ':!plan/_archive' ':!plan/changelog' ':!plan/_migrations' ':!plan/current' ':!plan/backlog/*/_reference' ':!ravintio-framework/migrations' ':!ravintio-framework/tests/test-0000039-req-006*' | sort -u`. The exclusions cover history paths, shipped migration bodies, `plan/_migrations/`, `plan/current/`, backlog `_reference/` documents, and the req-006 helper files and their tests. The helpers name the pack-owned variables they rewrite in a consumer workflow.
+  - P6 correction (verification defect D-2): the command also excludes `':!ravintio-framework/tests/test-0000039-req-003*'`. That suite's own probe names the old shard variables, and the suite already excludes every `test-0000039-*` file.
 - Re-run the inventory command at P3 and rename any name that appears since P1.
 - `PLANIFEST_SESSION_ID` is the only name with a legacy fallback. The OpenCode adapter in `planifest-framework/hooks/adapters/opencode/index.ts` (renamed by req-001) reads `RAVINTIO_SESSION_ID` first. It reads `PLANIFEST_SESSION_ID` only when `RAVINTIO_SESSION_ID` is unset. It prints no warning. 1.0.0 removes the fallback.
 - No other variable gets a fallback, because only the pack sets them.
