@@ -76,6 +76,19 @@ foreach ($oldDir in @('planifest-framework', 'planifest-overrides')) {
         exit 1
     }
 }
+# Stop the same way while a tool folder holds an old marker file.
+foreach ($toolDir in @('.claude', '.cursor', '.windsurf', '.clinerules', '.agents', '.github', '.gemini', '.opencode')) {
+    foreach ($oldMarker in @('.planifest-setup-flags', 'skills/.planifest-manifest')) { # old-name read, removed at 1.0.0
+        $oldMarkerPath = "${toolDir}/${oldMarker}"
+        $oldMarkerFull = Join-Path $ProjectRoot $oldMarkerPath
+        # Get-Item also finds a link whose target is missing, which Test-Path misses.
+        if ($null -ne (Get-Item -LiteralPath $oldMarkerFull -Force -ErrorAction SilentlyContinue)) {
+            [Console]::Error.WriteLine("Error: found the old marker file ${oldMarkerPath}.")
+            [Console]::Error.WriteLine("Run the migration migrate-0.37.0-ravintio-rename first, then run setup again.")
+            exit 1
+        }
+    }
+}
 
 $ValidTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'windsurf', 'cline', 'roo-code', 'opencode')
 
@@ -1299,62 +1312,6 @@ function Invoke-RavintioSetup {
     Write-Host ""
     Write-Host "  Setting up $ToolName"
     Write-Host "  Skills directory: $($toolConfig.SkillsDir)/"
-
-    # One-time read of the old-name state (ADR-004). Old-name read kept through 0.x, removed at 1.0.0.
-    $oldFlagsPath = Join-Path (Split-Path -Parent $skillsDir) '.planifest-setup-flags'
-    if (Test-Path $oldFlagsPath) {
-        $oldFlagsRaw = Get-Content -Path $oldFlagsPath -Raw
-        if ($oldFlagsRaw -match '"--include-full-skill-library"') { $script:IncludeFullSkillLibrary = $true }
-        if ($oldFlagsRaw -match '"--strict-orchestrator"') {
-            $script:StrictOrchestrator = $true
-            $strictPlanDir = Join-Path $ProjectRoot 'plan'
-            New-Item -ItemType Directory -Path $strictPlanDir -Force | Out-Null
-            New-Item -ItemType File -Path (Join-Path $strictPlanDir '.orchestrator-strict') -Force | Out-Null
-        }
-        Remove-Item -Path $oldFlagsPath -Force
-        Write-Host "  ~ carried old setup flags into .ravintio-setup-flags"
-    }
-    $oldManifest = Join-Path $skillsDir '.planifest-manifest'
-    if (Test-Path $oldManifest) {
-        # Delete only a folder whose parent is the skills folder itself, and act
-        # on the joined path, so an absolute, .. or linked-parent entry is skipped.
-        $skillsFull = $null
-        $skillsItem = Get-Item -LiteralPath $skillsDir -Force -ErrorAction SilentlyContinue
-        if ($null -ne $skillsItem) { $skillsFull = $skillsItem.FullName.TrimEnd('\', '/') }
-        # Skip the prune if the skills folder, or a folder above it up to the
-        # project root, is a link or junction.
-        $rootFull = (Get-Item -LiteralPath $ProjectRoot -Force).FullName.TrimEnd('\', '/')
-        $walk = $skillsItem
-        while (($null -ne $walk) -and ($walk.FullName.TrimEnd('\', '/') -ine $rootFull)) {
-            if ($walk.Attributes -band [IO.FileAttributes]::ReparsePoint) { $skillsFull = $null; break }
-            $walk = $walk.Parent
-        }
-        Get-Content -Path $oldManifest | Where-Object { $_ -ne '' } | ForEach-Object {
-            $oldDirPath = $_.TrimEnd('/', '\')
-            if (($null -eq $skillsFull) -or ($oldDirPath -eq '')) { return }
-            $oldLeaf = Split-Path -Leaf $oldDirPath
-            $oldParent = $null
-            try {
-                $oldParentPath = Split-Path -Parent $oldDirPath
-                if ($oldParentPath) { $oldParent = Get-Item -LiteralPath $oldParentPath -Force -ErrorAction SilentlyContinue }
-            } catch {
-                $oldParent = $null
-            }
-            if ($null -eq $oldParent) { return }
-            if ($oldParent.FullName.TrimEnd('\', '/') -ine $skillsFull) { return }
-            $oldTarget = Join-Path $skillsDir $oldLeaf
-            if ((Test-Path -LiteralPath $oldTarget -PathType Container) -and ($oldLeaf -like 'planifest-*')) {
-                $oldItem = Get-Item -LiteralPath $oldTarget -Force
-                if ($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                    $oldItem.Delete() # unlink only, never recurse into the link target
-                } else {
-                    Remove-Item -LiteralPath $oldTarget -Recurse -Force
-                }
-                Write-Host "  - removed old skill: $oldLeaf"
-            }
-        }
-        Remove-Item -Path $oldManifest -Force
-    }
 
     # Manifest cleanup — remove only previously installed directories on re-run
     $manifest = Join-Path $skillsDir ".ravintio-manifest"

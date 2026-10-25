@@ -278,49 +278,6 @@ strip_old_ignore_block() {
   rm -f "$tmp"
 }
 
-# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
-# Carry flags from the old flags marker into the RAVINTIO variables, then remove it.
-migrate_old_flags_marker() {
-  local tool_dir="$1"
-  local old="$PROJECT_ROOT/$tool_dir/.planifest-setup-flags" # old-name read, removed at 1.0.0
-  [ -f "$old" ] || return 0
-  if grep -qF -- '"--include-full-skill-library"' "$old"; then INCLUDE_FULL_SKILL_LIBRARY=true; fi
-  if grep -qF -- '"--strict-orchestrator"' "$old"; then
-    STRICT_ORCHESTRATOR=true
-    mkdir -p "$PROJECT_ROOT/plan"
-    touch "$PROJECT_ROOT/plan/.orchestrator-strict"
-  fi
-  rm -f "$old"
-  echo "  ~ carried old setup flags into .ravintio-setup-flags"
-}
-
-# Old-name read kept through 0.x and removed at 1.0.0 (ADR-004).
-# Remove the installed old skill folders the old manifest lists, then the manifest.
-migrate_old_manifest() {
-  local old="$1/.planifest-manifest" # old-name read, removed at 1.0.0
-  [ -f "$old" ] || return 0
-  # Delete only a folder whose real parent is the real skills folder, and act
-  # on the joined path, so an absolute, .. or linked-parent entry is skipped.
-  local skills_real
-  skills_real="$(cd "$1" 2>/dev/null && pwd -P)" || return 0
-  local dir_path name parent_real
-  while IFS= read -r dir_path; do
-    dir_path="${dir_path%/}" # a trailing slash would make rm follow a link
-    [ -n "$dir_path" ] || continue
-    name="$(basename "$dir_path")"
-    parent_real="$(cd "$(dirname "$dir_path")" 2>/dev/null && pwd -P)" || continue
-    if [ "$parent_real" = "$skills_real" ] && [[ "$name" == planifest-* ]] && [ -d "$skills_real/$name" ]; then # old-name read, removed at 1.0.0
-      if [ -L "$skills_real/$name" ]; then
-        rm -f "$skills_real/$name" # unlink only, never recurse into the link target
-      else
-        rm -rf "$skills_real/$name"
-      fi
-      echo "  - removed old skill: $name"
-    fi
-  done < "$old"
-  rm -f "$old"
-}
-
 append_override_instructions() {
   # Appends project-specific instructions from ravintio-overrides/instructions/
   # into the boot file between sentinel markers (idempotent). (REQ-006, REQ-007,
@@ -1104,10 +1061,6 @@ setup_tool() {
   fi
   cleanup_retired_integrations "$hooks_base_rel" "${TOOL_SETTINGS_FILE:-}"
 
-  # One-time read of the old-name state (ADR-004)
-  migrate_old_flags_marker "$(dirname "$TOOL_SKILLS_DIR")"
-  migrate_old_manifest "$skills_dir"
-
   # Manifest cleanup — remove only previously installed directories on re-run
   local manifest="$skills_dir/.ravintio-manifest"
   if [ -f "$manifest" ]; then
@@ -1382,6 +1335,17 @@ for _old_dir in planifest-framework planifest-overrides; do # old-name read, rem
     echo "Run the migration migrate-0.37.0-ravintio-rename first, then run setup again." >&2
     exit 1
   fi
+done
+# Stop the same way while a tool folder holds an old marker file.
+for _tool_dir in .claude .cursor .windsurf .clinerules .agents .github .gemini .opencode; do
+  for _old_marker in .planifest-setup-flags skills/.planifest-manifest; do # old-name read, removed at 1.0.0
+    _old_path="$_tool_dir/$_old_marker"
+    if [ -e "$PROJECT_ROOT/$_old_path" ] || [ -L "$PROJECT_ROOT/$_old_path" ]; then
+      echo "Error: found the old marker file $_old_path." >&2
+      echo "Run the migration migrate-0.37.0-ravintio-rename first, then run setup again." >&2
+      exit 1
+    fi
+  done
 done
 
 if [ -z "$TOOL" ]; then

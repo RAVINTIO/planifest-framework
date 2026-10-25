@@ -102,14 +102,13 @@ ALLOWLIST=(
   '^ravintio-framework/setup\.[a-z0-9]+$|planifest-(framework|overrides)|Old pack folder stop check.'
   '^ravintio-framework/setup\.[a-z0-9]+$|planifest-overrides:instructions:(start|end)|Old boot marker strip.'
   '^ravintio-framework/setup\.[a-z0-9]+$|Planifest - (Token Reduction|Indexing Exclusions)|Old ignore header strip.'
-  '^ravintio-framework/setup\.[a-z0-9]+$|\.planifest-(setup-flags|manifest)|Old marker read.'
-  '^ravintio-framework/setup\.[a-z0-9]+$|planifest-\*|Old skill folder match.'
+  '^ravintio-framework/setup\.[a-z0-9]+$|\.planifest-setup-flags.{0,3} .?skills/\.planifest-manifest|Old marker file stop check.'
   '^ravintio-framework/hooks/enforcement/em-dash-guard\.mjs$|planifest-em-dash-allow|Old sentinel read.'
   '^ravintio-framework/scripts/archive-current\.mjs$|\.planifest-session|Old marker delete.'
   '^ravintio-framework/hooks/enforcement/path-rules\.mjs$|old-name read, removed at 1\.0\.0|Old plugin and workflow stay enforcement paths through 0.x (P5 S-02).'
   '^ravintio-framework/workflows/fast-path\.md$|kept until 1\.0\.0|The doc mirrors the old enforcement paths through 0.x (P5 S-02).'
   '^ravintio-framework/skills/ravintio-migrator/SKILL\.md$|planifest-|Old-path mapping for pre-0.37.0 migrations.'
-  '^ravintio-framework/skills/ravintio-refresh-setup/SKILL\.md$|\.planifest-setup-flags|Old marker read note.'
+  '^ravintio-framework/skills/ravintio-refresh-setup/SKILL\.md$|\.planifest-setup-flags. exists, stop|Old marker stop note.'
   # The test reads a migration shipped before 0.37.0, whose body is history.
   '^ravintio-framework/tests/test-0000032-req-011-rerun-setup-migration\.sh$|planifest-refresh-setup|Asserts text of a past migration.'
 
