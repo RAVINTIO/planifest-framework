@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic_p2"
 summary: "Persisted state for the P2 design-critic loop."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic_p2
 
@@ -15,8 +15,8 @@ status: "active"
 | Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` |
-| Last decision | `continue` |
-| Last updated | `2026-10-25T02:37:00Z` |
+| Last decision | `done` |
+| Last updated | `2026-10-25T02:39:39Z` |
 
 ---
 
@@ -37,8 +37,8 @@ status: "active"
 ### Iteration 3 (2026-10-25T02:38:38Z)
 - **Approach:** 1
 - **Action:** A fresh-context critic re-runs the mechanical check, checks N1 to N3, and applies the full rubric to the P1 and P2 set.
-- **Observation:** pending
-- **Decision:** pending
+- **Observation:** Mechanical check clean. N1 to N3 fixed. Every rubric item passes, and no finding remains. Verdict in `plan/current/critic-verdict-p2-3.md`.
+- **Decision:** done: APPROVE, the pass condition is met.
 
 ---
 

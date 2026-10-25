@@ -122,18 +122,24 @@ Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 32 criteria, critic
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T02:31:38Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T02:39:39Z` |
+| Wall-clock | `8` |
 | Streams | `1` |
-| Model tier | primary (orchestrator), cheaper (ADR drafters and critic) |
-| Skills loaded | planifest-adr-agent |
-| Agents spawned | `pending` |
+| Model tier | primary (orchestrator), cheaper (all 13 subagents, sonnet) |
+| Skills loaded | planifest-adr-agent, planifest-design-critic |
+| Agents spawned | `13` (10 ADR drafters, 3 critics) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` (the 10 drafters) |
 | Notes | `none` |
 
 Skills inbox (P2): absent, nothing to take in.
 Decision (P2): ten ADRs, ADR-001 to ADR-010, one drafter each in one batch / reason: each ADR records one decision the design already fixed, so no drafter needs another's output.
 Decision (P2): NFR-003 and ADR-009 also check `plan/backlog/*/_reference/` / reason: the ADR-009 drafter found the measurement narrower than req-005.
 Deviation (P2, unclassified): the P2 critic found two design conflicts. The migration helper now leaves `.planifest-setup-flags` and `.planifest-manifest` for setup to read, and removes only `.planifest-session`. The `Applies when:` condition now also names `.ravintio-backup/planifest-framework/`, so a hand-run helper still ends in an `applied` record. design.md gains two clarifying sub-lines, and req-006, req-009, ADR-004, ADR-006, and scope.md follow.
+Decision (P2): critic iteration 2's stale marker wording (ADR-005, ADR-010, R-011, ADR-007) is fixed, and a sweep fixed the same wording in the glossary / reason: one fact must read the same in every artifact.
+Credential scan (P2): clean (regex only), every P2 commit.
+Skills inbox (P2 to P3): absent, nothing to take in.
+Skill Map (P2 gate): re-checked, no change.
+Gate (P2): passed. The design critic approved iteration 3 with no finding left. Ten ADRs, each with at least two rejected alternatives and one negative consequence. Consistency check clean.
+Progress: P2 done at 2026-10-25T02:39:39Z: ten ADRs, critic approved on iteration 3 with no findings
 
