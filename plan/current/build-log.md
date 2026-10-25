@@ -251,17 +251,24 @@ Progress: P4 done at 2026-10-25T05:01:11Z: CI green on all 13 checks, 5 self-cor
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T05:01:11Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T05:45:22Z` |
+| Wall-clock | `44` |
 | Streams | `1` |
-| Model tier | primary (two fresh-context reviewers, opus) |
+| Model tier | primary (all four subagents, opus) |
 | Skills loaded | ravintio-security-agent |
-| Agents spawned | `pending` |
+| Agents spawned | `4` (2 reviewers, 1 fix agent, 1 fresh-context re-reviewer) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` (the two reviewers) |
 | Notes | `none` |
 
 Decision (P5): two fresh-context reviewers in parallel. One covers the consumer migration helpers. The other covers setup, the enforcement hooks, `archive-current.mjs`, secrets, and dependencies / reason: the helpers move consumer files and carry the most risk. The two areas share no code.
+Findings (P5): three Medium (S-01 the old-manifest prune could leave the skills folder, M-001 the helper renamed consumer secret references, M-002 the branch protection warning named the wrong check), plus Lows. One fix agent fixed each Medium and five Lows in 19e485f5, with a test per fix that fails without it.
+Re-review (P5): a fresh-context reviewer closed six findings, including all three Mediums, and judged two partly closed with Low residue. It found one new Low (N-01). Every new test fails when its fix is reverted.
+Deviation (P5, unclassified): the M-002 fix changed the migration's branch-protection warning and made the helper rewrite the workflow `name:` line. design.md gains a P5 correction sub-line, and risk R-007 reads mitigated.
+Backlog filed (P5): 0000255 (older manifest prune), 0000256 (migrator mapping scope), 0000257 (other secret reference forms), 0000258 (old OpenCode registration), 0000259 (prune parity on a linked folder, and a req-008 test that needs the repo).
+Credential scan (P5): clean (regex only) on every P5 commit.
+Gate (P5): passed. Overall risk Low, with zero open Critical, High, or Medium findings. See `plan/current/security-report.md`.
+Progress: P5 done at 2026-10-25T05:45:22Z: three Mediums fixed and re-reviewed closed, risk Low, five Lows to backlog
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
