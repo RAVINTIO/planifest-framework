@@ -114,6 +114,6 @@ Decision (P1): the two `test-0000030` telemetry-absence suites keep `PLANIFEST_T
 Backlog filed (P1): 0000250 (stale copied-folder docs), 0000251 (broken feature-structure links in the setup heredoc), 0000252 (consistency check reads cross-feature ADR references as local). 0000238 gained 0000039 evidence.
 Credential scan (P1): clean (regex only), every P1 commit.
 Skill Map (P1 gate): re-checked. REQ-008, REQ-009, and REQ-010 rows added for the three splits. No other change.
-Gate (P1): passed. The design critic approved iteration 3 with five minor findings, all fixed after the loop closed. Ten requirements, 34 criteria. Consistency check clean, with criteria-count warnings on req-002 (4) and req-006 (5), both with recorded keep answers.
-Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 34 criteria, critic approved on iteration 3
+Gate (P1): passed. The design critic approved iteration 3 with five minor findings, all fixed after the loop closed. Ten requirements, 32 criteria. Consistency check clean, with criteria-count warnings on req-002 (4) and req-006 (5), both with recorded keep answers.
+Progress: P1 done at 2026-10-25T02:30:43Z: ten requirements, 32 criteria, critic approved on iteration 3
 
