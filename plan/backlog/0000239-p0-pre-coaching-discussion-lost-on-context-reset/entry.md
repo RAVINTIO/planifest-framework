@@ -1,16 +1,16 @@
 ---
-title: "Backlog Entry: 0000047 - Pre-P0 discussion is lost at the mandatory context reset"
+title: "Backlog Entry: 0000239 - Pre-P0 discussion is lost at the mandatory context reset"
 summary: "Backlog triage, item targeting, and migration handling often happen before Phase 0 Start Actions writes build-log.md or discovery.md. The Context Hygiene reset at step -1 then discards that discussion, and the human on the loop has to re-paste it."
 status: "open"
 ---
-# Backlog Entry: 0000047 - Pre-P0 discussion is lost at the mandatory context reset
+# Backlog Entry: 0000239 - Pre-P0 discussion is lost at the mandatory context reset
 
 **Source feature:** none. The orchestrator found this during a pre-P0 flow, before a feature ID existed.
 **Source phase:** P0 (Context Hygiene step -1, before Phase 0 Start Actions)
 **Deferral source:** discovered mid-flight
 **Date filed:** 2026-08-08
 
-> First filed on 2026-08-08 in commit `14d14465`. That commit stayed on a local backup branch and never reached `main`. Re-filed on 2026-10-25 with the same ID, since `main` never used 0000047.
+> First filed on 2026-08-08 as 0000047 in commit `14d14465`. That commit stayed on a local backup branch and never reached `main`. A component-manifest entry also used 0000047 before feature 0000028 renumbered it to 0000061. Re-filed on 2026-10-25 as 0000239, the next unused ID.
 
 ---
 
