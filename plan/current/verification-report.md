@@ -147,3 +147,4 @@ The hash covers every path, mtime, size, and mode outside `.git`, the SHA-1 of e
 - REQ-003 AC1 full suite, first table, not-verifiable: now verified, 162 of 162 suites pass on macOS. The Windows and 5.1 legs still need CI.
 - REQ-003 AC1 inventory, first table, verified: now failed against the exact command (D-2). The output is unchanged. The earlier row didn't compare it with the criterion.
 - P6 step 5 helper rerun, **failed** (D-1): now verified for `.sh` and `.ps1` on a linked path and a physical path.
+- REQ-003 AC1 inventory, this section, **failed** (D-2): now verified. `4928eba9` corrected the command in req-003 to also exclude `test-0000039-req-003*`. The orchestrator ran the corrected command at `58658ee6`. It printed only `PLANIFEST_SESSION_ID`, `PLANIFEST_TELEMETRY`, and `PLANIFEST_TELEMETRY_URL`, which the criterion allows. Counts after this line: verified 12, failed 0, not-verifiable 0.
