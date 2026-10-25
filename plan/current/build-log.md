@@ -293,6 +293,7 @@ Drift (P6): the component-docs agent found two old-name reads missing from ADR-0
 Deviation (P6, unclassified): ADR-004 gains the two old-name reads, and ADR-005 now names the one marker-file removal. Hard Limit 7 requires docs to match what was built.
 Decision (P6): the req-010 classifier accepts any line that pairs 1.0.0 with a form of "remove" or "go", in either order / reason: the living docs and backlog 0000261 name the removal point in correct wording that the first, narrow pattern missed.
 Decision (P6): the decisions index cites "the Write-or-Edit rule (boot Hard Limit 8)" / reason: the 0000036 hard-limits suite requires each citation to name its rule.
+Revalidation (P6): P4 steps 0-5, pass, feature suites 127 passed and regression 35 passed (162 of 162), after the P6 commit 84e93277.
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
