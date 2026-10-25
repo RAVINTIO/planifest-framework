@@ -205,14 +205,14 @@ Progress: P3 done at 2026-10-25T03:59:35Z: pack renamed, ten requirements GREEN,
 | Field | Value |
 |-------|-------|
 | Start | `2026-10-25T04:00:12Z` |
-| End | `pending` |
-| Wall-clock | `pending` |
+| End | `2026-10-25T05:01:11Z` |
+| Wall-clock | `61` |
 | Streams | `1` |
-| Model tier | primary (orchestrator), cheaper (verify-by-execution) |
+| Model tier | primary (orchestrator, CI fix agent: opus), cheaper (verify-by-execution: sonnet) |
 | Skills loaded | ravintio-validate-agent, ravintio-verify-by-execution (in a subagent) |
-| Agents spawned | `pending` |
+| Agents spawned | `2` (verify-by-execution, CI fix agent) |
 | MCP calls | `0` |
-| Parallel task batches | `pending` |
+| Parallel task batches | `1` (CI with verify-by-execution) |
 | Notes | `none` |
 
 Library audit (P4): skipped. No dependency manifest changed, and the OpenCode `package.json` lists no dependency.
@@ -237,6 +237,14 @@ Human touchpoint (P4): the human on the loop cleared the held-back files: "They'
 Credential scan (P4): cleared by the human on the loop on 2026-10-25 for the three held-back external-skills files. All four hits are false positives: two are the risk skill's folder name, and two are the security skill's example search patterns. The lines stay as written.
 Decision (P4): the three files move to `ravintio-framework/external-skills/` as R100 renames. The held-back fixture, req-001's held-back filter, and the two guard allowlist entries for the old paths go / reason: nothing is held back any more, and a kept entry would be stale.
 Exception cleared (P4, 7): the four `Exception waiting (P3, 7)` lines above.
+Cycle 4 (P4): Check: CI run 40162372708 / Error: req-005 "migration ... is byte-identical to the base commit" on Windows shard 5 / Root cause: the Windows checkout writes CRLF, so working files differ from the stored blobs / Fix: compare git blob ids and check for local edits / Result: 12 of 13 checks had passed, and the fix passed locally.
+Cycle 5 (P4): Check: portability lint / Error: path-literal finding on the new req-005 line / Root cause: the orchestrator pushed cycle 4 before it ran the lint suites / Fix: a `# portable-ok` marker, since the path is a repo-relative git path / Result: lint green.
+Coverage (P4): 10 requirements, 32 criteria, each mapped to a 0000039 suite with a matching `Verified by` header. Every criterion passes.
+CI (P4): all 13 checks pass on PR #71 at a1b94d63, including both PowerShell legs, macOS, Ubuntu, and all seven Windows shards.
+Self-corrections (P4): 5 cycles, within the cap of 5.
+Credential scan (P4): clean (regex only) on every P4 commit, apart from the cleared external-skills move.
+Gate (P4): passed. CI passes, and verify-by-execution confirmed every behavioural criterion. The one clean-clone failure was fixed in cycle 2 and is green in CI.
+Progress: P4 done at 2026-10-25T05:01:11Z: CI green on all 13 checks, 5 self-correction cycles, credential match cleared by the human on the loop
 Decision (P4): the merge commit used a plain `git commit` / reason: a merge commit can't take a pathspec. The index held only the four merge paths, and the held-back files stayed unstaged.
 
 Resume note (P3): from this commit on, the orchestrator skill is `ravintio-orchestrator` and the pack is `ravintio-framework/`. A resumed session loads `ravintio-orchestrator`. The old `planifest-*` skill copies stay in `.claude/skills/` until req-002 adds the prune.
