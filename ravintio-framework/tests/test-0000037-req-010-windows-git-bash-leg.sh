@@ -32,7 +32,8 @@ TESTS_README="$SCRIPT_DIR/README.md"
 
 # Set to "20" when ADR-014 decision 2 applies. Leave "10" until P3 measures.
 CAP_BRANCH="20"
-WINDOWS_CAP_EXPR="\\\$\\{\\{ matrix\\.os == 'windows-latest' && 20 \\|\\| 10 \\}\\}"
+# 0000039 raised the Linux and macOS cap from 10 to 15 minutes.
+WINDOWS_CAP_EXPR="\\\$\\{\\{ matrix\\.os == 'windows-latest' && 20 \\|\\| 15 \\}\\}"
 
 job_block() {
   awk -v id="  $1:" '
