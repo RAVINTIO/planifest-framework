@@ -51,7 +51,7 @@ Add the Bash suite `ravintio-framework/tests/test-0000039-req-007-brand-guard.sh
 
 ### Regression tag
 
-The suite carries `# REGRESSION-CANDIDATE:`. Ship offers it for promotion to `ravintio-framework/tests/regression/`. The allowlist covers the suite and its regression copy, because both must name the word to match it.
+The suite carries `# REGRESSION-CANDIDATE:`. Ship offers it for promotion to `ravintio-framework/tests/regression/`. The allowlist covers the suite and its regression copy, because both must name the word to match it. One entry covers both, with the path regex `^ravintio-framework/tests/(regression/)?test-0000039-req-007-brand-guard\.sh$`. It matches before and after the P7 promotion, so it never goes stale.
 
 ## Alternatives Considered
 

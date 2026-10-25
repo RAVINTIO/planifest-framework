@@ -35,7 +35,7 @@ version: "0.1.0"
 | allowlist entry | A brand guard exception made of a path regex, a line regex, and a reason. Sibling `planifest-docs` links and `_reference/` documents have entries. | | ravintio-framework |
 | stale entry | An allowlist entry that no longer matches any live line. The brand guard fails on it. | | ravintio-framework |
 | Applies when check | A condition in a migration that skips it where it does not apply. It skips this source repo, which then writes a `plan/_migrations/` record with outcome `not applicable` (0000035 ADR-010). | | ravintio-framework |
-| marker file | A file the pack writes into a consumer repo so later runs can detect state. They are `.ravintio-session`, `.ravintio-manifest`, and `.ravintio-setup-flags`. The migration removes the old marker files. | | ravintio-framework |
+| marker file | A file the pack writes into a consumer repo so later runs can detect state. They are `.ravintio-session`, `.ravintio-manifest`, and `.ravintio-setup-flags`. The migration helper removes the old `.planifest-session`. Setup reads the old flags and manifest files once each, then removes them. | | ravintio-framework |
 | boot file | A consumer's tool boot file that setup writes. It holds the `<!-- ravintio-overrides:instructions:start -->` and `:end -->` markers. Setup replaces the old markers so no block appears twice. | | ravintio-framework |
 
 ## Gaps

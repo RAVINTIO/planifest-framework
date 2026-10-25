@@ -17,7 +17,7 @@ The feature changes files and no database. Hard Limit 5 says one component owns 
 
 The marker files live in the consumer repo. They are `.ravintio-session`, `.ravintio-manifest`, and `.ravintio-setup-flags`. Setup writes them, and the refresh-setup skill reads the flags file. The rename also changes the generated boot-file blocks, which setup writes between the `ravintio-overrides` markers.
 
-The migration helper in `.sh` and `.ps1` form writes to the consumer repo. It moves `planifest-overrides/`, renames the workflow, removes old markers, and moves the old pack to `.ravintio-backup/planifest-framework/`. The migrator skill records each outcome under `plan/_migrations/`.
+The migration helper in `.sh` and `.ps1` form writes to the consumer repo. It moves `planifest-overrides/`, renames the workflow, removes the old `.planifest-session` marker, and moves the old pack to `.ravintio-backup/planifest-framework/`. The migrator skill records each outcome under `plan/_migrations/`.
 
 Someone must own these files, or the rename cannot say who may change them.
 

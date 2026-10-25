@@ -18,7 +18,7 @@ Consumers copy the pack folder into their repo and run setup. The rename leaves 
 - the old `planifest-framework/` folder
 - the content of `planifest-overrides/`
 - the installed `.github/workflows/planifest.yml`
-- the old marker files
+- the old marker files, of which the helper removes `.planifest-session` and setup removes the other two
 
 A consumer who runs the new setup first risks a half-moved install. The pack already has a pattern for one-off changes. A migration file lives in `migrations/`, with a Bash and a PowerShell helper beside it. The migrator skill runs it. `migrate-archive-dirname.sh` and `migrate-archive-dirname.ps1` are the model.
 
@@ -43,6 +43,7 @@ The helper runs these steps:
 3. Move `planifest-overrides/` to `ravintio-overrides/`.
 4. Rename the workflow to `ravintio.yml`. Rewrite only the pack-owned names in it. A consumer secret keeps its `PLANIFEST_` name.
 5. Remove the old marker files.
+   - Of the old markers, the helper removes only `.planifest-session`. It leaves `.planifest-setup-flags` and `.planifest-manifest` for setup, which reads each once and then removes it (ADR-004, req-006 step 5).
 6. Stop git tracking of the old pack. Move it to `.ravintio-backup/planifest-framework/` with a plain rename.
 7. Print the setup command and tell the human on the loop to delete the backup after checking it.
 8. Print a branch protection warning. A rule that requires the old check name must now require `RAVINTIO Strict Pipeline`.
