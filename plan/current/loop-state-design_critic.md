@@ -1,7 +1,7 @@
 ---
 title: "Loop State: design_critic"
 summary: "Persisted state for the P1 design-critic loop."
-status: "active"
+status: "done"
 ---
 # Loop State: design_critic
 
@@ -15,7 +15,7 @@ status: "active"
 | Iteration | `3` of cap `3` |
 | Approach | `1 of 3 (autonomous only)` |
 | Reversal budget remaining | `2` |
-| Last decision | `continue` |
+| Last decision | `done` |
 | Last updated | `2026-10-25T02:40:00Z` |
 
 ---
@@ -37,8 +37,8 @@ status: "active"
 ### Iteration 3 (2026-10-25T03:20:00Z)
 - **Approach:** 1
 - **Action:** A fresh-context critic re-runs the mechanical check, checks every iteration 2 finding, and applies the full rubric to req-001 to req-010 and the other P1 artifacts.
-- **Observation:** pending
-- **Decision:** pending
+- **Observation:** Mechanical check clean. Every iteration 2 finding fixed. Five minor findings remain, each a criterion or in-scope line the ratchet held in place. Verdict in `plan/current/critic-verdict-3.md`.
+- **Decision:** done: APPROVE, the pass condition is met. The orchestrator makes the deferred moves once this file reads `done`.
 
 ---
 
