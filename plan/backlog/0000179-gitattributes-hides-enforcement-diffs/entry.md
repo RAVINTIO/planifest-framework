@@ -24,6 +24,10 @@ The gap predates 0000036. See finding 6 in `plan/current/security-review-hooks.m
 
 Route `.gitattributes` through the normal design route when it sits in the root or in a folder above an enforcement path. Another option is to add the root `.gitattributes` to `FAST_PATH_ENFORCEMENT_PATHS`.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. Regulated teams depend on human review of every enforcement change. A change that hides from review defeats separation of duties (0000286). Group it with 0000288, which also adds paths to the enforcement list.
+
 ## Why Deferred
 
 It changes the always-permitted list outside enforcement paths, which 0000036 req-009 keeps unchanged. It needs its own design decision.

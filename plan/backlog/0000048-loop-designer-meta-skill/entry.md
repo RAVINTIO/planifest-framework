@@ -20,6 +20,10 @@ status: "open"
 
 Build the `ravintio-loop-designer` meta-skill once REC-004 data (design-critic report-only precision, run on the next 2 real features per that same `recommendations.md`) has landed in two P8 build-assessment reports. Consult the original `0000016` scope document and ADRs for the reasoning behind deferring this in the first place.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review moves the evaluation half of this entry to RAVINTIO Qualify. Measuring loop precision across features is skill evaluation. If Framework still builds the loop designer, Qualify supplies the evidence that the gate above waits for.
+
 ## Why Deferred
 
 The source feature's scope document explicitly deferred this pending evidence that did not yet exist at the time — a deliberate scope decision, not an oversight. Revisit after REC-004's two-feature evidence window closes.

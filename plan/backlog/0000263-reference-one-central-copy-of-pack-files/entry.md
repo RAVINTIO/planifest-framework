@@ -44,6 +44,10 @@ Mirror the three-part fix in RAVINTIO Zero roadmap 0000168 step 3 (feature 00001
 
 Check 0000232 at pickup. It concerns links to `standards/reference/` that bundling misses, and this change may close it.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review keeps this port as it stands. It is install infrastructure and doesn't change how Framework differs from Zero.
+
 ## Why Deferred
 
 The human asked for this to match the Zero change. It changes how setup installs skills on every tool, so it needs its own design and parity tests for both setup scripts.

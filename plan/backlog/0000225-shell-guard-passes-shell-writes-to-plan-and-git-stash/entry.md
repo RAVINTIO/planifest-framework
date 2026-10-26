@@ -22,6 +22,10 @@ Subagents broke the Write-or-Edit rule (boot Hard Limit 8) five times in 0000037
 
 Add a report-only mode to `shell-write-guard.mjs` that warns, in every session, on `sed -i`, `perl -pi`, `>>`, `tee`, and `git stash` against a tracked file. Review the warning rate for one feature, then decide whether to block. Add a documented way to prove RED without `git stash`, such as running the suite against a copy in a temporary folder, to `ravintio-test-writer`. Pair this with 0000105 (wrappers) and 0000189 (citation forms).
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review holds this entry until 0000119 decides the guard's long-term design. The report-only mode here fits the detective-control option in 0000119. If so, send each warning to the audit trail (0000289).
+
 ## Why Deferred
 
 The 0000037 scope covers CI and credential checks, and it does not touch the write guard. See `plan/current/recommendations.md` row REC-001 and the build-log rule-breach lines for P2 and P5.

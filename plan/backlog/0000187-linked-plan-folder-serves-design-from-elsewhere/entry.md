@@ -20,6 +20,10 @@ The hooks check `design.md` with `lstat`, but they do not check whether `plan/` 
 
 Resolve `plan/current/design.md` with `realpathSync` and require the result to sit inside the repository root. Treat a result outside the root as no design.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. The confirmed design is an approved artefact. A design served from outside the repository has no approval record and no audit trail. Fix it with 0000286, which binds each approval to an artefact hash.
+
 ## Why Deferred
 
 P5 rated the finding Low and accepted it. Fixing it changes how the gate treats every installed project that links `plan/` on purpose, so it needs its own design decision.

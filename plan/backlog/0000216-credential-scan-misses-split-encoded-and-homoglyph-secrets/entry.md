@@ -20,6 +20,10 @@ status: "open"
 
 Document the three cases as out of scope in the req-003 spec, and state that only `gitleaks` narrows them. Optionally add a normalisation pass (Unicode NFKC, line joining) for the highest-risk rules.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review recommends against growing the built-in scanner. The RAVINTIO strategy says Framework doesn't own security scanners. Make an external scanner the main path through 0000281, such as gitleaks or the organisation's own tool. Close this entry by taking the documentation option only, and keep the regex rules as a minimal fallback.
+
 ## Why Deferred
 
 A regex scan cannot close these cases. Narrowing them needs a design decision on false-positive cost, which is outside feature 0000037.

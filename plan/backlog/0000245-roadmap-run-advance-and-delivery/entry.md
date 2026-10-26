@@ -86,6 +86,10 @@ Sources in `RAVINTIO/ravintio-zero` on `main`:
 - `ravintio-zero/hooks/enforcement/merge-guard.mjs`
 - `plan/_archive/0000043-autonomous-roadmaps-2026-10-24/`, ADR-003 to ADR-005 and ADR-007, plus `verification-report.md` for the four faults the live run found
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review flags this port. An unattended run to one PR suits Zero. Framework must also keep separation of duties and a change record per release. The agent squash-merging step PRs needs an approval record a team can audit (0000286). Each step's release may also need an approved change record (0000282). Settle both before the merge-rule fork at P0.
+
 ## Why Deferred
 
 Filed on request of the human on the loop during triage for 0000039. It changes the merge rule and adds an enforcement hook, so it needs its own design and ADRs.

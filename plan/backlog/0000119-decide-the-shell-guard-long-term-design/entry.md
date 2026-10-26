@@ -31,6 +31,14 @@ Make a design decision before fixing any more edge cases. Two options stand out:
 
 Record the choice as an ADR that supersedes or amends 0000032 ADR-006.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review puts this decision ahead of every other shell-guard fix. Entries 0000225 and 0000238 show subagents getting past Hard Limit 8 in practice. An auditor won't accept a heuristic as a preventive control. Add a third option to the two above:
+
+3. Enforce writes through tool permissions or a sandbox, so the control is preventive. Then reclassify the shell guard as a detective control, and record each detected bypass in the audit trail (0000289).
+
+The answer decides the fate of 0000105, 0000108, 0000115, 0000116, 0000144, and 0000225.
+
 ## Why Deferred
 
 The choice needs its own design decision and ADR. 0000032 closed P5 with every Medium finding fixed and verified. See the Tech Debt table in the 0000032 `recommendations.md` and the re-review rounds in its `security-report.md`.

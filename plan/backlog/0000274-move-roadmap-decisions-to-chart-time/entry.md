@@ -43,6 +43,10 @@ Extend chart-time approval to the decisions that stopped roadmap 0000168:
 
 A charted roadmap holds a decision table, a baseline for each performance target, and a bump rule per step. A step that hits a forecast fork applies the pre-approved answer without stopping. Replaying roadmap 0000168's step 3 stops against the new chart would need no human decision.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review flags this entry with 0000244 and 0000245. A pre-approved answer in a decision table is an approval given in advance. In Framework, record each one as an attributable approval (0000286). If an answer relaxes a gate or control, record it as a waiver (0000287).
+
 ## Why Deferred
 
 The human asked for it after RAVINTIO Zero roadmap 0000168 delivered. It pairs with 0000244 (chart), 0000245 (run and supervision), and 0000269 (retrospectives). Zero backlog 0000186 holds the same entry.

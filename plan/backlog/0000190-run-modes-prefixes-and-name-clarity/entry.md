@@ -24,6 +24,10 @@ RAVINTIO Zero release 0.9.0 (feature 0000042) overhauls three things. The human 
 
 Read the Zero 0000042 design and ADRs in `planifest/planifest-zero` under `plan/_archive/0000042-*`. Then decide whether to collapse continuous into the other two modes and adopt the `P{n} {Name}:` prefix form.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review splits this entry. Take the phase-name prefixes (part 2) and the product-name fix (part 3) as they stand. Hold part 1, the run-mode change. Framework serves teams with more complex governance, so its approval points must come from policy. Decide part 1 after 0000286 (attributable approvals) and 0000288 (protected policy) settle which approval points a team can set.
+
 ## Why Deferred
 
 The human raised it during a RAVINTIO Zero run. It needs its own design, since RAVINTIO Framework has ten phases and an exception list Zero does not share.

@@ -46,6 +46,10 @@ Sources in `RAVINTIO/ravintio-zero` on `main`:
 
 Pick this up with 0000245. Zero shipped both halves as one feature, and a chart has no use without a run.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review flags this port. Zero's chart approves a whole chain of features in one confirmation. A regulated team needs each step's approval to name the approver, the role, and the exact artefacts approved. If you port the chart, record chart-time approvals per step through 0000286. Each step must also export its evidence through 0000290.
+
 ## Why Deferred
 
 Filed on request of the human on the loop during triage for 0000039. Self-confirmed steps change the P0 confirmation rule, so the port needs its own design and ADRs.

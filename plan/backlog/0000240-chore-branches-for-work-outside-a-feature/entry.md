@@ -31,6 +31,10 @@ Add a `chore/` rule for changes outside a feature run, matching Zero. It covers 
 
 Keep `feat/` for pipeline runs. The autonomous branch check in `ravintio-framework/standards/autonomous-run-standards.md` and `ravintio-framework/skills/ravintio-ship-agent/SKILL.md` should still require `feat/`.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review keeps this port as it stands. It is repository housekeeping and doesn't change how Framework differs from Zero.
+
 ## Why Deferred
 
 No feature run is active. The rule changes generated boot files, so it needs a run that can re-run setup and update the regression tests.

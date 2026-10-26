@@ -24,6 +24,10 @@ Publish a measured comparison of a fixed task set built three ways: baseline age
 
 Small and honest beats large and delayed — five tasks published is worth more than fifty planned.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review moves this entry to RAVINTIO Unbound. The RAVINTIO strategy has Unbound run matched comparisons of governed and ungoverned workflows, with RAVINTIO Insight as the independent assessor. Compare Zero and Framework in the same study, since they are the two governed options. File the entry in the Unbound repository, then close it here with a pointer.
+
 ## Why Deferred
 
 Filed from an external review rather than an in-flight pipeline feature. Depends on 0000022, which supplies two of the four metrics automatically; without it, tokens and duration have to be collected by hand.

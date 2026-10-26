@@ -20,6 +20,10 @@ status: "open"
 
 In `ravintio-loop-runner`, make the orchestrator run `date -u +%Y-%m-%dT%H:%M:%SZ` in the same step that appends each iteration, and paste the output. Add a loop-close check that each iteration timestamp falls between the commit times of the previous and next iteration artifacts (`git log --format=%cI`). Flag a round number such as `:00:00Z` for review.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. The note above says no gate reads these timestamps. An auditor does read them, so an estimated time weakens the whole record. 0000289 takes every timestamp from the system clock or the source system. Fold this entry into it.
+
 ## Why Deferred
 
 The timestamps are audit data only, and no gate reads them. The loop-runner change is a separate design choice. See `plan/current/recommendations.md` row REC-004.

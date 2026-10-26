@@ -22,6 +22,10 @@ ADR-019 says every downstream migration applies, but the migrator skill doesn't 
 
 Resume detection or the migrator lists every record whose outcome is `not applicable` or `skipped` for a migration marked "Safe to skip: No". The human on the loop then sees each one and can confirm or rerun it.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. Under audit, a record that any agent can write is not evidence that a control was applied. Pair it with 0000289, so each migration record names who wrote it and can't change unseen.
+
 ## Why Deferred
 
 P5 records findings and fixes defects in the feature's own code. This change adds a new check to resume detection and the migrator, which needs its own design.
