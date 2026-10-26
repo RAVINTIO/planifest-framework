@@ -50,6 +50,13 @@ fi
 if [ -z "$BASE" ]; then
   BASE="$(git -C "$ROOT" merge-base HEAD main 2>/dev/null || true)"
 fi
+# Once the rename is on main, the merge base already holds it. Compare with
+# the commit just before the rename instead: the parent of the commit that
+# added ravintio-framework/component.yml.
+if [ -n "$BASE" ] && [ -z "$(git -C "$ROOT" ls-tree --name-only "$BASE" "${OLDFW}/" 2>/dev/null)" ]; then
+  RENAME="$(git -C "$ROOT" log --diff-filter=A --format=%H -1 -- ravintio-framework/component.yml 2>/dev/null || true)"
+  if [ -n "$RENAME" ]; then BASE="$(git -C "$ROOT" rev-parse "$RENAME^" 2>/dev/null || true)"; fi
+fi
 assert_equals "yes" "$([ -n "$BASE" ] && git -C "$ROOT" cat-file -e "$BASE^{commit}" 2>/dev/null && echo yes || echo no)" \
   "req-005: a base commit resolves (set RAVINTIO_BASE_COMMIT if the default fails)"
 

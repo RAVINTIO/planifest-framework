@@ -51,6 +51,15 @@ $SetupTools = @('claude-code', 'cursor', 'codex', 'antigravity', 'copilot', 'win
 $NameRe = '^[A-Za-z0-9][A-Za-z0-9._-]*\z'
 $TmpRe = '^\.ravintio-manifest\.[A-Za-z0-9]{6}\z'
 $WfTmpRe = '^\.ravintio\.yml\.[A-Za-z0-9]{6}\z'
+$AttrTmpRe = '^\.gitattributes\.[A-Za-z0-9]{6}\z'
+# Step 4 also rewrites the pack path in this file, so its LF rules cover the
+# new hooks.
+$Attrs = '.gitattributes'
+# Step 4 rewrites these old brand phrases in the workflow messages.
+$WfPhrases = @(('title=' + $OldC + ' Fast Path Violation::'), ('title=' + $OldC + ' Strict Violation::'),
+    ($OldC + ' fast-path pipeline passed.'), ($OldC + ' pipeline passed.'))
+# Step 5 moves each old boot file into the backup. Setup writes the new one.
+$OldBoots = @(('.cursor/rules/' + $Old + '.mdc'), ('.clinerules/00-' + $Old + '-boot.md'))
 # A last part whose base, before the first dot, matches this in upper case is
 # a Windows device name.
 $DeviceRe = '^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])\z'
@@ -382,10 +391,11 @@ function Get-FlagsArgs([string]$Dir) {
     return ''
 }
 
-# Get-Rewritten TEXT: TEXT with the workflow name line, the pack path, and
-# the pack-owned variable names rewritten, line by line, each line ending in a
-# newline. A name counts only as a whole name, and never after secrets. or
-# vars., where it names a consumer secret or variable.
+# Get-Rewritten TEXT: TEXT with the workflow name line, the old brand phrases
+# in the workflow messages, the pack path, and the pack-owned variable names
+# rewritten, line by line, each line ending in a newline. A name counts only
+# as a whole name, and never after secrets. or vars., where it names a
+# consumer secret or variable.
 function Get-Rewritten([string]$Text) {
     if ($Text.Length -eq 0) { return '' }
     $body = $Text
@@ -398,12 +408,58 @@ function Get-Rewritten([string]$Text) {
         if (($l -ceq $OldWfName) -or ($l -ceq ($OldWfName + "`r"))) {
             $l = $NewWfName + $l.Substring($OldWfName.Length)
         }
+        foreach ($ph in $WfPhrases) {
+            $l = $l.Replace($ph, $ph.Replace($OldC, 'RAVINTIO'))
+        }
         $l = $l.Replace($OldPack + '/', $NewPack + '/')
         $l = $regex.Replace($l, 'RAVINTIO_$1')
         [void]$sb.Append($l)
         [void]$sb.Append("`n")
     }
     return $sb.ToString()
+}
+
+# Update-File FILE TMP_PREFIX STEP WHAT: rewrite FILE with Get-Rewritten, or
+# print a skip line when nothing changes. It writes to a temporary file in the
+# same folder, then renames it over FILE. The finally block removes the
+# temporary file when the write fails or the run is stopped.
+function Update-File([string]$Rel, [string]$TmpPrefix, [string]$Step, [string]$What) {
+    $full = Get-Full $Rel
+    $text = $Bytes1.GetString([System.IO.File]::ReadAllBytes($full))
+    $newText = Get-Rewritten $text
+    if ([string]::Equals($text, $newText, [System.StringComparison]::Ordinal)) {
+        Write-Host "Step ${Step}: skipped the rewrite, $Rel holds no pack-owned old name."
+        return
+    }
+    $tmpRel = $TmpPrefix + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
+    $tmpFull = Get-Full $tmpRel
+    $made = $false
+    $fs = $null
+    try {
+        try {
+            $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
+            $made = $true
+            $buf = $Bytes1.GetBytes($newText)
+            $fs.Write($buf, 0, $buf.Length)
+            $fs.Close()
+        } catch {
+            if ($fs) { $fs.Dispose() }
+            Stop-At $Step "could not rewrite $Rel."
+        }
+        # PowerShell turns $null into an empty string for a .NET string
+        # argument, and File.Replace rejects an empty backup path.
+        # NullString passes a real null, so no backup file is made.
+        try {
+            [System.IO.File]::Replace($tmpFull, $full, [System.Management.Automation.Language.NullString]::Value)
+            $made = $false
+        } catch {
+            Stop-At $Step "could not replace $Rel."
+        }
+    } finally {
+        if ($made) { [System.IO.File]::Delete($tmpFull) }
+    }
+    Write-Host "Step ${Step}: rewrote $What in $Rel."
+    $script:Changed = $true
 }
 
 # Step 1: the new pack must be in place.
@@ -508,46 +564,15 @@ if ($WfParentLink -ne '') {
         Write-Host "Step 4: skipped the rename, $OldWf is not present."
     }
     if (Test-File $NewWf) {
-        $wfFull = Get-Full $NewWf
-        $text = $Bytes1.GetString([System.IO.File]::ReadAllBytes($wfFull))
-        $newText = Get-Rewritten $text
-        if ([string]::Equals($text, $newText, [System.StringComparison]::Ordinal)) {
-            Write-Host "Step 4: skipped the rewrite, $NewWf holds no pack-owned old name."
-        } else {
-            # Write to a temporary file in the same folder, then rename it
-            # over the target. The finally block removes the temporary file
-            # when the write fails or the run is stopped.
-            $tmpRel = $WfDir + '/.ravintio.yml.' + ([System.IO.Path]::GetRandomFileName().Replace('.', '').Substring(0, 6))
-            $tmpFull = Get-Full $tmpRel
-            $made = $false
-            $fs = $null
-            try {
-                try {
-                    $fs = New-Object System.IO.FileStream($tmpFull, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write)
-                    $made = $true
-                    $buf = $Bytes1.GetBytes($newText)
-                    $fs.Write($buf, 0, $buf.Length)
-                    $fs.Close()
-                } catch {
-                    if ($fs) { $fs.Dispose() }
-                    Stop-At '4' "could not rewrite $NewWf."
-                }
-                # PowerShell turns $null into an empty string for a .NET string
-                # argument, and File.Replace rejects an empty backup path.
-                # NullString passes a real null, so no backup file is made.
-                try {
-                    [System.IO.File]::Replace($tmpFull, $wfFull, [System.Management.Automation.Language.NullString]::Value)
-                    $made = $false
-                } catch {
-                    Stop-At '4' "could not replace $NewWf."
-                }
-            } finally {
-                if ($made) { [System.IO.File]::Delete($tmpFull) }
-            }
-            Write-Host "Step 4: rewrote the pack path and pack-owned names in $NewWf."
-            $script:Changed = $true
-        }
+        Update-File $NewWf ($WfDir + '/.ravintio.yml.') '4' 'the pack path and pack-owned names'
     }
+}
+# The LF rules in .gitattributes name the pack path.
+Remove-TempFiles '.' $AttrTmpRe '4'
+if (Test-Link $Attrs) {
+    Write-Host "WARNING: $Attrs is a symlink. Skipped its rewrite, so nothing is written through it."
+} elseif (Test-File $Attrs) {
+    Update-File $Attrs ('./' + $Attrs + '.') '4' 'the pack path'
 }
 Invoke-Hook '4'
 
@@ -664,6 +689,44 @@ foreach ($t in $ToolDirs) {
         Write-Host "Step 5: rewrote the entries in $manRel."
         $script:Changed = $true
     }
+}
+# Move each old boot file into the backup, so the tool stops loading the old
+# rules. Setup writes the new boot file.
+foreach ($b in $OldBoots) {
+    $bdir = $b.Substring(0, $b.LastIndexOf('/'))
+    $blink = Get-FirstLink @($bdir.Split('/')[0], $bdir, $b)
+    if ($blink -ne '') {
+        Write-Host "WARNING: $blink is a symlink. Left $b in place."
+        continue
+    }
+    if (-not (Test-File $b)) {
+        if (Test-Present $b) { Write-Host "WARNING: $b is not a regular file. Left it in place." }
+        continue
+    }
+    if ((Test-Present $Backup) -and -not (Test-Dir $Backup)) {
+        Stop-At '5' "$Backup exists and is not a folder. Move it aside, then run this helper again."
+    }
+    if (Test-Present ($Backup + '/' + $b)) {
+        Write-Host "WARNING: $Backup/$b exists. Left $b in place."
+        continue
+    }
+    if (Test-Tracked $b) {
+        & git rm -q --cached -- $b 2>$null | Out-Null
+        if ($LASTEXITCODE -ne 0) { Stop-At '5' "could not stop git tracking of $b." }
+    }
+    try {
+        [void][System.IO.Directory]::CreateDirectory((Get-Full ($Backup + '/' + $bdir)))
+    } catch {
+        Stop-At '5' "could not create $Backup/$bdir/."
+    }
+    try {
+        [System.IO.File]::Move((Get-Full $b), (Get-Full ($Backup + '/' + $b)))
+    } catch {
+        Stop-At '5' "could not move $b to $Backup/$b."
+    }
+    Write-Host "Step 5: moved the old boot file $b to $Backup/$b."
+    $script:Moved += "$b to $Backup/$b"
+    $script:Changed = $true
 }
 Invoke-Hook '5'
 
