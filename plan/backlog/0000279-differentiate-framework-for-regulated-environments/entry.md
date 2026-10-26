@@ -107,6 +107,10 @@ Governance inside Framework:
 
 Entries 0000076, 0000078, 0000103, 0000104, 0000266, and 0000267 cut needless prompts and speed up runs. The strategy wants that. Framework's approvals should come from policy, not from habit.
 
+### 8. Decide which tool builds this repository
+
+0000292 weighs building Framework with Zero. It recommends a measured trial on one bounded change, and Framework runs on consumer repositories for evidence.
+
 ## Wanted outcome
 
 A reader can name what Framework does that Zero doesn't, from the README and the backlog alone. Every entry listed here carries a note that points back to this review.
