@@ -39,6 +39,36 @@ Treat it as a decision with a trial, not a switch:
 4. Before installing Zero here, decide which pack owns `CLAUDE.md`, the hooks, and the backlog sequence. Migrate this repository's history if Zero takes over.
 5. Record the decision as an ADR, whatever the trial shows.
 
+## Option: keep both packs and switch with setup (2026-10-27)
+
+The human on the loop proposed vendoring `ravintio-zero/` next to `ravintio-framework/` and running either pack's setup to switch builds. A read of both setup scripts on 2026-10-27 found that part of this works already. Nobody has run a switch yet.
+
+What already works:
+
+- Both setups write the same `.claude/skills/.ravintio-manifest`. A switch prunes the skills the other pack listed, then installs its own. The two packs share skill names such as `ravintio-orchestrator`, so this matters.
+- Both write `CLAUDE.md` from their own boot template. Both also read the shared `ravintio-overrides/instructions/`, so repo rules such as GUTD carry across.
+- Both skip `.github/workflows/ravintio.yml` when it exists. Framework's CI and test suite keep running under either pack.
+- Hook files share paths under `.claude/hooks/enforcement/`, so the last setup's files win.
+
+Gaps to close before the switch is safe:
+
+1. **Stale hook wiring.** Each setup removes only its own hook commands from `.claude/settings.json`. After a switch to Zero, Framework's `shell-write-guard` stays wired. It may fail to load, because Zero doesn't install `path-rules.mjs`. After a switch back, Zero's `merge-guard` (Bash) and `check-reply-prefix` (Stop) stay wired. `check-reply-prefix` expects Zero's `P2 Implement:` form, so it would flag every Framework `P3:` reply.
+2. **Shared run state.** Both packs read `plan/current/` and `plan/.orchestrator-active`, with different phase sets. Zero runs P0 to P4 and Framework runs P0 to P9. Zero also writes `plan/.orchestrator-strict`, `plan/.initiative-*`, and `plan/.roadmap-logs/`. A switch must refuse while a run is active or a sentinel exists.
+3. **Migrations.** Each orchestrator scans its own pack's `migrations/` and records outcomes in the shared `plan/_migrations/`. The first Zero session here would offer Zero's pending migrations, such as `0004-ravintio-rename.md` and `0005-initiative-rename.md`. Check each `Applies when` condition against this repo first.
+4. **Manifest pruning.** 0000272 found that Framework's manifest lists every folder under the skills folder, including ones it didn't install. A switch could then prune a person's own skill.
+5. **Weaker self-protection under Zero.** Zero's `gate-write` checks paths against the design's component paths only. It has no enforcement-path list and no shell guard. Under Zero, a design that lists `ravintio-framework/hooks/` admits changes to Framework's own enforcement.
+6. **Two packs to keep current.** The vendored `ravintio-zero/` copy needs its own update and provenance check (Resume Detection step 1a covers only `ravintio-framework/`).
+
+Suggested shape:
+
+- Teach each setup the other pack's hook module names, so a switch removes them.
+- Make each setup refuse while `plan/current/` holds artefacts or a run sentinel exists.
+- Record the active pack in one marker file, and have each auto-trigger hook check it.
+- Fix 0000272 first, so a switch prunes only pack-installed skills.
+- File the matching change in the Zero repository, since Zero's setup must also remove Framework's hooks.
+
+This option makes the trial in steps 2 and 3 above cheap to run and to reverse.
+
 ## Wanted outcome
 
 A recorded decision, based on one measured trial, on which tool builds this repository. Framework still gets at least one real run per release, wherever it runs.
