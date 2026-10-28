@@ -59,13 +59,13 @@ Gaps to close before the switch is safe:
 5. **Weaker self-protection under Zero.** Zero's `gate-write` checks paths against the design's component paths only. It has no enforcement-path list and no shell guard. Under Zero, a design that lists `ravintio-framework/hooks/` admits changes to Framework's own enforcement.
 6. **Two packs to keep current.** The vendored `ravintio-zero/` copy needs its own update and provenance check (Resume Detection step 1a covers only `ravintio-framework/`).
 
-Suggested shape:
+Suggested shape (revised 2026-10-28):
 
-- Teach each setup the other pack's hook module names, so a switch removes them.
-- Make each setup refuse while `plan/current/` holds artefacts or a run sentinel exists.
-- Record the active pack in one marker file, and have each auto-trigger hook check it.
-- Fix 0000272 first, so a switch prunes only pack-installed skills.
-- File the matching change in the Zero repository, since Zero's setup must also remove Framework's hooks.
+- Give each pack an uninstall script that pairs with its setup (0000293). Each pack then knows only about itself. A switch runs one pack's uninstall, then the other pack's setup.
+- The uninstall refuses while `plan/current/` holds artefacts or a run sentinel exists. That closes gap 2.
+- The install record in 0000293 replaces the manifest and closes gap 4.
+- Gaps 3, 5, and 6 stay open. Settle them before the trial.
+- File the matching uninstall entry in the Zero repository.
 
 This option makes the trial in steps 2 and 3 above cheap to run and to reverse.
 
