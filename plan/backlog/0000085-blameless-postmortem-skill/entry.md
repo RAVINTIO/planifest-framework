@@ -40,6 +40,10 @@ Also:
 
 `ovelunor`'s version, at `ravintio-overrides/capability-skills/blameless-postmortem/SKILL.md` in that repository, is a starting point.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review moves this entry to RAVINTIO Insight. The RAVINTIO strategy gives Insight the blameless incident review, with timelines, contributing conditions, and human-reviewed findings. Framework's part is to use those findings. File the entry in the Insight repository, then close it here with a pointer.
+
 ## Related
 
 - `gate-write` blocks `ravintio-overrides/` once P7 removes the sentinel, so a product can't install a capability skill after a run without a design. 0000077 covers governance lapsing after P7.

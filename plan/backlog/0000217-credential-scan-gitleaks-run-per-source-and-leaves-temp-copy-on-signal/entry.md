@@ -20,6 +20,10 @@ status: "open"
 
 Copy all sources into one temp directory and run `gitleaks` once. Register a signal handler that removes the directory. Separate usage errors from findings by reading the report file.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review keeps this entry, folded into 0000281. When an external scanner becomes the main path, the gitleaks call is the integration. Fix the per-source runs and the temp-copy cleanup there, as part of reading the scanner's report as evidence.
+
 ## Why Deferred
 
 The behaviour fails closed and needs a real `gitleaks` in CI to test. It is outside the P5 fixes for feature 0000037.

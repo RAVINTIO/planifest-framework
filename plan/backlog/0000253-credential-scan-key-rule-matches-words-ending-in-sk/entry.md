@@ -20,6 +20,10 @@ status: "open"
 
 Anchor the rule so a letter can't come before `sk-`, for example `(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{20,}`. Add a test with a hyphenated word that ends in `sk` and a real-shaped key.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review keeps this one-line fix, because the fallback rules stay. Don't add new rules to the built-in scanner. The RAVINTIO strategy says Framework doesn't own security scanners, so new detection goes through an external scanner (0000281).
+
 ## Why Deferred
 
 Out of scope. 0000039 renames the pack and doesn't change scan rules. The autonomous rules also bar the run from loosening its own guard mid-run.

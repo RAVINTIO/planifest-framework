@@ -33,6 +33,10 @@ Zero's archive at `plan/_archive/0000170-story-mapping-and-gherkin-*` holds the 
 
 Every plan phase writes a story map, and every acceptance criterion has `Given`, `When`, and `Then` steps. The consistency check fails a plan that breaks either rule.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. Gherkin criteria with stable IDs let a test, a managed test case, and a control map to each criterion line by line. 0000283 (test case management) and 0000285 (control mapping) build on it.
+
 ## Why Deferred
 
 The human asked for parity with RAVINTIO Zero.

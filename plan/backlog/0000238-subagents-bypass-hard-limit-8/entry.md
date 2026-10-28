@@ -30,6 +30,10 @@ It happened once more in 0000039 P5. The third security re-review agent changed 
 
 Make the shell guard block appends and interpreter writes to `plan/current/` artifacts while a ratchet loop is active. Or run the ratchet check over the diff at commit time, so a Bash edit can't skip it.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review treats this entry as evidence for 0000119. The commit-time ratchet check suggested above works whatever the guard design, so it can go ahead first. It also gives the tamper-evident audit trail (0000289) a check that a Bash edit can't skip.
+
 ## Why Deferred
 
 Found after P9 of 0000038. It changes an enforcement hook, so it needs its own design.

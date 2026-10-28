@@ -22,6 +22,10 @@ A re-run-setup migration also puts "Re-run setup" under `## Migrator Instruction
 
 Run step 1a before step 1, or make step 1 skip any migration that runs setup until step 1a records a confirmed provenance. Add a confirmation before the setup run in each re-run-setup migration, as `ravintio-refresh-setup` Step 4 already does.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review raises the priority of this entry. Regulated teams must confirm where a change to their controls came from before it takes effect. Installing first and confirming later breaks that order for Framework's own hooks.
+
 ## Why Deferred
 
 The order predates 0000036 and needs its own design decision about Resume Detection order. 0000036 adds no new path through it.

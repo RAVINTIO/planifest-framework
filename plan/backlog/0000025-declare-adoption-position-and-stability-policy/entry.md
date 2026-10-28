@@ -22,6 +22,10 @@ The ambiguity deters the adopters most likely to benefit: anyone who needs forma
 
 State the current position and the stability commitment in the README. The Status section should say who the framework is currently for. Add a versioning and breaking-change policy, including how migrations are delivered — `ravintio-framework/migrations/` and the `ravintio-migrator` skill already exist, so the mechanism can be described rather than invented. Make the roadmap link reflect the same position.
 
+## Positioning note (2026-10-26)
+
+The 0000279 differentiation review supplies the position this entry waits for. The RAVINTIO strategy says Zero serves solo developers, small teams, and straightforward projects. Framework serves teams working within established governance, such as multi-team, security-sensitive, or traceability-heavy work. State both in the README, and say what Framework doesn't replace: CI/CD, scanners, work trackers, and the organisation's own approval processes.
+
 ## Why Deferred
 
 Filed from an external review rather than an in-flight pipeline feature. This is a positioning decision, not a defect — it needs the human to decide what RAVINTIO Framework is before anything can be written down.
