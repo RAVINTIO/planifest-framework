@@ -30,20 +30,30 @@ Framework records evidence and never claims compliance, as 0000279 says.
 
 ## Proposed decision
 
-| Framework | Default | Option or trigger | Reason |
+Each row takes exactly one enforcement value:
+
+- **Default:** on for every install. A team loosens it only through a waiver.
+- **Optional:** off until a team picks the profile at P0.
+- **Triggered:** on automatically when the design meets the condition.
+- **Out of scope:** Framework doesn't support it.
+
+| Framework | Part | Enforcement | Reason |
 |---|---|---|---|
-| OWASP Top 10 and ASVS Level 1 | Enforce. P1 adds criteria and P5 checks them. | ASVS Level 2 or 3 is an option, tied to risk class (0000339). | Universal, cheap, and already close to the P5 STRIDE review. |
-| OWASP Top 10 for LLM Applications | None | Trigger when the design embeds an LLM (0000347). | Applies only to AI products. |
-| OWASP MASVS | None | Trigger for mobile apps. | Applies only to mobile. |
-| OWASP SAMM | None | Out of scope | It measures an organisation's maturity, not one feature. |
-| NIST SSDF (SP 800-218) core practices | Enforce the practices Framework can evidence, such as PW and PS and part of RV. | SLSA level and a secure software attestation are options. | Most practices come with the base pipeline (0000280 to 0000290). |
-| NIST SP 800-218A | None | Trigger with an LLM in the product. | The SSDF profile for generative AI. |
-| NIST SP 800-53, SP 800-171, and FedRAMP | None | Option for US federal and defence buyers. | Sector-bound and heavy. |
-| NIST CSF 2.0 | None | Out of scope | Organisation-level. |
-| ISO 27001 Annex A 8.25 to 8.33 | None, because the SSDF default covers most of it | Option: an Annex A mapping profile. | Certifies an organisation's ISMS, not software. |
-| ISO 27001 data sent to the model provider | Enforce (0000357). | None | Every customer's auditor asks this first. |
-| GAMP 5 | Enforce its general base controls: attributable approvals (0000286), audit trail (0000289), and traceability (0000340). | Option: the GxP profile (0000337) adds categories, the specification hierarchy, validation plan, and summary report. | The base controls help every regulated buyer. The rest is GxP ceremony. |
-| UK GCAP | None | Option: a UK public sector profile. It bundles the Software Security Code of Practice, Secure by Design, and the Cyber Assessment Framework. | The code of practice is voluntary. Binding duties come through the Cyber Security and Resilience Bill, which was still a bill in January 2026. The SSDF default covers most of the code's software principles. |
+| OWASP | Top 10 and ASVS Level 1 | Default | Universal and cheap. P1 adds criteria and P5 checks them. |
+| OWASP | ASVS Level 2 and 3 | Optional | Depth follows risk class (0000339). |
+| OWASP | Top 10 for LLM Applications | Triggered: the product embeds an LLM | Applies only to AI products (0000347). |
+| OWASP | MASVS | Triggered: the product is a mobile app | Applies only to mobile. |
+| OWASP | SAMM | Out of scope | It measures an organisation's maturity. |
+| NIST | SSDF (SP 800-218) core practices | Default | The base pipeline already evidences most of them (0000280 to 0000290). |
+| NIST | SLSA level and secure software attestation | Optional | Needed mainly by US federal buyers. |
+| NIST | SP 800-218A | Triggered: the product embeds generative AI | The SSDF profile for generative AI. |
+| NIST | SP 800-53, SP 800-171, and FedRAMP | Optional | Sector-bound and heavy. |
+| NIST | CSF 2.0 | Out of scope | Organisation-level. |
+| ISO 27001 | Data sent to the model provider (0000357) | Default | Every customer's auditor asks this first. |
+| ISO 27001 | Annex A mapping profile | Optional | The standard certifies an organisation's ISMS, not software. |
+| GAMP 5 | Attributable approvals (0000286), audit trail (0000289), and traceability (0000340) | Default | These base controls help every regulated buyer. |
+| GAMP 5 | GxP profile (0000337): categories, specification hierarchy, validation plan, and summary report | Optional | GxP ceremony that only GxP systems need. |
+| UK GCAP | UK public sector profile: Software Security Code of Practice, Secure by Design, and Cyber Assessment Framework | Optional | The code is voluntary. Binding duties come through the Cyber Security and Resilience Bill, still a bill in January 2026. The SSDF default covers most of the code. |
 
 Check the GCAP position against the plan and Bill text at pickup.
 
