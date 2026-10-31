@@ -11,7 +11,7 @@ status: "open"
 **Date filed:** 2026-10-31
 
 **Suggested route:** Feature Pipeline
-**Related:** 0000279, 0000285, 0000286, 0000287, 0000288, 0000290, 0000337
+**Related:** 0000279, 0000285, 0000286, 0000287, 0000288, 0000290, 0000337, 0000356, 0000357
 
 ---
 
@@ -62,6 +62,9 @@ First skeletons:
 1. GxP (0000337).
 2. Medical device software: IEC 62304, with ISO 14971 and ISO 13485 design controls.
 3. NIST SSDF with SLSA. It covers much of ISO 27001 A.8.25 to A.8.33 and SOX change management.
+4. ISO 27001 Annex A mapping. It maps A.5.8, A.5.19 to A.5.23, A.8.4, A.8.9, and A.8.25 to A.8.33 to Framework evidence. It reuses the SSDF evidence where the two overlap.
+
+0000356 proposes which frameworks Framework enforces by default and which it offers as profiles.
 
 DO-178C, ISO 26262, and EN 50716 aren't worth targeting. An LLM code generator would need the top tool qualification level under each of them.
 
