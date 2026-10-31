@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en-GB">
+<meta charset="utf-8">
+<title>Framework for Regulated Delivery</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&display=swap">
+<style>
+/* Layout: a controlled quality document. A4 pages, a document-control header band, numbered sections, diagrams set as figures. */
+:root {
+  --ink: #14202e;
+  --ink-2: #3b4a5c;
+  --ink-3: #6b7889;
+  --rule: #d5dbe3;
+  --wash: #f2f5f8;
+  --paper: #ffffff;
+  --teal: #0d6b66;
+  --teal-wash: #e3f1ef;
+  --amber: #a85a12;
+  --amber-wash: #fbf0e3;
+  --red: #b3261e;
+  --red-wash: #fbe9e7;
+  --violet: #4b4fa6;
+  --violet-wash: #ecedf9;
+  --display: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@page {
+  size: A4;
+  margin: 20mm 18mm 18mm 18mm;
+  @top-left { content: "RAVINTIO Framework  ·  Regulated strategy review"; font: 500 7.5pt "IBM Plex Sans", Arial, sans-serif; color: #6b7889; }
+  @top-right { content: "RFW-RPT-0001  ·  Rev 1.0  ·  2026-10-31"; font: 400 7.5pt "IBM Plex Mono", Menlo, monospace; color: #6b7889; }
+  @bottom-left { content: "Proposal for owner review. Framework records evidence and never claims compliance."; font: 400 7pt "IBM Plex Sans", Arial, sans-serif; color: #6b7889; }
+  @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 400 7.5pt "IBM Plex Mono", Menlo, monospace; color: #6b7889; }
+}
+@page :first {
+  margin: 0;
+  @top-left { content: none; } @top-right { content: none; }
+  @bottom-left { content: none; } @bottom-right { content: none; }
+}
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body {
+  margin: 0;
+  background: var(--paper); color: var(--ink);
+  font: 400 9.6pt/1.55 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media print { body { padding-left: 0; padding-right: 0; } }
+.page-break { break-before: page; }
+h1, h2, h3 { font-family: var(--display); font-weight: 500; text-wrap: balance; color: var(--ink); margin: 0; }
+h2 { font-size: 21pt; line-height: 1.15; letter-spacing: -0.005em; }
+h3 { font-size: 12.5pt; line-height: 1.25; }
+p { margin: 0; max-width: 68ch; }
+.mono, code { font-family: var(--mono); font-size: 0.88em; }
+code { background: var(--wash); padding: 0.05em 0.3em; border-radius: 2px; }
+.eyebrow { font: 600 7.5pt var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal); }
+.section { display: flex; flex-direction: column; gap: 10pt; margin-bottom: 18pt; }
+.section-head { display: grid; grid-template-columns: 34pt 1fr; gap: 0 10pt; align-items: baseline; padding-bottom: 6pt; border-bottom: 1.5pt solid var(--ink); margin-bottom: 4pt; }
+.section-head .num { font: 500 10pt var(--mono); color: var(--teal); }
+.lede { font: 400 11pt/1.5 var(--display); color: var(--ink-2); max-width: 64ch; }
+ul.tight { margin: 0; padding-left: 14pt; display: grid; gap: 4pt; }
+ul.tight li { max-width: 66ch; }
+.id { font: 500 8pt var(--mono); color: var(--teal); white-space: nowrap; }
+
+/* Cover */
+.cover { height: 296mm; display: grid; grid-template-rows: auto 1fr auto; background: var(--ink); color: #eef2f6; padding: 22mm 20mm 18mm; break-after: page; position: relative; overflow: hidden; }
+.cover-top { display: flex; justify-content: space-between; align-items: baseline; font: 500 8pt var(--mono); color: #9fb0c3; letter-spacing: 0.04em; }
+.cover-main { align-self: center; display: flex; flex-direction: column; gap: 14pt; position: relative; z-index: 1; }
+.cover .eyebrow { color: #7fd3c9; }
+.cover h1 { font-size: 46pt; line-height: 1.02; color: #ffffff; letter-spacing: -0.015em; max-width: 13ch; }
+.cover .lede { color: #c6d1dd; font-size: 13pt; max-width: 46ch; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1pt solid #3a4b60; margin-top: 10pt; }
+.stat { padding: 12pt 10pt 0 0; display: flex; flex-direction: column; gap: 3pt; }
+.stat b { font: 500 30pt/1 var(--display); color: #ffffff; font-variant-numeric: tabular-nums; }
+.stat span { font: 400 8pt/1.35 var(--body); color: #9fb0c3; max-width: 16ch; }
+.stat.alert b { color: #f2b37a; }
+.doc-control { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt 14pt; border: 1pt solid #3a4b60; padding: 10pt 12pt; font-size: 8pt; }
+.doc-control div { display: flex; flex-direction: column; gap: 1pt; }
+.doc-control dt { font: 600 6.5pt var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: #7f93a8; }
+.doc-control dd { margin: 0; color: #e3e9ef; font-family: var(--mono); font-size: 8pt; }
+.cover-art { position: absolute; right: -62mm; top: 12mm; width: 160mm; opacity: 0.75; z-index: 0; }
+
+/* Tables */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 8.6pt; line-height: 1.4; }
+th { text-align: left; font: 600 7pt var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3); padding: 0 8pt 5pt 0; border-bottom: 1pt solid var(--ink); }
+td { padding: 6pt 8pt 6pt 0; border-bottom: 0.6pt solid var(--rule); vertical-align: top; }
+tr { break-inside: avoid; }
+td.k { font-weight: 600; color: var(--ink); width: 18%; }
+td.zero { color: var(--ink-3); width: 34%; }
+.compare th:nth-child(3), .compare td:nth-child(3) { background: var(--teal-wash); padding-left: 8pt; }
+
+/* Figures */
+figure { margin: 4pt 0 6pt; break-inside: avoid; display: flex; flex-direction: column; gap: 6pt; }
+figure svg { width: 100%; height: auto; display: block; }
+figcaption { font: 400 7.8pt/1.4 var(--body); color: var(--ink-3); max-width: 80ch; }
+figcaption b { color: var(--ink-2); font-weight: 600; }
+svg text { font-family: "IBM Plex Sans", Arial, sans-serif; }
+svg .mono { font-family: "IBM Plex Mono", Menlo, monospace; }
+
+/* Cards */
+.urgent-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8pt; }
+.ucard { border-top: 3pt solid var(--red); background: var(--red-wash); padding: 9pt 10pt 10pt; display: flex; flex-direction: column; gap: 5pt; break-inside: avoid; min-width: 0; }
+.ucard h3 { font-size: 11pt; }
+.ucard p { font-size: 8.4pt; color: var(--ink-2); }
+.ucard .where { font: 400 7.4pt var(--mono); color: var(--red); margin-top: auto; }
+.callout { border-left: 3pt solid var(--teal); background: var(--teal-wash); padding: 8pt 11pt; display: flex; flex-direction: column; gap: 4pt; break-inside: avoid; }
+.callout.warn { border-color: var(--amber); background: var(--amber-wash); }
+.callout b.t { font: 600 7.2pt var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); }
+.callout.warn b.t { color: var(--amber); }
+.callout p { font-size: 8.8pt; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14pt; }
+.two-col > * { min-width: 0; }
+
+/* Enforcement chips */
+.chip { display: inline-block; font: 600 7pt var(--body); letter-spacing: 0.06em; text-transform: uppercase; padding: 2pt 6pt; border-radius: 2pt; white-space: nowrap; }
+.chip.def { background: var(--teal); color: #fff; }
+.chip.opt { background: var(--violet-wash); color: var(--violet); border: 0.6pt solid var(--violet); }
+.chip.trg { background: var(--amber-wash); color: var(--amber); border: 0.6pt solid var(--amber); }
+.chip.out { background: var(--wash); color: var(--ink-3); border: 0.6pt solid var(--rule); }
+.legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8pt; }
+.legend div { display: flex; flex-direction: column; gap: 3pt; font-size: 8pt; color: var(--ink-2); }
+.matrix td.fw { font-weight: 600; width: 12%; }
+.matrix td.part { width: 36%; }
+.matrix td.enf { width: 17%; }
+.matrix td.why { color: var(--ink-2); }
+.matrix tr.grp td { border-top: 1pt solid var(--ink-3); }
+
+/* Roadmap */
+.waves { display: grid; gap: 0; }
+.wave { display: grid; grid-template-columns: 54pt 1fr; gap: 12pt; padding: 8pt 0; border-bottom: 0.6pt solid var(--rule); break-inside: avoid; }
+.wave .w { font: 500 18pt/1 var(--display); color: var(--teal); }
+.wave .w small { display: block; font: 600 6.5pt var(--body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 3pt; }
+.wave h3 { font-size: 11.5pt; margin-bottom: 2pt; }
+.wave p { font-size: 8.6pt; color: var(--ink-2); }
+.ids { display: flex; flex-wrap: wrap; gap: 3pt; margin-top: 4pt; }
+.ids span { font: 500 7.4pt var(--mono); background: var(--wash); color: var(--ink-2); padding: 1pt 4pt; border-radius: 2pt; }
+.wave.first .w { color: var(--red); }
+
+/* Decisions */
+.decisions { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: d; }
+.decisions li { display: grid; grid-template-columns: 22pt 1fr; gap: 10pt; padding: 9pt 0; border-bottom: 0.6pt solid var(--rule); counter-increment: d; break-inside: avoid; }
+.decisions li::before { content: ""; width: 12pt; height: 12pt; border: 1.2pt solid var(--ink); margin-top: 2pt; }
+.decisions b { display: block; font-weight: 600; }
+.decisions span { color: var(--ink-2); font-size: 8.8pt; }
+
+/* Index */
+.index td { padding: 3.5pt 8pt 3.5pt 0; font-size: 8pt; }
+.index td:first-child { width: 52pt; }
+.index td:last-child { width: 70pt; color: var(--ink-3); }
+.index tr.g { break-after: avoid; page-break-after: avoid; }
+.index tr.g td { font: 600 7pt var(--body); letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); padding-top: 10pt; border-bottom: 1pt solid var(--ink); }
+.fw-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10pt 14pt; }
+.fw-grid > div { display: flex; flex-direction: column; gap: 3pt; break-inside: avoid; min-width: 0; }
+.fw-grid h3 { font-size: 10.5pt; }
+.fw-grid p { font-size: 8.2pt; color: var(--ink-2); }
+.sources { font-size: 7.6pt; color: var(--ink-3); display: grid; gap: 2pt; }
+a { color: var(--teal); text-decoration: none; }
+</style>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="cover-top"><span>RAVINTIO FRAMEWORK</span><span>RFW-RPT-0001 · REV 1.0</span></div>
+
+  <svg class="cover-art" viewBox="0 0 400 400" aria-hidden="true">
+    <g fill="none" stroke="#2c4057" stroke-width="1">
+      <circle cx="200" cy="200" r="190"/><circle cx="200" cy="200" r="150"/><circle cx="200" cy="200" r="110"/><circle cx="200" cy="200" r="70"/>
+    </g>
+    <g fill="none" stroke="#3b5672" stroke-width="1.2">
+      <path d="M200 10 V390 M10 200 H390"/>
+    </g>
+    <g font-family="IBM Plex Mono, monospace" font-size="9" fill="#5d7a96">
+      <text x="206" y="56">P0</text><text x="206" y="96">P1</text><text x="206" y="136">P2</text><text x="345" y="196">P3</text>
+    </g>
+    <g fill="#7fd3c9"><circle cx="200" cy="50" r="4"/><circle cx="306" cy="94" r="4"/><circle cx="350" cy="200" r="4"/><circle cx="306" cy="306" r="4"/></g>
+    <path d="M200 50 A150 150 0 0 1 350 200" fill="none" stroke="#7fd3c9" stroke-width="2.4"/>
+    <path d="M350 200 A150 150 0 0 1 200 350" fill="none" stroke="#7fd3c9" stroke-width="2.4" stroke-dasharray="4 5"/>
+  </svg>
+
+  <div class="cover-main">
+    <span class="eyebrow">Strategy review · 2026-10-31</span>
+    <h1>Framework for regulated delivery</h1>
+    <p class="lede">A review of RAVINTIO Zero against Framework's regulated strategy. It turns every useful finding into a backlog entry, ready for your review in pull request #75.</p>
+    <div class="stats">
+      <div class="stat"><b>64</b><span>backlog entries filed</span></div>
+      <div class="stat"><b>11</b><span>parallel review scans</span></div>
+      <div class="stat alert"><b>3</b><span>urgent security gaps to fix first</span></div>
+      <div class="stat"><b>372</b><span>bundled third-party skills to remove</span></div>
+    </div>
+  </div>
+
+  <dl class="doc-control">
+    <div><dt>Document</dt><dd>RFW-RPT-0001</dd></div>
+    <div><dt>Revision</dt><dd>1.0 · 2026-10-31</dd></div>
+    <div><dt>Status</dt><dd>Proposal for owner review</dd></div>
+    <div><dt>Pull request</dt><dd>#75</dd></div>
+    <div><dt>Branch</dt><dd>chore/0000294-zero-filed-backlog</dd></div>
+    <div><dt>Prepared for</dt><dd>Martin Mayer, product owner</dd></div>
+  </dl>
+</section>
+
+<!-- ===================== 1. SUMMARY ===================== -->
+<section class="section">
+  <div class="section-head"><span class="num">01</span><h2>The short version</h2></div>
+  <p class="lede">Framework shouldn't chase Zero's speed. Framework wins by being the delivery pipeline that a regulated organisation can defend to an auditor.</p>
+  <ul class="tight">
+    <li><b>Three gaps let an agent weaken its own controls today.</b> Fix them before anything else <span class="id">0000297–0000299</span>.</li>
+    <li><b>The bundled skill library has to go.</b> Its provenance data is defective. Developers bring their own approved, licensed skills through overrides instead <span class="id">0000301, 0000302</span>.</li>
+    <li><b>Four base controls carry most of the audit story.</b> They are attributable approvals, an audit trail, traceability, and one feature at a time. Most later entries build on them.</li>
+    <li><b>Jira becomes the system of record for planning and approval.</b> A named human moves each gate, and Framework binds the approval to a commit and an artefact digest <span class="id">0000295, 0000352</span>.</li>
+    <li><b>Postmortems go further than Zero's.</b> Zero writes good records and never closes them. Framework adds CAPA with effectiveness checks and a gate before archive <span class="id">0000330–0000336</span>.</li>
+    <li><b>Compliance frameworks become profiles.</b> A small set of controls is on by default. GAMP 5, ISO 27001 mapping, and UK GCAP are opt-in <span class="id">0000348, 0000356</span>.</li>
+  </ul>
+</section>
+
+<!-- ===================== 2. POSITIONING ===================== -->
+<section class="section">
+  <div class="section-head"><span class="num">02</span><h2>Where Framework differs from Zero</h2></div>
+  <p>Both products share an ancestor and most of their hooks. They now serve different buyers. Zero optimises for throughput across many features. Framework optimises for control, evidence, and a clear line of accountability for every change.</p>
+  <div class="tbl-wrap">
+    <table class="compare">
+      <thead><tr><th>Dimension</th><th>RAVINTIO Zero</th><th>RAVINTIO Framework</th></tr></thead>
+      <tbody>
+        <tr><td class="k">Market</td><td class="zero">Any team that wants speed</td><td>Regulated industries: life sciences, medical devices, finance, and the public sector</td></tr>
+        <tr><td class="k">Unit of work</td><td class="zero">Initiatives: many features in one unattended run</td><td>One feature at a time, behind human gates</td></tr>
+        <tr><td class="k">Planning</td><td class="zero">Markdown files in the repository</td><td>Jira drives the workflow, and the repository keeps the evidence</td></tr>
+        <tr><td class="k">Approvals</td><td class="zero">Chat replies that the agent writes down</td><td>A named human moves a Jira gate, bound to a commit SHA and digest</td></tr>
+        <tr><td class="k">Skills</td><td class="zero">Bundled library removed in Zero 0000030</td><td>No bundled skills. Approved, licensed skills arrive through overrides</td></tr>
+        <tr><td class="k">Postmortems</td><td class="zero">Blameless records that stay open</td><td>CAPA with effectiveness checks, trend analysis, and periodic review</td></tr>
+        <tr><td class="k">Compliance</td><td class="zero">Not a goal</td><td>Evidence for GAMP 5, ISO 27001, NIST, OWASP, and UK GCAP through profiles</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===================== 3. METHOD ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">03</span><h2>How the review ran</h2></div>
+  <p>Eleven read-only scans ran in parallel, each from one angle. Their findings were checked against Framework's existing backlog to avoid duplicates. Six writers then filed the entries. Each writer checked every cited path and line against the code first, and corrected any that had moved.</p>
+  <figure>
+    <svg viewBox="0 0 660 232" role="img" aria-label="Five sources feed eleven scans, which feed consolidation and then 64 entries in PR 75">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3b4a5c"/></marker></defs>
+      <g font-size="10" fill="#14202e">
+        <g>
+          <rect x="0" y="8" width="150" height="34" rx="2" fill="#f2f5f8" stroke="#d5dbe3"/><text x="10" y="22" font-weight="600">Zero archive</text><text x="10" y="35" fill="#6b7889" font-size="9">58 shipped features</text>
+          <rect x="0" y="50" width="150" height="34" rx="2" fill="#f2f5f8" stroke="#d5dbe3"/><text x="10" y="64" font-weight="600">Zero backlog</text><text x="10" y="77" fill="#6b7889" font-size="9">62 open entries and roadmap</text>
+          <rect x="0" y="92" width="150" height="34" rx="2" fill="#f2f5f8" stroke="#d5dbe3"/><text x="10" y="106" font-weight="600">Retros and postmortems</text><text x="10" y="119" fill="#6b7889" font-size="9">26 records, 56 build reports</text>
+          <rect x="0" y="134" width="150" height="34" rx="2" fill="#f2f5f8" stroke="#d5dbe3"/><text x="10" y="148" font-weight="600">Source comparison</text><text x="10" y="161" fill="#6b7889" font-size="9">hooks, scripts, setup, tests</text>
+          <rect x="0" y="176" width="150" height="34" rx="2" fill="#f2f5f8" stroke="#d5dbe3"/><text x="10" y="190" font-weight="600">Standards research</text><text x="10" y="203" fill="#6b7889" font-size="9">GAMP 5, IEC 62304, SOX, more</text>
+        </g>
+        <g stroke="#9aa6b5" fill="none" stroke-width="1">
+          <path d="M150 25 C175 25 175 115 198 115"/><path d="M150 67 C175 67 175 115 198 115"/><path d="M150 109 C175 109 175 115 198 115"/><path d="M150 151 C175 151 175 115 198 115"/><path d="M150 193 C175 193 175 115 198 115"/>
+        </g>
+        <rect x="200" y="58" width="130" height="114" rx="2" fill="#14202e"/>
+        <text x="265" y="98" text-anchor="middle" fill="#ffffff" font-size="26" font-family="Newsreader, Georgia, serif">11</text>
+        <text x="265" y="118" text-anchor="middle" fill="#c6d1dd" font-size="10">parallel scans</text>
+        <text x="265" y="134" text-anchor="middle" fill="#7fd3c9" font-size="8.5">read-only, one angle each</text>
+        <path d="M330 115 H364" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar)"/>
+        <rect x="366" y="58" width="130" height="114" rx="2" fill="#ffffff" stroke="#14202e"/>
+        <text x="431" y="96" text-anchor="middle" font-weight="600">Consolidate</text>
+        <text x="431" y="112" text-anchor="middle" fill="#3b4a5c" font-size="9">dedupe against the</text>
+        <text x="431" y="124" text-anchor="middle" fill="#3b4a5c" font-size="9">existing backlog and</text>
+        <text x="431" y="136" text-anchor="middle" fill="#3b4a5c" font-size="9">verify every claim</text>
+        <path d="M496 115 H526" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar)"/>
+        <rect x="528" y="58" width="132" height="114" rx="2" fill="#0d6b66"/>
+        <text x="594" y="98" text-anchor="middle" fill="#ffffff" font-size="26" font-family="Newsreader, Georgia, serif">64</text>
+        <text x="594" y="118" text-anchor="middle" fill="#e3f1ef" font-size="10">backlog entries</text>
+        <text x="594" y="134" text-anchor="middle" fill="#bfe5e0" font-size="8.5">6 writers · PR #75</text>
+        <text x="431" y="196" text-anchor="middle" fill="#6b7889" font-size="8.5">One citation proved wrong at this step and was corrected before filing.</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 1.</b> The review pipeline. No scan changed any file. Only the writers created files, and the orchestrator made every commit.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <b class="t">Phase numbers differ between the two products</b>
+    <p>Zero has five phases and Framework has ten. Every entry uses Framework numbers. Where an entry cites Zero, it names the phase in full, such as Zero P2 Implement.</p>
+  </div>
+  <figure>
+    <svg viewBox="0 0 660 196" role="img" aria-label="Zero's five phases mapped onto Framework's ten phases">
+      <g font-size="9.5">
+        <text x="0" y="12" font-weight="600" fill="#6b7889" font-size="8" letter-spacing="1.2">RAVINTIO ZERO</text>
+        <rect x="0" y="20" width="60" height="44" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="30" y="38" text-anchor="middle" class="mono" fill="#6b7889" font-size="8.5">P0</text><text x="30" y="53" text-anchor="middle" fill="#14202e">Discovery</text>
+        <rect x="66.7" y="20" width="126.6" height="44" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="130" y="38" text-anchor="middle" class="mono" fill="#6b7889" font-size="8.5">P1</text><text x="130" y="53" text-anchor="middle" fill="#14202e">Plan</text>
+        <rect x="200" y="20" width="60" height="44" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="230" y="38" text-anchor="middle" class="mono" fill="#6b7889" font-size="8.5">P2</text><text x="230" y="53" text-anchor="middle" fill="#14202e">Implement</text>
+        <rect x="266.7" y="20" width="126.6" height="44" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="330" y="38" text-anchor="middle" class="mono" fill="#6b7889" font-size="8.5">P3</text><text x="330" y="53" text-anchor="middle" fill="#14202e">Validate and Accept</text>
+        <rect x="466.7" y="20" width="193.3" height="44" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="563" y="38" text-anchor="middle" class="mono" fill="#6b7889" font-size="8.5">P4</text><text x="563" y="53" text-anchor="middle" fill="#14202e">Ship</text>
+
+        <g stroke="#9aa6b5" stroke-width="1" fill="none">
+          <path d="M30 64 V140"/>
+          <path d="M130 64 V100 M96.7 100 H163.3 M96.7 100 V140 M163.3 100 V140"/>
+          <path d="M230 64 V140"/>
+          <path d="M330 64 V100 M296.7 100 H363.3 M296.7 100 V140 M363.3 100 V140"/>
+          <path d="M563 64 V100 M496.7 100 H630 M496.7 100 V140 M563 100 V140 M630 100 V140"/>
+          <path d="M248 64 C252 118 420 112 430 140" stroke-dasharray="3 3"/>
+        </g>
+        <text x="400" y="122" fill="#6b7889" font-size="8" text-anchor="end">docs written in Zero P2</text>
+
+        <text x="0" y="132" font-weight="600" fill="#0d6b66" font-size="8" letter-spacing="1.2">RAVINTIO FRAMEWORK</text>
+        <g>
+          <rect x="0" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="66.7" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="133.3" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="200" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="266.7" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="333.3" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="400" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="466.7" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="533.3" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+          <rect x="600" y="140" width="60" height="46" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+        </g>
+        <g text-anchor="middle" class="mono" fill="#0d6b66" font-size="8.5">
+          <text x="30" y="157">P0</text><text x="96.7" y="157">P1</text><text x="163.3" y="157">P2</text><text x="230" y="157">P3</text><text x="296.7" y="157">P4</text><text x="363.3" y="157">P5</text><text x="430" y="157">P6</text><text x="496.7" y="157">P7</text><text x="563.3" y="157">P8</text><text x="630" y="157">P9</text>
+        </g>
+        <g text-anchor="middle" fill="#14202e" font-size="9">
+          <text x="30" y="172">Assess</text><text x="96.7" y="172">Spec</text><text x="163.3" y="172">ADRs</text><text x="230" y="172">Codegen</text><text x="296.7" y="172">Validate</text><text x="363.3" y="172">Security</text><text x="430" y="172">Docs</text><text x="496.7" y="172">Archive</text><text x="563.3" y="172">Build report</text><text x="630" y="172">Ship</text>
+        </g>
+      </g>
+    </svg>
+    <figcaption><b>Figure 2.</b> Phase mapping. A Zero P1 Plan finding lands in Framework P1 or P2. A Zero P3 Validate and Accept finding lands in P4 or P5.</figcaption>
+  </figure>
+</section>
+
+<!-- ===================== 4. URGENT ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">04</span><h2>Fix first: three urgent gaps</h2></div>
+  <p class="lede">Each of these lets an agent weaken a control without a human seeing it. All three are small, self-contained Change Pipeline runs.</p>
+  <div class="urgent-grid">
+    <div class="ucard">
+      <span class="id">0000297</span>
+      <h3>The write gate fails open</h3>
+      <p>If <code>design.md</code> exists but has no parseable component paths list, the gate allows every write. That includes <code>.claude/settings.local.json</code>, which can switch off every hook.</p>
+      <span class="where">path-rules.mjs, line 897 · confirmed</span>
+    </div>
+    <div class="ucard">
+      <span class="id">0000298</span>
+      <h3>Fast Path can rewrite policy</h3>
+      <p>The agent can authorise its own Fast Path writes to <code>ravintio-overrides/</code>. That folder holds the loop toggles, standing instructions, and push permission.</p>
+      <span class="where">workflows/fast-path.md</span>
+    </div>
+    <div class="ucard">
+      <span class="id">0000299</span>
+      <h3>Setup can leak a secret</h3>
+      <p>When <code>settings.json</code> fails to parse, setup prints the parser's message. That message quotes part of the file, so a secret can reach the terminal and the agent's context.</p>
+      <span class="where">setup.sh and setup.ps1 · 4 sites</span>
+    </div>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 660 214" role="img" aria-label="Decision flow of the write gate, showing the fail-open branch">
+      <defs><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3b4a5c"/></marker></defs>
+      <g font-size="9.5" fill="#14202e">
+        <rect x="0" y="40" width="96" height="46" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/>
+        <text x="48" y="60" text-anchor="middle" font-weight="600">Agent writes</text><text x="48" y="74" text-anchor="middle" fill="#6b7889" font-size="8.5">a file in the repo</text>
+        <path d="M96 63 H124" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar2)"/>
+        <rect x="126" y="40" width="126" height="46" rx="23" fill="#ffffff" stroke="#14202e"/>
+        <text x="189" y="67" text-anchor="middle" font-weight="600">design.md exists?</text>
+        <path d="M252 63 H288" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar2)"/><text x="262" y="57" fill="#6b7889" font-size="8.5">yes</text>
+        <path d="M189 86 V140" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar2)"/><text x="195" y="116" fill="#6b7889" font-size="8.5">no</text>
+        <rect x="126" y="142" width="126" height="50" rx="2" fill="#e3f1ef" stroke="#0d6b66"/>
+        <text x="189" y="162" text-anchor="middle" font-weight="600" fill="#0d6b66">Enforcement list</text><text x="189" y="176" text-anchor="middle" fill="#0d6b66" font-size="8.5">hooks and settings blocked</text>
+
+        <rect x="290" y="40" width="150" height="46" rx="23" fill="#ffffff" stroke="#14202e"/>
+        <text x="365" y="67" text-anchor="middle" font-weight="600">Component paths parse?</text>
+        <path d="M440 63 H476" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar2)"/><text x="450" y="57" fill="#6b7889" font-size="8.5">yes</text>
+        <path d="M365 86 V140" stroke="#b3261e" stroke-width="1.6" marker-end="url(#ar2)"/><text x="371" y="116" fill="#b3261e" font-size="8.5" font-weight="600">no</text>
+        <rect x="290" y="142" width="150" height="50" rx="2" fill="#b3261e"/>
+        <text x="365" y="162" text-anchor="middle" font-weight="600" fill="#ffffff">Write allowed</text><text x="365" y="176" text-anchor="middle" fill="#fbe9e7" font-size="8.5">any path, no list checked</text>
+
+        <rect x="478" y="40" width="182" height="46" rx="23" fill="#ffffff" stroke="#14202e"/>
+        <text x="569" y="67" text-anchor="middle" font-weight="600">Path inside a component?</text>
+        <path d="M569 86 V140" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar2)"/>
+        <rect x="478" y="142" width="182" height="50" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/>
+        <text x="569" y="162" text-anchor="middle" font-weight="600">Allow or block</text><text x="569" y="176" text-anchor="middle" fill="#6b7889" font-size="8.5">the normal route</text>
+
+        <path d="M282 16 H660" stroke="#b3261e" stroke-dasharray="3 3"/>
+        <text x="282" y="10" fill="#b3261e" font-size="8.5" font-weight="600">0000297 checks the enforcement list on every branch, before this point</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 3.</b> The gate applies its list of protected paths only when no design exists. Once any design exists, an unparseable paths section skips every check.</figcaption>
+  </figure>
+</section>
+
+<!-- ===================== 5. ENFORCEMENT ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">05</span><h2>What Framework enforces, and what you choose</h2></div>
+  <p>Framework enforces a control by default when it costs little, applies to all software, and only adds good practice. Heavy, sector-bound, or organisation-level frameworks become profiles that a team picks at P0. Some parts switch on when the design needs them.</p>
+  <div class="legend">
+    <div><span><span class="chip def">Default</span></span>On for every install. Loosening it needs a waiver.</div>
+    <div><span><span class="chip opt">Optional</span></span>Off until a team picks the profile at P0.</div>
+    <div><span><span class="chip trg">Triggered</span></span>On when the design meets a condition.</div>
+    <div><span><span class="chip out">Out of scope</span></span>Framework doesn't support it.</div>
+  </div>
+  <div class="tbl-wrap">
+    <table class="matrix">
+      <thead><tr><th>Framework</th><th>Part</th><th>Enforcement</th><th>Reason</th></tr></thead>
+      <tbody>
+        <tr><td class="fw">OWASP</td><td class="part">Top 10 and ASVS Level 1</td><td class="enf"><span class="chip def">Default</span></td><td class="why">Applies to all software at low cost. P1 adds criteria and P5 checks them.</td></tr>
+        <tr><td class="fw"></td><td class="part">ASVS Level 2 and 3</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">Depth follows the risk class.</td></tr>
+        <tr><td class="fw"></td><td class="part">Top 10 for LLM Applications</td><td class="enf"><span class="chip trg">Triggered</span></td><td class="why">When the product embeds an LLM.</td></tr>
+        <tr><td class="fw"></td><td class="part">MASVS</td><td class="enf"><span class="chip trg">Triggered</span></td><td class="why">When the product is a mobile app.</td></tr>
+        <tr><td class="fw"></td><td class="part">SAMM</td><td class="enf"><span class="chip out">Out of scope</span></td><td class="why">It measures an organisation's maturity.</td></tr>
+        <tr class="grp"><td class="fw">NIST</td><td class="part">SSDF (SP 800-218) core practices</td><td class="enf"><span class="chip def">Default</span></td><td class="why">The base pipeline already evidences most of them.</td></tr>
+        <tr><td class="fw"></td><td class="part">SLSA level and secure software attestation</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">Mainly US federal buyers need these.</td></tr>
+        <tr><td class="fw"></td><td class="part">SP 800-218A</td><td class="enf"><span class="chip trg">Triggered</span></td><td class="why">When the product embeds generative AI.</td></tr>
+        <tr><td class="fw"></td><td class="part">SP 800-53, SP 800-171, and FedRAMP</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">Sector-bound and heavy.</td></tr>
+        <tr><td class="fw"></td><td class="part">CSF 2.0</td><td class="enf"><span class="chip out">Out of scope</span></td><td class="why">Organisation-level.</td></tr>
+        <tr class="grp"><td class="fw">ISO 27001</td><td class="part">Data sent to the model provider <span class="id">0000357</span></td><td class="enf"><span class="chip def">Default</span></td><td class="why">Every customer's auditor asks this first.</td></tr>
+        <tr><td class="fw"></td><td class="part">Annex A mapping profile</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">The standard certifies an organisation, not software.</td></tr>
+        <tr class="grp"><td class="fw">GAMP 5</td><td class="part">Attributable approvals, audit trail, and traceability</td><td class="enf"><span class="chip def">Default</span></td><td class="why">These base controls help every regulated buyer.</td></tr>
+        <tr><td class="fw"></td><td class="part">GxP profile: categories, specification hierarchy, validation plan, and summary report</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">Only GxP systems need this.</td></tr>
+        <tr class="grp"><td class="fw">UK GCAP</td><td class="part">UK public sector profile: Software Security Code of Practice, Secure by Design, and Cyber Assessment Framework</td><td class="enf"><span class="chip opt">Optional</span></td><td class="why">The code is voluntary. Binding duties come through a bill that hadn't passed by January 2026.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    <b class="t">Your decision</b>
+    <p>This table is a proposal in entry 0000356. Confirm or change each row before 0000348 builds the profile mechanism.</p>
+  </div>
+</section>
+
+<!-- ===================== 6. SKILLS ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">06</span><h2>Skills: remove, then govern</h2></div>
+  <p>The bundled library holds 372 third-party skills. Removing it ends the redistribution duty for future releases, and past tags keep their attribution files. The provenance data shows why a regulated buyer couldn't accept the library as it stands.</p>
+  <figure>
+    <svg viewBox="0 0 660 132" role="img" aria-label="Bar charts of the licences and provenance of the 372 bundled skills">
+      <g font-size="9">
+        <text x="0" y="12" fill="#3b4a5c" font-weight="600">Declared licence</text>
+        <rect x="100" y="2" width="538.9" height="20" fill="#0d6b66"/><rect x="638.9" y="2" width="21.1" height="20" fill="#4b4fa6"/>
+        <text x="110" y="16" fill="#ffffff" font-weight="600">MIT · 358</text>
+        <text x="634" y="36" fill="#4b4fa6" text-anchor="end" font-weight="600">Apache-2.0 · 14</text>
+
+        <text x="0" y="66" fill="#3b4a5c" font-weight="600">Copyright holder</text>
+        <rect x="100" y="56" width="228.8" height="20" fill="#b3261e"/><rect x="328.8" y="56" width="331.2" height="20" fill="#d5dbe3"/>
+        <text x="110" y="70" fill="#ffffff" font-weight="600">"Unknown" · 152</text>
+        <text x="338" y="70" fill="#3b4a5c">Named holder · 220</text>
+        <path d="M100 86 V92 H328.8 V86" fill="none" stroke="#b3261e"/>
+        <text x="100" y="106" fill="#b3261e" font-size="8.5">152 skills claim "original work" with an unknown holder. They say MIT but carry Apache-2.0 licence text.</text>
+        <text x="100" y="122" fill="#6b7889" font-size="8.5">No skill folder has its own LICENSE file. The library README claims 200 skills.</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 4.</b> Licence and provenance of the bundled skills, from each folder's <code>attribution.txt</code>. Scale: full width is 372 skills.</figcaption>
+  </figure>
+
+  <h3>The governed route for a team's own skills</h3>
+  <p>After removal, <code>ravintio-overrides/capability-skills/</code> is the only way in. Setup installs a skill only when every check passes. Agents can draft a provenance record but can never fill in the approver.</p>
+  <figure>
+    <svg viewBox="0 0 660 150" role="img" aria-label="Flow from inbox through provenance record and human approval to five setup checks">
+      <defs><marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3b4a5c"/></marker></defs>
+      <g font-size="9.5" fill="#14202e">
+        <rect x="0" y="30" width="100" height="50" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="50" y="52" text-anchor="middle" font-weight="600">Skills inbox</text><text x="50" y="66" text-anchor="middle" fill="#6b7889" font-size="8.5">developer drops it</text>
+        <path d="M100 55 H122" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="124" y="30" width="120" height="50" rx="2" fill="#ffffff" stroke="#14202e"/><text x="184" y="50" text-anchor="middle" font-weight="600" class="mono" font-size="9">provenance.yml</text><text x="184" y="64" text-anchor="middle" fill="#6b7889" font-size="8.5">agent drafts it,</text><text x="184" y="75" text-anchor="middle" fill="#6b7889" font-size="8.5">approver left blank</text>
+        <path d="M244 55 H266" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="268" y="30" width="100" height="50" rx="2" fill="#14202e"/><text x="318" y="52" text-anchor="middle" font-weight="600" fill="#ffffff">Human approves</text><text x="318" y="66" text-anchor="middle" fill="#c6d1dd" font-size="8.5">reviewed in a PR</text>
+        <path d="M368 55 H390" stroke="#3b4a5c" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <g font-size="8.5">
+          <rect x="392" y="0" width="150" height="22" rx="11" fill="#e3f1ef" stroke="#0d6b66"/><text x="467" y="14.5" text-anchor="middle" fill="#0d6b66">Record parses, fields present</text>
+          <rect x="392" y="27" width="150" height="22" rx="11" fill="#e3f1ef" stroke="#0d6b66"/><text x="467" y="41.5" text-anchor="middle" fill="#0d6b66">Licence on the allowlist</text>
+          <rect x="392" y="54" width="150" height="22" rx="11" fill="#e3f1ef" stroke="#0d6b66"/><text x="467" y="68.5" text-anchor="middle" fill="#0d6b66">LICENSE file present</text>
+          <rect x="392" y="81" width="150" height="22" rx="11" fill="#e3f1ef" stroke="#0d6b66"/><text x="467" y="95.5" text-anchor="middle" fill="#0d6b66">Folder hash matches</text>
+          <rect x="392" y="108" width="150" height="22" rx="11" fill="#e3f1ef" stroke="#0d6b66"/><text x="467" y="122.5" text-anchor="middle" fill="#0d6b66">Approver named</text>
+        </g>
+        <path d="M542 40 H570" stroke="#0d6b66" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="572" y="20" width="88" height="40" rx="2" fill="#0d6b66"/><text x="616" y="37" text-anchor="middle" fill="#ffffff" font-weight="600">Installed</text><text x="616" y="50" text-anchor="middle" fill="#e3f1ef" font-size="8">whole folder</text>
+        <path d="M542 100 H570" stroke="#b3261e" stroke-width="1.2" marker-end="url(#ar3)"/>
+        <rect x="572" y="80" width="88" height="40" rx="2" fill="#fbe9e7" stroke="#b3261e"/><text x="616" y="97" text-anchor="middle" fill="#b3261e" font-weight="600">Skipped</text><text x="616" y="110" text-anchor="middle" fill="#b3261e" font-size="8">named warning</text>
+        <text x="0" y="112" fill="#6b7889" font-size="8.5">Default licence allowlist:</text>
+        <text x="0" y="125" fill="#3b4a5c" font-size="8.5" class="mono">MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC</text>
+        <text x="0" y="140" fill="#6b7889" font-size="8.5">A team overrides it in ravintio-overrides/setup-config/.</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 5.</b> Bring-your-own skills under entry 0000302. Setup also copies each skill's whole folder, which fixes a defect where it copied only <code>SKILL.md</code>.</figcaption>
+  </figure>
+  <div class="callout warn">
+    <b class="t">Prerequisite</b>
+    <p>Fix backlog 0000272 before 0000301. Otherwise the migration's setup re-run deletes developers' own skill folders.</p>
+  </div>
+</section>
+
+<!-- ===================== 7. JIRA ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">07</span><h2>One feature at a time, driven by Jira</h2></div>
+  <p>One Jira Story maps to one feature, one run, one pull request, and one release. The agent moves work statuses. Only a named human can move a review status, and Jira's workflow enforces that through an approvers group that leaves out the agent's account.</p>
+  <figure>
+    <svg viewBox="0 0 660 214" role="img" aria-label="Jira statuses alternating between agent work and human-only gates">
+      <defs><marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3b4a5c"/></marker></defs>
+      <g font-size="9.5" fill="#14202e">
+        <text x="0" y="14" font-size="8" font-weight="600" letter-spacing="1.2" fill="#0d6b66">AGENT ACCOUNT MAY MOVE</text>
+        <rect x="0" y="24" width="100" height="56" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="50" y="47" text-anchor="middle" font-weight="600">Analysing</text><text x="50" y="62" text-anchor="middle" class="mono" fill="#0d6b66" font-size="8.5">P0</text>
+        <rect x="160" y="24" width="100" height="56" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="210" y="47" text-anchor="middle" font-weight="600">Specifying</text><text x="210" y="62" text-anchor="middle" class="mono" fill="#0d6b66" font-size="8.5">P1–P2</text>
+        <rect x="320" y="24" width="100" height="56" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="370" y="47" text-anchor="middle" font-weight="600">Implementing</text><text x="370" y="62" text-anchor="middle" class="mono" fill="#0d6b66" font-size="8.5">P3–P6</text>
+        <rect x="480" y="24" width="100" height="56" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="530" y="47" text-anchor="middle" font-weight="600">Shipping</text><text x="530" y="62" text-anchor="middle" class="mono" fill="#0d6b66" font-size="8.5">P7–P9</text>
+
+        <rect x="80" y="124" width="100" height="56" rx="2" fill="#14202e"/><text x="130" y="147" text-anchor="middle" font-weight="600" fill="#ffffff">Design review</text><text x="130" y="162" text-anchor="middle" fill="#c6d1dd" font-size="8.5">P0 gate</text>
+        <rect x="240" y="124" width="100" height="56" rx="2" fill="#14202e"/><text x="290" y="147" text-anchor="middle" font-weight="600" fill="#ffffff">Spec review</text><text x="290" y="162" text-anchor="middle" fill="#c6d1dd" font-size="8.5">P1–P2 gate</text>
+        <rect x="400" y="124" width="100" height="56" rx="2" fill="#14202e"/><text x="450" y="143" text-anchor="middle" font-weight="600" fill="#ffffff">Verification</text><text x="450" y="155" text-anchor="middle" font-weight="600" fill="#ffffff">review</text><text x="450" y="169" text-anchor="middle" fill="#c6d1dd" font-size="8.5">P4–P5 reports</text>
+        <rect x="560" y="124" width="100" height="56" rx="2" fill="#14202e"/><text x="610" y="147" text-anchor="middle" font-weight="600" fill="#ffffff">PR review</text><text x="610" y="162" text-anchor="middle" fill="#c6d1dd" font-size="8.5">human merges</text>
+        <text x="0" y="204" font-size="8" font-weight="600" letter-spacing="1.2" fill="#14202e">NAMED HUMAN ONLY · APPROVAL BOUND TO COMMIT SHA AND DIGEST</text>
+
+        <g stroke="#3b4a5c" stroke-width="1.2" fill="none">
+          <path d="M70 80 L108 122" marker-end="url(#ar4)"/><path d="M150 124 L188 82" marker-end="url(#ar4)"/>
+          <path d="M230 80 L268 122" marker-end="url(#ar4)"/><path d="M310 124 L348 82" marker-end="url(#ar4)"/>
+          <path d="M390 80 L428 122" marker-end="url(#ar4)"/><path d="M470 124 L508 82" marker-end="url(#ar4)"/>
+          <path d="M550 80 L588 122" marker-end="url(#ar4)"/>
+        </g>
+      </g>
+    </svg>
+    <figcaption><b>Figure 6.</b> Proposed Jira workflow for entries 0000295 and 0000352. Each human gate records the approver's account, the time, the commit SHA, and a digest of the approved artefacts.</figcaption>
+  </figure>
+  <div class="two-col">
+    <div class="section" style="margin:0">
+      <h3>What makes an approval stand up</h3>
+      <ul class="tight">
+        <li>The agent signs in to Atlassian as its own account, never the human's.</li>
+        <li>Jira's changelog holds the identity, and nobody can edit it.</li>
+        <li>A later gate re-hashes the artefacts. A changed file needs a fresh approval.</li>
+        <li>Schema and destructive approvals stay in the repository.</li>
+      </ul>
+    </div>
+    <div class="section" style="margin:0">
+      <h3>How one feature at a time holds</h3>
+      <ul class="tight">
+        <li>Before it claims a Story, the agent searches for any other active Story on its account and stops if it finds one.</li>
+        <li>The repository lock carries the Jira key, and the hooks check it <span class="id">0000305</span>.</li>
+        <li>If Jira can't be reached, no gate can pass. Unknown never counts as approved.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 8. POSTMORTEMS ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">08</span><h2>Postmortems that go further</h2></div>
+  <p>Zero's postmortems are good records. They build an evidence timeline, ask five whys, and end at a process gap rather than a person. Three things stop them working as a quality system.</p>
+  <div class="two-col">
+    <div class="callout warn" style="margin:0">
+      <b class="t">What Zero's records show</b>
+      <p>All 26 postmortems and retrospectives still read <code>status: "open"</code>. Two stops got no postmortem until two days later. One lesson recurred in nine retrospectives and nothing noticed the pattern.</p>
+    </div>
+    <div class="callout" style="margin:0">
+      <b class="t">What Framework adds</b>
+      <p>Deterministic triggers and a gate before archive. A CAPA register where closure needs evidence that the action worked. Impact on validated state, deviations, incidents, trends, and periodic review.</p>
+    </div>
+  </div>
+  <figure>
+    <svg viewBox="0 0 660 190" role="img" aria-label="CAPA lifecycle from trigger to closed, with an ineffective loop back to postmortem">
+      <defs><marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#3b4a5c"/></marker></defs>
+      <g font-size="9.5" fill="#14202e">
+        <path d="M228 14 V130" stroke="#a85a12" stroke-dasharray="3 3"/>
+        <text x="234" y="20" fill="#a85a12" font-size="8.5" font-weight="600">P7 gate: no run closes with a</text>
+        <text x="234" y="31" fill="#a85a12" font-size="8.5" font-weight="600">missing postmortem or open CAPA</text>
+
+        <rect x="0" y="50" width="86" height="54" rx="2" fill="#fbe9e7" stroke="#b3261e"/><text x="43" y="73" text-anchor="middle" font-weight="600" fill="#b3261e">Trigger</text><text x="43" y="87" text-anchor="middle" fill="#b3261e" font-size="8">stop, failed CI</text>
+        <rect x="96" y="50" width="98" height="54" rx="2" fill="#14202e"/><text x="145" y="70" text-anchor="middle" font-weight="600" fill="#ffffff">Postmortem</text><text x="145" y="83" text-anchor="middle" fill="#c6d1dd" font-size="8">5 whys, fishbone,</text><text x="145" y="94" text-anchor="middle" fill="#c6d1dd" font-size="8">impact</text>
+        <rect x="246" y="50" width="70" height="54" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="281" y="81" text-anchor="middle" font-weight="600">Open</text>
+        <rect x="326" y="50" width="86" height="54" rx="2" fill="#f2f5f8" stroke="#9aa6b5"/><text x="369" y="81" text-anchor="middle" font-weight="600">Implemented</text>
+        <rect x="422" y="50" width="86" height="54" rx="2" fill="#fbf0e3" stroke="#a85a12"/><text x="465" y="73" text-anchor="middle" font-weight="600" fill="#a85a12">Effectiveness</text><text x="465" y="87" text-anchor="middle" font-weight="600" fill="#a85a12">check</text>
+        <rect x="518" y="50" width="62" height="54" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="549" y="81" text-anchor="middle" font-weight="600" fill="#0d6b66">Effective</text>
+        <rect x="590" y="50" width="70" height="54" rx="2" fill="#0d6b66"/><text x="625" y="75" text-anchor="middle" font-weight="600" fill="#ffffff">Closed</text><text x="625" y="89" text-anchor="middle" fill="#e3f1ef" font-size="8">signed off</text>
+
+        <g stroke="#3b4a5c" stroke-width="1.2" fill="none">
+          <path d="M86 77 H94" marker-end="url(#ar5)"/><path d="M194 77 H244" marker-end="url(#ar5)"/><path d="M316 77 H324" marker-end="url(#ar5)"/>
+          <path d="M412 77 H420" marker-end="url(#ar5)"/><path d="M508 77 H516" marker-end="url(#ar5)"/><path d="M580 77 H588" marker-end="url(#ar5)"/>
+        </g>
+        <text x="219" y="72" text-anchor="middle" fill="#6b7889" font-size="8">CAPA</text>
+        <path d="M465 104 V150 H145 V106" stroke="#b3261e" stroke-width="1.2" fill="none" marker-end="url(#ar5)"/>
+        <rect x="402" y="140" width="96" height="20" rx="10" fill="#fbe9e7" stroke="#b3261e"/><text x="450" y="154" text-anchor="middle" fill="#b3261e" font-size="8.5" font-weight="600">Ineffective</text>
+        <text x="160" y="146" fill="#b3261e" font-size="8.5">reopens and links a new postmortem</text>
+        <text x="0" y="182" fill="#6b7889" font-size="8.5">Each CAPA states a measurable criterion, for example "no recurrence in five runs" or "the detective test fails on a seeded fault".</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 7.</b> CAPA lifecycle in entries 0000330 to 0000332. Framework records the evidence and links the organisation's own QMS CAPA, which stays the system of record.</figcaption>
+  </figure>
+</section>
+
+<!-- ===================== 9. GAMP 5 ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">09</span><h2>GAMP 5 and the V-model</h2></div>
+  <p>Framework already does much of what GAMP 5 asks. It has traceable requirements, maker-checker splits, test-first code, and verification by execution. What it lacks is the GxP vocabulary and the records that tie those steps into a validation story. The GxP profile maps Framework's artefacts onto the specification hierarchy.</p>
+  <figure>
+    <svg viewBox="0 0 660 262" role="img" aria-label="V-model mapping Framework artefacts to GAMP 5 specification and verification levels">
+      <g font-size="9.5" fill="#14202e">
+        <g stroke="#9aa6b5" stroke-width="1.4" fill="none">
+          <path d="M100 64 L160 116 L220 168 L300 214"/>
+          <path d="M360 214 L440 168 L500 116 L560 64"/>
+        </g>
+        <g stroke="#0d6b66" stroke-dasharray="4 3" stroke-width="1">
+          <path d="M180 42 H500"/><path d="M240 94 H440"/><path d="M300 146 H380"/>
+        </g>
+        <text x="340" y="36" text-anchor="middle" fill="#0d6b66" font-size="8.5" font-weight="600">traceability matrix · 0000340</text>
+        <text x="340" y="88" text-anchor="middle" fill="#0d6b66" font-size="8.5">verifies</text>
+
+        <rect x="20" y="20" width="160" height="44" rx="2" fill="#ffffff" stroke="#14202e"/><text x="30" y="37" font-weight="600">User requirements (URS)</text><text x="30" y="52" fill="#6b7889" font-size="8.5">Feature brief, stories · P0–P1</text>
+        <rect x="80" y="72" width="160" height="44" rx="2" fill="#ffffff" stroke="#14202e"/><text x="90" y="89" font-weight="600">Functional spec (FS)</text><text x="90" y="104" fill="#6b7889" font-size="8.5">Requirements · P1</text>
+        <rect x="140" y="124" width="160" height="44" rx="2" fill="#ffffff" stroke="#14202e"/><text x="150" y="141" font-weight="600">Design spec (DS)</text><text x="150" y="156" fill="#6b7889" font-size="8.5">ADRs, execution plan · P2</text>
+        <rect x="250" y="192" width="160" height="44" rx="2" fill="#14202e"/><text x="330" y="210" text-anchor="middle" font-weight="600" fill="#ffffff">Code</text><text x="330" y="225" text-anchor="middle" fill="#c6d1dd" font-size="8.5">test first · P3</text>
+        <rect x="380" y="124" width="160" height="44" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="390" y="141" font-weight="600">Unit and integration tests</text><text x="390" y="156" fill="#0d6b66" font-size="8.5">TDD record, CI · P3–P4</text>
+        <rect x="440" y="72" width="160" height="44" rx="2" fill="#e3f1ef" stroke="#0d6b66"/><text x="450" y="89" font-weight="600">System verification</text><text x="450" y="104" fill="#0d6b66" font-size="8.5">Verify by execution · P4–P5</text>
+        <rect x="500" y="20" width="160" height="44" rx="2" fill="#0d6b66"/><text x="510" y="37" font-weight="600" fill="#ffffff">Validation summary</text><text x="510" y="52" fill="#e3f1ef" font-size="8.5">Quality unit approves · P7</text>
+        <text x="0" y="256" fill="#6b7889" font-size="8.5">Category 4 systems add a configuration specification. Risk class (0000339) sets test depth and whether a human must run or review each test.</text>
+      </g>
+    </svg>
+    <figcaption><b>Figure 8.</b> GAMP 5 specification and verification levels, mapped to Framework artefacts and phases in entries 0000337 to 0000342.</figcaption>
+  </figure>
+  <div class="two-col">
+    <div class="section" style="margin:0">
+      <h3>Smallest defensible set</h3>
+      <p>Attributable approvals <span class="id">0000286</span>, the GxP profile <span class="id">0000337</span>, risk-based test depth <span class="id">0000339</span>, the traceability matrix <span class="id">0000340</span>, and the validation summary report <span class="id">0000342</span>.</p>
+    </div>
+    <div class="section" style="margin:0">
+      <h3>The AI pipeline is itself a tool to qualify</h3>
+      <p>Auditors ask first for an intended-use statement for the agent. Entry 0000344 pins the model ID and Framework version per artefact, and packages the test suite as qualification evidence.</p>
+    </div>
+  </div>
+  <div class="callout">
+    <b class="t">Source check</b>
+    <p>The GAMP 5 Appendix D9 and D11 and ISPE AI Guide references come from general knowledge. Each entry says to check them against the source text at pickup.</p>
+  </div>
+</section>
+
+<!-- ===================== 10. ROADMAP ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">10</span><h2>Suggested delivery order</h2></div>
+  <p>Framework builds one feature at a time, so the order matters. Each wave depends on the one before it. The base controls in wave 3 carry most of what later waves need.</p>
+  <div class="waves">
+    <div class="wave first"><div class="w"><small>Wave</small>1</div><div><h3>Close the three urgent gaps</h3><p>Stop an agent switching off its own controls or leaking a secret.</p><div class="ids"><span>0000297</span><span>0000298</span><span>0000299</span></div></div></div>
+    <div class="wave"><div class="w"><small>Wave</small>2</div><div><h3>Remove the bundled skills</h3><p>Fix the manifest first, then remove the library and open the governed route.</p><div class="ids"><span>0000272</span><span>0000301</span><span>0000302</span></div></div></div>
+    <div class="wave"><div class="w"><small>Wave</small>3</div><div><h3>Build the base controls</h3><p>Protected policy, attributable approvals, a tamper-evident audit trail, git guards, and the one-feature lock.</p><div class="ids"><span>0000288</span><span>0000286</span><span>0000289</span><span>0000303</span><span>0000305</span></div></div></div>
+    <div class="wave"><div class="w"><small>Wave</small>4</div><div><h3>Put Jira at the centre</h3><p>Permanent ADR homes, then Jira planning and approval records bound to commits.</p><div class="ids"><span>0000296</span><span>0000295</span><span>0000352</span></div></div></div>
+    <div class="wave"><div class="w"><small>Wave</small>5</div><div><h3>Add profiles and GAMP 5</h3><p>Confirm the enforcement table, build the profile mechanism, then the GxP records in order.</p><div class="ids"><span>0000356</span><span>0000348</span><span>0000337</span><span>0000339</span><span>0000338</span><span>0000340</span><span>0000341</span><span>0000342</span></div></div></div>
+    <div class="wave"><div class="w"><small>Wave</small>6</div><div><h3>Close the quality loop</h3><p>Postmortems, CAPA, and the gate before archive. The remaining entries follow.</p><div class="ids"><span>0000330</span><span>0000331</span><span>0000332</span></div></div></div>
+  </div>
+</section>
+
+<!-- ===================== 11. DECISIONS ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">11</span><h2>Decisions for you</h2></div>
+  <ul class="decisions">
+    <li><div><b>Confirm the enforcement table.</b><span>Accept or change each row in entry 0000356.</span></div></li>
+    <li><div><b>Choose where the base controls apply.</b><span>Decide whether they are on for every install, or only when a team picks a regulated profile.</span></div></li>
+    <li><div><b>Settle the initiative entries.</b><span>Close 0000244 and 0000245, or move them to Zero. Both port the initiative pattern.</span></div></li>
+    <li><div><b>Keep postmortems in Framework.</b><span>Revise 0000279 section 2, which moves them to RAVINTIO Insight.</span></div></li>
+    <li><div><b>Merge PR #74 before PR #75.</b><span>The new entries cite 0000280 to 0000293, which exist only on PR #74.</span></div></li>
+  </ul>
+</section>
+
+<!-- ===================== APPENDIX A ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">A</span><h2>Entry index</h2></div>
+  <p>Every entry filed in PR #75, grouped by theme. Entry 0000355 also lists amendments to 20 existing entries.</p>
+  <div class="tbl-wrap">
+  <table class="index">
+    <thead><tr><th>ID</th><th>Title</th><th>Route</th></tr></thead>
+    <tbody>
+      <tr class="g"><td colspan="3">Copied from Zero</td></tr>
+      <tr><td class="id">0000294</td><td>Put a 24-hour time before each phase prefix</td><td>To triage</td></tr>
+      <tr><td class="id">0000295</td><td>Drive Framework from Jira through the Atlassian MCP</td><td>Feature</td></tr>
+      <tr><td class="id">0000296</td><td>Keep ADRs in docs/adr with repo-wide numbers</td><td>Feature</td></tr>
+      <tr class="g"><td colspan="3">Urgent controls</td></tr>
+      <tr><td class="id">0000297</td><td>Gate-write fails open when design.md has no component paths</td><td>Change</td></tr>
+      <tr><td class="id">0000298</td><td>Put ravintio-overrides/ on the enforcement list</td><td>Change</td></tr>
+      <tr><td class="id">0000299</td><td>Setup echoes settings content on a JSON parse error</td><td>Change</td></tr>
+      <tr class="g"><td colspan="3">Skills</td></tr>
+      <tr><td class="id">0000301</td><td>Remove the bundled third-party skills</td><td>Change</td></tr>
+      <tr><td class="id">0000302</td><td>Governed bring-your-own skills</td><td>Feature</td></tr>
+      <tr class="g"><td colspan="3">Controls, setup, and tests</td></tr>
+      <tr><td class="id">0000300</td><td>Setup hook merge drops or duplicates user hooks</td><td>Change</td></tr>
+      <tr><td class="id">0000303</td><td>Guard git bypasses and agent merges</td><td>Change</td></tr>
+      <tr><td class="id">0000304</td><td>Git hygiene for parallel subagents</td><td>Change</td></tr>
+      <tr><td class="id">0000305</td><td>One active feature per repository</td><td>Feature</td></tr>
+      <tr><td class="id">0000306</td><td>Limit run modes under a regulated profile</td><td>Feature</td></tr>
+      <tr><td class="id">0000307</td><td>Tighten the Change Pipeline under a regulated profile</td><td>Feature</td></tr>
+      <tr><td class="id">0000308</td><td>Grant the Fast Path CI exemption by content, not commit subject</td><td>Change</td></tr>
+      <tr><td class="id">0000309</td><td>Prove hook coverage at P0 with a canary write</td><td>Change</td></tr>
+      <tr><td class="id">0000310</td><td>Make the test runner and assert helpers able to fail</td><td>Change</td></tr>
+      <tr><td class="id">0000311</td><td>Set read-only token permissions in the consumer CI template</td><td>Change</td></tr>
+      <tr><td class="id">0000312</td><td>Check build log integrity with a script</td><td>Change</td></tr>
+      <tr><td class="id">0000313</td><td>Run resume detection as a script</td><td>Feature</td></tr>
+      <tr><td class="id">0000314</td><td>Setup refuses uncommitted pack or override files</td><td>Change</td></tr>
+      <tr><td class="id">0000315</td><td>Record failing tests on the base commit at P0</td><td>Change</td></tr>
+      <tr><td class="id">0000316</td><td>Run the P4 suite in a clean clone of HEAD</td><td>Change</td></tr>
+      <tr><td class="id">0000317</td><td>Installation check as qualification evidence</td><td>Feature</td></tr>
+      <tr><td class="id">0000318</td><td>Override-first standards and templates</td><td>Feature</td></tr>
+      <tr><td class="id">0000319</td><td>Joining a Framework repo, and turning strict mode off</td><td>Change</td></tr>
+      <tr><td class="id">0000320</td><td>Agent identity and repository security settings</td><td>Change</td></tr>
+      <tr><td class="id">0000321</td><td>Keep the developer's CLAUDE.md on first install</td><td>Change</td></tr>
+      <tr><td class="id">0000322</td><td>Tag the release on main after merge</td><td>Change</td></tr>
+      <tr><td class="id">0000323</td><td>Evidence before claims</td><td>Change</td></tr>
+      <tr><td class="id">0000324</td><td>Test impact scan in the execution plan</td><td>Change</td></tr>
+      <tr><td class="id">0000325</td><td>Explicit agreement and numbered permissions</td><td>Change</td></tr>
+      <tr><td class="id">0000326</td><td>Report context size at each gate</td><td>Change</td></tr>
+      <tr><td class="id">0000327</td><td>Critic flags guard widening and missing containment</td><td>Change</td></tr>
+      <tr><td class="id">0000328</td><td>Writing standard and prose checks at filing</td><td>Feature</td></tr>
+      <tr><td class="id">0000329</td><td>Setup target safety for agents</td><td>Change</td></tr>
+      <tr class="g"><td colspan="3">Postmortem and CAPA</td></tr>
+      <tr><td class="id">0000330</td><td>A regulated postmortem with an impact assessment</td><td>Feature</td></tr>
+      <tr><td class="id">0000331</td><td>A CAPA register with effectiveness checks</td><td>Feature</td></tr>
+      <tr><td class="id">0000332</td><td>A postmortem and CAPA gate before archive</td><td>Feature</td></tr>
+      <tr><td class="id">0000333</td><td>Deviation records linked to waivers and change control</td><td>Feature</td></tr>
+      <tr><td class="id">0000334</td><td>Incident and problem management intake</td><td>Feature</td></tr>
+      <tr><td class="id">0000335</td><td>Trend analysis across quality records</td><td>Feature</td></tr>
+      <tr><td class="id">0000336</td><td>A periodic quality review and a retirement plan</td><td>Feature</td></tr>
+      <tr class="g"><td colspan="3">GAMP 5</td></tr>
+      <tr><td class="id">0000337</td><td>GxP profile and system categorisation at P0</td><td>Feature</td></tr>
+      <tr><td class="id">0000338</td><td>GAMP specification hierarchy and a living system spec</td><td>Feature</td></tr>
+      <tr><td class="id">0000339</td><td>GxP quality risk assessment and risk-based test depth</td><td>Change</td></tr>
+      <tr><td class="id">0000340</td><td>Requirements traceability matrix</td><td>Change</td></tr>
+      <tr><td class="id">0000341</td><td>Objective test evidence standard</td><td>Change</td></tr>
+      <tr><td class="id">0000342</td><td>Validation plan and summary report</td><td>Feature</td></tr>
+      <tr><td class="id">0000343</td><td>Part 11, Annex 11, and ALCOA+ requirement kit</td><td>Feature</td></tr>
+      <tr><td class="id">0000344</td><td>Qualify the AI pipeline as a development tool</td><td>Feature</td></tr>
+      <tr><td class="id">0000345</td><td>Supplier assessment for the LLM provider and agent tool</td><td>Change</td></tr>
+      <tr><td class="id">0000346</td><td>Change impact on validated state</td><td>Change</td></tr>
+      <tr><td class="id">0000347</td><td>Appendix D11 trigger for AI in the built product</td><td>Change</td></tr>
+      <tr class="g"><td colspan="3">Compliance profiles and other frameworks</td></tr>
+      <tr><td class="id">0000348</td><td>Pluggable compliance profiles</td><td>Feature</td></tr>
+      <tr><td class="id">0000349</td><td>SOUP and third-party component register</td><td>Feature</td></tr>
+      <tr><td class="id">0000350</td><td>Safety risk controls traced to requirements and tests</td><td>Feature</td></tr>
+      <tr><td class="id">0000351</td><td>Record model identity and AI contribution</td><td>Change</td></tr>
+      <tr><td class="id">0000356</td><td>Decide which compliance frameworks Framework enforces by default</td><td>Feature</td></tr>
+      <tr><td class="id">0000357</td><td>Control what data the agent sends to the model provider</td><td>Feature</td></tr>
+      <tr class="g"><td colspan="3">Jira</td></tr>
+      <tr><td class="id">0000352</td><td>Jira approval records bound to commit and digest</td><td>Feature</td></tr>
+      <tr><td class="id">0000353</td><td>Change record gate before ship</td><td>Feature</td></tr>
+      <tr><td class="id">0000354</td><td>CAPA and defect source links in templates</td><td>Fast or Change</td></tr>
+      <tr class="g"><td colspan="3">Strategy record</td></tr>
+      <tr><td class="id">0000355</td><td>Regulated strategy and amendments from the Zero review</td><td>Record</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<!-- ===================== APPENDIX B ===================== -->
+<section class="section page-break">
+  <div class="section-head"><span class="num">B</span><h2>Other frameworks to assess</h2></div>
+  <p>Entry 0000356 lists these for the same default, optional, triggered, or out-of-scope call. The Cyber Resilience Act and IEC 81001-5-1 matter most for Framework's target market.</p>
+  <div class="fw-grid">
+    <div><h3>EU and UK regulation</h3><p>Cyber Resilience Act, NIS2, DORA, the EU AI Act with ISO/IEC 42001, GDPR Article 25, and Cyber Essentials.</p></div>
+    <div><h3>Life sciences and devices</h3><p>IEC 62304, ISO 13485, ISO 14971, IEC 81001-5-1, FDA section 524B premarket cybersecurity, and the EU GMP Annex 11 revision and draft Annex 22.</p></div>
+    <div><h3>Finance and payments</h3><p>SOX IT general controls, PCI DSS v4.0 requirement 6, and SOC 2.</p></div>
+    <div><h3>Industrial and automotive</h3><p>IEC 62443-4-1, ISO/SAE 21434, and UNECE R155. Automotive safety standards need a tool qualification level that an LLM can't reach.</p></div>
+    <div><h3>US government</h3><p>CMMC 2.0, CISA Secure by Design, and the secure software self-attestation form.</p></div>
+    <div><h3>Supply chain</h3><p>SBOM formats (SPDX and CycloneDX), OpenSSF Scorecard, OpenChain (ISO/IEC 5230 and 18974), and CIS Controls control 16.</p></div>
+  </div>
+  <div class="sources">
+    <b style="color:#3b4a5c">Sources for the UK GCAP position</b>
+    <span>Government Cyber Action Plan, GOV.UK: gov.uk/government/publications/government-cyber-action-plan</span>
+    <span>Cyber security and the UK government, House of Lords Library: lordslibrary.parliament.uk/cyber-security-and-the-uk-government</span>
+    <span>The Cyber Security and Resilience Bill explained, TLT: tlt.com/insights-and-events</span>
+    <span>Check the plan and the Bill text at pickup. This review didn't read either directly.</span>
+  </div>
+</section>
